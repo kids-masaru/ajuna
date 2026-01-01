@@ -170,10 +170,11 @@
     <a href="index.html" style="position:fixed; top:5px; left:5px; z-index:100; background:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; border:2px solid #fb923c; font-size:1.2rem; box-shadow:0 2px 5px rgba(0,0,0,0.2);">🏠</a>
 
     <div id="startScreen">
-        <div class="text-7xl mb-6">🚓🐶🍅</div>
+        <div class="text-7xl mb-6">🚓🐶🍎</div>
         <h1 class="text-4xl text-orange-600 font-bold mb-4">わくわく かるた</h1>
         <p class="text-gray-500 mb-8 text-sm leading-relaxed">
-            どうぶつ、のりもの、やさい が<br>
+            どうぶつ、のりもの、<br>
+            やさい、くだもの が<br>
             ランダムで でてくるよ！
         </p>
         <button id="startBtn" class="bg-orange-500 text-white text-3xl font-bold py-5 px-16 rounded-full shadow-[0_6px_0_#c2410c] active:translate-y-1 transition-all">
@@ -235,7 +236,7 @@
             { char: 'ろ', word: 'ろけっと', emoji: '🚀', text: 'ろけっと はっしゃ', speak: 'ろけっと、はっしゃ' },
             { char: 'じ', word: 'じてんしゃ', emoji: '🚲', text: 'じてんしゃ チリンチリン', speak: 'じてんしゃ、ちりんちりん' },
 
-            // --- やさい（NEW!） ---
+            // --- やさい ---
             { char: 'と', word: 'とまと', emoji: '🍅', text: 'とまと まっかっか', speak: 'とまと、まっかっか' },
             { char: 'に', word: 'にんじん', emoji: '🥕', text: 'にんじん ぽりぽり', speak: 'にんじん、ぽりぽり' },
             { char: 'な', word: 'なす', emoji: '🍆', text: 'なすび つやつや', speak: 'なすび、つやつや' },
@@ -246,7 +247,20 @@
             { char: 'ぴ', word: 'ぴーまん', emoji: '🫑', text: 'ぴーまん みどりいろ', speak: 'ぴーまん、みどりいろ' },
             { char: 'ぶ', word: 'ぶろっこりー', emoji: '🥦', text: 'ぶろっこりー もこもこ', speak: 'ぶろっこりー、もこもこ' },
             { char: 'た', word: 'たまねぎ', emoji: '🧅', text: 'たまねぎ まるいね', speak: 'たまねぎ、まるいね' },
-            { char: 'じ', word: 'じゃがいも', emoji: '🥔', text: 'じゃがいも ごろごろ', speak: 'じゃがいも、ごろごろ' }
+            { char: 'じ', word: 'じゃがいも', emoji: '🥔', text: 'じゃがいも ごろごろ', speak: 'じゃがいも、ごろごろ' },
+
+            // --- くだもの（NEW!） ---
+            { char: 'り', word: 'りんご', emoji: '🍎', text: 'りんごが まっかっか', speak: 'りんごが、まっかっか' },
+            { char: 'ば', word: 'ばなな', emoji: '🍌', text: 'ばななが きいろだよ', speak: 'ばななが、きいろだよ' },
+            { char: 'ぶ', word: 'ぶどう', emoji: '🍇', text: 'ぶどうが つぶつぶ', speak: 'ぶどうが、つぶつぶ' },
+            { char: 'い', word: 'いちご', emoji: '🍓', text: 'いちごが あまいね', speak: 'いちごが、あまいね' },
+            { char: 'も', word: 'もも', emoji: '🍑', text: 'ももさん ぴんくいろ', speak: 'ももさん、ぴんくいろ' },
+            { char: 'め', word: 'めろん', emoji: '🍈', text: 'めろんが あみあみ', speak: 'めろんが、あみあみ' },
+            { char: 'す', word: 'すいか', emoji: '🍉', text: 'すいかが しましま', speak: 'すいかが、しましま' },
+            { char: 'み', word: 'みかん', emoji: '🍊', text: 'みかんが オレンジ', speak: 'みかんが、おれんじ' },
+            { char: 'ぱ', word: 'ぱいなっぷる', emoji: '🍍', text: 'ぱいなっぷる トゲトゲ', speak: 'ぱいなっぷる、とげとげ' },
+            { char: 'さ', word: 'さくらんぼ', emoji: '🍒', text: 'さくらんぼ なかよし', speak: 'さくらんぼ、なかよし' },
+            { char: 'れ', word: 'れもん', emoji: '🍋', text: 'れもんが すっぱい', speak: 'れもんが、すっぱい' }
         ];
 
         let currentTarget = null;
