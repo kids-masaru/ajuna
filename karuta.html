@@ -13,11 +13,11 @@
             touch-action: none;
             background-color: #fff7ed;
             user-select: none;
-            height: 100vh;
+            height: 100vh; /* 画面の高さピッタリにする */
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden;
+            overflow: hidden; /* スクロールを禁止 */
         }
 
         /* Start Screen */
@@ -37,23 +37,24 @@
         /* Header / Controls */
         .header-area {
             width: 100%;
-            padding: 8px 15px;
+            padding: 5px 15px; /* 少し高さを詰める */
             background: #ffedd5;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid #fb923c;
-            height: 50px;
+            height: 45px; /* 固定高さを少し低く */
+            flex-shrink: 0; /* 縮まないようにする */
         }
         .reset-btn {
             background: #cbd5e1;
-            width: 36px;
-            height: 36px;
+            width: 32px; /* 少し小さく */
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             border: 2px solid #94a3b8;
         }
@@ -61,68 +62,71 @@
         /* Reader Area */
         .reader-area {
             width: 100%;
-            padding: 10px;
+            padding: 8px; /* 余白を少し詰める */
             background: #fff;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 90px;
+            min-height: 85px; /* 少し高さを詰める */
             border-bottom: 4px solid #fb923c;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             z-index: 20;
+            flex-shrink: 0; /* 縮まないようにする */
         }
         .reader-text {
-            font-size: 1.5rem; /* 文字数が増える可能性があるので少し小さく */
+            font-size: 1.4rem; /* 少し小さく */
             color: #ea580c;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: bold;
             white-space: nowrap;
         }
         .replay-btn {
             background: #fbbf24;
             color: #78350f;
-            padding: 6px 24px;
+            padding: 5px 20px; /* 少し小さく */
             border-radius: 20px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             box-shadow: 0 3px 0 #d97706;
             font-weight: bold;
         }
         .replay-btn:active { transform: translateY(3px); box-shadow: none; }
 
-        /* Grid */
+        /* Grid (ここを調整！) */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3列 */
-            gap: 8px;
+            grid-template-columns: repeat(3, 1fr); /* 3列維持 */
+            gap: 6px; /* カード間の隙間を少し狭く */
             width: 100%;
-            max-width: 600px;
+            max-width: 500px; /* 全体の幅を少し狭めてコンパクトに */
             padding: 10px;
-            flex-grow: 1;
-            overflow-y: auto;
-            align-content: start;
+            flex-grow: 1; /* 残りのスペースいっぱいに広がる */
+            overflow-y: auto; /* 念のためスクロール許可 */
+            align-content: center; /* 縦方向も中央寄せ */
         }
 
-        /* Card */
+        /* Card (ここを調整！) */
         .card {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-            border: 3px solid #fed7aa;
+            border-radius: 10px; /* 角丸を少し小さく */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 2px solid #fed7aa; /* 枠線を少し細く */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             position: relative;
-            aspect-ratio: 3/4;
+            aspect-ratio: 3/4; /* 縦横比は維持 */
         }
         .card:active { background: #ffedd5; transform: scale(0.95); }
         .card.correct { border-color: #22c55e; background: #dcfce7; transform: scale(1.05); z-index: 10; }
         .card.taken { opacity: 0; pointer-events: none; }
-        .card-char { font-size: 1.5rem; color: #ea580c; position: absolute; top: 2px; right: 6px; font-weight: bold; }
-        .card-img { font-size: 3rem; }
-        .card-word { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+        
+        /* カードの中身を少し小さく */
+        .card-char { font-size: 1.3rem; color: #ea580c; position: absolute; top: 2px; right: 4px; font-weight: bold; }
+        .card-img { font-size: 2.6rem; }
+        .card-word { font-size: 0.65rem; color: #9ca3af; margin-top: 1px; }
 
         /* Next Button Overlay */
         #nextOverlay {
@@ -164,7 +168,7 @@
 </head>
 <body>
 
-    <a href="index.html" style="position:fixed; top:10px; left:10px; z-index:100; background:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; border:2px solid #fb923c; font-size:1.5rem; box-shadow:0 2px 5px rgba(0,0,0,0.2);">🏠</a>
+    <a href="index.html" style="position:fixed; top:5px; left:5px; z-index:100; background:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; border:2px solid #fb923c; font-size:1.2rem; box-shadow:0 2px 5px rgba(0,0,0,0.2);">🏠</a>
 
     <div id="startScreen">
         <div class="text-7xl mb-6">🚓🐶🚅</div>
@@ -179,7 +183,7 @@
     </div>
 
     <div class="header-area">
-        <div style="width: 40px;"></div> <div class="font-bold text-orange-800">かるた</div>
+        <div style="width: 36px;"></div> <div class="font-bold text-orange-800">かるた</div>
         <button onclick="resetSpeech()" class="reset-btn" title="音声をなおす">🔄</button>
     </div>
 
@@ -199,7 +203,6 @@
 
     <script>
         // --- Master Data (Pool) ---
-        // ここから毎回12枚が選ばれます
         const masterData = [
             // --- どうぶつ ---
             { char: 'い', word: 'いぬ', emoji: '🐶', text: 'いぬが わんわん', speak: 'いぬが、わんわん' },
@@ -219,7 +222,7 @@
             { char: 'う', word: 'うし', emoji: '🐮', text: 'うしさん もーもー', speak: 'うしさん、もーもー' },
             { char: 'に', word: 'にわとり', emoji: '🐔', text: 'にわとり コケコッコー', speak: 'にわとり、こけこっこー' },
             
-            // --- のりもの（New!） ---
+            // --- のりもの ---
             { char: 'ぱ', word: 'ぱとかー', emoji: '🚓', text: 'ぱとかー ぴーぽー', speak: 'ぱとかー、ぴーぽー' },
             { char: 'き', word: 'きゅうきゅうしゃ', emoji: '🚑', text: 'きゅうきゅうしゃ ピーポー', speak: 'きゅうきゅうしゃ、ぴーぽー' },
             { char: 'し', word: 'しょうぼうしゃ', emoji: '🚒', text: 'しょうぼうしゃ ウーカンカン', speak: 'しょうぼうしゃ、うーかんかん' },
@@ -235,7 +238,7 @@
         ];
 
         let currentTarget = null;
-        let gameDeck = []; // 今回つかうカード
+        let gameDeck = []; 
         let remainingCards = [];
         const synth = window.speechSynthesis;
         let voices = [];
@@ -325,21 +328,18 @@
             const grid = document.getElementById('cardGrid');
             grid.innerHTML = '';
             
-            // ★ランダム選出ロジック
-            // 1. マスターデータをシャッフル
+            // ランダム選出
             const shuffledMaster = [...masterData].sort(() => Math.random() - 0.5);
-            // 2. 先頭から12枚だけ取り出す
             gameDeck = shuffledMaster.slice(0, 12);
-            // 3. 残りカードとしてセット
             remainingCards = [...gameDeck];
 
-            // 4. 画面表示用にさらにシャッフルして配置
+            // 画面配置用シャッフル
             const displayCards = [...gameDeck].sort(() => Math.random() - 0.5);
 
             displayCards.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.id = `card-${item.char}-${item.word}`; // IDを一意にするためwordも付与
+                card.id = `card-${item.char}-${item.word}`;
                 card.innerHTML = `
                     <div class="card-char">${item.char}</div>
                     <div class="card-img">${item.emoji}</div>
@@ -357,7 +357,6 @@
                 document.getElementById('displayText').textContent = 'おわり！';
                 speak('おしまいです。またあそんでね！');
                 setTimeout(() => {
-                   // リロードして新しいセットで遊べるようにする案内
                    if(confirm('もういちど、ちがうカードであそぶ？')) {
                        location.reload();
                    }
@@ -375,7 +374,6 @@
         function checkAnswer(item) {
             if (!currentTarget) return;
 
-            // 文字と単語が一致しているか確認（同じ文字のカードがあるかもしれないので念のため）
             if (item.word === currentTarget.word) {
                 // Correct
                 playSound('correct');
