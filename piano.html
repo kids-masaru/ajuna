@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>プリンセス・ピアノ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background-color: #fff1f2;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* 戻るボタン */
+        .home-btn {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            z-index: 60;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 99px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 2px solid #fbcfe8;
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 画面回転の案内 */
+        #rotate-message {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            color: #db2777;
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        @media (orientation: portrait) {
+            #rotate-message { display: flex; }
+        }
+
+        /* --- Header --- */
+        .header {
+            width: 100%;
+            height: 18vh; 
+            min-height: 60px;
+            background: white;
+            border-bottom: 2px solid #fbcfe8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0.5rem 0 3.5rem; /* 左側にホームボタン分の余白 */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 20;
+            gap: 8px;
+        }
+
+        .mode-switch-container {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column; /* スマホ用に縦並び変更 */
+            align-items: center;
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 2px;
+            gap: 2px;
+        }
+        .mode-label {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            color: #6b7280;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+        .mode-label.active {
+            background: white;
+            color: #db2777;
+            font-weight: bold;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .song-scroll-wrapper {
+            flex-grow: 1;
+            overflow-x: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .song-scroll-wrapper::-webkit-scrollbar { display: none; }
+
+        .song-group {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0 0.5rem;
+            width: max-content;
+        }
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid #fce7f3;
+            background: #fff;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.1s;
+        }
+        .icon-btn:active { transform: scale(0.9); }
+        .icon-btn.active-song { background: #0ea5e9; border-color: #0ea5e9; animation: pulse 1s infinite; }
+        .icon-btn.active-guide { background: #f59e0b; border-color: #f59e0b; animation: pulse 1s infinite; }
+
+        .inst-group {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .inst-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #f3f4f6;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .inst-btn.active {
+            background: #ec4899;
+            color: white;
+        }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,0,0, 0.2); } 70% { box-shadow: 0 0 0 6px rgba(0,0,0, 0); } }
+
+        /* --- Keyboard --- */
+        .piano-container {
+            position: relative;
+            width: 98%;
+            height: 80vh; 
+            margin-top: 1vh;
+            background: #fff;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            overflow: hidden; 
+        }
+
+        .white-key {
+            flex: 1;
+            height: 100%;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-bottom: 8px solid #d1d5db;
+            border-radius: 0 0 6px 6px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 10px;
+            color: #db2777;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .white-key:active, .white-key.active {
+            border-bottom-width: 2px;
+            background: #fce7f3;
+            transform: translateY(6px);
+        }
+        .white-key.guide-target { background: #fef08a !important; }
+        .white-key.guide-target::after { content: '👇'; position: absolute; bottom: 40px; font-size: 2rem; animation: bounce 0.8s infinite; }
+
+        .black-key {
+            position: absolute;
+            top: 0;
+            height: 55%;
+            background: #374151;
+            border-bottom: 6px solid #111;
+            border-radius: 0 0 4px 4px;
+            z-index: 10;
+        }
+        .black-key:active, .black-key.active {
+            border-bottom-width: 2px;
+            background: #1f2937;
+            transform: translateY(4px);
+        }
+        .black-key.guide-target { background: #fbbf24 !important; }
+        .black-key.guide-target::after { content: '👇'; position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); font-size: 2rem; animation: bounce 0.8s infinite; z-index: 20; }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        #bravo-msg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 8rem;
+            z-index: 60;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #bravo-msg.show { transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="home-btn">🏠</a>
+
+    <div id="rotate-message">
+        <div class="text-6xl mb-4">📱💫</div>
+        <p class="text-2xl font-bold">くるっとまわして<br>よこむきにしてね！</p>
+    </div>
+
+    <header class="header">
+        <div class="mode-switch-container">
+            <div id="mode-auto" class="mode-label active" onclick="setMode('auto')">👂 きく</div>
+            <div id="mode-guide" class="mode-label" onclick="setMode('guide')">🎹 ひく</div>
+        </div>
+
+        <div class="song-scroll-wrapper">
+            <div class="song-group">
+                <button class="icon-btn" onclick="selectSong('twinkle')" title="きらきらぼし">🌟</button>
+                <button class="icon-btn" onclick="selectSong('tulip')" title="チューリップ">🌷</button>
+                <button class="icon-btn" onclick="selectSong('kaeru')" title="かえるのうた">🐸</button>
+                <button class="icon-btn" onclick="selectSong('choucho')" title="ちょうちょ">🦋</button>
+                <button class="icon-btn" onclick="selectSong('kobuta')" title="こぶたぬきつねこ">🐷</button>
+                <button class="icon-btn" onclick="selectSong('atama')" title="あたま・かた・ひざ・ポン">💪</button>
+                <button class="icon-btn" onclick="selectSong('bunbun')" title="ぶんぶんぶん">🐝</button>
+            </div>
+        </div>
+
+        <div class="inst-group">
+            <button class="inst-btn active" onclick="setInstrument('piano', this)">🎹</button>
+            <button class="inst-btn" onclick="setInstrument('bell', this)">🔔</button>
+            <button class="inst-btn" onclick="setInstrument('synth', this)">🎺</button>
+        </div>
+    </header>
+
+    <div class="piano-container" id="piano">
+        <div id="bravo-msg">💮</div>
+    </div>
+
+    <script>
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        let currentInstrument = 'piano';
+        let currentMode = 'auto'; 
+        let currentSessionId = 0; 
+        
+        let guideNoteIndex = 0;
+        let guideSongData = [];
+
+        const freqs = {
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63,
+            'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00,
+            'A#4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25
+        };
+
+        const whiteKeysList = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'];
+        const blackKeysMap = [
+            { note: 'C#4', pos: 1 }, { note: 'D#4', pos: 2 },
+            { note: 'F#4', pos: 4 }, { note: 'G#4', pos: 5 }, { note: 'A#4', pos: 6 },
+            { note: 'C#5', pos: 8 }, { note: 'D#5', pos: 9 }
+        ];
+
+        const songs = {
+            'twinkle': [
+                {n:'C4',d:400}, {n:'C4',d:400}, {n:'G4',d:400}, {n:'G4',d:400}, {n:'A4',d:400}, {n:'A4',d:400}, {n:'G4',d:800},
+                {n:'F4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'D4',d:400}, {n:'C4',d:800}
+            ],
+            'tulip': [
+                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:800}, {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:800},
+                {n:'G4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:400}, {n:'D4',d:800}
+            ],
+            'kaeru': [
+                {n:'C4',d:300}, {n:'D4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'D4',d:300}, {n:'C4',d:600},
+                {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:300}, {n:'A4',d:300}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:600},
+                {n:'C4',d:600}
+            ],
+            'choucho': [
+                {n:'G4',d:400}, {n:'E4',d:400}, {n:'E4',d:800}, {n:'F4',d:400}, {n:'D4',d:400}, {n:'D4',d:800},
+                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:400}, {n:'F4',d:400}, {n:'G4',d:400}, {n:'G4',d:400}, {n:'G4',d:800}
+            ],
+            'kobuta': [
+                {n:'C4',d:200}, {n:'C4',d:200}, {n:'E4',d:400}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'G4',d:400},
+                {n:'G4',d:200}, {n:'G4',d:200}, {n:'E4',d:400}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'C4',d:400},
+                {n:'C4',d:200}, {n:'C4',d:200}, {n:'E4',d:400}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'G4',d:200}, {n:'G4',d:200},
+                {n:'G4',d:200}, {n:'G4',d:200}, {n:'E4',d:400}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'C4',d:400}
+            ],
+            'atama': [
+                {n:'G4',d:400}, {n:'A4',d:400}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
+                {n:'D4',d:300}, {n:'E4',d:300}, {n:'F4',d:600}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
+                {n:'G4',d:400}, {n:'A4',d:400}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
+                {n:'D4',d:600}, {n:'G4',d:600}, {n:'E4',d:400}, {n:'C4',d:400}
+            ],
+            'bunbun': [
+                {n:'G4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:800},
+                {n:'D4',d:200}, {n:'D4',d:200}, {n:'D4',d:200}, {n:'D4',d:200}, {n:'E4',d:200}, {n:'F4',d:400},
+                {n:'E4',d:200}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'F4',d:200}, {n:'G4',d:400},
+                {n:'G4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:800}
+            ]
+        };
+
+        const keyElements = {};
+        const pianoContainer = document.getElementById('piano');
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTone(note) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            const freq = freqs[note];
+            osc.frequency.value = freq;
+
+            if (currentInstrument === 'piano') {
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                osc.stop(audioCtx.currentTime + 1.5);
+            } else if (currentInstrument === 'bell') {
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.0);
+                osc.stop(audioCtx.currentTime + 2.0);
+            } else if (currentInstrument === 'synth') {
+                osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.stop(audioCtx.currentTime + 0.5);
+            }
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+        }
+
+        function buildKeys() {
+            whiteKeysList.forEach((note) => {
+                const key = document.createElement('div');
+                key.className = 'white-key';
+                key.textContent = noteToLabel(note);
+                key.dataset.note = note;
+                keyElements[note] = key;
+                addInteraction(key, note);
+                pianoContainer.appendChild(key);
+            });
+
+            const unitPct = 100 / whiteKeysList.length;
+            const widthPct = unitPct * 0.70;
+            
+            blackKeysMap.forEach((bk) => {
+                const key = document.createElement('div');
+                key.className = 'black-key';
+                const leftPos = (bk.pos * unitPct) - (widthPct / 2);
+                key.style.left = leftPos + '%';
+                key.style.width = widthPct + '%';
+                key.dataset.note = bk.note;
+                keyElements[bk.note] = key;
+                addInteraction(key, bk.note);
+                pianoContainer.appendChild(key);
+            });
+        }
+
+        function addInteraction(el, note) {
+            const hit = (e) => {
+                e.preventDefault();
+                el.classList.add('active');
+                playTone(note);
+                setTimeout(() => el.classList.remove('active'), 200);
+                
+                // ガイドモードの判定
+                if (currentMode === 'guide') {
+                    checkGuide(note);
+                }
+            };
+            el.addEventListener('mousedown', hit);
+            el.addEventListener('touchstart', hit);
+        }
+        
+        function noteToLabel(note) {
+            return note.replace(/[0-9]/, '')
+                .replace('C', 'ド').replace('D', 'レ').replace('E', 'ミ')
+                .replace('F', 'ファ').replace('G', 'ソ').replace('A', 'ラ').replace('B', 'シ');
+        }
+
+        buildKeys();
+
+        function setMode(mode) {
+            stopAll();
+            currentMode = mode;
+            document.getElementById('mode-auto').classList.toggle('active', mode === 'auto');
+            document.getElementById('mode-guide').classList.toggle('active', mode === 'guide');
+        }
+
+        function setInstrument(inst, btn) {
+            currentInstrument = inst;
+            document.querySelectorAll('.inst-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            initAudio();
+        }
+
+        function selectSong(songId) {
+            initAudio();
+            stopAll(); 
+            currentSessionId++; 
+            
+            // アイコン光らせる
+            document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active-song', 'active-guide'));
+            const btn = document.querySelector(`button[onclick="selectSong('${songId}')"]`);
+            
+            if (currentMode === 'auto') {
+                btn.classList.add('active-song');
+                playSongLoop(songId, currentSessionId);
+            } else {
+                btn.classList.add('active-guide');
+                startGuide(songId);
+            }
+        }
+
+        function stopAll() {
+            currentSessionId++; 
+            resetGuide();
+            document.querySelector('#bravo-msg').classList.remove('show');
+            document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active-song', 'active-guide'));
+        }
+
+        // --- Auto Play Logic ---
+        function playSongLoop(songId, sessionId) {
+            const song = songs[songId];
+            let idx = 0;
+            const playNext = () => {
+                if (sessionId !== currentSessionId) return;
+                if (idx >= song.length) {
+                    idx = 0; // ループ
+                    setTimeout(playNext, 1000); 
+                    return;
+                }
+                const item = song[idx];
+                const key = keyElements[item.n];
+                
+                key.classList.add('active');
+                playTone(item.n);
+                setTimeout(() => key.classList.remove('active'), 200);
+
+                idx++;
+                setTimeout(playNext, item.d);
+            };
+            playNext();
+        }
+
+        // --- Guide Logic ---
+        function startGuide(songId) {
+            guideSongData = songs[songId];
+            guideNoteIndex = 0;
+            showNextGuide();
+        }
+
+        function resetGuide() {
+            document.querySelectorAll('.guide-target').forEach(el => el.classList.remove('guide-target'));
+        }
+
+        function showNextGuide() {
+            if (guideNoteIndex >= guideSongData.length) {
+                // 曲おわり
+                document.querySelector('#bravo-msg').classList.add('show');
+                setTimeout(() => {
+                    document.querySelector('#bravo-msg').classList.remove('show');
+                    document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active-guide'));
+                }, 3000);
+                return;
+            }
+            const note = guideSongData[guideNoteIndex].n;
+            keyElements[note].classList.add('guide-target');
+        }
+
+        function checkGuide(hitNote) {
+            if (guideNoteIndex >= guideSongData.length) return;
+            const target = guideSongData[guideNoteIndex].n;
+            
+            if (hitNote === target) {
+                // 正解！
+                keyElements[target].classList.remove('guide-target');
+                guideNoteIndex++;
+                setTimeout(showNextGuide, 100); 
+            }
+        }
+    </script>
+</body>
+</html>
