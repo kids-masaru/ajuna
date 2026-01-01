@@ -1,0 +1,15 @@
+{
+  "name": "まほうのおえかき",
+  "short_name": "おえかき",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fdf2f8",
+  "theme_color": "#fdf2f8",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
