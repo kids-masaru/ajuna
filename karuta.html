@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>どうぶつ かるた</title>
+    <title>わくわく かるた</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
@@ -73,10 +73,11 @@
             z-index: 20;
         }
         .reader-text {
-            font-size: 1.6rem;
+            font-size: 1.5rem; /* 文字数が増える可能性があるので少し小さく */
             color: #ea580c;
             margin-bottom: 8px;
             font-weight: bold;
+            white-space: nowrap;
         }
         .replay-btn {
             background: #fbbf24;
@@ -92,13 +93,14 @@
         /* Grid */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(3, 1fr); /* 3列 */
+            gap: 8px;
             width: 100%;
             max-width: 600px;
-            padding: 15px;
+            padding: 10px;
             flex-grow: 1;
             overflow-y: auto;
+            align-content: start;
         }
 
         /* Card */
@@ -118,8 +120,9 @@
         .card:active { background: #ffedd5; transform: scale(0.95); }
         .card.correct { border-color: #22c55e; background: #dcfce7; transform: scale(1.05); z-index: 10; }
         .card.taken { opacity: 0; pointer-events: none; }
-        .card-char { font-size: 1.8rem; color: #ea580c; position: absolute; top: 4px; right: 8px; font-weight: bold; }
-        .card-img { font-size: 3.2rem; }
+        .card-char { font-size: 1.5rem; color: #ea580c; position: absolute; top: 2px; right: 6px; font-weight: bold; }
+        .card-img { font-size: 3rem; }
+        .card-word { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
 
         /* Next Button Overlay */
         #nextOverlay {
@@ -164,11 +167,11 @@
     <a href="index.html" style="position:fixed; top:10px; left:10px; z-index:100; background:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; border:2px solid #fb923c; font-size:1.5rem; box-shadow:0 2px 5px rgba(0,0,0,0.2);">🏠</a>
 
     <div id="startScreen">
-        <div class="text-7xl mb-6">🐼</div>
-        <h1 class="text-4xl text-orange-600 font-bold mb-4">どうぶつ かるた</h1>
+        <div class="text-7xl mb-6">🚓🐶🚅</div>
+        <h1 class="text-4xl text-orange-600 font-bold mb-4">わくわく かるた</h1>
         <p class="text-gray-500 mb-8 text-sm leading-relaxed">
-            マナーモードをオフにして<br>
-            音量を上げて 遊んでね
+            どうぶつ や のりもの が<br>
+            ランダムで でてくるよ！
         </p>
         <button id="startBtn" class="bg-orange-500 text-white text-3xl font-bold py-5 px-16 rounded-full shadow-[0_6px_0_#c2410c] active:translate-y-1 transition-all">
             はじめる！
@@ -195,9 +198,10 @@
     <div id="statusLine">準備完了</div>
 
     <script>
-        // --- Data ---
-        // 「ぶた」は削除済みのリストです（全11枚）
-        const karutaData = [
+        // --- Master Data (Pool) ---
+        // ここから毎回12枚が選ばれます
+        const masterData = [
+            // --- どうぶつ ---
             { char: 'い', word: 'いぬ', emoji: '🐶', text: 'いぬが わんわん', speak: 'いぬが、わんわん' },
             { char: 'ね', word: 'ねこ', emoji: '🐱', text: 'ねこが にゃーにゃー', speak: 'ねこが、にゃーにゃー' },
             { char: 'う', word: 'うさぎ', emoji: '🐰', text: 'うさぎが ぴょんぴょん', speak: 'うさぎが、ぴょんぴょん' },
@@ -208,10 +212,30 @@
             { char: 'く', word: 'くま', emoji: '🐻', text: 'くまさん のっしのっし', speak: 'くまさん、のっしのっし' },
             { char: 'き', word: 'きりん', emoji: '🦒', text: 'きりんさん 首ながい', speak: 'きりんさん、くびながい' },
             { char: 'ぺ', word: 'ぺんぎん', emoji: '🐧', text: 'ぺんぎん よちよち', speak: 'ぺんぎん、よちよち' },
-            { char: 'か', word: 'かえる', emoji: '🐸', text: 'かえるが けろけろ', speak: 'かえるが、けろけろ' }
+            { char: 'か', word: 'かえる', emoji: '🐸', text: 'かえるが けろけろ', speak: 'かえるが、けろけろ' },
+            { char: 'こ', word: 'こあら', emoji: '🐨', text: 'こあらが すやすや', speak: 'こあらが、すやすや' },
+            { char: 'と', word: 'とら', emoji: '🐯', text: 'とらさん つよいぞ', speak: 'とらさん、つよいぞ' },
+            { char: 'う', word: 'うま', emoji: '🐴', text: 'うまが ひひーん', speak: 'うまが、ひひーん' },
+            { char: 'う', word: 'うし', emoji: '🐮', text: 'うしさん もーもー', speak: 'うしさん、もーもー' },
+            { char: 'に', word: 'にわとり', emoji: '🐔', text: 'にわとり コケコッコー', speak: 'にわとり、こけこっこー' },
+            
+            // --- のりもの（New!） ---
+            { char: 'ぱ', word: 'ぱとかー', emoji: '🚓', text: 'ぱとかー ぴーぽー', speak: 'ぱとかー、ぴーぽー' },
+            { char: 'き', word: 'きゅうきゅうしゃ', emoji: '🚑', text: 'きゅうきゅうしゃ ピーポー', speak: 'きゅうきゅうしゃ、ぴーぽー' },
+            { char: 'し', word: 'しょうぼうしゃ', emoji: '🚒', text: 'しょうぼうしゃ ウーカンカン', speak: 'しょうぼうしゃ、うーかんかん' },
+            { char: 'で', word: 'でんしゃ', emoji: '🚃', text: 'でんしゃ ガタンゴトン', speak: 'でんしゃ、がたんごとん' },
+            { char: 'し', word: 'しんかんせん', emoji: '🚅', text: 'しんかんせん ビューン', speak: 'しんかんせん、びゅーん' },
+            { char: 'ば', word: 'ばす', emoji: '🚌', text: 'ばす プップー', speak: 'ばす、ぷっぷー' },
+            { char: 'た', word: 'たくしー', emoji: '🚕', text: 'たくしー おきゃくさん', speak: 'たくしー、おきゃくさん' },
+            { char: 'と', word: 'とらっく', emoji: '🚚', text: 'とらっく ブーン', speak: 'とらっく、ぶーん' },
+            { char: 'ひ', word: 'ひこうき', emoji: '✈️', text: 'ひこうき キーン', speak: 'ひこうき、きーん' },
+            { char: 'ふ', word: 'ふね', emoji: '🚢', text: 'ふねが ぼーっ', speak: 'ふねが、ぼーっ' },
+            { char: 'ろ', word: 'ろけっと', emoji: '🚀', text: 'ろけっと はっしゃ', speak: 'ろけっと、はっしゃ' },
+            { char: 'じ', word: 'じてんしゃ', emoji: '🚲', text: 'じてんしゃ チリンチリン', speak: 'じてんしゃ、ちりんちりん' }
         ];
 
         let currentTarget = null;
+        let gameDeck = []; // 今回つかうカード
         let remainingCards = [];
         const synth = window.speechSynthesis;
         let voices = [];
@@ -257,7 +281,6 @@
         }
 
         // --- Speech Logic ---
-        // ★修正点：声のロード待ちを追加
         window.speechSynthesis.onvoiceschanged = function() {
             voices = window.speechSynthesis.getVoices();
         };
@@ -274,8 +297,6 @@
                 setStatus('エラー: 読み上げ非対応の端末です');
                 return;
             }
-
-            // キャンセルしてキューをクリア
             synth.cancel();
 
             const uttr = new SpeechSynthesisUtterance(text);
@@ -283,7 +304,6 @@
             uttr.rate = 0.9;
             uttr.volume = 1.0;
 
-            // 日本語の声を優先的に選ぶ
             if (voices.length > 0) {
                 const jpVoice = voices.find(v => v.lang.includes('ja'));
                 if (jpVoice) uttr.voice = jpVoice;
@@ -291,7 +311,7 @@
 
             uttr.onstart = () => setStatus('再生中: ' + text);
             uttr.onend = () => setStatus('再生完了');
-            uttr.onerror = (e) => setStatus('再生エラー'); // エラー詳細表示をシンプルに
+            uttr.onerror = (e) => setStatus('再生エラー');
 
             synth.speak(uttr);
         }
@@ -305,21 +325,25 @@
             const grid = document.getElementById('cardGrid');
             grid.innerHTML = '';
             
-            // 論理的な残りをセット
-            remainingCards = [...karutaData];
-            
-            // ★修正点：画面上のカード配置もランダムにする
-            // コピーを作ってシャッフルする
-            const shuffledForDisplay = [...karutaData].sort(() => Math.random() - 0.5);
+            // ★ランダム選出ロジック
+            // 1. マスターデータをシャッフル
+            const shuffledMaster = [...masterData].sort(() => Math.random() - 0.5);
+            // 2. 先頭から12枚だけ取り出す
+            gameDeck = shuffledMaster.slice(0, 12);
+            // 3. 残りカードとしてセット
+            remainingCards = [...gameDeck];
 
-            shuffledForDisplay.forEach(item => {
+            // 4. 画面表示用にさらにシャッフルして配置
+            const displayCards = [...gameDeck].sort(() => Math.random() - 0.5);
+
+            displayCards.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.id = `card-${item.char}`;
+                card.id = `card-${item.char}-${item.word}`; // IDを一意にするためwordも付与
                 card.innerHTML = `
                     <div class="card-char">${item.char}</div>
                     <div class="card-img">${item.emoji}</div>
-                    <div class="text-xs text-gray-400 mt-1">${item.word}</div>
+                    <div class="card-word">${item.word}</div>
                 `;
                 card.onclick = () => checkAnswer(item);
                 grid.appendChild(card);
@@ -331,34 +355,37 @@
 
             if (remainingCards.length === 0) {
                 document.getElementById('displayText').textContent = 'おわり！';
-                speak('おしまいです。よくできました！');
+                speak('おしまいです。またあそんでね！');
+                setTimeout(() => {
+                   // リロードして新しいセットで遊べるようにする案内
+                   if(confirm('もういちど、ちがうカードであそぶ？')) {
+                       location.reload();
+                   }
+                }, 3000);
                 return;
             }
 
-            // 次の正解をランダムに選ぶ
             const idx = Math.floor(Math.random() * remainingCards.length);
             currentTarget = remainingCards[idx];
             
             document.getElementById('displayText').textContent = currentTarget.text;
-            
-            // 読み上げ開始
             speak(currentTarget.speak);
         }
 
         function checkAnswer(item) {
             if (!currentTarget) return;
 
-            if (item.char === currentTarget.char) {
+            // 文字と単語が一致しているか確認（同じ文字のカードがあるかもしれないので念のため）
+            if (item.word === currentTarget.word) {
                 // Correct
                 playSound('correct');
-                const card = document.getElementById(`card-${item.char}`);
+                const card = document.getElementById(`card-${item.char}-${item.word}`);
                 card.classList.add('correct');
-                // アニメーション後に消す
                 setTimeout(() => {
                     card.classList.add('taken');
                 }, 500);
                 
-                remainingCards = remainingCards.filter(c => c.char !== currentTarget.char);
+                remainingCards = remainingCards.filter(c => c.word !== currentTarget.word);
                 currentTarget = null;
 
                 // Show Next Button
@@ -366,7 +393,6 @@
                     document.getElementById('nextOverlay').style.display = 'flex';
                     setStatus('正解！つぎへボタンを押してね');
                 }, 500);
-
             } else {
                 // Wrong
                 playSound('wrong');
@@ -376,14 +402,12 @@
 
         // --- Event Listeners ---
         document.getElementById('startBtn').addEventListener('click', () => {
-            // Audio Init
             if (!audioCtx) audioCtx = new AudioContext();
             audioCtx.resume();
 
-            // Speech Wake-up (声を確実にロードさせる)
             if (synth) {
                 synth.cancel();
-                voices = synth.getVoices(); // ここでも取得しておく
+                voices = synth.getVoices();
                 const dummy = new SpeechSynthesisUtterance('');
                 synth.speak(dummy);
             }
@@ -398,7 +422,6 @@
 
         document.getElementById('nextBtn').addEventListener('click', nextTurn);
 
-        // 初期化時に声を取得
         window.speechSynthesis.getVoices();
 
     </script>
