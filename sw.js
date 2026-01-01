@@ -1,11 +1,11 @@
 const CACHE_NAME = 'oekaki-v1';
 const urlsToCache = [
   './',
-  './index.html',
+  './index.html',     // メニュー
   './manifest.json',
   './icon.png',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap'
+  './oekaki.html',    // ← おえかきを追加！
+  './game2.html'      // ← 新しいゲームを作ったらここにも追加！
 ];
 
 self.addEventListener('install', event => {
