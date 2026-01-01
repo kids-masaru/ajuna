@@ -1,6 +1,83 @@
-<a href="oekaki.html" class="big-button">
-   🎨 おえかきボード
-</a>
-<a href="game2.html" class="big-button">
-   🧩 パズル（準備中）
-</a>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fff1f2">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <title>げーむのおへや</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #fff1f2; /* Rose-50 */
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .game-card {
+            transition: all 0.2s;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+        }
+        .game-card:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+        /* ふわふわ動くアニメーション */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .title-anim {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <div class="text-center mb-8 title-anim">
+        <h1 class="text-4xl text-rose-500 font-bold drop-shadow-sm">
+            🎮 げーむのおへや
+        </h1>
+    </div>
+
+    <div class="w-full max-w-md space-y-6">
+
+        <a href="oekaki.html" class="game-card block bg-white rounded-3xl p-6 border-4 border-pink-300 flex items-center space-x-6 no-underline text-gray-800">
+            <div class="bg-pink-100 w-24 h-24 rounded-2xl flex items-center justify-center text-5xl border-2 border-pink-200">
+                🎨
+            </div>
+            <div class="flex-1">
+                <h2 class="text-2xl font-bold text-pink-500 mb-1">おえかき</h2>
+                <p class="text-sm text-gray-400 font-bold">すきなえをかこう！</p>
+            </div>
+            <div class="text-pink-300 text-3xl">▶</div>
+        </a>
+
+        <div class="block bg-gray-100 rounded-3xl p-6 border-4 border-gray-200 flex items-center space-x-6 opacity-60 grayscale">
+            <div class="bg-gray-200 w-24 h-24 rounded-2xl flex items-center justify-center text-5xl">
+                🧩
+            </div>
+            <div class="flex-1">
+                <h2 class="text-2xl font-bold text-gray-500 mb-1">パズル</h2>
+                <p class="text-sm text-gray-400 font-bold">じゅんびちゅう...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Service Workerの登録
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
+</body>
+</html>
