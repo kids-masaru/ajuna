@@ -41,6 +41,18 @@
             justify-content: center;
         }
 
+        /* ★修正1：スタート画面（音を出すために必要） */
+        #start-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,241,242, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
         /* 画面回転の案内 */
         #rotate-message {
             display: none;
@@ -48,7 +60,7 @@
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255, 255, 255, 0.95);
             color: #db2777;
-            z-index: 100;
+            z-index: 200; /* スタート画面より手前 */
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -69,7 +81,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 0.5rem 0 3.5rem; /* 左側にホームボタン分の余白 */
+            padding: 0 0.5rem 0 3.5rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             z-index: 20;
             gap: 8px;
@@ -78,7 +90,7 @@
         .mode-switch-container {
             flex-shrink: 0;
             display: flex;
-            flex-direction: column; /* スマホ用に縦並び変更 */
+            flex-direction: column;
             align-items: center;
             background: #f3f4f6;
             border-radius: 12px;
@@ -228,6 +240,13 @@
 
     <a href="index.html" class="home-btn">🏠</a>
 
+    <div id="start-overlay">
+        <div class="text-6xl mb-4">🎹</div>
+        <button id="start-btn" class="bg-pink-500 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-lg active:scale-95 transition-transform">
+            あそぶ！
+        </button>
+    </div>
+
     <div id="rotate-message">
         <div class="text-6xl mb-4">📱💫</div>
         <p class="text-2xl font-bold">くるっとまわして<br>よこむきにしてね！</p>
@@ -332,6 +351,12 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
+        // ★修正3：スタートボタンの処理
+        document.getElementById('start-btn').addEventListener('click', () => {
+            initAudio();
+            document.getElementById('start-overlay').style.display = 'none';
+        });
+
         function playTone(note) {
             initAudio();
             const osc = audioCtx.createOscillator();
@@ -396,13 +421,13 @@
                 playTone(note);
                 setTimeout(() => el.classList.remove('active'), 200);
                 
-                // ガイドモードの判定
                 if (currentMode === 'guide') {
                     checkGuide(note);
                 }
             };
             el.addEventListener('mousedown', hit);
-            el.addEventListener('touchstart', hit);
+            // ★修正4：パッシブモードをオフにする（重要！）
+            el.addEventListener('touchstart', hit, {passive: false});
         }
         
         function noteToLabel(note) {
@@ -432,7 +457,6 @@
             stopAll(); 
             currentSessionId++; 
             
-            // アイコン光らせる
             document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active-song', 'active-guide'));
             const btn = document.querySelector(`button[onclick="selectSong('${songId}')"]`);
             
@@ -459,7 +483,7 @@
             const playNext = () => {
                 if (sessionId !== currentSessionId) return;
                 if (idx >= song.length) {
-                    idx = 0; // ループ
+                    idx = 0; // Loop
                     setTimeout(playNext, 1000); 
                     return;
                 }
@@ -489,7 +513,6 @@
 
         function showNextGuide() {
             if (guideNoteIndex >= guideSongData.length) {
-                // 曲おわり
                 document.querySelector('#bravo-msg').classList.add('show');
                 setTimeout(() => {
                     document.querySelector('#bravo-msg').classList.remove('show');
@@ -506,7 +529,6 @@
             const target = guideSongData[guideNoteIndex].n;
             
             if (hitNote === target) {
-                // 正解！
                 keyElements[target].classList.remove('guide-target');
                 guideNoteIndex++;
                 setTimeout(showNextGuide, 100); 
