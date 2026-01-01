@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fdf2f8">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <title>まほうのおえかきボード</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background-color: #fdf2f8;
+            user-select: none;
+            /* iOSでのバウンススクロール防止 */
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        .tool-btn {
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .tool-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        .tool-btn.active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+            border: 4px solid #f472b6;
+            background-color: #fdf2f8;
+        }
+
+        .color-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .color-btn.active {
+            transform: scale(1.2);
+            border-color: #333;
+        }
+
+        #canvas-container {
+            background-color: white;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="h-full w-full flex flex-col items-center justify-between py-2 bg-pink-50">
+
+    <div class="w-full px-2 flex justify-center items-center max-w-4xl space-x-2 overflow-x-auto py-2 z-10">
+        <button id="btnPen" class="tool-btn active bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16" onclick="setMode('pen')">
+            <span class="text-3xl">✏️</span>
+            <span class="text-[10px] text-gray-500 font-bold">かく</span>
+        </button>
+        <button id="btnMagic" class="tool-btn bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16" onclick="setMode('magic')">
+            <span class="text-3xl">🌈</span>
+            <span class="text-[10px] text-gray-500 font-bold">まほう</span>
+        </button>
+        <button id="btnStamp" class="tool-btn bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16 relative" onclick="setMode('stamp')">
+            <span id="currentStampIcon" class="text-3xl">⭐</span>
+            <span class="text-[10px] text-gray-500 font-bold">ポン！</span>
+            <div onclick="event.stopPropagation(); changeStampType()" class="absolute -top-1 -right-1 bg-yellow-400 text-white w-6 h-6 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-xs">
+                ↻
+            </div>
+        </button>
+        
+        <button id="btnEraser" class="tool-btn bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16" onclick="setMode('eraser')">
+            <span class="text-3xl">🧼</span>
+            <span class="text-[10px] text-gray-500 font-bold">けしごむ</span>
+        </button>
+
+        <div class="w-2"></div>
+
+        <button class="tool-btn bg-red-100 p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16 text-red-500" onclick="clearCanvas()">
+            <span class="text-3xl">🗑️</span>
+            <span class="text-[10px] font-bold">ぜんぶ</span>
+        </button>
+    </div>
+
+    <div class="flex-grow w-full px-4 py-2 max-w-4xl relative flex items-center justify-center">
+        <div id="canvas-container" class="w-full h-full relative overflow-hidden touch-none">
+            <canvas id="drawingCanvas" class="w-full h-full"></canvas>
+        </div>
+    </div>
+
+    <div class="w-full px-4 pb-safe max-w-4xl overflow-x-auto no-scrollbar z-10 mb-4">
+        <div class="flex justify-center space-x-4 py-3 bg-white/60 backdrop-blur-sm rounded-full px-6 shadow-sm min-w-max mx-auto">
+            <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
+            <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
+            <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
+            <button class="color-btn bg-yellow-400" onclick="setColor('#facc15', this)"></button>
+            <button class="color-btn bg-green-500" onclick="setColor('#22c55e', this)"></button>
+            <button class="color-btn bg-sky-500" onclick="setColor('#0ea5e9', this)"></button>
+            <button class="color-btn bg-blue-600" onclick="setColor('#2563eb', this)"></button>
+            <button class="color-btn bg-purple-500" onclick="setColor('#a855f7', this)"></button>
+            <button class="color-btn bg-pink-400" onclick="setColor('#f472b6', this)"></button>
+        </div>
+    </div>
+
+    <script>
+        // --- Audio Context ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playDrawSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(200 + Math.random()*100, now);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(now + 0.1);
+        }
+
+        function playEraseSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.linearRampToValueAtTime(400, now + 0.1);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(now + 0.1);
+        }
+
+        function playStampSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(now + 0.1);
+        }
+
+        function playClearSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(now + 0.3);
+        }
+
+        // --- Canvas Setup ---
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentColor = 'black';
+        let currentMode = 'pen'; 
+        let currentStamp = '⭐';
+        const stamps = ['⭐', '❤️', '🐶', '🚗', '🍎', '🌸', '👑', '💩'];
+        let stampIndex = 0;
+
+        function resize() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            if(canvas.width > 0) tempCtx.drawImage(canvas, 0, 0);
+
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            ctx.drawImage(tempCanvas, 0, 0);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+        window.addEventListener('resize', resize);
+        // iOS Safari height fix
+        setTimeout(resize, 500);
+
+        // --- Tools ---
+        function setMode(mode) {
+            initAudio();
+            currentMode = mode;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            if(mode === 'pen') document.getElementById('btnPen').classList.add('active');
+            if(mode === 'magic') document.getElementById('btnMagic').classList.add('active');
+            if(mode === 'stamp') document.getElementById('btnStamp').classList.add('active');
+            if(mode === 'eraser') document.getElementById('btnEraser').classList.add('active');
+        }
+
+        function setColor(color, btn) {
+            initAudio();
+            currentColor = color;
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (currentMode === 'eraser') setMode('pen');
+        }
+
+        function changeStampType() {
+            initAudio();
+            stampIndex = (stampIndex + 1) % stamps.length;
+            currentStamp = stamps[stampIndex];
+            document.getElementById('currentStampIcon').innerText = currentStamp;
+            setMode('stamp'); 
+        }
+
+        function clearCanvas() {
+            initAudio();
+            playClearSound();
+            canvas.style.transition = 'transform 0.3s, opacity 0.3s';
+            canvas.style.transform = 'scale(0.9)';
+            canvas.style.opacity = '0.5';
+            setTimeout(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.style.transform = 'scale(1)';
+                canvas.style.opacity = '1';
+                setTimeout(() => canvas.style.transition = 'none', 300);
+            }, 300);
+        }
+
+        // --- Drawing Logic ---
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDraw(e) {
+            if (e.target !== canvas) return;
+            e.preventDefault();
+            initAudio();
+            isDrawing = true;
+            const pos = getPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+
+            if (currentMode === 'stamp') {
+                ctx.globalCompositeOperation = 'source-over';
+                drawStamp(pos.x, pos.y);
+            } else {
+                draw(e);
+            }
+        }
+
+        function moveDraw(e) {
+            if (!isDrawing) return;
+            if (e.target !== canvas) return;
+            e.preventDefault();
+            
+            const pos = getPos(e);
+
+            if (currentMode === 'stamp') {
+                const dist = Math.hypot(pos.x - lastX, pos.y - lastY);
+                if (dist > 50) { 
+                    drawStamp(pos.x, pos.y);
+                    lastX = pos.x;
+                    lastY = pos.y;
+                }
+            } else {
+                draw(e);
+            }
+        }
+
+        function endDraw() {
+            isDrawing = false;
+        }
+
+        function drawStamp(x, y) {
+            playStampSound();
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate((Math.random() - 0.5) * 0.5);
+            ctx.font = "60px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(currentStamp, 0, 0);
+            ctx.restore();
+        }
+
+        function draw(e) {
+            const pos = getPos(e);
+            
+            if (currentMode === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = 40;
+                if (Math.random() > 0.8) playEraseSound();
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = 8;
+                if (Math.random() > 0.8) playDrawSound();
+            }
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentMode === 'pen' || currentMode === 'eraser') {
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            } else if (currentMode === 'magic') {
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const points = 8;
+                const startRelX = lastX - cx;
+                const startRelY = lastY - cy;
+                const endRelX = pos.x - cx;
+                const endRelY = pos.y - cy;
+                
+                for (let i = 0; i < points; i++) {
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate((Math.PI * 2 / points) * i);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startRelX, startRelY);
+                    ctx.lineTo(endRelX, endRelY);
+                    ctx.stroke();
+
+                    // Mirror
+                    ctx.beginPath();
+                    ctx.moveTo(startRelX, -startRelY);
+                    ctx.lineTo(endRelX, -endRelY);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', moveDraw);
+        canvas.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('mouseout', endDraw);
+
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', moveDraw, { passive: false });
+        canvas.addEventListener('touchend', endDraw);
+
+        // Service Worker Register
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered!', reg))
+                    .catch(err => console.log('SW failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
