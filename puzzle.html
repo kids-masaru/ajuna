@@ -124,9 +124,10 @@
 
     <script>
         // --- Configuration ---
-        const ROWS = 3; // スマホだと4x4は細かいので3x3に少し優しくしました
-        const COLS = 3;
-        const SNAP_DISTANCE = 40; 
+        // ★ここを修正しました（16ピース）
+        const ROWS = 4;
+        const COLS = 4;
+        const SNAP_DISTANCE = 30; // ピースが小さくなったので吸着判定も少し厳しく調整
         
         // --- State ---
         let canvas, ctx;
