@@ -1,5 +1,5 @@
-// バージョンを v6 に上げました
-const CACHE_NAME = 'oekaki-v6';
+// バージョンを v7 に上げました
+const CACHE_NAME = 'oekaki-v7';
 
 // 保存するファイルの一覧
 const urlsToCache = [
@@ -8,7 +8,8 @@ const urlsToCache = [
   './oekaki.html',
   './piano.html',
   './snow.html',
-  './karuta.html',    // ← ★ここに追加しました！
+  './karuta.html',
+  './puzzle.html',    // ← ★ここに追加！
   './manifest.json',
   './icon.png',
   'https://cdn.tailwindcss.com',
