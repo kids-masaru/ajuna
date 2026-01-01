@@ -13,11 +13,11 @@
             touch-action: none;
             background-color: #fff7ed;
             user-select: none;
-            height: 100vh; /* 画面の高さピッタリにする */
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden; /* スクロールを禁止 */
+            overflow: hidden;
         }
 
         /* Start Screen */
@@ -37,18 +37,18 @@
         /* Header / Controls */
         .header-area {
             width: 100%;
-            padding: 5px 15px; /* 少し高さを詰める */
+            padding: 5px 15px;
             background: #ffedd5;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid #fb923c;
-            height: 45px; /* 固定高さを少し低く */
-            flex-shrink: 0; /* 縮まないようにする */
+            height: 45px;
+            flex-shrink: 0;
         }
         .reset-btn {
             background: #cbd5e1;
-            width: 32px; /* 少し小さく */
+            width: 32px;
             height: 32px;
             border-radius: 50%;
             display: flex;
@@ -62,20 +62,20 @@
         /* Reader Area */
         .reader-area {
             width: 100%;
-            padding: 8px; /* 余白を少し詰める */
+            padding: 8px;
             background: #fff;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 85px; /* 少し高さを詰める */
+            min-height: 85px;
             border-bottom: 4px solid #fb923c;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             z-index: 20;
-            flex-shrink: 0; /* 縮まないようにする */
+            flex-shrink: 0;
         }
         .reader-text {
-            font-size: 1.4rem; /* 少し小さく */
+            font-size: 1.4rem;
             color: #ea580c;
             margin-bottom: 6px;
             font-weight: bold;
@@ -84,7 +84,7 @@
         .replay-btn {
             background: #fbbf24;
             color: #78350f;
-            padding: 5px 20px; /* 少し小さく */
+            padding: 5px 20px;
             border-radius: 20px;
             font-size: 0.9rem;
             box-shadow: 0 3px 0 #d97706;
@@ -92,38 +92,37 @@
         }
         .replay-btn:active { transform: translateY(3px); box-shadow: none; }
 
-        /* Grid (ここを調整！) */
+        /* Grid */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3列維持 */
-            gap: 6px; /* カード間の隙間を少し狭く */
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
             width: 100%;
-            max-width: 500px; /* 全体の幅を少し狭めてコンパクトに */
+            max-width: 500px;
             padding: 10px;
-            flex-grow: 1; /* 残りのスペースいっぱいに広がる */
-            overflow-y: auto; /* 念のためスクロール許可 */
-            align-content: center; /* 縦方向も中央寄せ */
+            flex-grow: 1;
+            overflow-y: auto;
+            align-content: center;
         }
 
-        /* Card (ここを調整！) */
+        /* Card (ここを調整しました！) */
         .card {
             background: white;
-            border-radius: 10px; /* 角丸を少し小さく */
+            border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border: 2px solid #fed7aa; /* 枠線を少し細く */
+            border: 2px solid #fed7aa;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             position: relative;
-            aspect-ratio: 3/4; /* 縦横比は維持 */
+            aspect-ratio: 5/6; /* ★ここを変更！縦を少し短くしました (元は3/4) */
         }
         .card:active { background: #ffedd5; transform: scale(0.95); }
         .card.correct { border-color: #22c55e; background: #dcfce7; transform: scale(1.05); z-index: 10; }
         .card.taken { opacity: 0; pointer-events: none; }
         
-        /* カードの中身を少し小さく */
         .card-char { font-size: 1.3rem; color: #ea580c; position: absolute; top: 2px; right: 4px; font-weight: bold; }
         .card-img { font-size: 2.6rem; }
         .card-word { font-size: 0.65rem; color: #9ca3af; margin-top: 1px; }
