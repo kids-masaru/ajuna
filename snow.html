@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雪の魔法のリズムあそび</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background-color: #0f172a;
+        }
+
+        /* 戻るボタンのデザイン */
+        .home-btn {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 60; /* スタート画面より手前 */
+            background: rgba(255, 255, 255, 0.9);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            border: 2px solid #a5f3fc;
+            font-size: 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Kirakira Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(180deg, #1e3a8a 0%, #60a5fa 50%, #dbeafe 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg h-screen w-screen relative overflow-hidden select-none">
+
+    <a href="index.html" class="home-btn">🏠</a>
+
+    <div id="startScreen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-500">
+        <div class="text-6xl mb-4 animate-float">❄️👸⛄</div>
+        <h1 class="text-4xl text-white font-bold mb-8 text-center drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]">
+            ゆきの<br>まほうあそび
+        </h1>
+        <button id="startBtn" class="bg-gradient-to-r from-pink-400 to-purple-500 text-white text-3xl font-bold py-6 px-12 rounded-full shadow-[0_0_20px_rgba(236,72,153,0.6)] transform active:scale-95 transition-transform hover:scale-105">
+            あそぶ！ ▶
+        </button>
+        <p class="text-blue-100 mt-6 text-lg">おとが なるよ 🔊</p>
+    </div>
+
+    <div class="absolute top-4 left-20 right-4 z-10 flex justify-between items-center pointer-events-none">
+        <div class="flex items-center space-x-2">
+            <span class="text-4xl">✨</span>
+            <span id="scoreDisplay" class="text-4xl text-white font-bold drop-shadow-md">0</span>
+        </div>
+        
+        <div class="w-1/2 max-w-xs h-8 bg-black/30 rounded-full border-2 border-white/50 overflow-hidden relative">
+            <div id="magicBar" class="h-full bg-gradient-to-r from-cyan-300 to-blue-500 w-0 transition-all duration-300"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-xs text-white font-bold tracking-widest shadow-black drop-shadow-md">
+                MAHOU POWER
+            </div>
+        </div>
+    </div>
+
+    <div id="celebration" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
+        <div class="text-[10rem] animate-bounce filter drop-shadow-[0_0_30px_rgba(255,255,255,1)]">⛄</div>
+        <div class="text-white text-5xl font-bold mt-4 animate-pulse drop-shadow-lg text-center">
+            すごい！<br>だいせいこう！
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" class="absolute inset-0 z-0 touch-none"></canvas>
+
+    <script>
+        // --- Audio System ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+        let noteIndex = 0;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playChime() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(notes[noteIndex % notes.length], audioCtx.currentTime);
+            noteIndex++;
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1);
+        }
+
+        function playSparkleSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // --- Game Logic ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const magicBar = document.getElementById('magicBar');
+        const celebration = document.getElementById('celebration');
+        const startScreen = document.getElementById('startScreen');
+        const startBtn = document.getElementById('startBtn');
+
+        let width, height;
+        let snowflakes = [];
+        let particles = [];
+        let score = 0;
+        let magicMeter = 0;
+        let isPlaying = false;
+        let isCelebration = false;
+
+        const flakeTypes = ['❄️', '❅', '❆', '✨'];
+
+        class Snowflake {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * -height;
+            }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = -50;
+                this.size = Math.random() * 20 + 30;
+                this.speed = Math.random() * 2 + 1;
+                this.emoji = flakeTypes[Math.floor(Math.random() * flakeTypes.length)];
+                this.rotation = Math.random() * Math.PI * 2;
+                this.spinSpeed = (Math.random() - 0.5) * 0.05;
+            }
+            update() {
+                this.y += this.speed;
+                this.rotation += this.spinSpeed;
+                this.x += Math.sin(this.y * 0.01) * 0.5;
+                if (this.y > height + 50) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.font = `${this.size}px serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = "white";
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = "white";
+                ctx.fillText(this.emoji, 0, 0);
+                ctx.restore();
+            }
+            checkHit(tx, ty) {
+                const dist = Math.hypot(this.x - tx, this.y - ty);
+                return dist < (this.size * 1.5);
+            }
+        }
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10;
+                this.life = 1.0;
+                this.color = `hsl(${Math.random() * 60 + 180}, 100%, 75%)`;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+            }
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        function createExplosion(x, y) {
+            for (let i = 0; i < 10; i++) particles.push(new Particle(x, y));
+        }
+
+        function handleInput(x, y) {
+            if (!isPlaying || isCelebration) return;
+            playSparkleSound();
+            let hit = false;
+            for (let i = snowflakes.length - 1; i >= 0; i--) {
+                if (snowflakes[i].checkHit(x, y)) {
+                    createExplosion(snowflakes[i].x, snowflakes[i].y);
+                    snowflakes[i].reset();
+                    score += 10;
+                    magicMeter += 5;
+                    playChime();
+                    hit = true;
+                    break;
+                }
+            }
+            if (!hit) createExplosion(x, y);
+            scoreDisplay.textContent = score;
+            if (magicMeter > 100) magicMeter = 100;
+            magicBar.style.width = `${magicMeter}%`;
+            if (magicMeter >= 100) triggerCelebration();
+        }
+
+        function triggerCelebration() {
+            isCelebration = true;
+            celebration.classList.remove('hidden');
+            celebration.classList.add('flex');
+            snowflakes.forEach(s => s.speed += 5);
+            setTimeout(() => {
+                isCelebration = false;
+                celebration.classList.add('hidden');
+                celebration.classList.remove('flex');
+                magicMeter = 0;
+                magicBar.style.width = '0%';
+                snowflakes.forEach(s => s.speed = Math.random() * 2 + 1);
+            }, 5000);
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, width, height);
+            if (isPlaying) {
+                snowflakes.forEach(flake => { flake.update(); flake.draw(); });
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].update();
+                    particles[i].draw();
+                    if (particles[i].life <= 0) particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        for (let i = 0; i < 15; i++) snowflakes.push(new Snowflake());
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.touches.length; i++) handleInput(e.touches[i].clientX, e.touches[i].clientY);
+        }, { passive: false });
+
+        canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, e.clientY));
+
+        startBtn.addEventListener('click', () => {
+            initAudio();
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                isPlaying = true;
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(800, now + 0.5);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 0.5);
+            }, 500);
+            gameLoop();
+        });
+    </script>
+</body>
+</html>
