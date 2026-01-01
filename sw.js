@@ -1,4 +1,4 @@
-const CACHE_NAME = 'oekaki-v2'; // バージョンをv2に上げました
+const CACHE_NAME = 'oekaki-v3'; // バージョンをv3に上げました
 const urlsToCache = [
   './',
   './index.html',     // メニュー画面
