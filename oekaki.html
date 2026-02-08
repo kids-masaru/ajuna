@@ -41,8 +41,8 @@
         }
 
         .color-btn {
-            width: 26px;
-            height: 26px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: 3px solid white;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -216,38 +216,38 @@
         <div class="w-full overflow-x-auto no-scrollbar scroll-x px-2 flex justify-center">
             <div class="flex space-x-1 p-1">
                 <button id="btnPen"
-                    class="tool-btn active bg-white p-1 rounded-xl flex flex-col items-center justify-center w-11 h-11"
+                    class="tool-btn active bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14"
                     onclick="setMode('pen')">
-                    <span class="text-xl">✏️</span>
-                    <span class="text-[8px] text-gray-500 font-bold">かく</span>
+                    <span class="text-2xl">✏️</span>
+                    <span class="text-[10px] text-gray-500 font-bold">かく</span>
                 </button>
                 <button id="btnMagic"
-                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-11 h-11"
+                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14"
                     onclick="setMode('magic')">
-                    <span class="text-xl">🌈</span>
-                    <span class="text-[8px] text-gray-500 font-bold">まほう</span>
+                    <span class="text-2xl">🌈</span>
+                    <span class="text-[10px] text-gray-500 font-bold">まほう</span>
                 </button>
                 <button id="btnStamp"
-                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-11 h-11 relative"
+                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14 relative"
                     onclick="setMode('stamp')">
-                    <span id="currentStampIcon" class="text-xl">⭐</span>
-                    <span class="text-[8px] text-gray-500 font-bold">ポン！</span>
+                    <span id="currentStampIcon" class="text-2xl">⭐</span>
+                    <span class="text-[10px] text-gray-500 font-bold">ポン！</span>
                     <div onclick="event.stopPropagation(); changeStampType()"
-                        class="absolute -top-1 -right-1 bg-yellow-400 text-white w-4 h-4 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-[8px]">
+                        class="absolute -top-1 -right-1 bg-yellow-400 text-white w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-[10px]">
                         ↻</div>
                 </button>
                 <button id="btnEraser"
-                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-11 h-11"
+                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14"
                     onclick="setMode('eraser')">
-                    <span class="text-xl">🧼</span>
-                    <span class="text-[8px] text-gray-500 font-bold">けし</span>
+                    <span class="text-2xl">🧼</span>
+                    <span class="text-[10px] text-gray-500 font-bold">けし</span>
                 </button>
-                <div class="w-px bg-pink-300 h-8 self-center mx-1 flex-shrink-0"></div>
+                <div class="w-px bg-pink-300 h-10 self-center mx-1 flex-shrink-0"></div>
                 <button
-                    class="tool-btn bg-red-50 p-1 rounded-xl flex flex-col items-center justify-center w-11 h-11 text-red-500 border border-red-100"
+                    class="tool-btn bg-red-50 p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100"
                     onclick="execClear()">
-                    <span class="text-xl">🗑️</span>
-                    <span class="text-[8px] font-bold">ぜんぶ</span>
+                    <span class="text-2xl">🗑️</span>
+                    <span class="text-[10px] font-bold">ぜんぶ</span>
                 </button>
             </div>
         </div>
