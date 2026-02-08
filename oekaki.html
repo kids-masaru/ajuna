@@ -11,7 +11,7 @@
 
         body {
             font-family: 'M PLUS Rounded 1c', sans-serif;
-            touch-action: none;
+            /* touch-action: none; removed to allow native scrolling in footer */
             overflow: hidden;
             background-color: #fdf2f8;
             user-select: none;
@@ -66,6 +66,8 @@
             top: 0;
             left: 0;
             z-index: 1;
+            touch-action: none;
+            /* Only canvas prevents default touch actions */
         }
 
         .full-overlay {
@@ -206,62 +208,63 @@
     </div>
     </div>
 
-    <!-- UI: ツールバー -->
-    <div id="toolbar-tools"
-        class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 z-50 pointer-events-none transition-transform duration-300">
-        <div
-            class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar scroll-x">
-            <button id="btnPen"
-                class="tool-btn active bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14"
-                onclick="setMode('pen')">
-                <span class="text-2xl">✏️</span>
-                <span class="text-[9px] text-gray-500 font-bold">かく</span>
-            </button>
-            <button id="btnMagic"
-                class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14"
-                onclick="setMode('magic')">
-                <span class="text-2xl">🌈</span>
-                <span class="text-[9px] text-gray-500 font-bold">まほう</span>
-            </button>
-            <button id="btnStamp"
-                class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 relative"
-                onclick="setMode('stamp')">
-                <span id="currentStampIcon" class="text-2xl">⭐</span>
-                <span class="text-[9px] text-gray-500 font-bold">ポン！</span>
-                <div onclick="event.stopPropagation(); changeStampType()"
-                    class="absolute -top-1 -right-1 bg-yellow-400 text-white w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-[10px]">
-                    ↻</div>
-            </button>
-            <button id="btnEraser"
-                class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14"
-                onclick="setMode('eraser')">
-                <span class="text-2xl">🧼</span>
-                <span class="text-[9px] text-gray-500 font-bold">けし</span>
-            </button>
-            <div class="w-px bg-pink-200 h-10 self-center mx-1 flex-shrink-0"></div>
-            <button
-                class="tool-btn bg-red-50 p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100"
-                onclick="execClear()">
-                <span class="text-2xl">🗑️</span>
-                <span class="text-[9px] font-bold">ぜんぶ</span>
-            </button>
-        </div>
-    </div>
+    <!-- UI Footer -->
+    <div id="ui-footer"
+        class="fixed bottom-0 left-0 w-full bg-white/40 backdrop-blur-xl border-t border-white/50 pb-4 pt-2 z-50 transition-transform duration-300 flex flex-col items-center gap-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
 
-    <!-- UI: カラーパレット -->
-    <div id="toolbar-colors"
-        class="fixed bottom-2 left-0 w-full px-4 z-50 pointer-events-none transition-transform duration-300">
-        <div
-            class="flex space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg max-w-[95vw] mx-auto border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar scroll-x">
-            <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
-            <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
-            <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
-            <button class="color-btn bg-yellow-400" onclick="setColor('#facc15', this)"></button>
-            <button class="color-btn bg-green-500" onclick="setColor('#22c55e', this)"></button>
-            <button class="color-btn bg-sky-500" onclick="setColor('#0ea5e9', this)"></button>
-            <button class="color-btn bg-blue-600" onclick="setColor('#2563eb', this)"></button>
-            <button class="color-btn bg-purple-500" onclick="setColor('#a855f7', this)"></button>
-            <button class="color-btn bg-pink-400" onclick="setColor('#f472b6', this)"></button>
+        <!-- Tools -->
+        <div class="w-full overflow-x-auto no-scrollbar scroll-x px-4 flex justify-center">
+            <div class="flex space-x-2 p-1">
+                <button id="btnPen"
+                    class="tool-btn active bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14"
+                    onclick="setMode('pen')">
+                    <span class="text-2xl">✏️</span>
+                    <span class="text-[9px] text-gray-500 font-bold">かく</span>
+                </button>
+                <button id="btnMagic"
+                    class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14"
+                    onclick="setMode('magic')">
+                    <span class="text-2xl">🌈</span>
+                    <span class="text-[9px] text-gray-500 font-bold">まほう</span>
+                </button>
+                <button id="btnStamp"
+                    class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 relative"
+                    onclick="setMode('stamp')">
+                    <span id="currentStampIcon" class="text-2xl">⭐</span>
+                    <span class="text-[9px] text-gray-500 font-bold">ポン！</span>
+                    <div onclick="event.stopPropagation(); changeStampType()"
+                        class="absolute -top-1 -right-1 bg-yellow-400 text-white w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-[10px]">
+                        ↻</div>
+                </button>
+                <button id="btnEraser"
+                    class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14"
+                    onclick="setMode('eraser')">
+                    <span class="text-2xl">🧼</span>
+                    <span class="text-[9px] text-gray-500 font-bold">けし</span>
+                </button>
+                <div class="w-px bg-pink-300 h-10 self-center mx-1 flex-shrink-0"></div>
+                <button
+                    class="tool-btn bg-red-50 p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100"
+                    onclick="execClear()">
+                    <span class="text-2xl">🗑️</span>
+                    <span class="text-[9px] font-bold">ぜんぶ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Colors -->
+        <div class="w-full overflow-x-auto no-scrollbar scroll-x px-4">
+            <div class="flex space-x-3 py-1 px-2 mx-auto w-max">
+                <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
+                <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
+                <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
+                <button class="color-btn bg-yellow-400" onclick="setColor('#facc15', this)"></button>
+                <button class="color-btn bg-green-500" onclick="setColor('#22c55e', this)"></button>
+                <button class="color-btn bg-sky-500" onclick="setColor('#0ea5e9', this)"></button>
+                <button class="color-btn bg-blue-600" onclick="setColor('#2563eb', this)"></button>
+                <button class="color-btn bg-purple-500" onclick="setColor('#a855f7', this)"></button>
+                <button class="color-btn bg-pink-400" onclick="setColor('#f472b6', this)"></button>
+            </div>
         </div>
     </div>
 
@@ -653,33 +656,23 @@
         }, { passive: false });
         window.addEventListener('touchend', () => { isDrawing = false; });
 
-        // Prevent default touch behavior (scrolling) ONLY if not on a scrollable element
-        document.body.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.scroll-x')) {
-                // Allow default scrolling for toolbars
-                return;
-            }
-            if (e.cancelable) e.preventDefault();
-        }, { passive: false });
+        // Removed custom touchmove listener as we now rely on native scrolling and CSS touch-action
 
         let isUIHidden = false;
         function toggleUI() {
             initAudio(); playActionSound();
             isUIHidden = !isUIHidden;
-            const tools = document.getElementById('toolbar-tools');
-            const colors = document.getElementById('toolbar-colors');
+            const footer = document.getElementById('ui-footer');
             const icon = document.getElementById('ui-toggle-icon');
             const btnContainer = document.getElementById('ui-toggle-btn');
 
             if (isUIHidden) {
-                tools.classList.add('translate-y-[200%]');
-                colors.classList.add('translate-y-[200%]');
+                footer.classList.add('translate-y-[100%]');
                 btnContainer.classList.remove('bottom-36');
                 btnContainer.classList.add('bottom-4');
                 icon.innerText = '🙈';
             } else {
-                tools.classList.remove('translate-y-[200%]');
-                colors.classList.remove('translate-y-[200%]');
+                footer.classList.remove('translate-y-[100%]');
                 btnContainer.classList.add('bottom-36');
                 btnContainer.classList.remove('bottom-4');
                 icon.innerText = '👀';
