@@ -3,12 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#fdf2f8">
-    <link rel="apple-touch-icon" href="icon.png">
-    
     <title>まほうのおえかきボード</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -20,7 +14,6 @@
             overflow: hidden;
             background-color: #fdf2f8;
             user-select: none;
-            /* iOSでのバウンススクロール防止 */
             position: fixed;
             width: 100%;
             height: 100%;
@@ -38,13 +31,13 @@
         .tool-btn.active {
             transform: translateY(2px);
             box-shadow: 0 2px 0 rgba(0,0,0,0.1);
-            border: 4px solid #f472b6;
-            background-color: #fdf2f8;
+            border: 3px solid #f472b6;
+            background-color: #fff1f2;
         }
 
         .color-btn {
-            width: 42px;
-            height: 42px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             border: 3px solid white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -58,57 +51,120 @@
 
         #canvas-container {
             background-color: white;
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 20px 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
             cursor: crosshair;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* モーダル共通 */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 241, 242, 0.98);
+            z-index: 200;
+            padding: 20px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #save-toast {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 99px;
+            z-index: 300;
+            text-align: center;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .custom-dialog {
+            background: white;
+            padding: 24px;
+            border-radius: 32px;
+            border: 4px solid #f9a8d4;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 90%;
         }
     </style>
 </head>
-<body class="h-full w-full flex flex-col items-center justify-between py-2 bg-pink-50">
-　　<a href="index.html" class="fixed top-2 left-2 z-50 bg-white p-2 rounded-full shadow-lg border-2 border-pink-200 text-xl no-underline" style="text-decoration: none;">
-    🏠
-　　</a>
-
-    <div class="w-full px-2 flex justify-center items-center max-w-4xl space-x-2 overflow-x-auto py-2 z-10">
-        <button id="btnPen" class="tool-btn active bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16" onclick="setMode('pen')">
-            <span class="text-3xl">✏️</span>
-            <span class="text-[10px] text-gray-500 font-bold">かく</span>
-        </button>
-        <button id="btnMagic" class="tool-btn bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16" onclick="setMode('magic')">
-            <span class="text-3xl">🌈</span>
-            <span class="text-[10px] text-gray-500 font-bold">まほう</span>
-        </button>
-        <button id="btnStamp" class="tool-btn bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16 relative" onclick="setMode('stamp')">
-            <span id="currentStampIcon" class="text-3xl">⭐</span>
-            <span class="text-[10px] text-gray-500 font-bold">ポン！</span>
-            <div onclick="event.stopPropagation(); changeStampType()" class="absolute -top-1 -right-1 bg-yellow-400 text-white w-6 h-6 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-xs">
-                ↻
-            </div>
-        </button>
-        
-        <button id="btnEraser" class="tool-btn bg-white p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16" onclick="setMode('eraser')">
-            <span class="text-3xl">🧼</span>
-            <span class="text-[10px] text-gray-500 font-bold">けしごむ</span>
-        </button>
-
-        <div class="w-2"></div>
-
-        <button class="tool-btn bg-red-100 p-2 rounded-xl flex flex-col items-center justify-center w-16 h-16 text-red-500" onclick="clearCanvas()">
-            <span class="text-3xl">🗑️</span>
-            <span class="text-[10px] font-bold">ぜんぶ</span>
-        </button>
+<body class="h-full w-full bg-pink-50">
+    
+    <div id="canvas-container" class="touch-none">
+        <canvas id="drawingCanvas"></canvas>
     </div>
 
-    <div class="flex-grow w-full px-4 py-2 max-w-4xl relative flex items-center justify-center">
-        <div id="canvas-container" class="w-full h-full relative overflow-hidden touch-none">
-            <canvas id="drawingCanvas" class="w-full h-full"></canvas>
+    <!-- 上部操作エリア -->
+    <div class="fixed top-0 left-0 w-full p-3 flex justify-between items-start z-50 pointer-events-none">
+        <button onclick="openConfirm('reset')" class="pointer-events-auto bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90">
+            🏠
+        </button>
+        
+        <div class="flex space-x-2 pointer-events-auto">
+            <!-- 写真追加ボタン -->
+            <label class="bg-white/90 backdrop-blur-sm p-2 rounded-2xl shadow-lg border-2 border-green-200 flex flex-col items-center justify-center w-14 h-14 active:scale-90 cursor-pointer">
+                <span class="text-2xl">📂</span>
+                <span class="text-[8px] text-green-600 font-bold leading-none">しゃしん</span>
+                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+            </label>
+            <button onclick="showGallery()" class="bg-white/90 backdrop-blur-sm p-2 rounded-2xl shadow-lg border-2 border-blue-200 flex flex-col items-center justify-center w-14 h-14 active:scale-90">
+                <span class="text-2xl">🖼️</span>
+                <span class="text-[8px] text-blue-500 font-bold leading-none">みたよ</span>
+            </button>
+            <button onclick="saveImage()" class="bg-yellow-400 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
+                <span class="text-2xl">📸</span>
+                <span class="text-[9px] text-white font-bold leading-none mt-1">保存</span>
+            </button>
         </div>
     </div>
 
-    <div class="w-full px-4 pb-safe max-w-4xl overflow-x-auto no-scrollbar z-10 mb-4">
-        <div class="flex justify-center space-x-4 py-3 bg-white/60 backdrop-blur-sm rounded-full px-6 shadow-sm min-w-max mx-auto">
+    <!-- ツールバー（下部） -->
+    <div class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 overflow-x-auto z-50 no-scrollbar pointer-events-none">
+        <div class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto">
+            <button id="btnPen" class="tool-btn active bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('pen')">
+                <span class="text-2xl">✏️</span>
+                <span class="text-[9px] text-gray-500 font-bold">かく</span>
+            </button>
+            <button id="btnMagic" class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('magic')">
+                <span class="text-2xl">🌈</span>
+                <span class="text-[9px] text-gray-500 font-bold">まほう</span>
+            </button>
+            <button id="btnStamp" class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 relative" onclick="setMode('stamp')">
+                <span id="currentStampIcon" class="text-2xl">⭐</span>
+                <span class="text-[9px] text-gray-500 font-bold">ポン！</span>
+                <div onclick="event.stopPropagation(); changeStampType()" class="absolute -top-1 -right-1 bg-yellow-400 text-white w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-[10px]">↻</div>
+            </button>
+            <button id="btnEraser" class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('eraser')">
+                <span class="text-2xl">🧼</span>
+                <span class="text-[9px] text-gray-500 font-bold">けし</span>
+            </button>
+            <div class="w-px bg-pink-200 h-10 self-center mx-1"></div>
+            <button id="btnClear" class="tool-btn bg-red-50 p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100" onclick="openConfirm('clear')">
+                <span class="text-2xl">🗑️</span>
+                <span class="text-[9px] font-bold">ぜんぶ</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- カラーパレット -->
+    <div class="fixed bottom-2 left-0 w-full px-4 z-50 pointer-events-none">
+        <div class="flex justify-center space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg min-w-max mx-auto border border-white/50 pointer-events-auto">
             <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
             <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
             <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
@@ -121,125 +177,110 @@
         </div>
     </div>
 
+    <!-- 通知 -->
+    <div id="save-toast">
+        <p class="font-bold text-lg">📸 保存したよ！</p>
+        <p class="text-xs mt-1">スマホの「写真」アプリをみてね</p>
+    </div>
+
+    <!-- ギャラリーモーダル -->
+    <div id="gallery-overlay" class="overlay">
+        <div class="w-full max-w-md flex justify-between items-center mb-6 px-4">
+            <h2 class="text-pink-600 text-2xl font-bold">🖼️ ギャラリー</h2>
+            <button onclick="hideGallery()" class="bg-pink-500 text-white px-6 py-2 rounded-full font-bold shadow-md active:scale-95">とじる</button>
+        </div>
+        <p class="text-pink-400 text-sm mb-4">えらぶと、つづきがかけるよ！</p>
+        <div id="gallery-list" class="flex-grow w-full max-w-2xl overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-4 pb-10 px-4 no-scrollbar"></div>
+    </div>
+
+    <!-- 確認ダイアログ -->
+    <div id="confirm-overlay" class="overlay">
+        <div class="custom-dialog">
+            <p id="confirm-text" class="text-gray-700 text-xl font-bold mb-6"></p>
+            <div class="flex space-x-4 justify-center">
+                <button onclick="closeConfirm(false)" class="bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-bold">やめる</button>
+                <button id="confirm-ok" class="bg-pink-500 text-white px-8 py-3 rounded-full font-bold shadow-lg">いいよ！</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- Audio Context ---
+        // --- Audio ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
-
-        function initAudio() {
-            if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function playDrawSound() {
+        function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+        function playSound(freq, duration, type = 'sine', gainVal = 0.1) {
             if (!audioCtx) return;
             const now = audioCtx.currentTime;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(200 + Math.random()*100, now);
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(now + 0.1);
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            osc.frequency.exponentialRampToValueAtTime(freq / 2, now + duration);
+            gain.gain.setValueAtTime(gainVal, now);
+            gain.gain.linearRampToValueAtTime(0, now + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(now + duration);
         }
 
-        function playEraseSound() {
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(800, now);
-            osc.frequency.linearRampToValueAtTime(400, now + 0.1);
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(now + 0.1);
-        }
+        const playDrawSound = () => playSound(250 + Math.random()*50, 0.08, 'triangle', 0.02);
+        const playEraseSound = () => playSound(600, 0.08, 'sine', 0.02);
+        const playStampSound = () => playSound(500, 0.1, 'sine', 0.08);
+        const playClearSound = () => playSound(300, 0.4, 'sawtooth', 0.05);
+        const playActionSound = () => playSound(1000, 0.1, 'sine', 0.1);
 
-        function playStampSound() {
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(400, now);
-            osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(now + 0.1);
-        }
-
-        function playClearSound() {
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.setValueAtTime(800, now);
-            osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.3);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(now + 0.3);
-        }
-
-        // --- Canvas Setup ---
+        // --- Canvas & State ---
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
-        const container = document.getElementById('canvas-container');
-        
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+        let lastX = 0; let lastY = 0;
         let currentColor = 'black';
         let currentMode = 'pen'; 
         let currentStamp = '⭐';
-        const stamps = ['⭐', '❤️', '🐶', '🚗', '🍎', '🌸', '👑', '💩'];
+        const stamps = ['⭐', '❤️', '🐶', '🚗', '🍎', '🌸', '👑', '🌈', '🍦', '✨', '🎈', '🐱', '🦋', '🍬', '🦖', '⚽', '🍩', '🍓'];
         let stampIndex = 0;
+        let galleryImages = [];
+        let confirmAction = null;
+
+        try {
+            const saved = localStorage.getItem('magic_board_gallery');
+            if (saved) galleryImages = JSON.parse(saved);
+        } catch(e) { console.error(e); }
 
         function resize() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            if(canvas.width > 0) tempCtx.drawImage(canvas, 0, 0);
+            const dpr = window.devicePixelRatio || 1;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const temp = canvas.toDataURL();
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(dpr, dpr);
+            const img = new Image();
+            img.onload = () => { ctx.drawImage(img, 0, 0, width, height); setBrushStyle(); };
+            img.src = temp;
+        }
 
-            const rect = container.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-
-            ctx.drawImage(tempCanvas, 0, 0);
+        function setBrushStyle() {
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
         }
-        window.addEventListener('resize', resize);
-        // iOS Safari height fix
-        setTimeout(resize, 500);
 
-        // --- Tools ---
+        window.addEventListener('resize', resize);
+        window.addEventListener('load', () => { resize(); setBrushStyle(); });
+
+        // --- Core Logic ---
         function setMode(mode) {
             initAudio();
             currentMode = mode;
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-            if(mode === 'pen') document.getElementById('btnPen').classList.add('active');
-            if(mode === 'magic') document.getElementById('btnMagic').classList.add('active');
-            if(mode === 'stamp') document.getElementById('btnStamp').classList.add('active');
-            if(mode === 'eraser') document.getElementById('btnEraser').classList.add('active');
+            const idMap = { pen: 'btnPen', magic: 'btnMagic', stamp: 'btnStamp', eraser: 'btnEraser' };
+            if(idMap[mode]) document.getElementById(idMap[mode]).classList.add('active');
         }
 
         function setColor(color, btn) {
-            initAudio();
-            currentColor = color;
+            initAudio(); currentColor = color;
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             if (currentMode === 'eraser') setMode('pen');
@@ -253,153 +294,190 @@
             setMode('stamp'); 
         }
 
-        function clearCanvas() {
+        // --- Confirm Dialog ---
+        function openConfirm(type) {
             initAudio();
+            confirmAction = type;
+            const text = type === 'reset' ? 'さいしょのおかおに もどる？' : 'ぜんぶ きえちゃうよ！ いい？';
+            document.getElementById('confirm-text').innerText = text;
+            document.getElementById('confirm-overlay').style.display = 'flex';
+            document.getElementById('confirm-ok').onclick = () => closeConfirm(true);
+        }
+
+        function closeConfirm(ok) {
+            document.getElementById('confirm-overlay').style.display = 'none';
+            if (ok) {
+                if (confirmAction === 'reset') location.reload();
+                if (confirmAction === 'clear') execClear();
+            }
+            confirmAction = null;
+        }
+
+        function execClear() {
             playClearSound();
-            canvas.style.transition = 'transform 0.3s, opacity 0.3s';
-            canvas.style.transform = 'scale(0.9)';
-            canvas.style.opacity = '0.5';
+            canvas.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s';
+            canvas.style.transform = 'scale(0.9) rotate(2deg)';
+            canvas.style.opacity = '0.3';
             setTimeout(() => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                canvas.style.transform = 'scale(1)';
+                canvas.style.transform = 'scale(1) rotate(0deg)';
                 canvas.style.opacity = '1';
-                setTimeout(() => canvas.style.transition = 'none', 300);
+                setTimeout(() => canvas.style.transition = 'none', 400);
             }, 300);
         }
 
-        // --- Drawing Logic ---
+        // --- Image Upload ---
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            initAudio();
+            playActionSound();
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // キャンバスのサイズに合わせる（比率を保つ）
+                    const dpr = window.devicePixelRatio || 1;
+                    const cw = canvas.width / dpr;
+                    const ch = canvas.height / dpr;
+                    const scale = Math.min(cw / img.width, ch / img.height) * 0.9;
+                    const x = (cw - img.width * scale) / 2;
+                    const y = (ch - img.height * scale) / 2;
+
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- Save & Persistence ---
+        function saveImage() {
+            initAudio(); playActionSound();
+            const dpr = window.devicePixelRatio || 1;
+            const saveCanvas = document.createElement('canvas');
+            saveCanvas.width = canvas.width; saveCanvas.height = canvas.height;
+            const sCtx = saveCanvas.getContext('2d');
+            sCtx.fillStyle = 'white';
+            sCtx.fillRect(0, 0, saveCanvas.width, saveCanvas.height);
+            sCtx.drawImage(canvas, 0, 0);
+
+            const dataUrl = saveCanvas.toDataURL('image/png');
+            galleryImages.unshift(dataUrl);
+            if(galleryImages.length > 20) galleryImages.pop();
+            try { localStorage.setItem('magic_board_gallery', JSON.stringify(galleryImages)); } catch(e) {}
+
+            const link = document.createElement('a');
+            link.download = `おえかき-${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+
+            const toast = document.getElementById('save-toast');
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 4000);
+        }
+
+        function showGallery() {
+            const list = document.getElementById('gallery-list');
+            list.innerHTML = '';
+            if (galleryImages.length === 0) {
+                list.innerHTML = '<div class="col-span-full text-pink-300 text-center mt-10">まだえがないよ！<br>📸ボタンをおしてね</div>';
+            } else {
+                galleryImages.forEach((imgData) => {
+                    const item = document.createElement('div');
+                    item.className = "relative active:scale-95 transition-transform cursor-pointer";
+                    item.innerHTML = `
+                        <img src="${imgData}" class="w-full rounded-xl border-4 border-white shadow-md bg-white">
+                        <div class="absolute bottom-2 right-2 bg-pink-500 text-white text-[8px] px-2 py-0.5 rounded-full shadow">つづきを描く</div>
+                    `;
+                    item.onclick = () => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const dpr = window.devicePixelRatio || 1;
+                            ctx.clearRect(0, 0, canvas.width/dpr, canvas.height/dpr);
+                            ctx.drawImage(img, 0, 0, canvas.width/dpr, canvas.height/dpr);
+                            hideGallery();
+                        };
+                        img.src = imgData;
+                    };
+                    list.appendChild(item);
+                });
+            }
+            document.getElementById('gallery-overlay').style.display = 'flex';
+        }
+
+        function hideGallery() { document.getElementById('gallery-overlay').style.display = 'none'; }
+
+        // --- Drawing ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+            return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
         function startDraw(e) {
             if (e.target !== canvas) return;
-            e.preventDefault();
-            initAudio();
-            isDrawing = true;
+            initAudio(); isDrawing = true;
             const pos = getPos(e);
-            lastX = pos.x;
-            lastY = pos.y;
-
+            lastX = pos.x; lastY = pos.y;
             if (currentMode === 'stamp') {
                 ctx.globalCompositeOperation = 'source-over';
                 drawStamp(pos.x, pos.y);
-            } else {
-                draw(e);
-            }
+            } else { draw(e); }
         }
 
         function moveDraw(e) {
             if (!isDrawing) return;
-            if (e.target !== canvas) return;
-            e.preventDefault();
-            
             const pos = getPos(e);
-
             if (currentMode === 'stamp') {
                 const dist = Math.hypot(pos.x - lastX, pos.y - lastY);
-                if (dist > 50) { 
-                    drawStamp(pos.x, pos.y);
-                    lastX = pos.x;
-                    lastY = pos.y;
-                }
-            } else {
-                draw(e);
-            }
-        }
-
-        function endDraw() {
-            isDrawing = false;
+                if (dist > 35) { drawStamp(pos.x, pos.y); lastX = pos.x; lastY = pos.y; }
+            } else { draw(e); }
         }
 
         function drawStamp(x, y) {
             playStampSound();
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate((Math.random() - 0.5) * 0.5);
-            ctx.font = "60px sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(currentStamp, 0, 0);
-            ctx.restore();
+            ctx.save(); ctx.translate(x, y); ctx.rotate((Math.random() - 0.5) * 0.7);
+            ctx.font = "60px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(currentStamp, 0, 0); ctx.restore();
         }
 
         function draw(e) {
             const pos = getPos(e);
-            
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             if (currentMode === 'eraser') {
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = 40;
-                if (Math.random() > 0.8) playEraseSound();
+                ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 50;
+                if (Math.random() > 0.9) playEraseSound();
             } else {
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.strokeStyle = currentColor;
-                ctx.lineWidth = 8;
-                if (Math.random() > 0.8) playDrawSound();
+                ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = currentColor; ctx.lineWidth = 10;
+                if (Math.random() > 0.9) playDrawSound();
             }
 
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
             if (currentMode === 'pen' || currentMode === 'eraser') {
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
             } else if (currentMode === 'magic') {
-                const cx = canvas.width / 2;
-                const cy = canvas.height / 2;
-                const points = 8;
-                const startRelX = lastX - cx;
-                const startRelY = lastY - cy;
-                const endRelX = pos.x - cx;
-                const endRelY = pos.y - cy;
-                
+                const cx = window.innerWidth / 2; const cy = window.innerHeight / 2; const points = 8;
+                const sX = lastX - cx, sY = lastY - cy, eX = pos.x - cx, eY = pos.y - cy;
                 for (let i = 0; i < points; i++) {
-                    ctx.save();
-                    ctx.translate(cx, cy);
-                    ctx.rotate((Math.PI * 2 / points) * i);
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(startRelX, startRelY);
-                    ctx.lineTo(endRelX, endRelY);
-                    ctx.stroke();
-
-                    // Mirror
-                    ctx.beginPath();
-                    ctx.moveTo(startRelX, -startRelY);
-                    ctx.lineTo(endRelX, -endRelY);
-                    ctx.stroke();
+                    ctx.save(); ctx.translate(cx, cy); ctx.rotate((Math.PI * 2 / points) * i);
+                    ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(sX, -sY); ctx.lineTo(eX, -eY); ctx.stroke();
                     ctx.restore();
                 }
             }
-            lastX = pos.x;
-            lastY = pos.y;
+            lastX = pos.x; lastY = pos.y;
         }
 
         canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('mousemove', moveDraw);
-        canvas.addEventListener('mouseup', endDraw);
-        canvas.addEventListener('mouseout', endDraw);
-
-        canvas.addEventListener('touchstart', startDraw, { passive: false });
-        canvas.addEventListener('touchmove', moveDraw, { passive: false });
-        canvas.addEventListener('touchend', endDraw);
-
-        // Service Worker Register
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registered!', reg))
-                    .catch(err => console.log('SW failed', err));
-            });
-        }
+        window.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+        window.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); }, { passive: false });
+        window.addEventListener('touchend', () => isDrawing = false);
     </script>
 </body>
 </html>
+
