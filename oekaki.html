@@ -51,7 +51,6 @@
             border-color: #333;
         }
 
-        /* キャンバス背景 */
         #canvas-container {
             background-color: white;
             background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
@@ -65,7 +64,6 @@
             z-index: 1;
         }
 
-        /* ギャラリー/削除ダイアログ */
         .full-overlay {
             position: fixed;
             inset: 0;
@@ -76,12 +74,25 @@
 
         .gallery-item {
             position: relative;
-            cursor: pointer;
-            -webkit-touch-callout: none; /* iOSでの長押しメニューを無効化 */
         }
-        
-        /* 画像が勝手に動かないようにする */
-        .gallery-item img {
+
+        /* 画像エリアだけをタップ/長押し可能にする */
+        .gallery-img-wrapper {
+            cursor: pointer;
+            -webkit-touch-callout: none;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .gallery-img-wrapper:active {
+            transform: scale(0.95);
+        }
+        .gallery-img-wrapper img {
+            width: 100%;
+            display: block;
             pointer-events: none;
             user-drag: none;
             -webkit-user-drag: none;
@@ -89,20 +100,23 @@
 
         .delete-btn {
             position: absolute;
-            top: -10px;
-            right: -10px;
+            top: -12px;
+            right: -12px;
             background: #ef4444;
             color: white;
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            font-size: 18px;
             border: 3px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 50;
+            cursor: pointer;
+            touch-action: auto;
         }
 
         #save-toast {
@@ -136,12 +150,11 @@
 </head>
 <body class="h-full w-full bg-pink-50">
     
-    <!-- 背面：おえかきする場所 -->
     <div id="canvas-container" class="touch-none">
         <canvas id="drawingCanvas"></canvas>
     </div>
 
-    <!-- UI: 上のボタン -->
+    <!-- UI: 上部ボタン -->
     <div class="fixed top-0 left-0 w-full p-3 flex justify-between items-start z-50 pointer-events-none">
         <button onclick="resetApp()" class="pointer-events-auto bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90">
             🏠
@@ -164,7 +177,7 @@
         </div>
     </div>
 
-    <!-- UI: まんなかの道具 -->
+    <!-- UI: ツールバー -->
     <div class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 z-50 pointer-events-none">
         <div class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
             <button id="btnPen" class="tool-btn active bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('pen')">
@@ -192,7 +205,7 @@
         </div>
     </div>
 
-    <!-- UI: 下の色 -->
+    <!-- UI: カラーパレット -->
     <div class="fixed bottom-2 left-0 w-full px-4 z-50 pointer-events-none">
         <div class="flex justify-center space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg min-w-max mx-auto border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
             <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
@@ -217,7 +230,7 @@
             えをえらぶと つづきがかけるよ！<br>
             <span class="font-bold text-pink-600">ながーくおすと</span> スマホにほぞんできるよ
         </p>
-        <div id="gallery-list" class="flex-grow w-full max-w-2xl overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-6 pb-20 px-6 no-scrollbar mx-auto"></div>
+        <div id="gallery-list" class="flex-grow w-full max-w-2xl overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-8 pb-20 px-8 no-scrollbar mx-auto"></div>
     </div>
 
     <!-- 削除確認 -->
@@ -236,7 +249,6 @@
     </div>
 
     <script>
-        // --- 音の準備 ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
@@ -260,7 +272,6 @@
         const playClearSound = () => playSound(300, 0.4, 'sawtooth', 0.05);
         const playActionSound = () => playSound(1000, 0.1, 'sine', 0.1);
 
-        // --- おえかきの基本設定 ---
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
@@ -273,9 +284,8 @@
         let galleryImages = [];
         let longPressTimer = null;
 
-        // 保存データの復元
         try {
-            const saved = localStorage.getItem('magic_board_gallery_v6');
+            const saved = localStorage.getItem('magic_board_gallery_v7');
             if (saved) galleryImages = JSON.parse(saved);
         } catch(e) { console.error(e); }
 
@@ -283,18 +293,14 @@
             const dpr = window.devicePixelRatio || 1;
             const width = window.innerWidth;
             const height = window.innerHeight;
-            
             let temp = null;
             if (canvas.width > 0) temp = canvas.toDataURL();
-            
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             canvas.style.width = width + 'px';
             canvas.style.height = height + 'px';
-            
             ctx.scale(dpr, dpr);
             setBrushStyle();
-
             if (temp) {
                 const img = new Image();
                 img.onload = () => {
@@ -317,7 +323,6 @@
             document.getElementById('confirm-overlay').classList.add('hidden');
         });
 
-        // アプリのリセット
         function resetApp() {
             initAudio();
             playActionSound();
@@ -363,7 +368,6 @@
             }, 300);
         }
 
-        // --- 写真の取り込み ---
         function handleImageUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -388,7 +392,6 @@
             reader.readAsDataURL(file);
         }
 
-        // --- ギャラリーと保存 ---
         function saveToGallery() {
             initAudio(); playActionSound();
             const dpr = window.devicePixelRatio || 1;
@@ -397,20 +400,17 @@
             const sCtx = saveCanvas.getContext('2d');
             sCtx.fillStyle = 'white'; sCtx.fillRect(0, 0, saveCanvas.width, saveCanvas.height);
             sCtx.drawImage(canvas, 0, 0);
-
             const dataUrl = saveCanvas.toDataURL('image/png');
             galleryImages.unshift(dataUrl);
             if(galleryImages.length > 30) galleryImages.pop();
-            
             syncStorage();
-
             const toast = document.getElementById('save-toast');
             toast.style.display = 'block';
             setTimeout(() => toast.style.display = 'none', 2000);
         }
 
         function syncStorage() {
-            try { localStorage.setItem('magic_board_gallery_v6', JSON.stringify(galleryImages)); } catch(e) {}
+            try { localStorage.setItem('magic_board_gallery_v7', JSON.stringify(galleryImages)); } catch(e) {}
         }
 
         function showGallery() {
@@ -426,172 +426,29 @@
                     const itemContainer = document.createElement('div');
                     itemContainer.className = "gallery-item";
                     
-                    // --- 長押しのためのイベント管理 ---
+                    // 画像エリアの作成
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = "gallery-img-wrapper";
+                    
                     const startPress = (e) => {
-                        // ブラウザ標準の動作を止める
                         longPressTimer = setTimeout(() => {
                             longPressTimer = null;
                             confirmDownload(idx);
-                        }, 1000); // 1秒で長押し判定
+                        }, 1000);
                     };
-
                     const endPress = (e) => {
                         if (longPressTimer) {
                             clearTimeout(longPressTimer);
                             longPressTimer = null;
-                            // 長押しにならなかった場合は「続きを描く」
                             loadFromGallery(idx);
                         }
                     };
-
                     const cancelPress = () => {
                         if (longPressTimer) clearTimeout(longPressTimer);
                         longPressTimer = null;
                     };
 
-                    // タッチイベント
-                    itemContainer.addEventListener('touchstart', startPress, { passive: true });
-                    itemContainer.addEventListener('touchend', endPress);
-                    itemContainer.addEventListener('touchmove', cancelPress);
-                    // マウスイベント (PCでも動くように)
-                    itemContainer.addEventListener('mousedown', startPress);
-                    itemContainer.addEventListener('mouseup', endPress);
-                    itemContainer.addEventListener('mouseleave', cancelPress);
-                    
-                    // ブラウザの画像ドラッグと右クリックメニューを禁止
-                    itemContainer.oncontextmenu = (e) => e.preventDefault();
-                    itemContainer.ondragstart = (e) => e.preventDefault();
-
-                    itemContainer.innerHTML = `
-                        <img src="${imgData}" class="w-full rounded-xl border-4 border-white shadow-md bg-white">
-                        <div class="delete-btn" onclick="event.stopPropagation(); requestDelete(${idx})">✕</div>
-                    `;
-                    list.appendChild(itemContainer);
-                });
-            }
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-        }
-
-        function hideGallery() {
-            const overlay = document.getElementById('gallery-overlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
-        }
-
-        function loadFromGallery(idx) {
-            initAudio(); playActionSound();
-            const img = new Image();
-            img.onload = () => {
-                const dpr = window.devicePixelRatio || 1;
-                ctx.clearRect(0, 0, canvas.width/dpr, canvas.height/dpr);
-                ctx.drawImage(img, 0, 0, canvas.width/dpr, canvas.height/dpr);
-                hideGallery();
-            };
-            img.src = galleryImages[idx];
-        }
-
-        function requestDelete(idx) {
-            initAudio();
-            const overlay = document.getElementById('confirm-overlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-            
-            document.getElementById('confirm-delete-ok').onclick = () => {
-                galleryImages.splice(idx, 1);
-                syncStorage();
-                showGallery();
-                closeDeleteConfirm();
-            };
-        }
-
-        function closeDeleteConfirm() {
-            const overlay = document.getElementById('confirm-overlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
-        }
-
-        // スマホ本体への保存 (ダウンロード)
-        function confirmDownload(idx) {
-            playActionSound();
-            if (confirm("この えを スマホに ほぞん(ダウンロード) する？")) {
-                const link = document.createElement('a');
-                link.download = `まほうのおえかき-${Date.now()}.png`;
-                link.href = galleryImages[idx];
-                link.click();
-            }
-        }
-
-        // --- おえかきの動き ---
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
-            const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-
-        function startDraw(e) {
-            if (e.target !== canvas) return;
-            initAudio(); 
-            isDrawing = true;
-            const pos = getPos(e);
-            lastX = pos.x; lastY = pos.y;
-            if (currentMode === 'stamp') {
-                ctx.globalCompositeOperation = 'source-over';
-                drawStamp(pos.x, pos.y);
-            } else { draw(e); }
-        }
-
-        function moveDraw(e) {
-            if (!isDrawing) return;
-            const pos = getPos(e);
-            if (currentMode === 'stamp') {
-                const dist = Math.hypot(pos.x - lastX, pos.y - lastY);
-                if (dist > 35) { drawStamp(pos.x, pos.y); lastX = pos.x; lastY = pos.y; }
-            } else { draw(e); }
-        }
-
-        function drawStamp(x, y) {
-            playStampSound();
-            ctx.save(); ctx.translate(x, y); ctx.rotate((Math.random() - 0.5) * 0.7);
-            ctx.font = "60px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText(currentStamp, 0, 0); ctx.restore();
-        }
-
-        function draw(e) {
-            const pos = getPos(e);
-            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            if (currentMode === 'eraser') {
-                ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 50;
-                if (Math.random() > 0.9) playEraseSound();
-            } else {
-                ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = currentColor; ctx.lineWidth = 10;
-                if (Math.random() > 0.9) playDrawSound();
-            }
-
-            if (currentMode === 'pen' || currentMode === 'eraser') {
-                ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
-            } else if (currentMode === 'magic') {
-                const cx = window.innerWidth / 2; const cy = window.innerHeight / 2; const points = 8;
-                const sX = lastX - cx, sY = lastY - cy, eX = pos.x - cx, eY = pos.y - cy;
-                for (let i = 0; i < points; i++) {
-                    ctx.save(); ctx.translate(cx, cy); ctx.rotate((Math.PI * 2 / points) * i);
-                    ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(sX, -sY); ctx.lineTo(eX, -eY); ctx.stroke();
-                    ctx.restore();
-                }
-            }
-            lastX = pos.x; lastY = pos.y;
-        }
-
-        canvas.addEventListener('mousedown', startDraw);
-        window.addEventListener('mousemove', moveDraw);
-        window.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
-        window.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); }, { passive: false });
-        window.addEventListener('touchend', () => isDrawing = false);
-
-    </script>
-</body>
-</html>
-
+                    imgWrapper.addEventListener('touchstart', startPress, { passive: true });
+                    imgWrapper.addEventListener('touchend', endPress);
+                    imgWrapper.addEventListener('touchmove', cancelPress);
+                    imgWrapper.addEventListener('mousedown', startPres
