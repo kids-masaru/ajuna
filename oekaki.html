@@ -14,9 +14,11 @@
             overflow: hidden;
             background-color: #fdf2f8;
             user-select: none;
+            -webkit-user-select: none;
             position: fixed;
             width: 100%;
             height: 100%;
+            margin: 0;
         }
 
         .tool-btn {
@@ -49,6 +51,7 @@
             border-color: #333;
         }
 
+        /* キャンバス背景 */
         #canvas-container {
             background-color: white;
             background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
@@ -59,22 +62,47 @@
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 1;
         }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* モーダル共通 */
-        .overlay {
-            display: none;
+        /* ギャラリー/削除ダイアログ */
+        .full-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(255, 241, 242, 0.98);
             z-index: 200;
             padding: 20px;
-            flex-direction: column;
+            background: rgba(255, 241, 242, 0.98);
+        }
+
+        .gallery-item {
+            position: relative;
+            cursor: pointer;
+            -webkit-touch-callout: none; /* iOSでの長押しメニューを無効化 */
+        }
+        
+        /* 画像が勝手に動かないようにする */
+        .gallery-item img {
+            pointer-events: none;
+            user-drag: none;
+            -webkit-user-drag: none;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ef4444;
+            color: white;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: bold;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
         }
 
         #save-toast {
@@ -88,9 +116,7 @@
             padding: 16px 28px;
             border-radius: 99px;
             z-index: 300;
-            text-align: center;
             pointer-events: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         .custom-dialog {
@@ -101,23 +127,27 @@
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             max-width: 90%;
+            margin: auto;
         }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="h-full w-full bg-pink-50">
     
+    <!-- 背面：おえかきする場所 -->
     <div id="canvas-container" class="touch-none">
         <canvas id="drawingCanvas"></canvas>
     </div>
 
-    <!-- 上部操作エリア -->
+    <!-- UI: 上のボタン -->
     <div class="fixed top-0 left-0 w-full p-3 flex justify-between items-start z-50 pointer-events-none">
-        <button onclick="openConfirm('reset')" class="pointer-events-auto bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90">
+        <button onclick="resetApp()" class="pointer-events-auto bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90">
             🏠
         </button>
         
         <div class="flex space-x-2 pointer-events-auto">
-            <!-- 写真追加ボタン -->
             <label class="bg-white/90 backdrop-blur-sm p-2 rounded-2xl shadow-lg border-2 border-green-200 flex flex-col items-center justify-center w-14 h-14 active:scale-90 cursor-pointer">
                 <span class="text-2xl">📂</span>
                 <span class="text-[8px] text-green-600 font-bold leading-none">しゃしん</span>
@@ -127,16 +157,16 @@
                 <span class="text-2xl">🖼️</span>
                 <span class="text-[8px] text-blue-500 font-bold leading-none">みたよ</span>
             </button>
-            <button onclick="saveImage()" class="bg-yellow-400 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
+            <button onclick="saveToGallery()" class="bg-yellow-400 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
                 <span class="text-2xl">📸</span>
                 <span class="text-[9px] text-white font-bold leading-none mt-1">保存</span>
             </button>
         </div>
     </div>
 
-    <!-- ツールバー（下部） -->
-    <div class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 overflow-x-auto z-50 no-scrollbar pointer-events-none">
-        <div class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto">
+    <!-- UI: まんなかの道具 -->
+    <div class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 z-50 pointer-events-none">
+        <div class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
             <button id="btnPen" class="tool-btn active bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('pen')">
                 <span class="text-2xl">✏️</span>
                 <span class="text-[9px] text-gray-500 font-bold">かく</span>
@@ -154,17 +184,17 @@
                 <span class="text-2xl">🧼</span>
                 <span class="text-[9px] text-gray-500 font-bold">けし</span>
             </button>
-            <div class="w-px bg-pink-200 h-10 self-center mx-1"></div>
-            <button id="btnClear" class="tool-btn bg-red-50 p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100" onclick="openConfirm('clear')">
+            <div class="w-px bg-pink-200 h-10 self-center mx-1 flex-shrink-0"></div>
+            <button class="tool-btn bg-red-50 p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100" onclick="execClear()">
                 <span class="text-2xl">🗑️</span>
                 <span class="text-[9px] font-bold">ぜんぶ</span>
             </button>
         </div>
     </div>
 
-    <!-- カラーパレット -->
+    <!-- UI: 下の色 -->
     <div class="fixed bottom-2 left-0 w-full px-4 z-50 pointer-events-none">
-        <div class="flex justify-center space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg min-w-max mx-auto border border-white/50 pointer-events-auto">
+        <div class="flex justify-center space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg min-w-max mx-auto border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
             <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
             <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
             <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
@@ -177,35 +207,36 @@
         </div>
     </div>
 
-    <!-- 通知 -->
-    <div id="save-toast">
-        <p class="font-bold text-lg">📸 保存したよ！</p>
-        <p class="text-xs mt-1">スマホの「写真」アプリをみてね</p>
-    </div>
-
-    <!-- ギャラリーモーダル -->
-    <div id="gallery-overlay" class="overlay">
-        <div class="w-full max-w-md flex justify-between items-center mb-6 px-4">
-            <h2 class="text-pink-600 text-2xl font-bold">🖼️ ギャラリー</h2>
+    <!-- ギャラリー -->
+    <div id="gallery-overlay" class="full-overlay hidden flex flex-col">
+        <div class="w-full max-w-md flex justify-between items-center mb-4 px-4 mt-2 mx-auto">
+            <h2 class="text-pink-600 text-2xl font-bold italic">🖼️ ギャラリー</h2>
             <button onclick="hideGallery()" class="bg-pink-500 text-white px-6 py-2 rounded-full font-bold shadow-md active:scale-95">とじる</button>
         </div>
-        <p class="text-pink-400 text-sm mb-4">えらぶと、つづきがかけるよ！</p>
-        <div id="gallery-list" class="flex-grow w-full max-w-2xl overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-4 pb-10 px-4 no-scrollbar"></div>
+        <p class="text-pink-400 text-[10px] mb-4 text-center px-4 leading-tight">
+            えをえらぶと つづきがかけるよ！<br>
+            <span class="font-bold text-pink-600">ながーくおすと</span> スマホにほぞんできるよ
+        </p>
+        <div id="gallery-list" class="flex-grow w-full max-w-2xl overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-6 pb-20 px-6 no-scrollbar mx-auto"></div>
     </div>
 
-    <!-- 確認ダイアログ -->
-    <div id="confirm-overlay" class="overlay">
+    <!-- 削除確認 -->
+    <div id="confirm-overlay" class="fixed inset-0 z-[300] hidden flex items-center justify-center bg-black/50 p-6">
         <div class="custom-dialog">
-            <p id="confirm-text" class="text-gray-700 text-xl font-bold mb-6"></p>
+            <p class="text-gray-700 text-xl font-bold mb-6">これを けしちゃう？</p>
             <div class="flex space-x-4 justify-center">
-                <button onclick="closeConfirm(false)" class="bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-bold">やめる</button>
-                <button id="confirm-ok" class="bg-pink-500 text-white px-8 py-3 rounded-full font-bold shadow-lg">いいよ！</button>
+                <button onclick="closeDeleteConfirm()" class="bg-gray-200 text-gray-600 px-6 py-3 rounded-full font-bold">やめる</button>
+                <button id="confirm-delete-ok" class="bg-red-500 text-white px-8 py-3 rounded-full font-bold shadow-lg">けす！</button>
             </div>
         </div>
     </div>
 
+    <div id="save-toast">
+        <p class="font-bold text-lg">🖼️ ギャラリーに いれたよ！</p>
+    </div>
+
     <script>
-        // --- Audio ---
+        // --- 音の準備 ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
@@ -229,21 +260,22 @@
         const playClearSound = () => playSound(300, 0.4, 'sawtooth', 0.05);
         const playActionSound = () => playSound(1000, 0.1, 'sine', 0.1);
 
-        // --- Canvas & State ---
+        // --- おえかきの基本設定 ---
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-        let lastX = 0; let lastY = 0;
+        let lastX = 0, lastY = 0;
         let currentColor = 'black';
         let currentMode = 'pen'; 
         let currentStamp = '⭐';
-        const stamps = ['⭐', '❤️', '🐶', '🚗', '🍎', '🌸', '👑', '🌈', '🍦', '✨', '🎈', '🐱', '🦋', '🍬', '🦖', '⚽', '🍩', '🍓'];
+        const stamps = ['⭐', '❤️', '🐶', '🚗', '🍎', '🌸', '👑', '🌈', '🍦', '✨', '🎈', '🐱', '🦋', '🦖', '⚽', '🍩', '🍓', '🎁'];
         let stampIndex = 0;
         let galleryImages = [];
-        let confirmAction = null;
+        let longPressTimer = null;
 
+        // 保存データの復元
         try {
-            const saved = localStorage.getItem('magic_board_gallery');
+            const saved = localStorage.getItem('magic_board_gallery_v6');
             if (saved) galleryImages = JSON.parse(saved);
         } catch(e) { console.error(e); }
 
@@ -251,15 +283,26 @@
             const dpr = window.devicePixelRatio || 1;
             const width = window.innerWidth;
             const height = window.innerHeight;
-            const temp = canvas.toDataURL();
+            
+            let temp = null;
+            if (canvas.width > 0) temp = canvas.toDataURL();
+            
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             canvas.style.width = width + 'px';
             canvas.style.height = height + 'px';
+            
             ctx.scale(dpr, dpr);
-            const img = new Image();
-            img.onload = () => { ctx.drawImage(img, 0, 0, width, height); setBrushStyle(); };
-            img.src = temp;
+            setBrushStyle();
+
+            if (temp) {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    setBrushStyle();
+                };
+                img.src = temp;
+            }
         }
 
         function setBrushStyle() {
@@ -268,9 +311,21 @@
         }
 
         window.addEventListener('resize', resize);
-        window.addEventListener('load', () => { resize(); setBrushStyle(); });
+        window.addEventListener('load', () => {
+            resize();
+            document.getElementById('gallery-overlay').classList.add('hidden');
+            document.getElementById('confirm-overlay').classList.add('hidden');
+        });
 
-        // --- Core Logic ---
+        // アプリのリセット
+        function resetApp() {
+            initAudio();
+            playActionSound();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            setMode('pen');
+            setColor('black', document.querySelector('.color-btn.bg-black'));
+        }
+
         function setMode(mode) {
             initAudio();
             currentMode = mode;
@@ -294,30 +349,12 @@
             setMode('stamp'); 
         }
 
-        // --- Confirm Dialog ---
-        function openConfirm(type) {
-            initAudio();
-            confirmAction = type;
-            const text = type === 'reset' ? 'さいしょのおかおに もどる？' : 'ぜんぶ きえちゃうよ！ いい？';
-            document.getElementById('confirm-text').innerText = text;
-            document.getElementById('confirm-overlay').style.display = 'flex';
-            document.getElementById('confirm-ok').onclick = () => closeConfirm(true);
-        }
-
-        function closeConfirm(ok) {
-            document.getElementById('confirm-overlay').style.display = 'none';
-            if (ok) {
-                if (confirmAction === 'reset') location.reload();
-                if (confirmAction === 'clear') execClear();
-            }
-            confirmAction = null;
-        }
-
         function execClear() {
+            initAudio();
             playClearSound();
             canvas.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s';
-            canvas.style.transform = 'scale(0.9) rotate(2deg)';
-            canvas.style.opacity = '0.3';
+            canvas.style.transform = 'scale(0.95) rotate(1.5deg)';
+            canvas.style.opacity = '0.5';
             setTimeout(() => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 canvas.style.transform = 'scale(1) rotate(0deg)';
@@ -326,101 +363,177 @@
             }, 300);
         }
 
-        // --- Image Upload ---
+        // --- 写真の取り込み ---
         function handleImageUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
             initAudio();
-            playActionSound();
-
             const reader = new FileReader();
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    // キャンバスのサイズに合わせる（比率を保つ）
                     const dpr = window.devicePixelRatio || 1;
                     const cw = canvas.width / dpr;
                     const ch = canvas.height / dpr;
-                    const scale = Math.min(cw / img.width, ch / img.height) * 0.9;
-                    const x = (cw - img.width * scale) / 2;
-                    const y = (ch - img.height * scale) / 2;
-
+                    const scale = Math.max(cw / img.width, ch / img.height);
+                    const drawWidth = img.width * scale;
+                    const drawHeight = img.height * scale;
+                    const x = (cw - drawWidth) / 2;
+                    const y = (ch - drawHeight) / 2;
                     ctx.globalCompositeOperation = 'source-over';
-                    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                    ctx.drawImage(img, x, y, drawWidth, drawHeight);
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // --- Save & Persistence ---
-        function saveImage() {
+        // --- ギャラリーと保存 ---
+        function saveToGallery() {
             initAudio(); playActionSound();
             const dpr = window.devicePixelRatio || 1;
             const saveCanvas = document.createElement('canvas');
             saveCanvas.width = canvas.width; saveCanvas.height = canvas.height;
             const sCtx = saveCanvas.getContext('2d');
-            sCtx.fillStyle = 'white';
-            sCtx.fillRect(0, 0, saveCanvas.width, saveCanvas.height);
+            sCtx.fillStyle = 'white'; sCtx.fillRect(0, 0, saveCanvas.width, saveCanvas.height);
             sCtx.drawImage(canvas, 0, 0);
 
             const dataUrl = saveCanvas.toDataURL('image/png');
             galleryImages.unshift(dataUrl);
-            if(galleryImages.length > 20) galleryImages.pop();
-            try { localStorage.setItem('magic_board_gallery', JSON.stringify(galleryImages)); } catch(e) {}
-
-            const link = document.createElement('a');
-            link.download = `おえかき-${Date.now()}.png`;
-            link.href = dataUrl;
-            link.click();
+            if(galleryImages.length > 30) galleryImages.pop();
+            
+            syncStorage();
 
             const toast = document.getElementById('save-toast');
             toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 4000);
+            setTimeout(() => toast.style.display = 'none', 2000);
+        }
+
+        function syncStorage() {
+            try { localStorage.setItem('magic_board_gallery_v6', JSON.stringify(galleryImages)); } catch(e) {}
         }
 
         function showGallery() {
+            initAudio();
+            const overlay = document.getElementById('gallery-overlay');
             const list = document.getElementById('gallery-list');
             list.innerHTML = '';
+            
             if (galleryImages.length === 0) {
-                list.innerHTML = '<div class="col-span-full text-pink-300 text-center mt-10">まだえがないよ！<br>📸ボタンをおしてね</div>';
+                list.innerHTML = '<div class="col-span-full text-pink-300 text-center mt-10 text-sm">まだ えがないよ！</div>';
             } else {
-                galleryImages.forEach((imgData) => {
-                    const item = document.createElement('div');
-                    item.className = "relative active:scale-95 transition-transform cursor-pointer";
-                    item.innerHTML = `
-                        <img src="${imgData}" class="w-full rounded-xl border-4 border-white shadow-md bg-white">
-                        <div class="absolute bottom-2 right-2 bg-pink-500 text-white text-[8px] px-2 py-0.5 rounded-full shadow">つづきを描く</div>
-                    `;
-                    item.onclick = () => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const dpr = window.devicePixelRatio || 1;
-                            ctx.clearRect(0, 0, canvas.width/dpr, canvas.height/dpr);
-                            ctx.drawImage(img, 0, 0, canvas.width/dpr, canvas.height/dpr);
-                            hideGallery();
-                        };
-                        img.src = imgData;
+                galleryImages.forEach((imgData, idx) => {
+                    const itemContainer = document.createElement('div');
+                    itemContainer.className = "gallery-item";
+                    
+                    // --- 長押しのためのイベント管理 ---
+                    const startPress = (e) => {
+                        // ブラウザ標準の動作を止める
+                        longPressTimer = setTimeout(() => {
+                            longPressTimer = null;
+                            confirmDownload(idx);
+                        }, 1000); // 1秒で長押し判定
                     };
-                    list.appendChild(item);
+
+                    const endPress = (e) => {
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                            // 長押しにならなかった場合は「続きを描く」
+                            loadFromGallery(idx);
+                        }
+                    };
+
+                    const cancelPress = () => {
+                        if (longPressTimer) clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    };
+
+                    // タッチイベント
+                    itemContainer.addEventListener('touchstart', startPress, { passive: true });
+                    itemContainer.addEventListener('touchend', endPress);
+                    itemContainer.addEventListener('touchmove', cancelPress);
+                    // マウスイベント (PCでも動くように)
+                    itemContainer.addEventListener('mousedown', startPress);
+                    itemContainer.addEventListener('mouseup', endPress);
+                    itemContainer.addEventListener('mouseleave', cancelPress);
+                    
+                    // ブラウザの画像ドラッグと右クリックメニューを禁止
+                    itemContainer.oncontextmenu = (e) => e.preventDefault();
+                    itemContainer.ondragstart = (e) => e.preventDefault();
+
+                    itemContainer.innerHTML = `
+                        <img src="${imgData}" class="w-full rounded-xl border-4 border-white shadow-md bg-white">
+                        <div class="delete-btn" onclick="event.stopPropagation(); requestDelete(${idx})">✕</div>
+                    `;
+                    list.appendChild(itemContainer);
                 });
             }
-            document.getElementById('gallery-overlay').style.display = 'flex';
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
         }
 
-        function hideGallery() { document.getElementById('gallery-overlay').style.display = 'none'; }
+        function hideGallery() {
+            const overlay = document.getElementById('gallery-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
 
-        // --- Drawing ---
+        function loadFromGallery(idx) {
+            initAudio(); playActionSound();
+            const img = new Image();
+            img.onload = () => {
+                const dpr = window.devicePixelRatio || 1;
+                ctx.clearRect(0, 0, canvas.width/dpr, canvas.height/dpr);
+                ctx.drawImage(img, 0, 0, canvas.width/dpr, canvas.height/dpr);
+                hideGallery();
+            };
+            img.src = galleryImages[idx];
+        }
+
+        function requestDelete(idx) {
+            initAudio();
+            const overlay = document.getElementById('confirm-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            
+            document.getElementById('confirm-delete-ok').onclick = () => {
+                galleryImages.splice(idx, 1);
+                syncStorage();
+                showGallery();
+                closeDeleteConfirm();
+            };
+        }
+
+        function closeDeleteConfirm() {
+            const overlay = document.getElementById('confirm-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        // スマホ本体への保存 (ダウンロード)
+        function confirmDownload(idx) {
+            playActionSound();
+            if (confirm("この えを スマホに ほぞん(ダウンロード) する？")) {
+                const link = document.createElement('a');
+                link.download = `まほうのおえかき-${Date.now()}.png`;
+                link.href = galleryImages[idx];
+                link.click();
+            }
+        }
+
+        // --- おえかきの動き ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+            const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
             return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
         function startDraw(e) {
             if (e.target !== canvas) return;
-            initAudio(); isDrawing = true;
+            initAudio(); 
+            isDrawing = true;
             const pos = getPos(e);
             lastX = pos.x; lastY = pos.y;
             if (currentMode === 'stamp') {
@@ -477,6 +590,7 @@
         canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
         window.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); }, { passive: false });
         window.addEventListener('touchend', () => isDrawing = false);
+
     </script>
 </body>
 </html>
