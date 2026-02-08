@@ -156,6 +156,10 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        .scroll-x {
+            touch-action: pan-x;
+        }
     </style>
 </head>
 
@@ -189,14 +193,19 @@
                 <span class="text-2xl">📸</span>
                 <span class="text-[9px] text-white font-bold leading-none mt-1">保存</span>
             </button>
+            <button onclick="toggleUI()"
+                class="bg-purple-500 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
+                <span id="ui-toggle-icon" class="text-2xl">👀</span>
+                <span class="text-[9px] text-white font-bold leading-none mt-1">ひょうじ</span>
+            </button>
         </div>
     </div>
 
     <!-- UI: ツールバー -->
-    <div
-        class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 z-50 pointer-events-none">
+    <div id="toolbar-tools"
+        class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 z-50 pointer-events-none transition-transform duration-300">
         <div
-            class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
+            class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar scroll-x">
             <button id="btnPen"
                 class="tool-btn active bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14"
                 onclick="setMode('pen')">
@@ -235,9 +244,10 @@
     </div>
 
     <!-- UI: カラーパレット -->
-    <div class="fixed bottom-2 left-0 w-full px-4 z-50 pointer-events-none">
+    <div id="toolbar-colors"
+        class="fixed bottom-2 left-0 w-full px-4 z-50 pointer-events-none transition-transform duration-300">
         <div
-            class="flex space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg max-w-[95vw] mx-auto border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
+            class="flex space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg max-w-[95vw] mx-auto border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar scroll-x">
             <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
             <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
             <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
@@ -637,6 +647,25 @@
             moveDraw(e);
         }, { passive: false });
         window.addEventListener('touchend', () => { isDrawing = false; });
+
+        let isUIHidden = false;
+        function toggleUI() {
+            initAudio(); playActionSound();
+            isUIHidden = !isUIHidden;
+            const tools = document.getElementById('toolbar-tools');
+            const colors = document.getElementById('toolbar-colors');
+            const icon = document.getElementById('ui-toggle-icon');
+
+            if (isUIHidden) {
+                tools.classList.add('translate-y-[200%]');
+                colors.classList.add('translate-y-[200%]');
+                icon.innerText = '🙈';
+            } else {
+                tools.classList.remove('translate-y-[200%]');
+                colors.classList.remove('translate-y-[200%]');
+                icon.innerText = '👀';
+            }
+        }
     </script>
 </body>
 
