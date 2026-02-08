@@ -14,102 +14,122 @@
             background-color: #fff7ed;
             user-select: none;
             height: 100vh;
+            margin: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
             overflow: hidden;
         }
 
-        /* Start Screen */
-        #startScreen {
-            position: absolute;
+        /* スタート画面 */
+        .overlay-screen {
+            position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.98);
-            z-index: 50;
+            background: #fff7ed;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 20px;
         }
 
-        /* Header / Controls */
+        .start-btn {
+            background-color: #f97316;
+            color: white;
+            font-size: 2.2rem;
+            font-weight: bold;
+            padding: 24px 0;
+            width: 280px;
+            border-radius: 999px;
+            box-shadow: 0 8px 0 #c2410c;
+            border: none;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #c2410c;
+        }
+
+        /* ヘッダー */
         .header-area {
-            width: 100%;
-            padding: 5px 15px;
+            height: 30px;
             background: #ffedd5;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #fb923c;
-            height: 45px;
-            flex-shrink: 0;
-        }
-        .reset-btn {
-            background: #cbd5e1;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border: 2px solid #94a3b8;
+            align-items: center;
+            border-bottom: 1px solid #fb923c;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            color: #9a3412;
         }
 
-        /* Reader Area */
+        /* 読み札エリア */
         .reader-area {
-            width: 100%;
-            padding: 8px;
+            height: 110px;
             background: #fff;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 85px;
-            border-bottom: 4px solid #fb923c;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            z-index: 20;
+            border-bottom: 3px solid #fb923c;
             flex-shrink: 0;
+            padding: 5px;
         }
+
         .reader-text {
-            font-size: 1.4rem;
+            font-size: 1.1rem;
             color: #ea580c;
-            margin-bottom: 6px;
             font-weight: bold;
-            white-space: nowrap;
+            line-height: 1.3;
+            text-align: center;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 15px;
         }
+
         .replay-btn {
             background: #fbbf24;
             color: #78350f;
-            padding: 5px 20px;
+            padding: 6px 24px;
             border-radius: 20px;
-            font-size: 0.9rem;
-            box-shadow: 0 3px 0 #d97706;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 0 #d97706;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
         }
-        .replay-btn:active { transform: translateY(3px); box-shadow: none; }
+        .replay-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d97706; }
 
-        /* Grid */
+        /* カードグリッド */
+        .grid-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            overflow: hidden;
+        }
+
         .card-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
             width: 100%;
-            max-width: 500px;
-            padding: 10px;
-            flex-grow: 1;
-            overflow-y: auto;
-            align-content: center;
+            max-width: 400px;
+            max-height: 100%;
         }
 
-        /* Card */
         .card {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             border: 2px solid #fed7aa;
             display: flex;
             flex-direction: column;
@@ -117,337 +137,189 @@
             justify-content: center;
             cursor: pointer;
             position: relative;
-            aspect-ratio: 5/6;
+            aspect-ratio: 1 / 1; /* 正方形 */
+            transition: transform 0.1s;
         }
-        .card:active { background: #ffedd5; transform: scale(0.95); }
-        .card.correct { border-color: #22c55e; background: #dcfce7; transform: scale(1.05); z-index: 10; }
+        .card.correct { border-color: #22c55e; background: #dcfce7; z-index: 10; transform: scale(1.05); }
         .card.taken { opacity: 0; pointer-events: none; }
-        
-        .card-char { font-size: 1.3rem; color: #ea580c; position: absolute; top: 2px; right: 4px; font-weight: bold; }
-        .card-img { font-size: 2.6rem; }
-        .card-word { font-size: 0.65rem; color: #9ca3af; margin-top: 1px; }
+        .card.wrong-shake { animation: shake 0.3s; border-color: #ef4444; }
 
-        /* Next Button Overlay */
-        #nextOverlay {
-            position: absolute;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .card-char { font-size: 1.1rem; color: #ea580c; position: absolute; top: 3px; right: 7px; font-weight: bold; }
+        .card-img { font-size: 2.2rem; line-height: 1; }
+        .card-word { font-size: 0.6rem; color: #9ca3af; margin-top: 2px; }
+
+        /* 正解通知画面 */
+        .full-overlay {
+            position: fixed;
             inset: 0;
-            background: rgba(255,255,255,0.9);
-            z-index: 40;
-            display: none;
+            background: rgba(255,255,255,0.92);
+            z-index: 500;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-        .next-btn {
-            background: #22c55e;
-            color: white;
-            font-size: 2.2rem;
-            padding: 20px 80px;
-            border-radius: 999px;
-            box-shadow: 0 8px 0 #15803d;
-            font-weight: bold;
-            animation: bounce 1s infinite;
-        }
-        .next-btn:active { transform: translateY(4px); box-shadow: none; }
-        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-
-        /* Status Line */
-        #statusLine {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: #333;
-            color: #4ade80;
-            font-size: 10px;
-            padding: 2px;
-            text-align: center;
-            z-index: 100;
         }
     </style>
 </head>
 <body>
 
-    <a href="index.html" style="position:fixed; top:5px; left:5px; z-index:100; background:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; border:2px solid #fb923c; font-size:1.2rem; box-shadow:0 2px 5px rgba(0,0,0,0.2);">🏠</a>
-
-    <div id="startScreen">
-        <div class="text-7xl mb-6">🚓🐶🍎</div>
-        <h1 class="text-4xl text-orange-600 font-bold mb-4">わくわく かるた</h1>
-        <p class="text-gray-500 mb-8 text-sm leading-relaxed">
-            どうぶつ、のりもの、<br>
-            やさい、くだもの が<br>
-            ランダムで でてくるよ！
-        </p>
-        <button id="startBtn" class="bg-orange-500 text-white text-3xl font-bold py-5 px-16 rounded-full shadow-[0_6px_0_#c2410c] active:translate-y-1 transition-all">
-            はじめる！
-        </button>
+    <!-- スタート画面 -->
+    <div id="startScreen" class="overlay-screen">
+        <div class="text-8xl mb-12">🐶🚒🍎</div>
+        <button class="start-btn" onclick="gameStart()">はじめる！</button>
     </div>
 
-    <div class="header-area">
-        <div style="width: 36px;"></div> <div class="font-bold text-orange-800">かるた</div>
-        <button onclick="resetSpeech()" class="reset-btn" title="音声をなおす">🔄</button>
+    <!-- おしまい画面 -->
+    <div id="endScreen" class="full-overlay" style="display: none;">
+        <div class="text-7xl mb-6">🎉🎊</div>
+        <h1 class="text-4xl text-orange-600 font-bold mb-8">おしまい！</h1>
+        <button onclick="location.reload()" class="bg-green-500 text-white text-2xl font-bold py-6 px-12 rounded-full shadow-[0_8px_0_#15803d]">もういっかい</button>
     </div>
+
+    <div class="header-area">わくわく かるた</div>
 
     <div class="reader-area">
         <div id="displayText" class="reader-text">...</div>
-        <button onclick="speakCurrent()" class="replay-btn">🔊 もういっかい</button>
+        <button id="replayBtn" class="replay-btn" style="visibility: hidden;" onclick="repeatText()">🔊 もういちど きく</button>
     </div>
 
-    <div id="cardGrid" class="card-grid"></div>
-
-    <div id="nextOverlay">
-        <div class="text-5xl mb-6 text-green-500 font-bold">せいかい！⭕</div>
-        <button id="nextBtn" class="next-btn">つぎへ ▶</button>
+    <div class="grid-container">
+        <div id="cardGrid" class="card-grid"></div>
     </div>
 
-    <div id="statusLine">準備完了</div>
+    <!-- 正解時のオーバーレイ -->
+    <div id="nextOverlay" class="full-overlay" style="display: none;">
+        <div class="text-5xl mb-8 text-green-500 font-bold">せいかい！⭕</div>
+        <button class="bg-green-500 text-white text-2xl font-bold py-5 px-12 rounded-full shadow-[0_6px_0_#15803d]" onclick="showNextPhrase()">つぎへ ▶</button>
+    </div>
 
     <script>
-        // --- Master Data (Pool) ---
         const masterData = [
-            // --- どうぶつ ---
-            { char: 'い', word: 'いぬ', emoji: '🐶', text: 'いぬが わんわん', speak: 'いぬが、わんわん' },
-            { char: 'ね', word: 'ねこ', emoji: '🐱', text: 'ねこが にゃーにゃー', speak: 'ねこが、にゃーにゃー' },
-            { char: 'う', word: 'うさぎ', emoji: '🐰', text: 'うさぎが ぴょんぴょん', speak: 'うさぎが、ぴょんぴょん' },
-            { char: 'ぱ', word: 'ぱんだ', emoji: '🐼', text: 'ぱんだが もぐもぐ', speak: 'ぱんだが、もぐもぐ' },
-            { char: 'ら', word: 'らいおん', emoji: '🦁', text: 'らいおん がおー', speak: 'らいおん、がおー' },
-            { char: 'ぞ', word: 'ぞう', emoji: '🐘', text: 'ぞうさん ぱおーん', speak: 'ぞうさん、ぱおーん' },
-            { char: 'さ', word: 'さる', emoji: '🐵', text: 'さるが うきき', speak: 'さるが、うきき' },
-            { char: 'く', word: 'くま', emoji: '🐻', text: 'くまさん のっしのっし', speak: 'くまさん、のっしのっし' },
-            { char: 'き', word: 'きりん', emoji: '🦒', text: 'きりんさん 首ながい', speak: 'きりんさん、くびながい' },
-            { char: 'ぺ', word: 'ぺんぎん', emoji: '🐧', text: 'ぺんぎん よちよち', speak: 'ぺんぎん、よちよち' },
-            { char: 'か', word: 'かえる', emoji: '🐸', text: 'かえるが けろけろ', speak: 'かえるが、けろけろ' },
-            { char: 'こ', word: 'こあら', emoji: '🐨', text: 'こあらが すやすや', speak: 'こあらが、すやすや' },
-            { char: 'と', word: 'とら', emoji: '🐯', text: 'とらさん つよいぞ', speak: 'とらさん、つよいぞ' },
-            { char: 'う', word: 'うま', emoji: '🐴', text: 'うまが ひひーん', speak: 'うまが、ひひーん' },
-            { char: 'う', word: 'うし', emoji: '🐮', text: 'うしさん もーもー', speak: 'うしさん、もーもー' },
-            { char: 'に', word: 'にわとり', emoji: '🐔', text: 'にわとり コケコッコー', speak: 'にわとり、こけこっこー' },
-            
-            // --- のりもの ---
-            { char: 'ぱ', word: 'ぱとかー', emoji: '🚓', text: 'ぱとかー ぴーぽー', speak: 'ぱとかー、ぴーぽー' },
-            { char: 'き', word: 'きゅうきゅうしゃ', emoji: '🚑', text: 'きゅうきゅうしゃ ピーポー', speak: 'きゅうきゅうしゃ、ぴーぽー' },
-            { char: 'し', word: 'しょうぼうしゃ', emoji: '🚒', text: 'しょうぼうしゃ ウーカンカン', speak: 'しょうぼうしゃ、うーかんかん' },
-            { char: 'で', word: 'でんしゃ', emoji: '🚃', text: 'でんしゃ ガタンゴトン', speak: 'でんしゃ、がたんごとん' },
-            { char: 'し', word: 'しんかんせん', emoji: '🚅', text: 'しんかんせん ビューン', speak: 'しんかんせん、びゅーん' },
-            { char: 'ば', word: 'ばす', emoji: '🚌', text: 'ばす プップー', speak: 'ばす、ぷっぷー' },
-            { char: 'た', word: 'たくしー', emoji: '🚕', text: 'たくしー おきゃくさん', speak: 'たくしー、おきゃくさん' },
-            { char: 'と', word: 'とらっく', emoji: '🚚', text: 'とらっく ブーン', speak: 'とらっく、ぶーん' },
-            { char: 'ひ', word: 'ひこうき', emoji: '✈️', text: 'ひこうき キーン', speak: 'ひこうき、きーん' },
-            { char: 'ふ', word: 'ふね', emoji: '🚢', text: 'ふねが ぼーっ', speak: 'ふねが、ぼーっ' },
-            { char: 'ろ', word: 'ろけっと', emoji: '🚀', text: 'ろけっと はっしゃ', speak: 'ろけっと、はっしゃ' },
-            { char: 'じ', word: 'じてんしゃ', emoji: '🚲', text: 'じてんしゃ チリンチリン', speak: 'じてんしゃ、ちりんちりん' },
-
-            // --- やさい ---
-            { char: 'と', word: 'とまと', emoji: '🍅', text: 'とまと まっかっか', speak: 'とまと、まっかっか' },
-            { char: 'に', word: 'にんじん', emoji: '🥕', text: 'にんじん ぽりぽり', speak: 'にんじん、ぽりぽり' },
-            { char: 'な', word: 'なす', emoji: '🍆', text: 'なすび つやつや', speak: 'なすび、つやつや' },
-            { char: 'き', word: 'きゅうり', emoji: '🥒', text: 'きゅうり ぽりぽり', speak: 'きゅうり、ぽりぽり' },
-            { char: 'と', word: 'とうもろこし', emoji: '🌽', text: 'とうもろこし つぶつぶ', speak: 'とうもろこし、つぶつぶ' },
-            { char: 'か', word: 'かぼちゃ', emoji: '🎃', text: 'かぼちゃ ごろごろ', speak: 'かぼちゃ、ごろごろ' },
-            { char: 'さ', word: 'さつまいも', emoji: '🍠', text: 'さつまいも ほくほく', speak: 'さつまいも、ほくほく' },
-            { char: 'ぴ', word: 'ぴーまん', emoji: '🫑', text: 'ぴーまん みどりいろ', speak: 'ぴーまん、みどりいろ' },
-            { char: 'ぶ', word: 'ぶろっこりー', emoji: '🥦', text: 'ぶろっこりー もこもこ', speak: 'ぶろっこりー、もこもこ' },
-            { char: 'た', word: 'たまねぎ', emoji: '🧅', text: 'たまねぎ まるいね', speak: 'たまねぎ、まるいね' },
-            { char: 'じ', word: 'じゃがいも', emoji: '🥔', text: 'じゃがいも ごろごろ', speak: 'じゃがいも、ごろごろ' },
-
-            // --- くだもの（NEW!） ---
-            { char: 'り', word: 'りんご', emoji: '🍎', text: 'りんごが まっかっか', speak: 'りんごが、まっかっか' },
-            { char: 'ば', word: 'ばなな', emoji: '🍌', text: 'ばななが きいろだよ', speak: 'ばななが、きいろだよ' },
-            { char: 'ぶ', word: 'ぶどう', emoji: '🍇', text: 'ぶどうが つぶつぶ', speak: 'ぶどうが、つぶつぶ' },
-            { char: 'い', word: 'いちご', emoji: '🍓', text: 'いちごが あまいね', speak: 'いちごが、あまいね' },
-            { char: 'も', word: 'もも', emoji: '🍑', text: 'ももさん ぴんくいろ', speak: 'ももさん、ぴんくいろ' },
-            { char: 'め', word: 'めろん', emoji: '🍈', text: 'めろんが あみあみ', speak: 'めろんが、あみあみ' },
-            { char: 'す', word: 'すいか', emoji: '🍉', text: 'すいかが しましま', speak: 'すいかが、しましま' },
-            { char: 'み', word: 'みかん', emoji: '🍊', text: 'みかんが オレンジ', speak: 'みかんが、おれんじ' },
-            { char: 'ぱ', word: 'ぱいなっぷる', emoji: '🍍', text: 'ぱいなっぷる トゲトゲ', speak: 'ぱいなっぷる、とげとげ' },
-            { char: 'さ', word: 'さくらんぼ', emoji: '🍒', text: 'さくらんぼ なかよし', speak: 'さくらんぼ、なかよし' },
-            { char: 'れ', word: 'れもん', emoji: '🍋', text: 'れもんが すっぱい', speak: 'れもんが、すっぱい' }
+            { char: 'い', word: 'いぬ', emoji: '🐶', phrases: ['おにわで ワンワン いぬがきた', 'ふわふわの いぬが ワンワンワン', 'いぬが しっぽを ふっている', 'かけっこ だいすき げんきな いぬ', 'おさんぽ いこうよ ぼくらの いぬ'] },
+            { char: 'う', word: 'うさぎ', emoji: '🐰', phrases: ['おみみが ながいね うさぎさん', 'ぴょんぴょん はねるよ うさぎさん', 'にんじん もぐもぐ うさぎが たべる', 'しろくて まあるい うさぎさん', 'おやまの うさぎが ぴょんととんだ'] },
+            { char: 'か', word: 'かえる', emoji: '🐸', phrases: ['はっぱの うえで ゲロゲロ かえる', 'あめが だいすき かえるさん', 'おみずの なかで けろけろ かえる', 'ぴょんぴょん およぐ かえるさん', 'みどりいろした かえるが けろり'] },
+            { char: 'く', word: 'くま', emoji: '🐻', phrases: ['のっしのっしと くまさんが きた', 'はちみつ だいすき くまさんだ', 'おやまの くまさん おひるねちゅう', 'おおきな おくちの くまさんだ', 'ふわふわ もこもこ くまさんだ'] },
+            { char: 'こ', word: 'こあら', emoji: '🐨', phrases: ['きに つかまって すやすや こあら', 'ゆっくり のんびり こあらさん', 'ゆーかり たべるよ こあらさん', 'だっこが だいすき こあらさん', 'おめめが まあるい こあらさん'] },
+            { char: 'さ', word: 'さる', emoji: '🐵', phrases: ['きに のぼるのが とくいな おさる', 'うききと わらうよ おさるさん', 'ばななが だいすき さるさんだ', 'おしりが あかいよ おさるさん', 'みんなで わいわい さるさんだ'] },
+            { char: 'し', word: 'しんかんせん', emoji: '🚅', phrases: ['ビューンとはしるよ しんかんせん', 'しろくて はやいぞ しんかんせん', 'まどから おそらの しんかんせん', 'がったん ごっとん しんかんせん', 'びゅーんと おおさか しんかんせん'] },
+            { char: 'と', word: 'とまと', emoji: '🍅', phrases: ['まっかっかな お顔の とまとさん', 'つやつや ぴかぴか とまとだよ', 'おさらで ころんと とまとさん', 'あまくて おいしい とまとだよ', 'りこぴん たっぷり とまとさん'] },
+            { char: 'に', word: 'にんじん', emoji: '🥕', phrases: ['おれんじいろした にんじんさん', 'うさぎが だいすき にんじんさん', 'つちの なかで そだった にんじん', 'ぽりぽり たべよう にんじんさん', 'ながくて おおきな にんじんさん'] },
+            { char: 'ね', word: 'ねこ', emoji: '🐱', phrases: ['にゃーにゃー なくよ こねこさん', 'こたつで まるまる ねこさんだ', 'おひるね だいすき ねこさんだ', 'おめめが ぴかぴか ねこさんだ', 'あそんで ほしいな ねこさんだ'] },
+            { char: 'ひ', word: 'ひこうき', emoji: '✈️', phrases: ['おそらを とぶよ ひこうきだ', 'おっきな つばさの ひこうきだ', 'くもの うえまで ひこうきで', 'びゅーんと おそらの ひこうきだ', 'きーんと とぶよ ひこうきだ'] },
+            { char: 'り', word: 'りんご', emoji: '🍎', phrases: ['まっかっかな まあるい りんごさん', 'しゃきしゃき おいしい りんごだよ', 'ほっぺが おちるよ りんごさん', 'かわを むいたら しろい りんご', 'きに なっているよ りんごさん'] }
         ];
 
         let currentTarget = null;
-        let gameDeck = []; 
+        let currentPhrase = "";
         let remainingCards = [];
+        let audioCtx = null;
         const synth = window.speechSynthesis;
-        let voices = [];
 
-        // --- Utils ---
-        function setStatus(msg) {
-            document.getElementById('statusLine').textContent = msg;
-        }
-
-        // --- Audio Context (SE) ---
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        let audioCtx;
-
-        function playSound(type) {
-            if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                const now = audioCtx.currentTime;
-
-                if (type === 'correct') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, now);
-                    osc.frequency.setValueAtTime(1760, now + 0.1);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.linearRampToValueAtTime(0, now + 0.5);
-                    osc.start();
-                    osc.stop(now + 0.5);
-                } else {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(150, now);
-                    osc.frequency.linearRampToValueAtTime(100, now + 0.3);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.linearRampToValueAtTime(0, now + 0.3);
-                    osc.start();
-                    osc.stop(now + 0.3);
-                }
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-            } catch(e) {}
-        }
-
-        // --- Speech Logic ---
-        window.speechSynthesis.onvoiceschanged = function() {
-            voices = window.speechSynthesis.getVoices();
-        };
-
-        function resetSpeech() {
-            if (synth) {
-                synth.cancel();
-                setStatus('音声をリセットしました');
-            }
-        }
-
+        // 音声の準備
         function speak(text) {
-            if (!synth) {
-                setStatus('エラー: 読み上げ非対応の端末です');
-                return;
-            }
             synth.cancel();
-
             const uttr = new SpeechSynthesisUtterance(text);
-            uttr.lang = 'ja-JP'; 
-            uttr.rate = 0.9;
-            uttr.volume = 1.0;
-
-            if (voices.length > 0) {
-                const jpVoice = voices.find(v => v.lang.includes('ja'));
-                if (jpVoice) uttr.voice = jpVoice;
-            }
-
-            uttr.onstart = () => setStatus('再生中: ' + text);
-            uttr.onend = () => setStatus('再生完了');
-            uttr.onerror = (e) => setStatus('再生エラー');
-
+            uttr.lang = 'ja-JP';
+            uttr.rate = 0.95;
+            
+            // 日本語の声をその場で探す
+            const voices = synth.getVoices();
+            const jpVoice = voices.find(v => v.lang.includes('ja'));
+            if (jpVoice) uttr.voice = jpVoice;
+            
             synth.speak(uttr);
         }
 
-        function speakCurrent() {
-            if (currentTarget) speak(currentTarget.speak);
+        // 効果音
+        function playEffect(type) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = (type === 'correct') ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime((type === 'correct') ? 880 : 150, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        // --- Game Logic ---
+        function gameStart() {
+            // スタートボタンを押した瞬間に実行
+            document.getElementById('startScreen').style.display = 'none';
+            
+            // 音声エンジンのアンロック
+            speak(" "); 
+            
+            initGame();
+            setTimeout(showNextPhrase, 300);
+        }
+
         function initGame() {
             const grid = document.getElementById('cardGrid');
             grid.innerHTML = '';
-            
-            // ランダム選出
-            const shuffledMaster = [...masterData].sort(() => Math.random() - 0.5);
-            gameDeck = shuffledMaster.slice(0, 12);
-            remainingCards = [...gameDeck];
+            const deck = [...masterData].sort(() => Math.random() - 0.5);
+            remainingCards = [...deck];
 
-            // 画面配置用シャッフル
-            const displayCards = [...gameDeck].sort(() => Math.random() - 0.5);
-
+            const displayCards = [...deck].sort(() => Math.random() - 0.5);
             displayCards.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.id = `card-${item.char}-${item.word}`;
-                card.innerHTML = `
-                    <div class="card-char">${item.char}</div>
-                    <div class="card-img">${item.emoji}</div>
-                    <div class="card-word">${item.word}</div>
-                `;
-                card.onclick = () => checkAnswer(item);
+                card.id = `card-${item.word}`;
+                card.innerHTML = `<div class="card-char">${item.char}</div><div class="card-img">${item.emoji}</div><div class="card-word">${item.word}</div>`;
+                card.onclick = () => checkCard(item);
                 grid.appendChild(card);
             });
         }
 
-        function nextTurn() {
+        function showNextPhrase() {
             document.getElementById('nextOverlay').style.display = 'none';
+            document.getElementById('replayBtn').style.visibility = 'hidden';
 
             if (remainingCards.length === 0) {
-                document.getElementById('displayText').textContent = 'おわり！';
-                speak('おしまいです。またあそんでね！');
-                setTimeout(() => {
-                   if(confirm('もういちど、ちがうカードであそぶ？')) {
-                       location.reload();
-                   }
-                }, 3000);
+                document.getElementById('endScreen').style.display = 'flex';
                 return;
             }
 
-            const idx = Math.floor(Math.random() * remainingCards.length);
-            currentTarget = remainingCards[idx];
-            
-            document.getElementById('displayText').textContent = currentTarget.text;
-            speak(currentTarget.speak);
+            currentTarget = remainingCards[Math.floor(Math.random() * remainingCards.length)];
+            currentPhrase = currentTarget.phrases[Math.floor(Math.random() * currentTarget.phrases.length)];
+
+            document.getElementById('displayText').textContent = currentPhrase;
+            speak(currentPhrase);
+            document.getElementById('replayBtn').style.visibility = 'visible';
         }
 
-        function checkAnswer(item) {
+        function checkCard(item) {
             if (!currentTarget) return;
-
+            const card = document.getElementById(`card-${item.word}`);
             if (item.word === currentTarget.word) {
-                // Correct
-                playSound('correct');
-                const card = document.getElementById(`card-${item.char}-${item.word}`);
+                playEffect('correct');
                 card.classList.add('correct');
-                setTimeout(() => {
-                    card.classList.add('taken');
-                }, 500);
-                
                 remainingCards = remainingCards.filter(c => c.word !== currentTarget.word);
                 currentTarget = null;
-
-                // Show Next Button
                 setTimeout(() => {
+                    card.classList.add('taken');
                     document.getElementById('nextOverlay').style.display = 'flex';
-                    setStatus('正解！つぎへボタンを押してね');
-                }, 500);
+                }, 400);
             } else {
-                // Wrong
-                playSound('wrong');
-                setStatus('はずれ！');
+                playEffect('wrong');
+                card.classList.add('wrong-shake');
+                setTimeout(() => card.classList.remove('wrong-shake'), 300);
             }
         }
 
-        // --- Event Listeners ---
-        document.getElementById('startBtn').addEventListener('click', () => {
-            if (!audioCtx) audioCtx = new AudioContext();
-            audioCtx.resume();
+        function repeatText() { if (currentPhrase) speak(currentPhrase); }
 
-            if (synth) {
-                synth.cancel();
-                voices = synth.getVoices();
-                const dummy = new SpeechSynthesisUtterance('');
-                synth.speak(dummy);
-            }
-
-            document.getElementById('startScreen').style.display = 'none';
-            initGame();
-            
-            setTimeout(() => {
-                nextTurn();
-            }, 500);
-        });
-
-        document.getElementById('nextBtn').addEventListener('click', nextTurn);
-
-        window.speechSynthesis.getVoices();
-
+        // ボイスリストの初期ロード試行
+        window.onload = () => { synth.getVoices(); };
     </script>
 </body>
 </html>
+
