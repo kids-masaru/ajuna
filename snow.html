@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -21,21 +22,45 @@
         }
 
         /* 各レベルの背景テーマ */
-        .stage-1 { background: linear-gradient(180deg, #020617 0%, #1e3a8a 50%, #3b82f6 100%); }
-        .stage-2 { background: linear-gradient(180deg, #0f172a 0%, #1e40af 50%, #60a5fa 100%); }
-        .stage-3 { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%); }
-        .stage-4 { background: linear-gradient(180deg, #312e81 0%, #581c87 50%, #7c3aed 100%); }
-        .stage-5 { background: linear-gradient(180deg, #4c1d95 0%, #701a75 50%, #db2777 100%); }
-        .stage-6 { background: linear-gradient(180deg, #020617 0%, #4338ca 30%, #ec4899 60%, #facc15 100%); }
+        .stage-1 {
+            background: linear-gradient(180deg, #020617 0%, #1e3a8a 50%, #3b82f6 100%);
+        }
+
+        .stage-2 {
+            background: linear-gradient(180deg, #0f172a 0%, #1e40af 50%, #60a5fa 100%);
+        }
+
+        .stage-3 {
+            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+        }
+
+        .stage-4 {
+            background: linear-gradient(180deg, #312e81 0%, #581c87 50%, #7c3aed 100%);
+        }
+
+        .stage-5 {
+            background: linear-gradient(180deg, #4c1d95 0%, #701a75 50%, #db2777 100%);
+        }
+
+        .stage-6 {
+            background: linear-gradient(180deg, #020617 0%, #4338ca 30%, #ec4899 60%, #facc15 100%);
+        }
 
         @keyframes float-character {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(5deg);
+            }
         }
 
         .character-pop {
             animation: float-character 4s ease-in-out infinite;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.5));
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
         }
 
         #magicBar {
@@ -46,9 +71,17 @@
         .fade-in-up {
             animation: fadeInUp 1s forwards;
         }
+
         @keyframes fadeInUp {
-            from { opacity: 0; transform: scale(0.6) translateY(40px); }
-            to { opacity: 1; transform: scale(1) translateY(0px); }
+            from {
+                opacity: 0;
+                transform: scale(0.6) translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0px);
+            }
         }
 
         /* 画面端のキラキラ */
@@ -56,31 +89,63 @@
             position: absolute;
             inset: 0;
             pointer-events: none;
-            box-shadow: inset 0 0 50px rgba(255,255,255,0.1);
+            box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.1);
             z-index: 5;
+        }
+
+        /* Home Button */
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            font-size: 1.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .home-btn:active {
+            transform: scale(0.9);
         }
     </style>
 </head>
+
 <body id="mainBody" class="gradient-bg stage-1 h-screen w-screen relative overflow-hidden select-none">
+
+    <a href="index.html" class="home-btn">🏠</a>
 
     <div class="fringe-sparkle"></div>
 
     <!-- UI Layer -->
-    <div id="startScreen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl transition-opacity duration-1000">
+    <div id="startScreen"
+        class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl transition-opacity duration-1000">
         <div class="text-8xl mb-8 character-pop">❄️💎🪄</div>
         <h1 class="text-4xl text-white font-bold mb-4 text-center tracking-widest">
             ゆきのまほう<br><span class="text-2xl font-normal opacity-80">リズムあそび</span>
         </h1>
-        <button id="startBtn" class="bg-white text-blue-600 text-3xl font-bold py-6 px-16 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.4)] transform active:scale-90 transition-all">
+        <button id="startBtn"
+            class="bg-white text-blue-600 text-3xl font-bold py-6 px-16 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.4)] transform active:scale-90 transition-all">
             まほうをはじめる ▶
         </button>
         <p class="text-white/60 mt-10 text-lg animate-pulse">がめんを なぞってね 🔊</p>
     </div>
 
     <!-- Milestone Notification -->
-    <div id="milestoneMsg" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
+    <div id="milestoneMsg"
+        class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
         <div id="milestoneEmoji" class="text-[12rem] character-pop">⛄</div>
-        <div id="milestoneText" class="text-white text-5xl font-bold mt-6 text-center drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
+        <div id="milestoneText"
+            class="text-white text-5xl font-bold mt-6 text-center drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
             ゆきだるま できた！
         </div>
     </div>
@@ -90,18 +155,20 @@
         <div class="flex justify-between items-end">
             <div class="flex flex-col">
                 <span class="text-white/70 text-xs font-bold tracking-widest ml-2 mb-1 uppercase">Magic Score</span>
-                <div class="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20">
+                <div
+                    class="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20">
                     <span id="scoreDisplay" class="text-3xl text-white font-bold tabular-nums">0</span>
                 </div>
             </div>
             <div class="flex flex-col items-end">
                 <span id="rankTitle" class="text-white/90 text-sm font-bold mb-1">みならい まほうつかい</span>
-                <div id="stageIndicator" class="px-5 py-2 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-sm font-black shadow-lg">
+                <div id="stageIndicator"
+                    class="px-5 py-2 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-sm font-black shadow-lg">
                     Level 1
                 </div>
             </div>
         </div>
-        
+
         <div class="w-full h-3 bg-black/40 rounded-full border border-white/10 overflow-hidden relative shadow-inner">
             <div id="magicBar" class="h-full bg-gradient-to-r from-cyan-300 via-white to-blue-500 w-0"></div>
         </div>
@@ -129,14 +196,14 @@
                 const now = audioCtx.currentTime;
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                
+
                 // レベルが上がると音がキラキラしてくる
                 osc.type = stage >= 4 ? 'sine' : (stage >= 2 ? 'triangle' : 'sine');
                 const freq = scale[noteIndex % scale.length] * (stage >= 5 ? 2 : 1);
                 noteIndex++;
-                
+
                 osc.frequency.setValueAtTime(freq, now);
-                
+
                 if (stage >= 3) {
                     const sub = audioCtx.createOscillator();
                     sub.type = 'sine';
@@ -152,12 +219,12 @@
 
                 gain.gain.setValueAtTime(0.12, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-                
+
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
                 osc.stop(now + 0.6);
-            } catch (e) {}
+            } catch (e) { }
         }
 
         // --- Game Logic ---
@@ -202,14 +269,14 @@
                 this.y = -80;
                 this.size = Math.random() * 20 + 35;
                 this.speed = Math.random() * 1.2 + 0.8 + (currentLevel * 0.25);
-                
+
                 const emojis = ['❄️', '❅', '❆'];
                 if (currentLevel >= 2) emojis.push('✨', '💎');
                 if (currentLevel >= 3) emojis.push('⭐', '🔔');
                 if (currentLevel >= 4) emojis.push('🌈', '🍬');
                 if (currentLevel >= 5) emojis.push('🌙', '🪐');
                 if (currentLevel >= 6) emojis.push('💖', '🔥');
-                
+
                 this.emoji = emojis[Math.floor(Math.random() * emojis.length)];
                 this.rotation = Math.random() * Math.PI * 2;
                 this.spin = (Math.random() - 0.5) * 0.04;
@@ -248,15 +315,15 @@
                 this.life = 1.0;
                 this.level = level;
                 this.isTrail = isTrail;
-                
+
                 // レベルによって色と形を決定
                 this.colors = ["#fff"];
                 if (level == 2) this.colors = ["#bae6fd", "#fff"];
                 if (level == 3) this.colors = ["#fde047", "#fff"];
                 if (level == 4) this.colors = ["#f472b6", "#60a5fa", "#34d399"];
                 if (level == 5) this.colors = ["#818cf8", "#c084fc", "#fff"];
-                if (level >= 6) this.colors = [`hsl(${Math.random()*360}, 100%, 80%)`];
-                
+                if (level >= 6) this.colors = [`hsl(${Math.random() * 360}, 100%, 80%)`];
+
                 this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
                 this.size = isTrail ? Math.random() * 4 + 2 : Math.random() * 6 + 3;
             }
@@ -272,19 +339,19 @@
                 ctx.fillStyle = this.color;
                 ctx.shadowBlur = this.level >= 3 ? 10 : 5;
                 ctx.shadowColor = this.color;
-                
+
                 ctx.beginPath();
                 // Lv.3以上は星型っぽく、それ以外は丸
                 if (this.level >= 3 && Math.random() > 0.7) {
                     const s = this.size * 2;
                     ctx.moveTo(this.x, this.y - s);
-                    ctx.lineTo(this.x + s/4, this.y - s/4);
+                    ctx.lineTo(this.x + s / 4, this.y - s / 4);
                     ctx.lineTo(this.x + s, this.y);
-                    ctx.lineTo(this.x + s/4, this.y + s/4);
+                    ctx.lineTo(this.x + s / 4, this.y + s / 4);
                     ctx.lineTo(this.x, this.y + s);
-                    ctx.lineTo(this.x - s/4, this.y + s/4);
+                    ctx.lineTo(this.x - s / 4, this.y + s / 4);
                     ctx.lineTo(this.x - s, this.y);
-                    ctx.lineTo(this.x - s/4, this.y - s/4);
+                    ctx.lineTo(this.x - s / 4, this.y - s / 4);
                 } else {
                     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 }
@@ -319,18 +386,18 @@
             for (let i = snowflakes.length - 1; i >= 0; i--) {
                 const s = snowflakes[i];
                 const dist = Math.hypot(s.x - x, s.y - y);
-                
+
                 // 判定サイズ（少し甘め）
                 if (dist < s.size * 1.6) {
                     const hX = s.x, hY = s.y;
                     s.reset();
-                    
+
                     for (let j = 0; j < (isMove ? 5 : 12); j++) {
                         if (particles.length < MAX_PARTICLES) {
                             particles.push(new Particle(hX, hY, currentLevel, false));
                         }
                     }
-                    
+
                     score += 10;
                     playMagicSound(currentLevel);
                     checkMilestones();
@@ -375,7 +442,7 @@
 
         function updateUI() {
             scoreDisplay.textContent = score;
-            
+
             // 次の目標
             let target = 200;
             let start = 0;
@@ -395,7 +462,7 @@
         function gameLoop() {
             if (!isPlaying) return;
             ctx.clearRect(0, 0, width, height);
-            
+
             snowflakes.forEach(f => {
                 f.update();
                 f.draw();
@@ -406,7 +473,7 @@
                 particles[i].draw();
                 if (particles[i].life <= 0) particles.splice(i, 1);
             }
-            
+
             requestAnimationFrame(gameLoop);
         }
 
@@ -452,5 +519,5 @@
 
     </script>
 </body>
-</html>
 
+</html>

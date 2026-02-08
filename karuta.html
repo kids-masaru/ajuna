@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -46,6 +47,7 @@
             cursor: pointer;
             transition: transform 0.1s;
         }
+
         .start-btn:active {
             transform: translateY(4px);
             box-shadow: 0 4px 0 #c2410c;
@@ -128,7 +130,7 @@
         .card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             border: 2px solid #fed7aa;
             display: flex;
             flex-direction: column;
@@ -138,34 +140,95 @@
             position: relative;
             aspect-ratio: 1 / 1;
         }
-        .card.correct { border-color: #22c55e; background: #dcfce7; z-index: 10; transform: scale(1.05); }
-        .card.taken { opacity: 0; pointer-events: none; }
-        .card.wrong-shake { animation: shake 0.3s; border-color: #ef4444; }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
+        .card.correct {
+            border-color: #22c55e;
+            background: #dcfce7;
+            z-index: 10;
+            transform: scale(1.05);
         }
 
-        .card-char { font-size: 1.1rem; color: #ea580c; position: absolute; top: 3px; right: 7px; font-weight: bold; }
-        .card-img { font-size: 2.2rem; line-height: 1; }
-        .card-word { font-size: 0.6rem; color: #9ca3af; margin-top: 2px; }
+        .card.taken {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .card.wrong-shake {
+            animation: shake 0.3s;
+            border-color: #ef4444;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
+        }
+
+        .card-char {
+            font-size: 1.1rem;
+            color: #ea580c;
+            position: absolute;
+            top: 3px;
+            right: 7px;
+            font-weight: bold;
+        }
+
+        .card-img {
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+
+        .card-word {
+            font-size: 0.6rem;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
 
         /* オーバーレイ */
         .full-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(255,255,255,0.92);
+            background: rgba(255, 255, 255, 0.92);
             z-index: 500;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
+
+        /* Home Button */
+        .home-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 999;
+            background: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: 2px solid #fb923c;
+            font-size: 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
+
 <body>
+    <a href="index.html" class="home-btn">🏠</a>
 
     <div id="startScreen">
         <div class="text-7xl mb-12">🐶🍎🚓</div>
@@ -175,14 +238,16 @@
     <div id="endScreen" class="full-overlay" style="display: none;">
         <div class="text-7xl mb-6">🎉🎊</div>
         <h1 class="text-4xl text-orange-600 font-bold mb-8">おしまい！</h1>
-        <button onclick="location.reload()" class="bg-green-500 text-white text-2xl font-bold py-6 px-12 rounded-full shadow-[0_8px_0_#15803d]">もういっかい</button>
+        <button onclick="location.reload()"
+            class="bg-green-500 text-white text-2xl font-bold py-6 px-12 rounded-full shadow-[0_8px_0_#15803d]">もういっかい</button>
     </div>
 
     <div class="header-area">わくわく かるた</div>
 
     <div class="reader-area">
         <div id="displayText" class="reader-text">...</div>
-        <button id="replayBtn" class="replay-btn" style="visibility: hidden;" onclick="repeatText()">🔊 もういちど きく</button>
+        <button id="replayBtn" class="replay-btn" style="visibility: hidden;" onclick="repeatText()">🔊 もういちど
+            きく</button>
     </div>
 
     <div class="grid-container">
@@ -191,7 +256,8 @@
 
     <div id="nextOverlay" class="full-overlay" style="display: none;">
         <div class="text-5xl mb-8 text-green-500 font-bold">せいかい！⭕</div>
-        <button class="bg-green-500 text-white text-2xl font-bold py-5 px-12 rounded-full shadow-[0_6px_0_#15803d]" onclick="showNextPhrase()">つぎへ ▶</button>
+        <button class="bg-green-500 text-white text-2xl font-bold py-5 px-12 rounded-full shadow-[0_6px_0_#15803d]"
+            onclick="showNextPhrase()">つぎへ ▶</button>
     </div>
 
     <script>
@@ -327,7 +393,7 @@
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } catch(e) {}
+            } catch (e) { }
         }
 
         function gameStart() {
@@ -339,7 +405,7 @@
                 try {
                     speak(" ");
                     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                } catch(e) {}
+                } catch (e) { }
                 showNextPhrase();
             }, 150);
         }
@@ -407,5 +473,5 @@
         window.onload = () => { synth.getVoices(); };
     </script>
 </body>
-</html>
 
+</html>
