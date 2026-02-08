@@ -76,16 +76,15 @@
             position: relative;
         }
 
-        /* 画像エリアだけをタップ/長押し可能にする */
         .gallery-img-wrapper {
             cursor: pointer;
-            -webkit-touch-callout: none;
             border-radius: 12px;
             overflow: hidden;
             background: white;
             border: 4px solid white;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             transition: transform 0.2s;
+            -webkit-touch-callout: none;
         }
         .gallery-img-wrapper:active {
             transform: scale(0.95);
@@ -116,7 +115,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             z-index: 50;
             cursor: pointer;
-            touch-action: auto;
         }
 
         #save-toast {
@@ -154,7 +152,7 @@
         <canvas id="drawingCanvas"></canvas>
     </div>
 
-    <!-- UI: 上部ボタン -->
+    <!-- UI: 上部 -->
     <div class="fixed top-0 left-0 w-full p-3 flex justify-between items-start z-50 pointer-events-none">
         <button onclick="resetApp()" class="pointer-events-auto bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90">
             🏠
@@ -283,9 +281,10 @@
         let stampIndex = 0;
         let galleryImages = [];
         let longPressTimer = null;
+        let isUIBusy = false; // UI操作後のガード用
 
         try {
-            const saved = localStorage.getItem('magic_board_gallery_v7');
+            const saved = localStorage.getItem('magic_board_gallery_v8');
             if (saved) galleryImages = JSON.parse(saved);
         } catch(e) { console.error(e); }
 
@@ -410,11 +409,12 @@
         }
 
         function syncStorage() {
-            try { localStorage.setItem('magic_board_gallery_v7', JSON.stringify(galleryImages)); } catch(e) {}
+            try { localStorage.setItem('magic_board_gallery_v8', JSON.stringify(galleryImages)); } catch(e) {}
         }
 
         function showGallery() {
             initAudio();
+            isUIBusy = true; // メニュー表示中は描画禁止
             const overlay = document.getElementById('gallery-overlay');
             const list = document.getElementById('gallery-list');
             list.innerHTML = '';
@@ -426,29 +426,181 @@
                     const itemContainer = document.createElement('div');
                     itemContainer.className = "gallery-item";
                     
-                    // 画像エリアの作成
                     const imgWrapper = document.createElement('div');
                     imgWrapper.className = "gallery-img-wrapper";
                     
                     const startPress = (e) => {
+                        e.stopPropagation();
                         longPressTimer = setTimeout(() => {
                             longPressTimer = null;
                             confirmDownload(idx);
                         }, 1000);
                     };
                     const endPress = (e) => {
+                        e.stopPropagation();
                         if (longPressTimer) {
                             clearTimeout(longPressTimer);
                             longPressTimer = null;
                             loadFromGallery(idx);
                         }
                     };
-                    const cancelPress = () => {
+                    const cancelPress = (e) => {
                         if (longPressTimer) clearTimeout(longPressTimer);
                         longPressTimer = null;
                     };
 
-                    imgWrapper.addEventListener('touchstart', startPress, { passive: true });
+                    imgWrapper.addEventListener('touchstart', startPress, { passive: false });
                     imgWrapper.addEventListener('touchend', endPress);
                     imgWrapper.addEventListener('touchmove', cancelPress);
-                    imgWrapper.addEventListener('mousedown', startPres
+                    imgWrapper.addEventListener('mousedown', startPress);
+                    imgWrapper.addEventListener('mouseup', endPress);
+                    imgWrapper.addEventListener('mouseleave', cancelPress);
+                    imgWrapper.oncontextmenu = (e) => e.preventDefault();
+                    imgWrapper.innerHTML = `<img src="${imgData}">`;
+
+                    const delBtn = document.createElement('div');
+                    delBtn.className = "delete-btn";
+                    delBtn.innerText = "✕";
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        requestDelete(idx);
+                    };
+
+                    itemContainer.appendChild(imgWrapper);
+                    itemContainer.appendChild(delBtn);
+                    list.appendChild(itemContainer);
+                });
+            }
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function hideGallery() {
+            const overlay = document.getElementById('gallery-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            // ゴーストクリック防止のため、0.3秒後に描画を許可
+            setTimeout(() => { isUIBusy = false; }, 300);
+        }
+
+        function loadFromGallery(idx) {
+            initAudio(); playActionSound();
+            const img = new Image();
+            img.onload = () => {
+                const dpr = window.devicePixelRatio || 1;
+                ctx.clearRect(0, 0, canvas.width/dpr, canvas.height/dpr);
+                ctx.drawImage(img, 0, 0, canvas.width/dpr, canvas.height/dpr);
+                hideGallery();
+            };
+            img.src = galleryImages[idx];
+        }
+
+        function requestDelete(idx) {
+            initAudio();
+            const overlay = document.getElementById('confirm-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            document.getElementById('confirm-delete-ok').onclick = () => {
+                galleryImages.splice(idx, 1);
+                syncStorage();
+                showGallery();
+                closeDeleteConfirm();
+            };
+        }
+
+        function closeDeleteConfirm() {
+            const overlay = document.getElementById('confirm-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            // ガードの延長
+            setTimeout(() => { if (document.getElementById('gallery-overlay').classList.contains('hidden')) isUIBusy = false; }, 300);
+        }
+
+        function confirmDownload(idx) {
+            playActionSound();
+            if (confirm("この えを スマホに ほぞん(ダウンロード) する？")) {
+                const link = document.createElement('a');
+                link.download = `まほうのおえかき-${Date.now()}.png`;
+                link.href = galleryImages[idx];
+                link.click();
+            }
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+            const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            if (e.target !== canvas || isUIBusy) return;
+            initAudio(); 
+            isDrawing = true;
+            const pos = getPos(e);
+            lastX = pos.x; lastY = pos.y;
+            if (currentMode === 'stamp') {
+                ctx.globalCompositeOperation = 'source-over';
+                drawStamp(pos.x, pos.y);
+            } else { draw(e); }
+        }
+
+        function moveDraw(e) {
+            if (!isDrawing || isUIBusy) return;
+            const pos = getPos(e);
+            if (currentMode === 'stamp') {
+                const dist = Math.hypot(pos.x - lastX, pos.y - lastY);
+                if (dist > 35) { drawStamp(pos.x, pos.y); lastX = pos.x; lastY = pos.y; }
+            } else { draw(e); }
+        }
+
+        function drawStamp(x, y) {
+            playStampSound();
+            ctx.save(); ctx.translate(x, y); ctx.rotate((Math.random() - 0.5) * 0.7);
+            ctx.font = "60px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(currentStamp, 0, 0); ctx.restore();
+        }
+
+        function draw(e) {
+            const pos = getPos(e);
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            if (currentMode === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 50;
+                if (Math.random() > 0.9) playEraseSound();
+            } else {
+                ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = currentColor; ctx.lineWidth = 10;
+                if (Math.random() > 0.9) playDrawSound();
+            }
+            if (currentMode === 'pen' || currentMode === 'eraser') {
+                ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+            } else if (currentMode === 'magic') {
+                const cx = window.innerWidth / 2; const cy = window.innerHeight / 2; const points = 8;
+                const sX = lastX - cx, sY = lastY - cy, eX = pos.x - cx, eY = pos.y - cy;
+                for (let i = 0; i < points; i++) {
+                    ctx.save(); ctx.translate(cx, cy); ctx.rotate((Math.PI * 2 / points) * i);
+                    ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(sX, -sY); ctx.lineTo(eX, -eY); ctx.stroke();
+                    ctx.restore();
+                }
+            }
+            lastX = pos.x; lastY = pos.y;
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        window.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', () => { isDrawing = false; });
+        canvas.addEventListener('touchstart', (e) => { 
+            if (isUIBusy) return;
+            e.preventDefault(); 
+            startDraw(e); 
+        }, { passive: false });
+        window.addEventListener('touchmove', (e) => { 
+            if (isUIBusy) return;
+            e.preventDefault(); 
+            moveDraw(e); 
+        }, { passive: false });
+        window.addEventListener('touchend', () => { isDrawing = false; });
+    </script>
+</body>
+</html>
+
