@@ -259,6 +259,49 @@
             { score: 5000, emoji: '👑', text: 'まほうの おうさま！', bg: 'stage-6', rank: 'きらきら マスター' }
         ];
 
+        // Drag Handling
+        let dragItem = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        function startDrag(e) {
+            e.preventDefault();
+            dragItem = e.target;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const rect = dragItem.getBoundingClientRect();
+            dragOffset.x = clientX - rect.left;
+            dragOffset.y = clientY - rect.top;
+            dragItem.style.transition = 'none'; // dragging中はアニメーションなし
+            dragItem.style.zIndex = 100;
+        }
+
+        function moveDrag(e) {
+            if (!dragItem) return;
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            // 画面外にはみ出さないようにガード（簡易）
+            const x = clientX - dragOffset.x;
+            const y = clientY - dragOffset.y;
+
+            dragItem.style.left = x + 'px';
+            dragItem.style.top = y + 'px';
+            dragItem.style.bottom = 'auto';
+        }
+
+        function endDrag() {
+            if (dragItem) {
+                dragItem.style.zIndex = '';
+                dragItem = null;
+            }
+        }
+
+        window.addEventListener('touchmove', moveDrag, { passive: false });
+        window.addEventListener('mousemove', moveDrag);
+        window.addEventListener('touchend', endDrag);
+        window.addEventListener('mouseup', endDrag);
+
         class Snowflake {
             constructor() {
                 this.reset();
@@ -429,6 +472,13 @@
             char.style.left = (Math.random() * 60 + 20) + '%';
             char.style.bottom = (Math.random() * 20 + 5) + '%';
             char.textContent = m.emoji;
+
+            // Make Draggable
+            char.style.pointerEvents = 'auto'; // 親がpointer-events-noneなので、これを有効化
+            char.style.cursor = 'grab';
+            char.addEventListener('touchstart', startDrag, { passive: false });
+            char.addEventListener('mousedown', startDrag);
+
             stageChars.appendChild(char);
 
             setTimeout(() => {

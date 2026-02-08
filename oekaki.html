@@ -193,12 +193,17 @@
                 <span class="text-2xl">📸</span>
                 <span class="text-[9px] text-white font-bold leading-none mt-1">保存</span>
             </button>
-            <button onclick="toggleUI()"
-                class="bg-purple-500 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
-                <span id="ui-toggle-icon" class="text-2xl">👀</span>
-                <span class="text-[9px] text-white font-bold leading-none mt-1">ひょうじ</span>
-            </button>
         </div>
+    </div>
+
+    <!-- UI Toggle Button -->
+    <div id="ui-toggle-btn" class="fixed bottom-36 right-4 z-[60] transition-all duration-300">
+        <button onclick="toggleUI()"
+            class="bg-purple-500 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
+            <span id="ui-toggle-icon" class="text-2xl">👀</span>
+            <span class="text-[9px] text-white font-bold leading-none mt-1">ひょうじ</span>
+        </button>
+    </div>
     </div>
 
     <!-- UI: ツールバー -->
@@ -648,6 +653,15 @@
         }, { passive: false });
         window.addEventListener('touchend', () => { isDrawing = false; });
 
+        // Prevent default touch behavior (scrolling) ONLY if not on a scrollable element
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.scroll-x')) {
+                // Allow default scrolling for toolbars
+                return;
+            }
+            if (e.cancelable) e.preventDefault();
+        }, { passive: false });
+
         let isUIHidden = false;
         function toggleUI() {
             initAudio(); playActionSound();
@@ -655,14 +669,19 @@
             const tools = document.getElementById('toolbar-tools');
             const colors = document.getElementById('toolbar-colors');
             const icon = document.getElementById('ui-toggle-icon');
+            const btnContainer = document.getElementById('ui-toggle-btn');
 
             if (isUIHidden) {
                 tools.classList.add('translate-y-[200%]');
                 colors.classList.add('translate-y-[200%]');
+                btnContainer.classList.remove('bottom-36');
+                btnContainer.classList.add('bottom-4');
                 icon.innerText = '🙈';
             } else {
                 tools.classList.remove('translate-y-[200%]');
                 colors.classList.remove('translate-y-[200%]');
+                btnContainer.classList.add('bottom-36');
+                btnContainer.classList.remove('bottom-4');
                 icon.innerText = '👀';
             }
         }
