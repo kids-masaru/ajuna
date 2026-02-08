@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>プリンセス・ピアノ（パーフェクト）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background-color: #fff1f2; /* Rose-50 */
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s;
+            position: relative; /* 戻るボタンの配置基準 */
+        }
+
+        /* 戻るボタン（回転時も追従するようにコンテナ内へ） */
+        .home-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 80;
+            background: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 2px solid #fbcfe8;
+            font-size: 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* スタート画面（音出し用・最前面） */
+        #start-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,241,242, 0.98);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- Rotation Logic --- */
+        /* Landscape Wrapper */
+        .force-landscape {
+            width: 100vh !important;
+            height: 100vw !important;
+            transform: rotate(90deg);
+            transform-origin: top left;
+            position: absolute;
+            top: 0;
+            left: 100%;
+        }
+
+        /* Rotation Hint Overlay */
+        #rotate-overlay {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            color: #db2777;
+            z-index: 5000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        @media (orientation: portrait) {
+            #rotate-overlay { display: flex; }
+        }
+
+        .rotate-btn {
+            background: #ec4899;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(236, 72, 153, 0.4);
+            cursor: pointer;
+            font-weight: bold;
+            animation: pulse-btn 2s infinite;
+        }
+        @keyframes pulse-btn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- Header --- */
+        .header {
+            width: 100%;
+            height: 16vh; 
+            min-height: 55px;
+            background: white;
+            border-bottom: 2px solid #fbcfe8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0.5rem 0 3.5rem; /* 左側にホームボタン分の余白 */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 20;
+            gap: 8px;
+        }
+
+        /* Mode Switch */
+        .mode-switch-container {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            background: #f3f4f6;
+            border-radius: 999px;
+            padding: 3px;
+            border: 1px solid #e5e7eb;
+        }
+        .mode-label {
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .mode-label.active {
+            background: white;
+            color: #db2777;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-weight: bold;
+        }
+        .mode-label.active.play-mode {
+            color: #d97706; 
+        }
+
+        /* Song Scroll Area */
+        .song-scroll-wrapper {
+            flex-grow: 1;
+            overflow-x: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        .song-scroll-wrapper::-webkit-scrollbar { display: none; }
+
+        .song-group {
+            display: flex;
+            gap: 0.8rem;
+            padding: 0 1rem;
+            width: max-content;
+        }
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: #fce7f3;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.1s;
+            flex-shrink: 0;
+        }
+        .icon-btn:active { transform: scale(0.9); }
+        
+        .icon-btn.active-song {
+            background: #0ea5e9;
+            color: white;
+            border-color: #0284c7;
+            animation: pulse 1s infinite;
+        }
+        .icon-btn.active-guide {
+            background: #f59e0b;
+            color: white;
+            border-color: #d97706;
+            animation: pulse-orange 1s infinite;
+        }
+
+        /* Instrument Icons */
+        .inst-group {
+            flex-shrink: 0;
+            display: flex;
+            gap: 0.3rem;
+        }
+        .inst-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #f3f4f6;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+        }
+        .inst-btn.active {
+            background: #ec4899;
+            color: white;
+            border-color: #be185d;
+        }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(14, 165, 233, 0); } }
+        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); } }
+
+        /* --- Keyboard Area --- */
+        .piano-container {
+            position: relative;
+            width: 98%;
+            height: 82vh; 
+            margin-top: 0.5vh;
+            background: #fff;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            overflow: hidden;
+        }
+
+        .white-key {
+            flex: 1;
+            height: 100%;
+            background: linear-gradient(to bottom, #fff 0%, #f9fafb 100%);
+            border: 1px solid #e5e7eb;
+            border-bottom: 8px solid #d1d5db;
+            border-radius: 0 0 8px 8px;
+            position: relative;
+            z-index: 1;
+            margin: 0 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 20px;
+            color: #db2777;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .white-key:active, .white-key.active {
+            border-bottom-width: 2px;
+            transform: translateY(6px);
+            background: #fce7f3;
+        }
+        .white-key.guide-target {
+            background: #fef08a !important;
+            box-shadow: inset 0 -20px 40px #facc15;
+        }
+        .white-key.guide-target::after {
+            content: '👇';
+            position: absolute;
+            bottom: 60px;
+            font-size: 2rem;
+            animation: bounce 0.8s infinite;
+        }
+
+        .black-key {
+            position: absolute;
+            top: 0;
+            height: 60%;
+            background: linear-gradient(to bottom, #4b5563 0%, #1f2937 100%);
+            border-bottom: 8px solid #111;
+            border-radius: 0 0 6px 6px;
+            z-index: 10;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+        .black-key:active, .black-key.active {
+            border-bottom-width: 3px;
+            transform: translateY(5px);
+            background: #374151;
+        }
+        .black-key.guide-target {
+            background: #fbbf24 !important;
+            border-bottom-color: #b45309;
+        }
+        .black-key.guide-target::after {
+            content: '👇';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            animation: bounce 0.8s infinite;
+        }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-10px) translateX(0); } }
+        .black-key.guide-target::after { animation: bounce-bk 0.8s infinite; }
+        @keyframes bounce-bk { 0%, 100% { transform: translateY(0) translateX(-50%); } 50% { transform: translateY(-10px) translateX(-50%); } }
+
+        /* Sparkles */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            font-size: 3rem;
+            z-index: 50;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 1; }
+            100% { transform: translateY(-150px) scale(1.5); opacity: 0; }
+        }
+
+        /* Success Message */
+        #bravo-msg {
+            position: absolute;
+            top: 60%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8rem;
+            z-index: 60;
+            pointer-events: none;
+            display: none;
+            filter: drop-shadow(0 0 10px white);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0); }
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-overlay">
+        <div class="text-6xl mb-4">🎹</div>
+        <button id="start-btn" class="bg-pink-500 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-lg active:scale-95 transition-transform">
+            あそぶ！
+        </button>
+    </div>
+
+    <div id="rotate-overlay">
+        <div class="text-6xl mb-4">📱💫</div>
+        <p class="text-2xl font-bold mb-4">くるっとまわしてね</p>
+        <p class="text-lg text-gray-500 mb-8">もし画面が変わらないときは...</p>
+        <button class="rotate-btn" onclick="forceLandscape()">
+            ボタンで よこにする 🔄
+        </button>
+    </div>
+
+    <div id="app-container">
+        
+        <a href="index.html" class="home-btn">🏠</a>
+
+        <header class="header">
+            <div class="mode-switch-container">
+                <div id="mode-auto" class="mode-label active" onclick="setMode('auto')">👂 きく</div>
+                <div id="mode-guide" class="mode-label" onclick="setMode('guide')">🎹 ひく</div>
+            </div>
+
+            <div class="song-scroll-wrapper">
+                <div class="song-group">
+                    <button class="icon-btn" onclick="selectSong('twinkle')" title="きらきらぼし">🌟</button>
+                    <button class="icon-btn" onclick="selectSong('tulip')" title="チューリップ">🌷</button>
+                    <button class="icon-btn" onclick="selectSong('kaeru')" title="かえるのうた">🐸</button>
+                    <button class="icon-btn" onclick="selectSong('choucho')" title="ちょうちょ">🦋</button>
+                    <button class="icon-btn" onclick="selectSong('atama')" title="あたま・かた・ひざ・ポン">💪</button>
+                    <button class="icon-btn" onclick="selectSong('bunbun')" title="ぶんぶんぶん">🐝</button>
+                </div>
+            </div>
+
+            <div class="inst-group">
+                <button class="inst-btn active" onclick="setInstrument('piano', this)">🎹</button>
+                <button class="inst-btn" onclick="setInstrument('bell', this)">🔔</button>
+                <button class="inst-btn" onclick="setInstrument('synth', this)">🎺</button>
+            </div>
+        </header>
+
+        <div class="piano-container" id="piano">
+            <div id="bravo-msg">💮</div>
+        </div>
+
+    </div>
+
+    <script>
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        // --- Start Button Logic ---
+        document.getElementById('start-btn').addEventListener('click', () => {
+            initAudio();
+            // Hide start overlay
+            document.getElementById('start-overlay').style.display = 'none';
+        });
+
+        // --- Forced Landscape Logic ---
+        function forceLandscape() {
+            // Hide the overlay
+            document.getElementById('rotate-overlay').style.display = 'none';
+            // Apply rotation to the main container
+            document.getElementById('app-container').classList.add('force-landscape');
+        }
+
+        // --- State ---
+        let currentInstrument = 'piano';
+        let currentMode = 'auto'; 
+        let currentSessionId = 0; 
+        
+        let guideNoteIndex = 0;
+        let guideSongData = [];
+
+        // Note Data
+        const freqs = {
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63,
+            'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00,
+            'A#4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25
+        };
+
+        const whiteKeysList = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'];
+        const blackKeysMap = [
+            { note: 'C#4', pos: 1 }, { note: 'D#4', pos: 2 },
+            { note: 'F#4', pos: 4 }, { note: 'G#4', pos: 5 }, { note: 'A#4', pos: 6 },
+            { note: 'C#5', pos: 8 }, { note: 'D#5', pos: 9 }
+        ];
+
+        // Melodies
+        const songs = {
+            'twinkle': [
+                {n:'C4',d:400}, {n:'C4',d:400}, {n:'G4',d:400}, {n:'G4',d:400}, {n:'A4',d:400}, {n:'A4',d:400}, {n:'G4',d:800},
+                {n:'F4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'D4',d:400}, {n:'C4',d:800}
+            ],
+            'tulip': [
+                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:800},
+                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:800},
+                {n:'G4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:400},
+                {n:'D4',d:400}, {n:'E4',d:400}, {n:'D4',d:800}
+            ],
+            'kaeru': [
+                {n:'C4',d:300}, {n:'D4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'D4',d:300}, {n:'C4',d:600},
+                {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:300}, {n:'A4',d:300}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:600},
+                {n:'C4',d:600}
+            ],
+            'choucho': [
+                {n:'G4',d:400}, {n:'E4',d:400}, {n:'E4',d:800},
+                {n:'F4',d:400}, {n:'D4',d:400}, {n:'D4',d:800},
+                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:400}, {n:'F4',d:400},
+                {n:'G4',d:400}, {n:'G4',d:400}, {n:'G4',d:800}
+            ],
+            'atama': [
+                {n:'G4',d:400}, {n:'A4',d:400}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
+                {n:'D4',d:300}, {n:'E4',d:300}, {n:'F4',d:600},
+                {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
+                {n:'G4',d:400}, {n:'A4',d:400}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
+                {n:'D4',d:600}, {n:'G4',d:600}, {n:'E4',d:400}, {n:'C4',d:400}
+            ],
+            'bunbun': [
+                {n:'G4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:800},
+                {n:'D4',d:200}, {n:'D4',d:200}, {n:'D4',d:200}, {n:'D4',d:200}, {n:'E4',d:200}, {n:'F4',d:400},
+                {n:'E4',d:200}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'F4',d:200}, {n:'G4',d:400},
+                {n:'G4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:800}
+            ]
+        };
+
+        const keyElements = {};
+        const pianoContainer = document.getElementById('piano');
+
+        // --- Setup ---
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function buildKeys() {
+            whiteKeysList.forEach((note) => {
+                const key = document.createElement('div');
+                key.className = 'white-key';
+                key.textContent = noteToLabel(note);
+                key.dataset.note = note;
+                keyElements[note] = key;
+                addInteraction(key, note);
+                pianoContainer.appendChild(key);
+            });
+
+            const unitPct = 100 / whiteKeysList.length;
+            const widthPct = unitPct * 0.70;
+            
+            blackKeysMap.forEach((bk) => {
+                const key = document.createElement('div');
+                key.className = 'black-key';
+                const leftPos = (bk.pos * unitPct) - (widthPct / 2);
+                key.style.left = leftPos + '%';
+                key.style.width = widthPct + '%';
+                key.dataset.note = bk.note;
+                keyElements[bk.note] = key;
+                addInteraction(key, bk.note);
+                pianoContainer.appendChild(key);
+            });
+        }
+        
+        function noteToLabel(note) {
+            return note.replace(/[0-9]/, '')
+                .replace('C', 'ド').replace('D', 'レ').replace('E', 'ミ')
+                .replace('F', 'ファ').replace('G', 'ソ').replace('A', 'ラ').replace('B', 'シ');
+        }
+
+        buildKeys();
+
+        // --- Controls ---
+        function setMode(mode) {
+            stopAll();
+            currentMode = mode;
+
+            document.getElementById('mode-auto').classList.toggle('active', mode === 'auto');
+            document.getElementById('mode-guide').classList.toggle('active', mode === 'guide');
+            document.getElementById('mode-guide').classList.toggle('play-mode', mode === 'guide');
+            
+            document.querySelectorAll('.icon-btn').forEach(b => {
+                b.classList.remove('active-song');
+                b.classList.remove('active-guide');
+            });
+        }
+
+        function setInstrument(inst, btn) {
+            currentInstrument = inst;
+            document.querySelectorAll('.inst-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            initAudio();
+        }
+
+        function selectSong(songId) {
+            initAudio();
+            stopAll(); 
+            currentSessionId++; 
+            
+            document.querySelectorAll('.icon-btn').forEach(b => {
+                b.classList.remove('active-song');
+                b.classList.remove('active-guide');
+            });
+            
+            const btn = document.querySelector(`button[onclick="selectSong('${songId}')"]`);
+
+            if (currentMode === 'auto') {
+                btn.classList.add('active-song');
+                playSongLoop(songId, currentSessionId);
+            } else {
+                btn.classList.add('active-guide');
+                startGuide(songId);
+            }
+        }
+
+        function stopAll() {
+            currentSessionId++; 
+            resetGuide();
+            document.querySelectorAll('.active').forEach(k => k.classList.remove('active'));
+            document.querySelector('#bravo-msg').style.display = 'none';
+        }
+
+
+        // --- Auto Play ---
+        async function playSongLoop(songId, sessionId) {
+            const melody = songs[songId];
+            
+            for (let noteData of melody) {
+                if (sessionId !== currentSessionId) return;
+
+                const key = keyElements[noteData.n];
+                if(key) {
+                    key.classList.add('active');
+                    playTone(noteData.n);
+                }
+                
+                await new Promise(r => setTimeout(r, noteData.d));
+                
+                if(key) key.classList.remove('active');
+                await new Promise(r => setTimeout(r, 50));
+            }
+
+            if (sessionId === currentSessionId) {
+                document.querySelector('.active-song')?.classList.remove('active-song');
+            }
+        }
+
+        // --- Guide Mode ---
+        function startGuide(songId) {
+            guideSongData = songs[songId];
+            guideNoteIndex = 0;
+            highlightNextGuideNote();
+        }
+
+        function resetGuide() {
+            guideSongData = [];
+            guideNoteIndex = 0;
+            document.querySelectorAll('.guide-target').forEach(k => k.classList.remove('guide-target'));
+        }
+
+        function highlightNextGuideNote() {
+            document.querySelectorAll('.guide-target').forEach(k => k.classList.remove('guide-target'));
+            
+            if (guideNoteIndex >= guideSongData.length) {
+                showBravo();
+                document.querySelector('.active-guide')?.classList.remove('active-guide');
+                return;
+            }
+
+            const nextNote = guideSongData[guideNoteIndex].n;
+            const key = keyElements[nextNote];
+            if(key) key.classList.add('guide-target');
+        }
+
+        function handleGuideInput(note) {
+            if (guideSongData.length > 0) {
+                const targetNote = guideSongData[guideNoteIndex].n;
+                if (note === targetNote) {
+                    guideNoteIndex++;
+                    highlightNextGuideNote();
+                }
+            }
+        }
+
+        function showBravo() {
+            const msg = document.getElementById('bravo-msg');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                playTone('C5'); 
+                setTimeout(() => playTone('E5'), 100);
+                setTimeout(() => playTone('G5'), 200);
+                setTimeout(() => playTone('C5'), 300);
+            }, 100);
+            
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 2500);
+        }
+
+        // --- Audio & Visuals ---
+        function playTone(note) {
+            initAudio();
+            const freq = freqs[note];
+            const now = audioCtx.currentTime;
+            spawnSparkle(keyElements[note]);
+
+            if (currentInstrument === 'piano') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.5, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 1.2);
+            } else if (currentInstrument === 'bell') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq * 2, now);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.3, now + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 2);
+            } else if (currentInstrument === 'synth') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, now);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.2);
+                gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 0.4);
+            }
+        }
+
+        function spawnSparkle(keyEl) {
+            if(!keyEl) return;
+            const rect = keyEl.getBoundingClientRect();
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const icons = ['💖', '✨', '🌸', '🎶', '⭐'];
+            p.textContent = icons[Math.floor(Math.random()*icons.length)];
+            
+            const left = rect.left + (rect.width / 2) - 20;
+            const top = rect.top + (rect.height / 2);
+            
+            p.style.left = left + 'px';
+            p.style.top = top + 'px';
+            
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+        }
+
+        // --- Interaction ---
+        function addInteraction(el, note) {
+            const hit = (e) => {
+                if (currentMode === 'auto' && document.querySelector('.active-song')) return;
+                e.preventDefault();
+                el.classList.add('active');
+                playTone(note);
+                if (currentMode === 'guide') handleGuideInput(note);
+            };
+            const release = (e) => {
+                e.preventDefault();
+                el.classList.remove('active');
+            };
+
+            el.addEventListener('mousedown', hit);
+            el.addEventListener('mouseup', release);
+            el.addEventListener('mouseleave', release);
+            // Passive false for smoother touch
+            el.addEventListener('touchstart', hit, {passive: false});
+            el.addEventListener('touchend', release);
+        }
+
+        document.body.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    </script>
+</body>
+</html>

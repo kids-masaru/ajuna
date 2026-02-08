@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>わくわく かるた</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: none;
+            background-color: #fff7ed;
+            user-select: none;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* スタート画面 */
+        #startScreen {
+            position: fixed;
+            inset: 0;
+            background: #fff7ed;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .start-btn {
+            background-color: #f97316;
+            color: white;
+            font-size: 2.2rem;
+            font-weight: bold;
+            padding: 24px 0;
+            width: 280px;
+            border-radius: 999px;
+            box-shadow: 0 8px 0 #c2410c;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #c2410c;
+        }
+
+        /* ヘッダー */
+        .header-area {
+            height: 30px;
+            background: #ffedd5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid #fb923c;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            color: #9a3412;
+        }
+
+        /* 読み札エリア */
+        .reader-area {
+            height: 110px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 3px solid #fb923c;
+            flex-shrink: 0;
+            padding: 5px;
+        }
+
+        .reader-text {
+            font-size: 1.1rem;
+            color: #ea580c;
+            font-weight: bold;
+            line-height: 1.3;
+            text-align: center;
+            height: 3.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 15px;
+        }
+
+        .replay-btn {
+            background: #fbbf24;
+            color: #78350f;
+            padding: 6px 24px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 0 #d97706;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* カードグリッド */
+        .grid-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            overflow: hidden;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 360px;
+            max-height: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 2px solid #fed7aa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            aspect-ratio: 1 / 1;
+        }
+
+        .card.correct {
+            border-color: #22c55e;
+            background: #dcfce7;
+            z-index: 10;
+            transform: scale(1.05);
+        }
+
+        .card.taken {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .card.wrong-shake {
+            animation: shake 0.3s;
+            border-color: #ef4444;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
+        }
+
+        .card-char {
+            font-size: 1.1rem;
+            color: #ea580c;
+            position: absolute;
+            top: 3px;
+            right: 7px;
+            font-weight: bold;
+        }
+
+        .card-img {
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+
+        .card-word {
+            font-size: 0.6rem;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        /* オーバーレイ */
+        .full-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.92);
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Home Button */
+        .home-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 999;
+            background: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: 2px solid #fb923c;
+            font-size: 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html" class="home-btn">🏠</a>
+
+    <div id="startScreen">
+        <div class="text-7xl mb-12">🐶🍎🚓</div>
+        <button class="start-btn" onclick="gameStart()">はじめる！</button>
+    </div>
+
+    <div id="endScreen" class="full-overlay" style="display: none;">
+        <div class="text-7xl mb-6">🎉🎊</div>
+        <h1 class="text-4xl text-orange-600 font-bold mb-8">おしまい！</h1>
+        <button onclick="location.reload()"
+            class="bg-green-500 text-white text-2xl font-bold py-6 px-12 rounded-full shadow-[0_8px_0_#15803d]">もういっかい</button>
+    </div>
+
+    <div class="header-area">わくわく かるた</div>
+
+    <div class="reader-area">
+        <div id="displayText" class="reader-text">...</div>
+        <button id="replayBtn" class="replay-btn" style="visibility: hidden;" onclick="repeatText()">🔊 もういちど
+            きく</button>
+    </div>
+
+    <div class="grid-container">
+        <div id="cardGrid" class="card-grid"></div>
+    </div>
+
+    <div id="nextOverlay" class="full-overlay" style="display: none;">
+        <div class="text-5xl mb-8 text-green-500 font-bold">せいかい！⭕</div>
+        <button class="bg-green-500 text-white text-2xl font-bold py-5 px-12 rounded-full shadow-[0_6px_0_#15803d]"
+            onclick="showNextPhrase()">つぎへ ▶</button>
+    </div>
+
+    <script>
+        const masterData = [
+            // --- どうぶつ ---
+            { char: 'い', word: 'いぬ', emoji: '🐶', phrases: ['いぬが ワンワン おにわで かけっこ', 'いちばん げんきな しろい いぬ', 'いいこね いいこね かわいい いぬくん', 'いぬの おさんぽ ぱぱと いっしょ', 'いつでも いっしょ だいすきな いぬ'] },
+            { char: 'う', word: 'うさぎ', emoji: '🐰', phrases: ['うさぎが ぴょんぴょん おやまを はねる', 'うれしいな おみみが ながい うさぎさん', 'うさぎが もぐもぐ にんじん たべる', 'うしろを ふりむく しろい うさぎ', 'うたを うたうよ かわいい うさぎ'] },
+            { char: 'か', word: 'かえる', emoji: '🐸', phrases: ['かえるが けろけろ あめふり うれしい', 'かえるの おやこが はっぱで おひるね', 'かえるが ぴょんと おみずへ ダイブ', 'かわに いるよ みどりの かえる', 'かぜに ふかれて けろけろ かえる'] },
+            { char: 'く', word: 'くま', emoji: '🐻', phrases: ['くまさん のっしのっし やまみち おさんぽ', 'くまの おやこが はちみつ ペロリ', 'くまさんが おやまの うえで おひるね', 'くるりと まわった おおきな くま', 'くまさん ありがとう もりの おともだち'] },
+            { char: 'こ', word: 'こあら', emoji: '🐨', phrases: ['こあらが きのうえ すやすや おやすみ', 'こあらの あかちゃん おんぶで おひるね', 'こまった かおも かわいい こあら', 'こんにちは ユーカリ たべる こあらさん', 'ころんと まるまった かわいい こあら'] },
+            { char: 'さ', word: 'さる', emoji: '🐵', phrases: ['さるが きのうえ うききと わらう', 'さるが だいすき きいろい ばなな', 'さかだち とくいな おさるさん', 'さあ みんなで さるの まね', 'さんぽに いこうよ おさるさん'] },
+            { char: 'ぱ', word: 'ぱんだ', emoji: '🐼', phrases: ['ぱんだが もぐもぐ 笹を たべる', 'ぱんだの おめめは くろまるだ', 'ぱんだが ころんと でんぐり返し', 'ぱんだの あかちゃん かわいいね', 'ぱーっと あかるい ぱんだの おかお'] },
+            { char: 'ら', word: 'らいおん', emoji: '🦁', phrases: ['らいおん がおーと おたけび あげる', 'らいおん たてがみ かっこいい', 'らいおん おやまの 王様だ', 'らいおん おひるね おおきな あくび', 'らいおん 走れば いちばん はやい'] },
+            { char: 'ぞ', word: 'ぞう', emoji: '🐘', phrases: ['ぞうさん おはなが とっても ながい', 'ぞうさんが おみずを パシャパシャ かける', 'ぞうさんの おみみは うちわ みたい', 'ぞうさん おっしり ふりふり あるく', 'ぞうさん おおきな おめめが かわいい'] },
+            { char: 'き', word: 'きりん', emoji: '🦒', phrases: ['きりんさん おくびが とっても ながい', 'きりんが むしゃむしゃ 葉っぱを たべる', 'きいろに ちゃいろの きりんさん', 'きらきら おめめの きりんさん', 'きりんが のっぽで こんにちは'] },
+            { char: 'ぺ', word: 'ぺんぎん', emoji: '🐧', phrases: ['ぺんぎん よちよち こおりの うえ', 'ぺんぎん スイスイ およぐの とくい', 'ぺんぎん おなかが まっしろだ', 'ぺんぎん おやこで ぎゅっと する', 'ぺたぺた あるくよ ぺんぎんさん'] },
+            { char: 'と', word: 'とら', emoji: '🐯', phrases: ['とらさん しましま つよいぞ', 'とらが がおーと 森の なか', 'とらの おめめが ぴかっと ひかる', 'とらさん はしれば かぜの よう', 'とらさん こわいぞ ガブリと するぞ'] },
+            { char: 'う', word: 'うま', emoji: '🐴', phrases: ['うまが パカパカ はしるよ はやい', 'うまに のって おさんぽ いこう', 'うまが ヒヒーンと ないている', 'うまの たてがみ かっこいい', 'うまさん にんじん だいすきだ'] },
+            { char: 'う', word: 'うし', emoji: '🐮', phrases: ['うしさん モーモー おちちを だすよ', 'うしが のんびり くさを たべる', 'うしの もようは しろくろだ', 'うしさん のっそり あるいている', 'うしさんが こんにちは モーモーモー'] },
+            { char: 'に', word: 'にわとり', emoji: '🐔', phrases: ['にわとり コケコッコー 朝が きた', 'にわとり たまごを うんだよ ぽん', 'にわとり とさかが まっかっか', 'にわとり はねを パタパタ する', 'にわとり みんなで つんつん つつく'] },
+            { char: 'ね', word: 'ねこ', emoji: '🐱', phrases: ['ねこが にゃーにゃー こたつで まるい', 'ねこが しっぽを ふりふり あそぶ', 'ねんねを している かわいい ねこ', 'ねこが おそとに でたがっている', 'ねこさん おさかな じっと みている'] },
+
+            // --- のりもの ---
+            { char: 'し', word: 'しんかんせん', emoji: '🚅', phrases: ['しんかんせん ビューンと はやいぞ', 'しろい からだの しんかんせん', 'しゅっぱつ しんこう しんかんせん', 'しゅーっと はしるよ かっこいいな', 'しあわせ はこぶよ しんかんせん'] },
+            { char: 'ぱ', word: 'ぱとかー', emoji: '🚓', phrases: ['ぱとかー ぴーぽー まちを まもる', 'ぱとかー ライトが ぴかぴか ひかる', 'ぱとかー はしるぞ どこまでも', 'ぱとかー かっこいい みんなの ヒーロー', 'ぱっと 出動 ぱとかーだ'] },
+            { char: 'き', word: 'きゅうきゅうしゃ', emoji: '🚑', phrases: ['きゅうきゅうしゃ ぴーぽー 急いで いこう', 'きゅうきゅうしゃ 白い からだに 赤い 線', 'きゅうきゅうしゃ びょういんまで おねがい', 'きんきゅう しゅつどう きゅうきゅうしゃ', 'きゅうきゅうしゃ みんなが みちを ゆずる'] },
+            { char: 'し', word: 'しょうぼうしゃ', emoji: '🚒', phrases: ['しょうぼうしゃ ウーカンカン 火を 消すぞ', 'しょうぼうしゃ 赤い 体が かっこいい', 'しょうぼうしゃ はしごを ぐんぐん のばす', 'しゅつどうだ しょうぼうしゃが いくぞ', 'しゅーっと おみずだ しょうぼうしゃ'] },
+            { char: 'で', word: 'でんしゃ', emoji: '🚃', phrases: ['でんしゃ ガタンゴトン 線路を いく', 'でんしゃに のって おでかけ しよう', 'でんしゃが 駅に はいってきた', 'でんしゃの 窓から 手を ふろう', 'でんしゃが 鉄橋 わたるよ ゴー'] },
+            { char: 'ば', word: 'ばす', emoji: '🚌', phrases: ['ばすが ぶーぶー バス停に きた', 'ばすに のってみんなで 出発', 'ばすの 運転手さん こんにちは', 'ばすの ボタンを ぴんぽん おそう', 'ばすが まちじゅう はしるよ ぶー'] },
+            { char: 'た', word: 'たくしー', emoji: '🚕', phrases: ['たくしー お客さんを のせて はしる', 'たくしー 黄色い 体が 目印', 'たくしー どこでも つれてって', 'たくしー 窓が 自動で ひらく', 'たくしー おねがいします こんにちは'] },
+            { char: 'と', word: 'とらっく', emoji: '🚚', phrases: ['とらっく 荷物を たくさん はこぶ', 'とらっく おおきな タイヤが まわる', 'とらっく ブーンと 力持ち', 'とらっく どこまで はこぶのかな', 'とらっく かっこいい はたらく 車'] },
+            { char: 'ふ', word: 'ふね', emoji: '🚢', phrases: ['ふねが ぷーっと 海を いく', 'ふねの 窓から 魚が みえる', 'ふねに ゆられて ゆらゆらり', 'ふねが 港に かえってきた', 'ふねの 煙突 けむりが もくもく'] },
+            { char: 'ひ', word: 'ひこうき', emoji: '✈️', phrases: ['ひこうき おそらを きーんと とぶよ', 'ひろい おそらを ひこうきが いく', 'ひかる つばさの ひこうきだ', 'ひこうき ぐんぐん くもを ぬける', 'ひかりの なかを ひこうきが 飛ぶ'] },
+            { char: 'ろ', word: 'ろけっと', emoji: '🚀', phrases: ['ろけっと はっしゃ 宇宙へ ゴー', 'ろけっと びゅーんと 雲を ぬける', 'ろけっと どこまで いくのかな', 'ろけっと キラキラ 星の そば', 'ろけっと かっこいい 宇宙船'] },
+            { char: 'じ', word: 'じてんしゃ', emoji: '🚲', phrases: ['じてんしゃ チリンチリン 風を きる', 'じてんしゃ ペダルを ぐんぐん こごう', 'じてんしゃ ヘルメット かぶって 出発', 'じぶんで こげるよ じてんしゃだ', 'じゅんびは OK じてんしゃで いこう'] },
+
+            // --- やさい ---
+            { char: 'と', word: 'とまと', emoji: '🍅', phrases: ['とまとが ころんと まっかっか', 'とまとを たべて げんき いっぱい', 'とっても あかいよ まるい とまと', 'とまとが ならんだ おさらこえ', 'とんとん お料理 とまとの サラダ'] },
+            { char: 'に', word: 'にんじん', emoji: '🥕', phrases: ['にんじん ぽりぽり うさぎが たべる', 'にんじん たべたら おめめが きらり', 'にっこり わらった にんじんさん', 'にんじん だいすき 栄養 いっぱい', 'にんじん おなべで ぐつぐつ によう'] },
+            { char: 'な', word: 'なす', emoji: '🍆', phrases: ['なすが つやつや 紫色', 'なすの お料理 おいしいな', 'なすびが 畑で なっている', 'なすの お山が できたかな', 'なすを たべて にっこにこ'] },
+            { char: 'き', word: 'きゅうり', emoji: '🥒', phrases: ['きゅうり ぽりぽり 緑色', 'きゅうり とげとげ 痛くない', 'きゅうりが シャキシャキ サラダだよ', 'きんきん 冷やした きゅうりさん', 'きゅうりを たべて げんきな 子'] },
+            { char: 'と', word: 'とうもろこし', emoji: '🌽', phrases: ['とうもろこし つぶつぶ 黄色いな', 'とうもろこし おひげが たくさんだ', 'とうもろこし 焼いたら いい 匂い', 'とるとる 収穫 とうもろこし', 'とっても あまいよ とうもろこし'] },
+            { char: 'か', word: 'かぼちゃ', emoji: '🎃', phrases: ['かぼちゃ ごろごろ 重たいな', 'かぼちゃを たべて 風邪 ひかない', 'かたい お肌の かぼちゃさん', 'からだに いいよ かぼちゃだよ', 'かぼちゃの スープが あったかい'] },
+            { char: 'さ', word: 'さつまいも', emoji: '🍠', phrases: ['さつまいも ほかほか やきいもだ', 'さつまいも 土の なかから こんばんは', 'さあ 掘るぞ おっきな さつまいも', 'さつまいも 甘くて ほっぺが おちる', 'さつまいも むらさきいろの 皮だよ'] },
+            { char: 'ぴ', word: 'ぴーまん', emoji: '🫑', phrases: ['ぴーまん 緑で 元気な 野菜', 'ぴーまん たべたら ヒーローだ', 'ぴかぴか 光る ぴーまんさん', 'ぴーまん 中は 空っぽだ', 'ぴーっと 笛吹く ぴーまんさん'] },
+            { char: 'ぶ', word: 'ぶろっこりー', emoji: '🥦', phrases: ['ぶろっこりー もこもこ 木の みたい', 'ぶろっこりー マヨネーズ つけて たべよう', 'ぶんぶん 栄養 ぶろっこりー', 'ぶろっこりー 緑の 小さな 森', 'ぶーんと 元気だ ぶろっこりー'] },
+            { char: 'た', word: 'たまねぎ', emoji: '🧅', phrases: ['たまねぎ 皮を むいたら まっしろ', 'たまねぎ 切ったら 涙が 出ちゃう', 'たくさん 入った たまねぎ スープ', 'たまねぎ まあるい お月様', 'たまねぎ 甘いよ 焼いたらね'] },
+            { char: 'じ', word: 'じゃがいも', emoji: '🥔', phrases: ['じゃがいも ゴロゴロ 土の なか', 'じゃがいも ほくほく ポテトサラダ', 'じっくり 煮ようね じゃがいもを', 'じゃがいも お顔が たくさんだ', 'じゅわっと 揚げたよ フライドポテト'] },
+
+            // --- くだもの ---
+            { char: 'り', word: 'りんご', emoji: '🍎', phrases: ['りんごが まっかっか まあるいな', 'りんごを たべて ほっぺが おちる', 'りんごの 皮を くるくる むこう', 'りっぱな りんごが きに なっている', 'りぼんを つけた りんごちゃん'] },
+            { char: 'ば', word: 'ばなな', emoji: '🍌', phrases: ['ばななが きいろで 三日月みたい', 'ばななを むいたら 白い 実', 'ばななを たべて げんきに 遊ぼう', 'ばななを むしむし お猿さん', 'ばなな おやつに もっていこう'] },
+            { char: 'ぶ', word: 'ぶどう', emoji: '🍇', phrases: ['ぶどうが 紫 つぶつぶだ', 'ぶどうを ひとつつ ぱくりと たべる', 'ぶんぶん ぶどうが たくさんだ', 'ぶどうの 房が 重たいな', 'ぶるーべりー じゃないよ ぶどうだよ'] },
+            { char: 'い', word: 'いちご', emoji: '🍓', phrases: ['いちごが まっかで 甘いな', 'いちごの つぶつぶ 種が いっぱい', 'いちごが 乗ったよ ケーキの 上', 'いちばんに たべたい いちごさん', 'いつも 人気の いちごだよ'] },
+            { char: 'も', word: 'もも', emoji: '🍑', phrases: ['ももが ぴんくで ふわふわだ', 'ももを むいたら ジュースが でるよ', 'ももさん おしり みたいだね', 'もりもり たべよう 甘い もも', 'ももが どんぶらこ 川から きた'] },
+            { char: 'め', word: 'めろん', emoji: '🍈', phrases: ['めろんが あみあみ かっこいい', 'めろんを たべたら 王様 気分', 'めずらしい 野菜の 王様 めろん', 'めろんの 香りが 甘いな', 'めいっぱいたべよう 緑の めろん'] },
+            { char: 'す', word: 'すいか', emoji: '🍉', phrases: ['すいかが しましま 緑と 黒', 'すいか 割ったら 赤い 実', 'すいかを たべて 夏が きた', 'すいかの 種を ぷっぷっぷ', 'すずしい 顔した すいかさん'] },
+            { char: 'み', word: 'みかん', emoji: '🍊', phrases: ['みかんが オレンジ まるいな', 'みかんを むいたら 良い 香り', 'みんなで たべよう こたつで みかん', 'みかんの 粒が たくさんだ', 'みかんを たべて かぜ予防'] },
+            { char: 'ぱ', word: 'ぱいなっぷる', emoji: '🍍', phrases: ['ぱいなっぷる 頭が ツンツン', 'ぱいなっぷる お肌は トゲトゲ', 'ぱきっと 甘いよ ぱいなっぷる', 'ぱいなっぷる 黄色の くだもの', 'ぱーっと 明るい 南の 国'] },
+            { char: 'さ', word: 'さくらんぼ', emoji: '🍒', phrases: ['さくらんぼ ふたつで なかよしだ', 'さくらんぼ 赤い 宝石 みたい', 'さあ どっちを たべようかな', 'さくらんぼ お耳に かけようか', 'さくらんぼ 甘くて 可愛いな'] },
+            { char: 'れ', word: 'れもん', emoji: '🍋', phrases: ['れもんが きいろで すっぱいな', 'れもんを たべたら お顔が くしゅ', 'れもんの ジュースは さっぱりだ', 'れもんが ならんで こんにちは', 'れっつ ごー たべよう れもんさん'] },
+
+            // --- もちもの ---
+            { char: 'か', word: 'かさ', emoji: '☔', phrases: ['かさを さして あめふり おさんぽ', 'かさが ひらいた まあるい おはな', 'かぜに ふかれて かさが パタパタ', 'からふるな かさが ならんでいるよ', 'かっこいい かさを 買ってもらった'] },
+            { char: 'く', word: 'くつ', emoji: '👟', phrases: ['くつを はいて おそとに いこう', 'くつを そろえて こんにちは', 'くるくると まわる くつの ひも', 'くつが ぴかぴか うれしいな', 'くつした はいて くつを はこう'] },
+            { char: 'と', word: 'とけい', emoji: '⏰', phrases: ['とけいが ちくたく お昼の じかん', 'とけいの はりが ぐるぐる まわる', 'とまらない とけい ずっと うごく', 'とけいを みてね あさの あいさつ', 'とけいさん おはよう チクタクチクタク'] },
+            { char: 'ぼ', word: 'ぼうし', emoji: '👒', phrases: ['ぼうしを かぶって おでかけ しよう', 'ぼうしが かぜで とばされた', 'ぼくの ぼうしは かっこいい あお', 'ぼうしを ぬいで ごあいさつ', 'ぼうしを ポンと あたまに のせる'] },
+            { char: 'め', word: 'めがね', emoji: '👓', phrases: ['めがねを かけたら よく みえる', 'めがねが ぴかぴか かっこいい', 'めいたんてい みたいだね めがねさん', 'めがねを ふいて ぴっかぴか', 'めがねの おじさん こんにちは'] },
+            { char: 'か', word: 'かばん', emoji: '🎒', phrases: ['かばんに つめて おでかけ じゅんび', 'かばんを せおって いっしょに いこう', 'からっぽの かばん なにを いれよう', 'かばんの なかに 宝物', 'かわいい かばん お気に入り'] },
+
+            // --- しぜん ---
+            { char: 'た', word: 'たいよう', emoji: '☀️', phrases: ['たいよう ぴかぴか あつい 夏', 'たいようさん おはよう おそらで 笑う', 'たかい おそらに たいようが ある', 'たっぷり ひかりを くれる たいよう', 'たのしく あそぼう たいようの 下'] },
+            { char: 'お', word: 'おつきさま', emoji: '🌙', phrases: ['おつきさま きいろい おふね みたい', 'おつきさまが おそらで 見守る', 'おおきな まるい おつきさま', 'おやすみなさい おつきさまと いっしょ', 'おつきさま 雲に かくれんぼ'] },
+            { char: 'お', word: 'おほしさま', emoji: '⭐', phrases: ['おほしさま きらきら 夜の おそら', 'おねがい ごとする おほしさま', 'おほしさまが ぴかっと ひかった', 'おそら一面 おほしさま', 'おほしさまを つなげて あそぼう'] },
+            { char: 'に', word: 'にじ', emoji: '🌈', phrases: ['にじが おそらに 七色だ', 'にじの 橋を わたって みたい', 'にっこり わらった にじの 橋', 'にじが きれいに でているよ', 'にじを 見つけて うれしいな'] },
+            { char: 'は', word: 'はな', emoji: '🌻', phrases: ['はなが さいたよ きれいな 色', 'はなを みつけて ちょうちょが きた', 'はなびらが ひらひら まっている', 'はなを お水で 育てよう', 'はなやかだね お庭の おはな'] },
+            { char: 'ゆ', word: 'ゆき', emoji: '❄️', phrases: ['ゆきが こんこん お山に つもる', 'ゆきだるま つくって あそぼうよ', 'ゆきが ひらひら おそらから', 'ゆびが つめたい ゆき遊び', 'ゆきが とけたら 春が くる'] },
+
+            // --- むし ---
+            { char: 'か', word: 'かぶとむし', emoji: '🪲', phrases: ['かぶとむし つのが かっこいい', 'かぶとむし 木の うえ 見つけた', 'かぶとむし 力持ちの 王様だ', 'かぶとむし むしゃむしゃ 蜜を 吸う', 'かぶとを かぶった かぶとむし'] },
+            { char: 'ち', word: 'ちょうちょ', emoji: '🦋', phrases: ['ちょうちょ ひらひら 花の うえ', 'ちょうちょの 羽は きれいな 色', 'ちょうちょが どこかへ 飛んでいく', 'ちいさな 羽の ちょうちょさん', 'ちょうちょと いっしょに かくれんぼ'] },
+            { char: 'て', word: 'てんとうむし', emoji: '🐞', phrases: ['てんとうむし お背中に 七つの 点', 'てんとうむしが 枝を のぼる', 'てんとうむし 赤くて 丸い', 'てを ひろげて 飛ぶ てんとうむし', 'てっぺんまで いこう てんとうむし'] },
+            { char: 'は', word: 'はち', emoji: '🐝', phrases: ['はちが ぶんぶん お花に きたよ', 'ハチミツ 作るよ はたらきもの', 'はちの お家は まあるいな', 'はなから はなへ はちが 飛ぶ', 'はちさん こんにちは ブンブンブン'] },
+            { char: 'あ', word: 'あり', emoji: '🐜', phrases: ['ありが 行列 どこまでも', 'ありさんが 荷物を はこんでいる', 'ありさんの お家は 土の なか', 'あっちへ こっちへ ありさんが 行く', 'ありがとうって 言っている ありさん'] },
+            { char: 'く', word: 'くわがた', emoji: '🪵', phrases: ['くわがた はさみが かっこいい', 'くわがた どっしり 木の うえだ', 'くろい 体の くわがたさん', 'くわがた 相撲で はっけよい', 'くわがた 捕まえて うれしいな'] },
+
+            // --- がっき ---
+            { char: 'ぴ', word: 'ぴあの', emoji: '🎹', phrases: ['ぴあのを 弾いたら たのしいな', 'ぴかぴか 光る 黒い ぴあの', 'ぴあのの おとが きこえるよ', 'ぴあので うたを うたおうよ', 'ぴっぴっと 指で ぴあのを 弾く'] },
+            { char: 'た', word: 'たいこ', emoji: '🥁', phrases: ['たいこを 叩けば ドンドンドン', 'たいこの リズムで 踊ろうよ', 'たのしく 叩こう おっきな たいこ', 'たいこが 鳴るよ お祭だ', 'たたくと 響くよ たいこの おと'] },
+            { char: 'ら', word: 'らっぱ', emoji: '🎺', phrases: ['らっぱを 吹いたら ぷっぷぷー', 'らんらん 楽しい らっぱの 音', 'らっぱを 鳴らして 行進だ', 'らいおん みたいだ らっぱの 音', 'らっぱの おもちゃで あそぼうよ'] },
+            { char: 'す', word: 'すず', emoji: '🔔', phrases: ['すずを 振ったら シャカシャカ リン', 'すずの おとが きれいだね', 'すずを ならして 踊ろうよ', 'すずを つけたよ 子猫ちゃん', 'すずしい 音だよ すずの おと'] },
+            { char: 'ふ', word: 'ふえ', emoji: '🪈', phrases: ['ふえを 吹いたら ぴーひゃらら', 'ふえの おとが お空に 響く', 'ふーっと 吹こうよ 小さな ふえ', 'ふえを 鳴らして 合図だよ', 'ふえの リズムで 行進だ'] },
+
+            // --- たべもの ---
+            { char: 'ぱ', word: 'ぱん', emoji: '🍞', phrases: ['ぱんを もぐもぐ 朝ごはん', 'ぱんの 匂いが 香ばしい', 'ぱくぱく たべよう おいしい ぱん', 'ぱんだの お顔の ぱんが ある', 'ぱんを 焼いたら ほかほかだ'] },
+            { char: 'た', word: 'たまご', emoji: '🥚', phrases: ['たまごを 割ったら 黄身が でた', 'たまご 料理は だいすきだ', 'たいせつに もとうね たまごさん', 'たまごが ころんと 転がった', 'たっぷり 食べよう たまごだよ'] },
+            { char: 'お', word: 'おにぎり', emoji: '🍙', phrases: ['おにぎり むしゃむしゃ 梅干しだ', 'おにぎり 握って お弁当', 'おおきな 三角 おにぎりさん', 'おいしいね 鮭の おにぎり', 'おにぎり もって ピクニック'] },
+            { char: 'け', word: 'けーき', emoji: '🍰', phrases: ['けーきに いちごが 乗っている', 'けーきを たべて お祝いだ', 'けーきが 甘くて おいしいな', 'けずった チョコの けーきだよ', 'けーきを みんなで 分けようよ'] },
+            { char: 'あ', word: 'あめ', emoji: '🍬', phrases: ['あめが 甘くて カラフルだ', 'あめを なめたら 元気だね', 'あかい りんごの あめがある', 'あめを お口で ころがそう', 'あめを もらって にっこにこ'] },
+            { char: 'あ', word: 'あいす', emoji: '🍦', phrases: ['あいす 冷たくて おいしいな', 'あいすの コーンが サクサクだ', 'あまい バニラの あいすだよ', 'あつい 夏には あいすだね', 'あいすが とけるよ 急いで たべよう'] }
+        ];
+
+        let currentTarget = null;
+        let currentPhrase = "";
+        let remainingCards = [];
+        let audioCtx = null;
+        const synth = window.speechSynthesis;
+
+        // 音声読み上げ（GitHub互換）
+        function speak(text) {
+            try {
+                synth.cancel();
+                const uttr = new SpeechSynthesisUtterance(text);
+                uttr.lang = 'ja-JP';
+                uttr.rate = 0.95;
+                const voices = synth.getVoices();
+                const jpVoice = voices.find(v => v.lang.includes('ja'));
+                if (jpVoice) uttr.voice = jpVoice;
+                synth.speak(uttr);
+            } catch (e) { console.log(e); }
+        }
+
+        // 効果音
+        function playEffect(type) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = (type === 'correct') ? 'sine' : 'triangle';
+                osc.frequency.setValueAtTime((type === 'correct') ? 880 : 150, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } catch (e) { }
+        }
+
+        function gameStart() {
+            document.getElementById('startScreen').style.display = 'none';
+            // 札を並べるのを優先
+            initGame();
+            // 音声ロック解除とお題出し
+            setTimeout(() => {
+                try {
+                    speak(" ");
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) { }
+                showNextPhrase();
+            }, 150);
+        }
+
+        function initGame() {
+            const grid = document.getElementById('cardGrid');
+            grid.innerHTML = '';
+            // 全79種類からランダムに12枚選ぶ
+            const deck = [...masterData].sort(() => Math.random() - 0.5).slice(0, 12);
+            remainingCards = [...deck];
+
+            const displayCards = [...deck].sort(() => Math.random() - 0.5);
+            displayCards.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = `card-${item.char}-${item.word}`;
+                card.innerHTML = `
+                    <div class="card-char">${item.char}</div>
+                    <div class="card-img">${item.emoji}</div>
+                    <div class="card-word">${item.word}</div>
+                `;
+                card.onclick = () => checkCard(item);
+                grid.appendChild(card);
+            });
+        }
+
+        function showNextPhrase() {
+            document.getElementById('nextOverlay').style.display = 'none';
+            document.getElementById('replayBtn').style.visibility = 'hidden';
+
+            if (remainingCards.length === 0) {
+                document.getElementById('endScreen').style.display = 'flex';
+                return;
+            }
+
+            currentTarget = remainingCards[Math.floor(Math.random() * remainingCards.length)];
+            currentPhrase = currentTarget.phrases[Math.floor(Math.random() * currentTarget.phrases.length)];
+
+            document.getElementById('displayText').textContent = currentPhrase;
+            speak(currentPhrase);
+            document.getElementById('replayBtn').style.visibility = 'visible';
+        }
+
+        function checkCard(item) {
+            if (!currentTarget) return;
+            const card = document.getElementById(`card-${item.char}-${item.word}`);
+            // 文字と単語の両方でチェック
+            if (item.word === currentTarget.word) {
+                playEffect('correct');
+                card.classList.add('correct');
+                remainingCards = remainingCards.filter(c => c.word !== currentTarget.word);
+                currentTarget = null;
+                setTimeout(() => {
+                    card.classList.add('taken');
+                    document.getElementById('nextOverlay').style.display = 'flex';
+                }, 400);
+            } else {
+                playEffect('wrong');
+                card.classList.add('wrong-shake');
+                setTimeout(() => card.classList.remove('wrong-shake'), 300);
+            }
+        }
+
+        function repeatText() { if (currentPhrase) speak(currentPhrase); }
+        window.onload = () => { synth.getVoices(); };
+    </script>
+</body>
+
+</html>

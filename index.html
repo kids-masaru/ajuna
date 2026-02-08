@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fff1f2">
+    <meta name="apple-mobile-web-app-title" content="あじゅなの">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <title>あじゅなのげーむ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #fff1f2;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .game-card {
+            transition: all 0.2s;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+        }
+        .game-card:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .title-anim {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <div class="text-center mb-8 title-anim">
+        <h1 class="text-4xl text-rose-500 font-bold drop-shadow-sm">
+            🎮 げーむのおへや
+        </h1>
+    </div>
+
+    <div class="w-full max-w-md space-y-5 pb-10">
+
+        <a href="oekaki.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-pink-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div class="bg-pink-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-pink-200 flex-shrink-0">
+                🎨
+            </div>
+            <div class="flex-1">
+                <h2 class="text-lg font-bold text-pink-500 mb-0.5">おえかき</h2>
+                <p class="text-xs text-gray-400 font-bold">すきなえをかこう！</p>
+            </div>
+            <div class="text-pink-300 text-xl">▶</div>
+        </a>
+
+        <a href="piano.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-purple-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div class="bg-purple-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-purple-200 flex-shrink-0">
+                🎹
+            </div>
+            <div class="flex-1">
+                <h2 class="text-lg font-bold text-purple-500 mb-0.5">ピアノ</h2>
+                <p class="text-xs text-gray-400 font-bold">きょくをひこう！</p>
+            </div>
+            <div class="text-purple-300 text-xl">▶</div>
+        </a>
+
+        <a href="snow.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-cyan-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div class="bg-cyan-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-cyan-200 flex-shrink-0">
+                ⛄
+            </div>
+            <div class="flex-1">
+                <h2 class="text-lg font-bold text-cyan-500 mb-0.5">ゆきのまほう</h2>
+                <p class="text-xs text-gray-400 font-bold">リズムであそぼ！</p>
+            </div>
+            <div class="text-cyan-300 text-xl">▶</div>
+        </a>
+
+        <a href="karuta.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-orange-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div class="bg-orange-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-orange-200 flex-shrink-0">
+                🐶
+            </div>
+            <div class="flex-1">
+                <h2 class="text-lg font-bold text-orange-500 mb-0.5">どうぶつかるた</h2>
+                <p class="text-xs text-gray-400 font-bold">よくきいてさがしてね</p>
+            </div>
+            <div class="text-orange-300 text-xl">▶</div>
+        </a>
+
+        <a href="puzzle.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-yellow-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div class="bg-yellow-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-yellow-200 flex-shrink-0">
+                🧩
+            </div>
+            <div class="flex-1">
+                <h2 class="text-lg font-bold text-yellow-500 mb-0.5">ジグソーパズル</h2>
+                <p class="text-xs text-gray-400 font-bold">しゃしんであそぼう</p>
+            </div>
+            <div class="text-yellow-300 text-xl">▶</div>
+        </a>
+
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
+</body>
+</html>

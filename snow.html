@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雪の魔法のリズムあそび - 進化する軌跡</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background-color: #020617;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(180deg, #020617 0%, #1e3a8a 50%, #3b82f6 100%);
+            transition: all 2s ease;
+        }
+
+        /* 各レベルの背景テーマ */
+        .stage-1 {
+            background: linear-gradient(180deg, #020617 0%, #1e3a8a 50%, #3b82f6 100%);
+        }
+
+        .stage-2 {
+            background: linear-gradient(180deg, #0f172a 0%, #1e40af 50%, #60a5fa 100%);
+        }
+
+        .stage-3 {
+            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+        }
+
+        .stage-4 {
+            background: linear-gradient(180deg, #312e81 0%, #581c87 50%, #7c3aed 100%);
+        }
+
+        .stage-5 {
+            background: linear-gradient(180deg, #4c1d95 0%, #701a75 50%, #db2777 100%);
+        }
+
+        .stage-6 {
+            background: linear-gradient(180deg, #020617 0%, #4338ca 30%, #ec4899 60%, #facc15 100%);
+        }
+
+        @keyframes float-character {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+        }
+
+        .character-pop {
+            animation: float-character 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+        }
+
+        #magicBar {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+            transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 1s forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: scale(0.6) translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0px);
+            }
+        }
+
+        /* 画面端のキラキラ */
+        .fringe-sparkle {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.1);
+            z-index: 5;
+        }
+
+        /* Home Button */
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            font-size: 1.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .home-btn:active {
+            transform: scale(0.9);
+        }
+    </style>
+</head>
+
+<body id="mainBody" class="gradient-bg stage-1 h-screen w-screen relative overflow-hidden select-none">
+
+    <a href="index.html" class="home-btn">🏠</a>
+
+    <div class="fringe-sparkle"></div>
+
+    <!-- UI Layer -->
+    <div id="startScreen"
+        class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl transition-opacity duration-1000">
+        <div class="text-8xl mb-8 character-pop">❄️💎🪄</div>
+        <h1 class="text-4xl text-white font-bold mb-4 text-center tracking-widest">
+            ゆきのまほう<br><span class="text-2xl font-normal opacity-80">リズムあそび</span>
+        </h1>
+        <button id="startBtn"
+            class="bg-white text-blue-600 text-3xl font-bold py-6 px-16 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.4)] transform active:scale-90 transition-all">
+            まほうをはじめる ▶
+        </button>
+        <p class="text-white/60 mt-10 text-lg animate-pulse">がめんを なぞってね 🔊</p>
+    </div>
+
+    <!-- Milestone Notification -->
+    <div id="milestoneMsg"
+        class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
+        <div id="milestoneEmoji" class="text-[12rem] character-pop">⛄</div>
+        <div id="milestoneText"
+            class="text-white text-5xl font-bold mt-6 text-center drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
+            ゆきだるま できた！
+        </div>
+    </div>
+
+    <!-- Stats UI -->
+    <div class="absolute top-8 left-8 right-8 z-10 flex flex-col gap-4 pointer-events-none">
+        <div class="flex justify-between items-end">
+            <div class="flex flex-col">
+                <span class="text-white/70 text-xs font-bold tracking-widest ml-2 mb-1 uppercase">Magic Score</span>
+                <div
+                    class="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20">
+                    <span id="scoreDisplay" class="text-3xl text-white font-bold tabular-nums">0</span>
+                </div>
+            </div>
+            <div class="flex flex-col items-end">
+                <span id="rankTitle" class="text-white/90 text-sm font-bold mb-1">みならい まほうつかい</span>
+                <div id="stageIndicator"
+                    class="px-5 py-2 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-sm font-black shadow-lg">
+                    Level 1
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full h-3 bg-black/40 rounded-full border border-white/10 overflow-hidden relative shadow-inner">
+            <div id="magicBar" class="h-full bg-gradient-to-r from-cyan-300 via-white to-blue-500 w-0"></div>
+        </div>
+    </div>
+
+    <div id="stageCharacters" class="absolute inset-0 z-0 pointer-events-none"></div>
+
+    <canvas id="gameCanvas" class="absolute inset-0 z-0 touch-none"></canvas>
+
+    <script>
+        // --- Audio System ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51];
+        let noteIndex = 0;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playMagicSound(stage) {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                // レベルが上がると音がキラキラしてくる
+                osc.type = stage >= 4 ? 'sine' : (stage >= 2 ? 'triangle' : 'sine');
+                const freq = scale[noteIndex % scale.length] * (stage >= 5 ? 2 : 1);
+                noteIndex++;
+
+                osc.frequency.setValueAtTime(freq, now);
+
+                if (stage >= 3) {
+                    const sub = audioCtx.createOscillator();
+                    sub.type = 'sine';
+                    sub.frequency.setValueAtTime(freq * 1.5, now);
+                    const subGain = audioCtx.createGain();
+                    subGain.gain.setValueAtTime(0.05, now);
+                    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    sub.connect(subGain);
+                    subGain.connect(audioCtx.destination);
+                    sub.start();
+                    sub.stop(now + 0.5);
+                }
+
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 0.6);
+            } catch (e) { }
+        }
+
+        // --- Game Logic ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const magicBar = document.getElementById('magicBar');
+        const milestoneMsg = document.getElementById('milestoneMsg');
+        const milestoneEmoji = document.getElementById('milestoneEmoji');
+        const milestoneText = document.getElementById('milestoneText');
+        const startScreen = document.getElementById('startScreen');
+        const startBtn = document.getElementById('startBtn');
+        const mainBody = document.getElementById('mainBody');
+        const stageChars = document.getElementById('stageCharacters');
+        const stageIndicator = document.getElementById('stageIndicator');
+        const rankTitle = document.getElementById('rankTitle');
+
+        let width, height;
+        let snowflakes = [];
+        let particles = [];
+        let score = 0;
+        let currentLevel = 1;
+        let isPlaying = false;
+        const MAX_PARTICLES = 200;
+
+        const milestones = [
+            { score: 200, emoji: '⛄', text: 'ゆきだるま できた！', bg: 'stage-2', rank: 'ゆきの まほうつかい' },
+            { score: 600, emoji: '🦌', text: 'トナカイも きたよ！', bg: 'stage-3', rank: 'もりの まほうつかい' },
+            { score: 1200, emoji: '🏰', text: 'おしろの まほう！', bg: 'stage-4', rank: 'こおりの おうじょ' },
+            { score: 2000, emoji: '🐳', text: 'そらとぶ クジラ！', bg: 'stage-5', rank: 'ほしの まほうつかい' },
+            { score: 3000, emoji: '🦄', text: 'でんせつの ユニコーン！', bg: 'stage-6', rank: 'にじの まほうつかい' },
+            { score: 5000, emoji: '👑', text: 'まほうの おうさま！', bg: 'stage-6', rank: 'きらきら マスター' }
+        ];
+
+        class Snowflake {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * -height;
+            }
+            reset() {
+                this.x = Math.random() * (width || 400);
+                this.y = -80;
+                this.size = Math.random() * 20 + 35;
+                this.speed = Math.random() * 1.2 + 0.8 + (currentLevel * 0.25);
+
+                const emojis = ['❄️', '❅', '❆'];
+                if (currentLevel >= 2) emojis.push('✨', '💎');
+                if (currentLevel >= 3) emojis.push('⭐', '🔔');
+                if (currentLevel >= 4) emojis.push('🌈', '🍬');
+                if (currentLevel >= 5) emojis.push('🌙', '🪐');
+                if (currentLevel >= 6) emojis.push('💖', '🔥');
+
+                this.emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                this.rotation = Math.random() * Math.PI * 2;
+                this.spin = (Math.random() - 0.5) * 0.04;
+                this.wobble = Math.random() * Math.PI * 2;
+            }
+            update() {
+                this.y += this.speed;
+                this.rotation += this.spin;
+                this.wobble += 0.02;
+                this.x += Math.sin(this.wobble) * 1.2;
+                if (this.y > height + 100) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.font = `${this.size}px serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = `hsl(${(currentLevel * 60) % 360}, 100%, 70%)`;
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = "white";
+                ctx.fillText(this.emoji, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, level, isTrail = false) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const force = isTrail ? Math.random() * 1.5 : Math.random() * 5 + 2;
+                this.vx = Math.cos(angle) * force;
+                this.vy = Math.sin(angle) * force;
+                this.life = 1.0;
+                this.level = level;
+                this.isTrail = isTrail;
+
+                // レベルによって色と形を決定
+                this.colors = ["#fff"];
+                if (level == 2) this.colors = ["#bae6fd", "#fff"];
+                if (level == 3) this.colors = ["#fde047", "#fff"];
+                if (level == 4) this.colors = ["#f472b6", "#60a5fa", "#34d399"];
+                if (level == 5) this.colors = ["#818cf8", "#c084fc", "#fff"];
+                if (level >= 6) this.colors = [`hsl(${Math.random() * 360}, 100%, 80%)`];
+
+                this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+                this.size = isTrail ? Math.random() * 4 + 2 : Math.random() * 6 + 3;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.04;
+                this.life -= (this.isTrail ? 0.04 : 0.025);
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = this.level >= 3 ? 10 : 5;
+                ctx.shadowColor = this.color;
+
+                ctx.beginPath();
+                // Lv.3以上は星型っぽく、それ以外は丸
+                if (this.level >= 3 && Math.random() > 0.7) {
+                    const s = this.size * 2;
+                    ctx.moveTo(this.x, this.y - s);
+                    ctx.lineTo(this.x + s / 4, this.y - s / 4);
+                    ctx.lineTo(this.x + s, this.y);
+                    ctx.lineTo(this.x + s / 4, this.y + s / 4);
+                    ctx.lineTo(this.x, this.y + s);
+                    ctx.lineTo(this.x - s / 4, this.y + s / 4);
+                    ctx.lineTo(this.x - s, this.y);
+                    ctx.lineTo(this.x - s / 4, this.y - s / 4);
+                } else {
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                }
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        function handleInteraction(x, y, isMove = false) {
+            if (!isPlaying) return;
+
+            // --- 魔法の軌跡（Trail）---
+            // レベルに応じた色
+            let trailColor = "#fff";
+            if (currentLevel == 2) trailColor = "#7dd3fc";
+            if (currentLevel == 3) trailColor = "#fbbf24";
+            if (currentLevel == 4) trailColor = `hsl(${Date.now() % 360}, 100%, 80%)`; // 虹色
+            if (currentLevel == 5) trailColor = "#c084fc";
+            if (currentLevel >= 6) trailColor = `hsl(${(Date.now() / 5) % 360}, 100%, 90%)`;
+
+            // 指から出るパーティクル
+            if (particles.length < MAX_PARTICLES) {
+                particles.push(new Particle(x, y, currentLevel, true));
+            }
+
+            // 当たり判定
+            for (let i = snowflakes.length - 1; i >= 0; i--) {
+                const s = snowflakes[i];
+                const dist = Math.hypot(s.x - x, s.y - y);
+
+                // 判定サイズ（少し甘め）
+                if (dist < s.size * 1.6) {
+                    const hX = s.x, hY = s.y;
+                    s.reset();
+
+                    for (let j = 0; j < (isMove ? 5 : 12); j++) {
+                        if (particles.length < MAX_PARTICLES) {
+                            particles.push(new Particle(hX, hY, currentLevel, false));
+                        }
+                    }
+
+                    score += 10;
+                    playMagicSound(currentLevel);
+                    checkMilestones();
+                    updateUI();
+                    if (isMove) break; // なぞり中は1フレーム1つまで
+                }
+            }
+        }
+
+        function checkMilestones() {
+            const nextIdx = milestones.findIndex(m => score >= m.score && currentLevel < (milestones.indexOf(m) + 2));
+            if (nextIdx !== -1) {
+                const m = milestones[nextIdx];
+                currentLevel = nextIdx + 2;
+                showMilestone(m);
+            }
+        }
+
+        function showMilestone(m) {
+            mainBody.className = `gradient-bg h-screen w-screen relative overflow-hidden select-none ${m.bg}`;
+            milestoneEmoji.textContent = m.emoji;
+            milestoneText.textContent = m.text;
+            milestoneMsg.classList.remove('hidden');
+            milestoneMsg.classList.add('fade-in-up');
+
+            // 固定キャラの追加
+            const char = document.createElement('div');
+            char.className = 'absolute character-pop text-7xl drop-shadow-lg';
+            char.style.left = (Math.random() * 60 + 20) + '%';
+            char.style.bottom = (Math.random() * 20 + 5) + '%';
+            char.textContent = m.emoji;
+            stageChars.appendChild(char);
+
+            setTimeout(() => {
+                milestoneMsg.classList.add('hidden');
+                milestoneMsg.classList.remove('fade-in-up');
+            }, 3500);
+
+            stageIndicator.textContent = `Level ${currentLevel}`;
+            rankTitle.textContent = m.rank;
+        }
+
+        function updateUI() {
+            scoreDisplay.textContent = score;
+
+            // 次の目標
+            let target = 200;
+            let start = 0;
+            const m = milestones[currentLevel - 1];
+            if (m) {
+                target = m.score;
+                start = currentLevel === 1 ? 0 : milestones[currentLevel - 2].score;
+            } else {
+                target = score + 1000;
+                start = 5000;
+            }
+
+            const progress = ((score - start) / (target - start)) * 100;
+            magicBar.style.width = `${Math.min(100, Math.max(5, progress))}%`;
+        }
+
+        function gameLoop() {
+            if (!isPlaying) return;
+            ctx.clearRect(0, 0, width, height);
+
+            snowflakes.forEach(f => {
+                f.update();
+                f.draw();
+            });
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Init
+        window.addEventListener('resize', resize);
+        resize();
+        for (let i = 0; i < 16; i++) snowflakes.push(new Snowflake());
+
+        // Listeners
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            initAudio();
+            for (let i = 0; i < e.touches.length; i++) {
+                handleInteraction(e.touches[i].clientX, e.touches[i].clientY, false);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.touches.length; i++) {
+                handleInteraction(e.touches[i].clientX, e.touches[i].clientY, true);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('mousedown', (e) => {
+            initAudio();
+            handleInteraction(e.clientX, e.clientY, false);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (e.buttons > 0) handleInteraction(e.clientX, e.clientY, true);
+        });
+
+        startBtn.addEventListener('click', () => {
+            initAudio();
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                isPlaying = true;
+                gameLoop();
+            }, 700);
+        });
+
+    </script>
+</body>
+
+</html>
