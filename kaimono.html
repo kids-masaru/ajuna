@@ -95,8 +95,12 @@
         const Play = (props) => (<IconBase {...props}><polygon points="5 3 19 12 5 21 5 3" /></IconBase>);
         const Volume2 = (props) => (<IconBase {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></IconBase>);
         const VolumeX = (props) => (<IconBase {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" x2="17" y1="9" y2="15" /><line x1="17" x2="23" y1="9" y2="15" /></IconBase>);
-        const MapIcon = (props) => (<IconBase {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" x2="8" y1="2" y2="18" /><line x1="16" x2="16" y1="6" y2="22" /></IconBase>); // Changed to Map Icon
-
+        const ArrowLeft = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        );
         // --- Clipboard Style Shopping List ---
         const ClipboardList = ({ items, foundItems, onSpeak }) => (
             <div className="relative bg-[#fdf6e3] rounded-sm shadow-lg border-2 border-[#d3c6aa] p-2 flex flex-col gap-2 min-h-[140px] w-20 md:w-24">
@@ -331,26 +335,32 @@
                 }
             };
 
-            // Pointer Event Handlers (Same as before)
+            // Improved Pointer Event Handlers for Smoother Dragging
             const handlePointerDown = (e, item) => {
                 if (e.button && e.button !== 0) return;
-                e.currentTarget.setPointerCapture(e.pointerId);
-                const c = e.touches ? e.touches[0] : e;
-                setDragState({ item, x: c.clientX, y: c.clientY, pointerId: e.pointerId });
+                const target = e.currentTarget;
+                target.setPointerCapture(e.pointerId);
+                setDragState({
+                    item,
+                    x: e.clientX,
+                    y: e.clientY,
+                    pointerId: e.pointerId
+                });
                 playSound(440, 'sine');
             };
+
             const handlePointerMove = (e) => {
                 if (!dragState) return;
-                e.preventDefault();
-                const c = e.touches ? e.touches[0] : e;
-                setDragState(prev => ({ ...prev, x: c.clientX, y: c.clientY }));
+                // Directly use e.clientX/Y which works for both touch and mouse in PointerEvents
+                setDragState(prev => ({ ...prev, x: e.clientX, y: e.clientY }));
             };
+
             const handlePointerUp = (e) => {
                 if (!dragState) return;
-                const c = e.changedTouches ? e.changedTouches[0] : e;
                 if (basketRef.current) {
                     const rect = basketRef.current.getBoundingClientRect();
-                    if (c.clientX >= rect.left && c.clientX <= rect.right && c.clientY >= rect.top && c.clientY <= rect.bottom) {
+                    // Check if drop is within basket area
+                    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
                         handleDropInBasket(dragState.item);
                     }
                 }
@@ -385,16 +395,10 @@
                     {gameState === 'playing' && (
                         <button
                             onClick={() => { setGameState('select_shop'); stopBGM(); }}
-                            className="fixed top-4 left-20 z-[110] bg-blue-100 p-2 rounded-full border-2 border-blue-300 w-12 h-12 flex items-center justify-center shadow-md active:scale-95 transition-all"
+                            className="fixed top-4 right-4 z-[110] bg-orange-500 p-3 rounded-full border-4 border-orange-200 w-16 h-16 flex items-center justify-center shadow-lg active:scale-90 transition-all text-white"
                             title="おみせをでる"
                         >
-                            <MapIcon size={24} className="text-blue-600" />
-                        </button>
-                    )}
-
-                    {gameState !== 'pre_start' && (
-                        <button onClick={() => setIsMuted(!isMuted)} className="fixed top-4 right-4 z-[110] bg-white/20 p-2 rounded-full text-white backdrop-blur-md">
-                            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                            <ArrowLeft size={32} />
                         </button>
                     )}
 
@@ -451,9 +455,9 @@
                                 </div>
                             </div>
 
-                            {/* Basket & Character Side-by-Side: Responsive Scale */}
-                            <div ref={basketRef} className="absolute bottom-0 left-0 right-0 h-24 md:h-40 z-40 flex items-end justify-center pointer-events-none gap-4">
-                                <div className="w-full max-w-4xl flex items-end justify-center px-4 pb-1 md:pb-2">
+                            {/* Basket & Character Side-by-Side: Responsive Scale & Half-Body Clip */}
+                            <div ref={basketRef} className="absolute bottom-[-5%] md:bottom-[-10%] left-0 right-0 h-28 md:h-48 z-40 flex items-end justify-center pointer-events-none gap-4">
+                                <div className="w-full max-w-4xl flex items-end justify-center px-4">
                                     {/* Character */}
                                     <div className="shrink-0 animate-sway">
                                         <GirlHalfBody className="w-20 h-20 md:w-40 md:h-40 drop-shadow-lg" />
