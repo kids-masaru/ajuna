@@ -135,7 +135,12 @@
                     { id: 'v1', name: 'にんじん', icon: '🥕' }, { id: 'v2', name: 'じゃがいも', icon: '🥔' },
                     { id: 'v3', name: 'コーン', icon: '🌽' }, { id: 'v4', name: 'トマト', icon: '🍅' },
                     { id: 'v5', name: 'なす', icon: '🍆' }, { id: 'v6', name: 'きゅうり', icon: '🥒' },
-                    { id: 'v7', name: 'たまねぎ', icon: '🧅' }, { id: 'v8', name: 'ブロッコリー', icon: '🥦' }
+                    { id: 'v7', name: 'たまねぎ', icon: '🧅' }, { id: 'v8', name: 'ブロッコリー', icon: '🥦' },
+                    { id: 'v9', name: 'かぼちゃ', icon: '🎃' }, { id: 'v10', name: 'さつまいも', icon: '🍠' },
+                    { id: 'v11', name: 'ぶどう', icon: '🍇' }, { id: 'v12', name: 'メロン', icon: '🍈' },
+                    { id: 'v13', name: 'すいか', icon: '🍉' }, { id: 'v14', name: 'いちご', icon: '🍓' },
+                    { id: 'v15', name: 'もも', icon: '🍑' }, { id: 'v16', name: 'りんご', icon: '🍎' },
+                    { id: 'v17', name: 'キノコ', icon: '🍄' }, { id: 'v18', name: 'さくらんぼ', icon: '🍒' }
                 ]
             },
             {
@@ -145,7 +150,10 @@
                     { id: 'f1', name: 'さかな', icon: '🐟' }, { id: 'f2', name: 'たこ', icon: '🐙' },
                     { id: 'f3', name: 'いか', icon: '🦑' }, { id: 'f4', name: 'えび', icon: '🦐' },
                     { id: 'f5', name: 'かに', icon: '🦀' }, { id: 'f6', name: 'ふぐ', icon: '🐡' },
-                    { id: 'f7', name: 'かい', icon: '🐚' }, { id: 'f8', name: 'さめ', icon: '🦈' }
+                    { id: 'f7', name: 'かい', icon: '🐚' }, { id: 'f8', name: 'さめ', icon: '🦈' },
+                    { id: 'f9', name: 'くじら', icon: '🐋' }, { id: 'f10', name: 'いるか', icon: '🐬' },
+                    { id: 'f11', name: 'ねったいぎょ', icon: '🐠' }, { id: 'f12', name: 'ロブスター', icon: '🦞' },
+                    { id: 'f13', name: 'ペンギン', icon: '🐧' }, { id: 'f14', name: 'かめ', icon: '🐢' }
                 ]
             },
             {
@@ -155,7 +163,10 @@
                     { id: 's1', name: 'あめ', icon: '🍬' }, { id: 's2', name: 'クッキー', icon: '🍪' },
                     { id: 's3', name: 'チョコ', icon: '🍫' }, { id: 's4', name: 'ドーナツ', icon: '🍩' },
                     { id: 's5', name: 'ケーキ', icon: '🍰' }, { id: 's6', name: 'プリン', icon: '🍮' },
-                    { id: 's7', name: 'アイス', icon: '🍦' }, { id: 's8', name: 'だんご', icon: '🍡' }
+                    { id: 's7', name: 'アイス', icon: '🍦' }, { id: 's8', name: 'だんご', icon: '🍡' },
+                    { id: 's9', name: 'ペロペロキャンディ', icon: '🍭' }, { id: 's10', name: 'かきごおり', icon: '🍧' },
+                    { id: 's11', name: 'はちみつ', icon: '🍯' }, { id: 's12', name: 'ポップコーン', icon: '🍿' },
+                    { id: 's13', name: 'バースデーケーキ', icon: '🎂' }, { id: 's14', name: 'クロワッサン', icon: '🥐' }
                 ]
             },
             {
@@ -165,7 +176,11 @@
                     { id: 'c1', name: 'おにぎり', icon: '🍙' }, { id: 'c2', name: 'パン', icon: '🍞' },
                     { id: 'c3', name: 'たまご', icon: '🥚' }, { id: 'c4', name: 'ぎゅうにゅう', icon: '🥛' },
                     { id: 'c5', name: 'おべんとう', icon: '🍱' }, { id: 'c6', name: 'おちゃ', icon: '🍵' },
-                    { id: 'c7', name: 'バナナ', icon: '🍌' }, { id: 'c8', name: 'サンドイッチ', icon: '🥪' }
+                    { id: 'c7', name: 'バナナ', icon: '🍌' }, { id: 'c8', name: 'サンドイッチ', icon: '🥪' },
+                    { id: 'c9', name: 'ハンバーガー', icon: '🍔' }, { id: 'c10', name: 'ポテト', icon: '🍟' },
+                    { id: 'c11', name: 'ホットドッグ', icon: '🌭' }, { id: 'c12', name: 'ピザ', icon: '🍕' },
+                    { id: 'c13', name: 'ジュース', icon: '🧃' }, { id: 'c14', name: 'コーヒー', icon: '☕' },
+                    { id: 'c15', name: 'かさ', icon: '☔' }, { id: 'c16', name: 'しんぶん', icon: '📰' }
                 ]
             }
         ];
@@ -283,12 +298,22 @@
 
             const startShopping = (shop) => {
                 initAudio();
-                const shuffled = [...shop.items].sort(() => 0.5 - Math.random());
-                const targets = shuffled.slice(0, Math.floor(Math.random() * 2) + 3);
+
+                // 1. 全アイテム候補からランダムに8個選んで「棚」に置く (重複なし)
+                const allItemsShuffled = [...shop.items].sort(() => 0.5 - Math.random());
+                const shelf = allItemsShuffled.slice(0, 8); // 棚には常に8個
+
+                // 2. 「棚にあるアイテム」の中からランダムに3〜5個選んで「買い物リスト」を作る
+                const shelfShuffled = [...shelf].sort(() => 0.5 - Math.random());
+                // 最小3個、最大5個、ただし棚のアイテム数を超えない範囲で
+                const targetCount = Math.min(shelf.length, Math.floor(Math.random() * 3) + 3);
+                const targets = shelfShuffled.slice(0, targetCount);
 
                 setCurrentShop(shop);
+                setShelfItems(shelf); // 順番はshelfShuffledではなくランダム選出時のままにするか、再度シャッフルするか。ここでは棚の配置もランダムにしたいのでshuffleする
+                setShelfItems(shelf.sort(() => 0.5 - Math.random()));
                 setTargetItems(targets);
-                setShelfItems([...shop.items].sort(() => 0.5 - Math.random()));
+
                 setFoundItems([]);
                 setGameState('playing');
                 speak(`${shop.name}にきました！おかいものリストのものをえらんでね！`);
@@ -390,19 +415,16 @@
                             {(gameState === 'playing' || gameState === 'result') && (
                                 <div className={`w-full h-full ${currentShop.bg} flex p-2 md:p-4 gap-2 md:gap-4 transition-all ${gameState === 'result' ? 'blur-md opacity-60' : ''}`}>
 
-                                    {/* 左側：リスト */}
+                                    {/* 左側：リスト (文字なし・アイコンのみ) */}
                                     <div className="w-1/4 bg-white/95 rounded-xl md:rounded-[2rem] shadow-xl border-2 border-dashed border-gray-300 flex flex-col p-2 md:p-4 h-full overflow-hidden shrink-0">
                                         <h2 className="text-sm md:text-xl font-bold text-center mb-2 md:mb-3 text-gray-400">かうもの</h2>
                                         <div className="flex flex-col gap-1 md:gap-2 overflow-y-auto">
                                             {targetItems.map(item => {
                                                 const done = foundItems.some(f => f.id === item.id);
                                                 return (
-                                                    <div key={item.id} className={`flex items-center p-1 md:p-3 rounded-lg md:rounded-2xl transition-all ${done ? 'bg-gray-100 opacity-20' : 'bg-orange-50 shadow-sm'}`}>
-                                                        <span className="text-2xl md:text-4xl mr-1 md:mr-3">{item.icon}</span>
-                                                        <span className={`text-xs md:text-base font-bold truncate ${done ? 'line-through decoration-2 decoration-red-400' : ''}`}>
-                                                            {item.name}
-                                                        </span>
-                                                        {done && <span className="ml-auto text-lg md:text-2xl">✅</span>}
+                                                    <div key={item.id} className={`flex items-center justify-center p-2 md:p-3 rounded-lg md:rounded-2xl transition-all aspect-square ${done ? 'bg-gray-100 opacity-20' : 'bg-orange-50 shadow-sm'}`}>
+                                                        <span className="text-4xl md:text-6xl">{item.icon}</span>
+                                                        {done && <span className="absolute text-4xl md:text-6xl">✅</span>}
                                                     </div>
                                                 );
                                             })}
