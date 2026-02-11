@@ -132,7 +132,6 @@
         const SHOPS = [
             {
                 id: 'greengrocer', name: 'やおやさん', icon: '🥕', bg: 'bg-green-50', accent: 'bg-green-500', border: 'border-green-300',
-                melody: [440, 493, 523, 587],
                 items: [
                     { id: 'v1', name: 'にんじん', icon: '🥕' }, { id: 'v2', name: 'じゃがいも', icon: '🥔' },
                     { id: 'v3', name: 'コーン', icon: '🌽' }, { id: 'v4', name: 'トマト', icon: '🍅' },
@@ -147,7 +146,6 @@
             },
             {
                 id: 'fish', name: 'おさかなや', icon: '🐟', bg: 'bg-blue-50', accent: 'bg-blue-500', border: 'border-blue-300',
-                melody: [330, 392, 440, 523],
                 items: [
                     { id: 'f1', name: 'さかな', icon: '🐟' }, { id: 'f2', name: 'たこ', icon: '🐙' },
                     { id: 'f3', name: 'いか', icon: '🦑' }, { id: 'f4', name: 'えび', icon: '🦐' },
@@ -160,7 +158,6 @@
             },
             {
                 id: 'sweets', name: 'おかしや', icon: '🍬', bg: 'bg-pink-50', accent: 'bg-pink-500', border: 'border-pink-300',
-                melody: [523, 659, 783, 1046],
                 items: [
                     { id: 's1', name: 'あめ', icon: '🍬' }, { id: 's2', name: 'クッキー', icon: '🍪' },
                     { id: 's3', name: 'チョコ', icon: '🍫' }, { id: 's4', name: 'ドーナツ', icon: '🍩' },
@@ -173,7 +170,6 @@
             },
             {
                 id: 'bakery', name: 'パンやさん', icon: '🍞', bg: 'bg-orange-50', accent: 'bg-orange-500', border: 'border-orange-300',
-                melody: [392, 493, 587, 783],
                 items: [
                     { id: 'b1', name: 'しょくパン', icon: '🍞' }, { id: 'b2', name: 'クロワッサン', icon: '🥐' },
                     { id: 'b3', name: 'フランスパン', icon: '🥖' }, { id: 'b4', name: 'ベーグル', icon: '🥯' },
@@ -184,7 +180,6 @@
             },
             {
                 id: 'toys', name: 'おもちゃや', icon: '🧸', bg: 'bg-yellow-50', accent: 'bg-yellow-500', border: 'border-yellow-300',
-                melody: [523, 587, 659, 698],
                 items: [
                     { id: 't1', name: 'くまさん', icon: '🧸' }, { id: 't2', name: 'ロボット', icon: '🤖' },
                     { id: 't3', name: 'くるま', icon: '🚗' }, { id: 't4', name: 'きしゃ', icon: '🚂' },
@@ -196,7 +191,6 @@
             },
             {
                 id: 'flowers', name: 'おはなや', icon: '💐', bg: 'bg-rose-50', accent: 'bg-rose-500', border: 'border-rose-300',
-                melody: [659, 587, 523, 493],
                 items: [
                     { id: 'fl1', name: 'はなたば', icon: '💐' }, { id: 'fl2', name: 'バラ', icon: '🌹' },
                     { id: 'fl3', name: 'ひまわり', icon: '🌻' }, { id: 'fl4', name: 'チューリップ', icon: '🌷' },
@@ -208,7 +202,6 @@
             },
             {
                 id: 'convenience', name: 'コンビニ', icon: '🏪', bg: 'bg-slate-50', accent: 'bg-slate-600', border: 'border-slate-300',
-                melody: [440, 554, 659, 880],
                 items: [
                     { id: 'c1', name: 'おにぎり', icon: '🍙' }, { id: 'c2', name: 'ハンバーガー', icon: '🍔' },
                     { id: 'c3', name: 'ポテト', icon: '🍟' }, { id: 'c4', name: 'ぎゅうにゅう', icon: '🥛' },
@@ -253,7 +246,7 @@
 
             const [isMuted, setIsMuted] = useState(false);
             const audioCtx = useRef(null);
-            const bgmInterval = useRef(null);
+            const bgmRef = useRef(null); // Reference for MP3 BGM
 
             const initAudio = () => {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -291,39 +284,47 @@
                 playSound(150, 'triangle', 0.3, 0.2);
             };
 
-            const startBGM = (shop) => {
-                if (bgmInterval.current) clearInterval(bgmInterval.current);
-                if (isMuted) return;
-                let step = 0;
-                bgmInterval.current = setInterval(() => {
-                    if (!isMuted && audioCtx.current) {
-                        try {
-                            const freq = shop.melody[step % shop.melody.length];
-                            const osc = audioCtx.current.createOscillator();
-                            const gain = audioCtx.current.createGain();
-                            osc.type = 'triangle';
-                            osc.frequency.setValueAtTime(freq, audioCtx.current.currentTime);
-                            gain.gain.setValueAtTime(0.03, audioCtx.current.currentTime);
-                            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.current.currentTime + 0.5);
-                            osc.connect(gain);
-                            gain.connect(audioCtx.current.destination);
-                            osc.start();
-                            osc.stop(audioCtx.current.currentTime + 0.5);
-                            step++;
-                        } catch (e) { }
-                    }
-                }, 600);
+            const startBGM = () => {
+                if (bgmRef.current && !isMuted) {
+                    bgmRef.current.volume = 0.3; // Lower BGM volume
+                    bgmRef.current.play().catch(e => console.log('BGM Play Error:', e));
+                }
             };
 
             const stopBGM = () => {
-                if (bgmInterval.current) clearInterval(bgmInterval.current);
+                if (bgmRef.current) {
+                    bgmRef.current.pause();
+                    bgmRef.current.currentTime = 0;
+                }
             };
 
+            // Effect to handle Mute Toggle
             useEffect(() => {
-                if (gameState === 'playing') startBGM(currentShop);
-                else stopBGM();
-                return () => stopBGM();
-            }, [gameState, currentShop, isMuted]);
+                if (bgmRef.current) {
+                    bgmRef.current.muted = isMuted;
+                    // Ensure playback state matches game state if muted changed
+                    if (gameState === 'playing' && !isMuted) {
+                        bgmRef.current.play().catch(e => { });
+                    } else if (isMuted) {
+                        // Just mute, don't stop if playing, but if stopped..
+                        // Use HTML attribute for simple mute handling
+                    }
+                }
+            }, [isMuted, gameState]);
+
+            // Effect to Start/Stop BGM based on Game State
+            useEffect(() => {
+                if (gameState === 'playing') {
+                    startBGM();
+                } else {
+                    stopBGM();
+                }
+                // Cleanup on unmount or state change handled by effect re-run/cleanup if needed
+                return () => {
+                    // if leaving playing state? No, simply stopBGM in the else block works.
+                };
+            }, [gameState]);
+
 
             const startShopping = (shop) => {
                 initAudio();
@@ -424,6 +425,9 @@
                     onPointerUp={handlePointerUp}
                     onPointerCancel={() => setDragState(null)}
                 >
+                    {/* AUDIO ELEMENT FOR BGM */}
+                    <audio ref={bgmRef} src="./ajunano_okaimono.mp3" loop />
+
                     {dragState && <DragItem item={dragState.item} x={dragState.x} y={dragState.y} />}
 
                     <a href="index.html" className="fixed top-4 left-4 z-[110] bg-white/90 backdrop-blur-sm p-4 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-14 h-14 active:scale-90 no-underline" title="ホームへ">🏠</a>
