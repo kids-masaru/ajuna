@@ -424,24 +424,22 @@
                                 <ClipboardList items={targetItems} foundItems={foundItems} onSpeak={speak} />
                             </div>
 
-                            {/* Shelves Layout */}
-                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex items-center pb-32 no-scrollbar scroll-smooth">
-                                <div className="min-w-[8rem] h-full shrink-0"></div>
-                                <div className="flex flex-nowrap gap-8 h-full items-center">
-                                    {/* Chunk results into shelf rows (e.g. 5 items per shelf row segment) */}
-                                    {[0, 5, 10, 15].map(startIdx => (
-                                        <div key={startIdx} className="flex flex-col gap-8 w-[500px] shrink-0">
+                            {/* Shelves Layout: Stacking 3 tiers vertically */}
+                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex flex-col items-center justify-center p-4 no-scrollbar scroll-smooth">
+                                <div className="flex flex-col gap-10 min-w-max px-24 py-8">
+                                    {[0, 7, 14].map(startIdx => (
+                                        <div key={startIdx} className="w-[800px] md:w-[1000px]">
                                             <ShelfLayer>
-                                                {shelfItems.slice(startIdx, startIdx + 5).map(item => {
+                                                {shelfItems.slice(startIdx, startIdx + 7).map(item => {
                                                     const isCollected = foundItems.some(f => f.id === item.id);
                                                     return (
-                                                        <div key={item.uniqueId} className="w-24 h-24 flex flex-col items-center justify-end shrink-0">
+                                                        <div key={item.uniqueId} className="w-24 h-24 md:w-32 md:h-28 flex flex-col items-center justify-end shrink-0 mx-2">
                                                             {!isCollected && (
                                                                 <div
                                                                     className="flex flex-col items-center cursor-grab active:cursor-grabbing transform transition-transform hover:scale-110"
                                                                     onPointerDown={(e) => handlePointerDown(e, item)}
                                                                 >
-                                                                    <span className="text-5xl md:text-6xl drop-shadow-md">{item.icon}</span>
+                                                                    <span className="text-5xl md:text-7xl drop-shadow-md">{item.icon}</span>
                                                                     <span className="bg-white/90 px-1.5 py-0.5 rounded-full text-[10px] font-bold mt-1 shadow-sm border border-orange-100">{item.name}</span>
                                                                 </div>
                                                             )}
@@ -452,20 +450,19 @@
                                         </div>
                                     ))}
                                 </div>
-                                <div className="min-w-[8rem] h-full shrink-0"></div>
                             </div>
 
-                            {/* Basket & Character Side-by-Side */}
-                            <div ref={basketRef} className="absolute bottom-0 left-0 right-0 h-32 z-40 flex items-end justify-center pointer-events-none gap-4">
-                                <div className="w-full max-w-2xl flex items-end justify-center px-4 pb-2">
+                            {/* Basket & Character Side-by-Side: Increased Scale */}
+                            <div ref={basketRef} className="absolute bottom-0 left-0 right-0 h-40 z-40 flex items-end justify-center pointer-events-none gap-4">
+                                <div className="w-full max-w-4xl flex items-end justify-center px-4 pb-2">
                                     {/* Character */}
                                     <div className="shrink-0 animate-sway">
-                                        <GirlHalfBody className="w-24 h-24 drop-shadow-lg" />
+                                        <GirlHalfBody className="w-32 h-32 md:w-40 md:h-40 drop-shadow-lg" />
                                     </div>
                                     {/* Wire Cart */}
-                                    <WireCart className="w-48 h-40 -ml-4">
+                                    <WireCart className="w-64 h-48 md:w-80 md:h-60 -ml-8">
                                         {foundItems.map((item, idx) => (
-                                            <span key={idx} className="text-3xl animate-in zoom-in slide-in-from-top-4 duration-300 drop-shadow-md">{item.icon}</span>
+                                            <span key={idx} className="text-4xl md:text-5xl animate-in zoom-in slide-in-from-top-4 duration-300 drop-shadow-md">{item.icon}</span>
                                         ))}
                                     </WireCart>
                                 </div>
