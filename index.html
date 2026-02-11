@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,30 +15,44 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
         body {
             font-family: 'M PLUS Rounded 1c', sans-serif;
             background-color: #fff1f2;
             touch-action: manipulation;
             user-select: none;
         }
+
         .game-card {
             transition: all 0.2s;
-            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.1);
         }
+
         .game-card:active {
             transform: translateY(8px);
             box-shadow: none;
         }
+
         @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
         }
+
         .title-anim {
             animation: float 3s ease-in-out infinite;
         }
     </style>
 </head>
+
 <body class="min-h-screen flex flex-col items-center py-10 px-4">
 
     <div class="text-center mb-8 title-anim">
@@ -48,8 +63,10 @@
 
     <div class="w-full max-w-md space-y-5 pb-10">
 
-        <a href="oekaki.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-pink-300 flex items-center space-x-4 no-underline text-gray-800">
-            <div class="bg-pink-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-pink-200 flex-shrink-0">
+        <a href="oekaki.html"
+            class="game-card block bg-white rounded-3xl p-4 border-4 border-pink-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div
+                class="bg-pink-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-pink-200 flex-shrink-0">
                 🎨
             </div>
             <div class="flex-1">
@@ -59,8 +76,10 @@
             <div class="text-pink-300 text-xl">▶</div>
         </a>
 
-        <a href="piano.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-purple-300 flex items-center space-x-4 no-underline text-gray-800">
-            <div class="bg-purple-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-purple-200 flex-shrink-0">
+        <a href="piano.html"
+            class="game-card block bg-white rounded-3xl p-4 border-4 border-purple-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div
+                class="bg-purple-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-purple-200 flex-shrink-0">
                 🎹
             </div>
             <div class="flex-1">
@@ -70,8 +89,10 @@
             <div class="text-purple-300 text-xl">▶</div>
         </a>
 
-        <a href="snow.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-cyan-300 flex items-center space-x-4 no-underline text-gray-800">
-            <div class="bg-cyan-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-cyan-200 flex-shrink-0">
+        <a href="snow.html"
+            class="game-card block bg-white rounded-3xl p-4 border-4 border-cyan-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div
+                class="bg-cyan-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-cyan-200 flex-shrink-0">
                 ⛄
             </div>
             <div class="flex-1">
@@ -81,8 +102,10 @@
             <div class="text-cyan-300 text-xl">▶</div>
         </a>
 
-        <a href="karuta.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-orange-300 flex items-center space-x-4 no-underline text-gray-800">
-            <div class="bg-orange-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-orange-200 flex-shrink-0">
+        <a href="karuta.html"
+            class="game-card block bg-white rounded-3xl p-4 border-4 border-orange-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div
+                class="bg-orange-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-orange-200 flex-shrink-0">
                 🐶
             </div>
             <div class="flex-1">
@@ -92,8 +115,10 @@
             <div class="text-orange-300 text-xl">▶</div>
         </a>
 
-        <a href="puzzle.html" class="game-card block bg-white rounded-3xl p-4 border-4 border-yellow-300 flex items-center space-x-4 no-underline text-gray-800">
-            <div class="bg-yellow-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-yellow-200 flex-shrink-0">
+        <a href="puzzle.html"
+            class="game-card block bg-white rounded-3xl p-4 border-4 border-yellow-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div
+                class="bg-yellow-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-yellow-200 flex-shrink-0">
                 🧩
             </div>
             <div class="flex-1">
@@ -101,6 +126,19 @@
                 <p class="text-xs text-gray-400 font-bold">しゃしんであそぼう</p>
             </div>
             <div class="text-yellow-300 text-xl">▶</div>
+        </a>
+
+        <a href="kaimono.html"
+            class="game-card block bg-white rounded-3xl p-4 border-4 border-emerald-300 flex items-center space-x-4 no-underline text-gray-800">
+            <div
+                class="bg-emerald-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-emerald-200 flex-shrink-0">
+                🛒
+            </div>
+            <div class="flex-1">
+                <h2 class="text-lg font-bold text-emerald-500 mb-0.5">おかいもの</h2>
+                <p class="text-xs text-gray-400 font-bold">かってこよう！</p>
+            </div>
+            <div class="text-emerald-300 text-xl">▶</div>
         </a>
 
     </div>
@@ -113,4 +151,5 @@
         }
     </script>
 </body>
+
 </html>

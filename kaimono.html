@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>おかいものごっこ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/lucide-react/dist/umd/lucide-react.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-12px);
+            }
+
+            75% {
+                transform: translateX(12px);
+            }
+        }
+
+        .animate-shake {
+            animation: shake 0.1s ease-in-out infinite;
+            animation-iteration-count: 3;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 overflow-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { ShoppingBag, Star, RefreshCw, Play, Home, Volume2, VolumeX } = lucideReact;
+
+        const SHOPS = [
+            {
+                id: 'greengrocer', name: 'やおやさん', icon: '🥕', bg: 'bg-green-50', accent: 'bg-green-500', border: 'border-green-300',
+                melody: [440, 493, 523, 587], // やおやさんの音階
+                items: [
+                    { id: 'v1', name: 'にんじん', icon: '🥕' }, { id: 'v2', name: 'じゃがいも', icon: '🥔' },
+                    { id: 'v3', name: 'コーン', icon: '🌽' }, { id: 'v4', name: 'トマト', icon: '🍅' },
+                    { id: 'v5', name: 'なす', icon: '🍆' }, { id: 'v6', name: 'きゅうり', icon: '🥒' },
+                    { id: 'v7', name: 'たまねぎ', icon: '🧅' }, { id: 'v8', name: 'ブロッコリー', icon: '🥦' }
+                ]
+            },
+            {
+                id: 'fish', name: 'おさかなやさん', icon: '🐟', bg: 'bg-blue-50', accent: 'bg-blue-500', border: 'border-blue-300',
+                melody: [330, 392, 440, 523], // おさかなやさんの音階
+                items: [
+                    { id: 'f1', name: 'さかな', icon: '🐟' }, { id: 'f2', name: 'たこ', icon: '🐙' },
+                    { id: 'f3', name: 'いか', icon: '🦑' }, { id: 'f4', name: 'えび', icon: '🦐' },
+                    { id: 'f5', name: 'かに', icon: '🦀' }, { id: 'f6', name: 'ふぐ', icon: '🐡' },
+                    { id: 'f7', name: 'かい', icon: '🐚' }, { id: 'f8', name: 'さめ', icon: '🦈' }
+                ]
+            },
+            {
+                id: 'sweets', name: 'おかしやさん', icon: '🍬', bg: 'bg-pink-50', accent: 'bg-pink-500', border: 'border-pink-300',
+                melody: [523, 659, 783, 1046], // おかしやさんの音階
+                items: [
+                    { id: 's1', name: 'あめ', icon: '🍬' }, { id: 's2', name: 'クッキー', icon: '🍪' },
+                    { id: 's3', name: 'チョコ', icon: '🍫' }, { id: 's4', name: 'ドーナツ', icon: '🍩' },
+                    { id: 's5', name: 'ケーキ', icon: '🍰' }, { id: 's6', name: 'プリン', icon: '🍮' },
+                    { id: 's7', name: 'アイス', icon: '🍦' }, { id: 's8', name: 'だんご', icon: '🍡' }
+                ]
+            },
+            {
+                id: 'convenience', name: 'コンビニ', icon: '🏪', bg: 'bg-slate-50', accent: 'bg-slate-600', border: 'border-slate-300',
+                melody: [440, 554, 659, 880], // コンビニの音階
+                items: [
+                    { id: 'c1', name: 'おにぎり', icon: '🍙' }, { id: 'c2', name: 'パン', icon: '🍞' },
+                    { id: 'c3', name: 'たまご', icon: '🥚' }, { id: 'c4', name: 'ぎゅうにゅう', icon: '🥛' },
+                    { id: 'c5', name: 'おべんとう', icon: '🍱' }, { id: 'c6', name: 'おちゃ', icon: '🍵' },
+                    { id: 'c7', name: 'バナナ', icon: '🍌' }, { id: 'c8', name: 'サンドイッチ', icon: '🥪' }
+                ]
+            }
+        ];
+
+        // 音声読み上げ
+        const speak = (text) => {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'ja-JP';
+            msg.rate = 1.1;
+            msg.pitch = 1.4;
+            window.speechSynthesis.speak(msg);
+        };
+
+        function App() {
+            const [gameState, setGameState] = useState('start');
+            const [currentShop, setCurrentShop] = useState(SHOPS[0]);
+            const [targetItems, setTargetItems] = useState([]);
+            const [shelfItems, setShelfItems] = useState([]);
+            const [foundItems, setFoundItems] = useState([]);
+            const [wrongId, setWrongId] = useState(null);
+            const [isPortrait, setIsPortrait] = useState(false);
+            const [isMuted, setIsMuted] = useState(false);
+
+            const audioCtx = useRef(null);
+            const bgmInterval = useRef(null);
+
+            // Audio Contextの初期化
+            const initAudio = () => {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!audioCtx.current && AudioContext) {
+                    audioCtx.current = new AudioContext();
+                }
+                if (audioCtx.current && audioCtx.current.state === 'suspended') {
+                    audioCtx.current.resume();
+                }
+            };
+
+            // 効果音再生
+            const playSound = (freq, type = 'sine', duration = 0.2, volume = 0.1) => {
+                if (!audioCtx.current || isMuted) return;
+                try {
+                    const osc = audioCtx.current.createOscillator();
+                    const gain = audioCtx.current.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, audioCtx.current.currentTime);
+                    gain.gain.setValueAtTime(volume, audioCtx.current.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.current.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.current.destination);
+                    osc.start();
+                    osc.stop(audioCtx.current.currentTime + duration);
+                } catch (e) { console.error(e); }
+            };
+
+            const playCorrectSound = () => {
+                playSound(523, 'sine', 0.1);
+                setTimeout(() => playSound(1046, 'sine', 0.3), 100);
+            };
+
+            const playWrongSound = () => {
+                playSound(200, 'triangle', 0.3, 0.2);
+                playSound(150, 'triangle', 0.3, 0.2);
+            };
+
+            // BGM再生
+            const startBGM = (shop) => {
+                if (bgmInterval.current) clearInterval(bgmInterval.current);
+                if (isMuted) return;
+
+                let step = 0;
+                bgmInterval.current = setInterval(() => {
+                    if (!isMuted && audioCtx.current) {
+                        try {
+                            const freq = shop.melody[step % shop.melody.length];
+                            // 優しいシンセ音
+                            const osc = audioCtx.current.createOscillator();
+                            const gain = audioCtx.current.createGain();
+                            osc.type = 'triangle';
+                            osc.frequency.setValueAtTime(freq, audioCtx.current.currentTime);
+                            gain.gain.setValueAtTime(0.03, audioCtx.current.currentTime);
+                            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.current.currentTime + 0.5);
+                            osc.connect(gain);
+                            gain.connect(audioCtx.current.destination);
+                            osc.start();
+                            osc.stop(audioCtx.current.currentTime + 0.5);
+                            step++;
+                        } catch (e) { }
+                    }
+                }, 600);
+            };
+
+            const stopBGM = () => {
+                if (bgmInterval.current) clearInterval(bgmInterval.current);
+            };
+
+            useEffect(() => {
+                const handleResize = () => setIsPortrait(window.innerHeight > window.innerWidth);
+                window.addEventListener('resize', handleResize);
+                handleResize();
+                return () => {
+                    window.removeEventListener('resize', handleResize);
+                    stopBGM();
+                };
+            }, []);
+
+            useEffect(() => {
+                if (gameState === 'playing') {
+                    startBGM(currentShop);
+                } else {
+                    stopBGM();
+                }
+            }, [gameState, currentShop, isMuted]);
+
+            const startShopping = (shop) => {
+                initAudio();
+                const shuffled = [...shop.items].sort(() => 0.5 - Math.random());
+                const targets = shuffled.slice(0, Math.floor(Math.random() * 2) + 3);
+
+                setCurrentShop(shop);
+                setTargetItems(targets);
+                setShelfItems([...shop.items].sort(() => 0.5 - Math.random()));
+                setFoundItems([]);
+                setGameState('playing');
+                speak(`${shop.name}にきました！おかいものリストのものをえらんでね！`);
+                playSound(880, 'sine', 0.2);
+            };
+
+            const handleItemClick = (item) => {
+                if (gameState !== 'playing') return;
+                initAudio();
+                if (foundItems.some(f => f.id === item.id)) return;
+
+                const isCorrect = targetItems.some(t => t.id === item.id);
+                if (isCorrect) {
+                    const newFound = [...foundItems, item];
+                    setFoundItems(newFound);
+                    playCorrectSound();
+                    if (newFound.length === targetItems.length) {
+                        setGameState('result');
+                        speak("すごーい！ぜんぶかえたよ！おかいものめいじん！");
+                    } else {
+                        speak(`${item.name}、あった！`);
+                    }
+                } else {
+                    setWrongId(item.id);
+                    playWrongSound();
+                    speak("あれ？ちがうよ〜？");
+                    setTimeout(() => setWrongId(null), 500);
+                }
+            };
+
+            const handleInitialStart = () => {
+                initAudio();
+                speak("どこのおみせにいく？");
+                setGameState('select_shop');
+                playSound(1046, 'sine', 0.2);
+            };
+
+            return (
+                <div className="fixed inset-0 bg-slate-900 flex items-center justify-center overflow-hidden font-sans select-none">
+
+                    {/* ホームボタン (NEW) */}
+                    <a href="index.html"
+                        className="fixed top-4 left-4 z-[110] bg-white/20 p-3 rounded-full text-white backdrop-blur-md hover:bg-white/30 transition-colors shadow-lg"
+                        title="戻る">
+                        <Home size={24} />
+                    </a>
+
+                    {/* ミュートボタン */}
+                    <button onClick={() => setIsMuted(!isMuted)}
+                        className="fixed top-4 right-4 z-[110] bg-white/20 p-3 rounded-full text-white backdrop-blur-md hover:bg-white/30 transition-colors shadow-lg"
+                    >
+                        {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+                    </button>
+
+                    {/* 1. スタート画面 */}
+                    {gameState === 'start' && (
+                        <div className="w-full h-full bg-white flex flex-col items-center justify-center p-4">
+                            <div className="bg-orange-50 p-10 rounded-[4rem] border-8 border-orange-200 text-center shadow-2xl animate-in zoom-in duration-300 relative">
+                                <h1 className="text-4xl font-bold text-orange-600 mb-8">おかいもの<br />ごっこ</h1>
+                                <button
+                                    onClick={handleInitialStart}
+                                    className="w-44 h-44 bg-orange-500 rounded-full shadow-[0_12px_0_rgb(180,60,20)] active:shadow-none active:translate-y-2 transition-all flex items-center justify-center mx-auto"
+                                >
+                                    <Play size={100} fill="white" className="text-white ml-2" />
+                                    <div className="absolute -bottom-6 -right-6 text-8xl animate-bounce">👆</div>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 2. ゲーム本体コンテナ */}
+                    {gameState !== 'start' && (
+                        <div
+                            className={`bg-white transition-all duration-300 relative overflow-hidden shadow-2xl
+                            ${isPortrait ? 'w-[100vh] h-[100vw] rotate-90 origin-center' : 'w-full h-full'}`}
+                            style={{ width: isPortrait ? '100vh' : '100%', height: isPortrait ? '100vw' : '100%' }}
+                        >
+
+                            {/* お店選び */}
+                            {gameState === 'select_shop' && (
+                                <div className="w-full h-full bg-orange-50 flex flex-col p-4 items-center justify-center">
+                                    <h2 className="text-3xl font-bold text-orange-600 mb-6">どこの おみせに いく？</h2>
+                                    <div className="grid grid-cols-4 gap-4 w-full max-w-5xl h-1/2">
+                                        {SHOPS.map(shop => (
+                                            <button
+                                                key={shop.id}
+                                                onClick={() => startShopping(shop)}
+                                                className={`flex flex-col items-center justify-center p-2 ${shop.bg} rounded-[2.5rem] border-4 ${shop.border} shadow-lg active:scale-95 transition-transform overflow-hidden`}
+                                            >
+                                                <span className="text-6xl mb-2">{shop.icon}</span>
+                                                <span className="text-xl font-bold text-gray-700">{shop.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* お買い物プレイ */}
+                            {(gameState === 'playing' || gameState === 'result') && (
+                                <div className={`w-full h-full ${currentShop.bg} flex p-4 gap-4 transition-all ${gameState === 'result' ? 'blur-md opacity-60' : ''}`}>
+
+                                    {/* 左側：リスト */}
+                                    <div className="w-1/4 bg-white/95 rounded-[2rem] shadow-xl border-2 border-dashed border-gray-300 flex flex-col p-4 h-full overflow-hidden shrink-0">
+                                        <h2 className="text-xl font-bold text-center mb-3 text-gray-400">かうもの</h2>
+                                        <div className="flex flex-col gap-2">
+                                            {targetItems.map(item => {
+                                                const done = foundItems.some(f => f.id === item.id);
+                                                return (
+                                                    <div key={item.id} className={`flex items-center p-3 rounded-2xl transition-all ${done ? 'bg-gray-100 opacity-20' : 'bg-orange-50 shadow-sm'}`}>
+                                                        <span className="text-4xl mr-3">{item.icon}</span>
+                                                        <span className={`text-base font-bold truncate ${done ? 'line-through decoration-2 decoration-red-400' : ''}`}>
+                                                            {item.name}
+                                                        </span>
+                                                        {done && <span className="ml-auto text-2xl">✅</span>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* 右側：売り場 */}
+                                    <div className="w-3/4 flex flex-col h-full overflow-hidden">
+                                        <div className={`${currentShop.accent} text-white rounded-2xl py-3 px-8 shadow-md flex items-center justify-between mb-4 shrink-0`}>
+                                            <h1 className="text-2xl font-bold flex items-center gap-2">🏠 {currentShop.name}</h1>
+                                            <button onClick={() => { setGameState('select_shop'); stopBGM(); }} className="bg-white/20 px-6 py-2 rounded-full text-sm font-bold hover:bg-white/30 transition-colors flex items-center gap-2">
+                                                <Home size={18} /> おみせを かえる
+                                            </button>
+                                        </div>
+
+                                        <div className="flex-grow grid grid-cols-4 grid-rows-2 gap-4 pb-2 h-full">
+                                            {shelfItems.map(item => {
+                                                const picked = foundItems.some(f => f.id === item.id);
+                                                const failing = wrongId === item.id;
+                                                return (
+                                                    <button
+                                                        key={item.id}
+                                                        onClick={() => handleItemClick(item)}
+                                                        disabled={picked}
+                                                        className={`
+                                        relative flex flex-col items-center justify-center bg-white rounded-[2rem] shadow-md border-b-8 border-gray-200
+                                        active:border-b-0 active:translate-y-2 transition-all
+                                        ${picked ? 'opacity-0 scale-50 pointer-events-none' : 'scale-100'}
+                                        ${failing ? 'animate-shake bg-red-50 border-red-200' : ''}
+                                        `}
+                                                    >
+                                                        <span className="text-7xl mb-1">{item.icon}</span>
+                                                        <span className="text-sm font-bold text-gray-500">{item.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 結果発表 */}
+                            {gameState === 'result' && (
+                                <div className="absolute inset-0 z-[100] flex items-center justify-center p-4">
+                                    <div className="bg-white rounded-[4rem] p-10 shadow-2xl border-8 border-yellow-400 text-center max-w-md w-full animate-in zoom-in duration-300">
+                                        <div className="text-8xl mb-4 animate-bounce">💮</div>
+                                        <h2 className="text-5xl font-bold text-orange-500 mb-2">じょうず！</h2>
+                                        <p className="text-2xl font-bold text-gray-500 mb-10">ぜんぶ かえたね！</p>
+                                        <div className="flex flex-col gap-4">
+                                            <button
+                                                onClick={() => startShopping(currentShop)}
+                                                className="w-full bg-green-500 text-white text-3xl font-bold py-6 rounded-full shadow-lg flex items-center justify-center gap-4 active:scale-95 transition-transform"
+                                            >
+                                                <RefreshCw size={40} /> もういっかい
+                                            </button>
+                                            <button
+                                                onClick={() => setGameState('select_shop')}
+                                                className="w-full bg-orange-100 text-orange-600 text-2xl font-bold py-4 rounded-full active:scale-95 transition-transform"
+                                            >
+                                                おみせを かえる
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

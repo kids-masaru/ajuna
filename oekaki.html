@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,7 +11,7 @@
 
         body {
             font-family: 'M PLUS Rounded 1c', sans-serif;
-            touch-action: none;
+            /* touch-action: none; removed to allow native scrolling in footer */
             overflow: hidden;
             background-color: #fdf2f8;
             user-select: none;
@@ -23,29 +24,32 @@
 
         .tool-btn {
             transition: all 0.2s;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
             flex-shrink: 0;
         }
+
         .tool-btn:active {
             transform: translateY(4px);
             box-shadow: none;
         }
+
         .tool-btn.active {
             transform: translateY(2px);
-            box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
             border: 3px solid #f472b6;
             background-color: #fff1f2;
         }
 
         .color-btn {
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: 3px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
             flex-shrink: 0;
         }
+
         .color-btn.active {
             transform: scale(1.2);
             border-color: #333;
@@ -62,6 +66,8 @@
             top: 0;
             left: 0;
             z-index: 1;
+            touch-action: none;
+            /* Only canvas prevents default touch actions */
         }
 
         .full-overlay {
@@ -82,13 +88,15 @@
             overflow: hidden;
             background: white;
             border: 4px solid white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s;
             -webkit-touch-callout: none;
         }
+
         .gallery-img-wrapper:active {
             transform: scale(0.95);
         }
+
         .gallery-img-wrapper img {
             width: 100%;
             display: block;
@@ -112,7 +120,7 @@
             font-weight: bold;
             font-size: 18px;
             border: 3px solid white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             z-index: 50;
             cursor: pointer;
         }
@@ -123,7 +131,7 @@
             top: 20%;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 16px 28px;
             border-radius: 99px;
@@ -137,84 +145,126 @@
             border-radius: 32px;
             border: 4px solid #f9a8d4;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             max-width: 90%;
             margin: auto;
         }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scroll-x {
+            touch-action: pan-x;
+        }
     </style>
 </head>
+
 <body class="h-full w-full bg-pink-50">
-    
+
     <div id="canvas-container" class="touch-none">
         <canvas id="drawingCanvas"></canvas>
     </div>
 
     <!-- UI: 上部 -->
     <div class="fixed top-0 left-0 w-full p-3 flex justify-between items-start z-50 pointer-events-none">
-        <button onclick="location.href='index.html'" class="pointer-events-auto bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90">
+        <button onclick="location.href='index.html'"
+            class="pointer-events-auto bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg border-2 border-pink-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90">
             🏠
         </button>
-        
+
         <div class="flex space-x-2 pointer-events-auto">
-            <label class="bg-white/90 backdrop-blur-sm p-2 rounded-2xl shadow-lg border-2 border-green-200 flex flex-col items-center justify-center w-14 h-14 active:scale-90 cursor-pointer">
+            <label
+                class="bg-white/90 backdrop-blur-sm p-2 rounded-2xl shadow-lg border-2 border-green-200 flex flex-col items-center justify-center w-14 h-14 active:scale-90 cursor-pointer">
                 <span class="text-2xl">📂</span>
                 <span class="text-[8px] text-green-600 font-bold leading-none">しゃしん</span>
                 <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
             </label>
-            <button onclick="showGallery()" class="bg-white/90 backdrop-blur-sm p-2 rounded-2xl shadow-lg border-2 border-blue-200 flex flex-col items-center justify-center w-14 h-14 active:scale-90">
+            <button onclick="showGallery()"
+                class="bg-white/90 backdrop-blur-sm p-2 rounded-2xl shadow-lg border-2 border-blue-200 flex flex-col items-center justify-center w-14 h-14 active:scale-90">
                 <span class="text-2xl">🖼️</span>
                 <span class="text-[8px] text-blue-500 font-bold leading-none">みたよ</span>
             </button>
-            <button onclick="saveToGallery()" class="bg-yellow-400 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
+            <button onclick="saveToGallery()"
+                class="bg-yellow-400 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
                 <span class="text-2xl">📸</span>
                 <span class="text-[9px] text-white font-bold leading-none mt-1">保存</span>
             </button>
         </div>
     </div>
 
-    <!-- UI: ツールバー -->
-    <div class="fixed bottom-16 left-0 w-full px-2 py-2 flex justify-center items-center space-x-2 z-50 pointer-events-none">
-        <div class="flex space-x-2 bg-white/60 backdrop-blur-md p-2 rounded-3xl shadow-xl border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
-            <button id="btnPen" class="tool-btn active bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('pen')">
-                <span class="text-2xl">✏️</span>
-                <span class="text-[9px] text-gray-500 font-bold">かく</span>
-            </button>
-            <button id="btnMagic" class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('magic')">
-                <span class="text-2xl">🌈</span>
-                <span class="text-[9px] text-gray-500 font-bold">まほう</span>
-            </button>
-            <button id="btnStamp" class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 relative" onclick="setMode('stamp')">
-                <span id="currentStampIcon" class="text-2xl">⭐</span>
-                <span class="text-[9px] text-gray-500 font-bold">ポン！</span>
-                <div onclick="event.stopPropagation(); changeStampType()" class="absolute -top-1 -right-1 bg-yellow-400 text-white w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-[10px]">↻</div>
-            </button>
-            <button id="btnEraser" class="tool-btn bg-white p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14" onclick="setMode('eraser')">
-                <span class="text-2xl">🧼</span>
-                <span class="text-[9px] text-gray-500 font-bold">けし</span>
-            </button>
-            <div class="w-px bg-pink-200 h-10 self-center mx-1 flex-shrink-0"></div>
-            <button class="tool-btn bg-red-50 p-2 rounded-2xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100" onclick="execClear()">
-                <span class="text-2xl">🗑️</span>
-                <span class="text-[9px] font-bold">ぜんぶ</span>
-            </button>
-        </div>
+    <!-- UI Toggle Button -->
+    <div id="ui-toggle-btn" class="fixed bottom-36 right-4 z-[60] transition-all duration-300">
+        <button onclick="toggleUI()"
+            class="bg-purple-500 p-2 rounded-2xl shadow-lg border-4 border-white flex flex-col items-center justify-center w-16 h-16 active:scale-90">
+            <span id="ui-toggle-icon" class="text-2xl">👀</span>
+            <span class="text-[9px] text-white font-bold leading-none mt-1">ひょうじ</span>
+        </button>
+    </div>
     </div>
 
-    <!-- UI: カラーパレット -->
-    <div class="fixed bottom-2 left-0 w-full px-4 z-50 pointer-events-none">
-        <div class="flex justify-center space-x-3 py-2 bg-white/70 backdrop-blur-md rounded-full px-5 shadow-lg min-w-max mx-auto border border-white/50 pointer-events-auto overflow-x-auto no-scrollbar">
-            <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
-            <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
-            <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
-            <button class="color-btn bg-yellow-400" onclick="setColor('#facc15', this)"></button>
-            <button class="color-btn bg-green-500" onclick="setColor('#22c55e', this)"></button>
-            <button class="color-btn bg-sky-500" onclick="setColor('#0ea5e9', this)"></button>
-            <button class="color-btn bg-blue-600" onclick="setColor('#2563eb', this)"></button>
-            <button class="color-btn bg-purple-500" onclick="setColor('#a855f7', this)"></button>
-            <button class="color-btn bg-pink-400" onclick="setColor('#f472b6', this)"></button>
+    <!-- UI Footer -->
+    <div id="ui-footer"
+        class="fixed bottom-0 left-0 w-full bg-pink-100/90 backdrop-blur-xl border-t border-white/50 pb-4 pt-2 z-50 transition-transform duration-300 flex flex-col items-center gap-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+
+        <!-- Tools -->
+        <div class="w-full overflow-x-auto no-scrollbar scroll-x px-2 flex justify-center">
+            <div class="flex space-x-1 p-1">
+                <button id="btnPen"
+                    class="tool-btn active bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14"
+                    onclick="setMode('pen')">
+                    <span class="text-2xl">✏️</span>
+                    <span class="text-[10px] text-gray-500 font-bold">かく</span>
+                </button>
+                <button id="btnMagic"
+                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14"
+                    onclick="setMode('magic')">
+                    <span class="text-2xl">🌈</span>
+                    <span class="text-[10px] text-gray-500 font-bold">まほう</span>
+                </button>
+                <button id="btnStamp"
+                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14 relative"
+                    onclick="setMode('stamp')">
+                    <span id="currentStampIcon" class="text-2xl">⭐</span>
+                    <span class="text-[10px] text-gray-500 font-bold">ポン！</span>
+                    <div onclick="event.stopPropagation(); changeStampType()"
+                        class="absolute -top-1 -right-1 bg-yellow-400 text-white w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-sm active:scale-90 text-[10px]">
+                        ↻</div>
+                </button>
+                <button id="btnEraser"
+                    class="tool-btn bg-white p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14"
+                    onclick="setMode('eraser')">
+                    <span class="text-2xl">🧼</span>
+                    <span class="text-[10px] text-gray-500 font-bold">けし</span>
+                </button>
+                <div class="w-px bg-pink-300 h-10 self-center mx-1 flex-shrink-0"></div>
+                <button
+                    class="tool-btn bg-red-50 p-1 rounded-xl flex flex-col items-center justify-center w-14 h-14 text-red-500 border border-red-100"
+                    onclick="execClear()">
+                    <span class="text-2xl">🗑️</span>
+                    <span class="text-[10px] font-bold">ぜんぶ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Colors -->
+        <div class="w-full overflow-x-auto no-scrollbar scroll-x px-1">
+            <div class="flex space-x-1 py-1 px-1 mx-auto w-max">
+                <button class="color-btn active bg-black" onclick="setColor('black', this)"></button>
+                <button class="color-btn bg-red-500" onclick="setColor('#ef4444', this)"></button>
+                <button class="color-btn bg-orange-400" onclick="setColor('#fb923c', this)"></button>
+                <button class="color-btn bg-yellow-400" onclick="setColor('#facc15', this)"></button>
+                <button class="color-btn bg-green-500" onclick="setColor('#22c55e', this)"></button>
+                <button class="color-btn bg-sky-500" onclick="setColor('#0ea5e9', this)"></button>
+                <button class="color-btn bg-blue-600" onclick="setColor('#2563eb', this)"></button>
+                <button class="color-btn bg-purple-500" onclick="setColor('#a855f7', this)"></button>
+                <button class="color-btn bg-pink-400" onclick="setColor('#f472b6', this)"></button>
+            </div>
         </div>
     </div>
 
@@ -222,13 +272,16 @@
     <div id="gallery-overlay" class="full-overlay hidden flex flex-col">
         <div class="w-full max-w-md flex justify-between items-center mb-4 px-4 mt-2 mx-auto">
             <h2 class="text-pink-600 text-2xl font-bold italic">🖼️ ギャラリー</h2>
-            <button onclick="hideGallery()" class="bg-pink-500 text-white px-6 py-2 rounded-full font-bold shadow-md active:scale-95">とじる</button>
+            <button onclick="hideGallery()"
+                class="bg-pink-500 text-white px-6 py-2 rounded-full font-bold shadow-md active:scale-95">とじる</button>
         </div>
         <p class="text-pink-400 text-[10px] mb-4 text-center px-4 leading-tight">
             えをえらぶと つづきがかけるよ！<br>
             <span class="font-bold text-pink-600">ながーくおすと</span> スマホにほぞんできるよ
         </p>
-        <div id="gallery-list" class="flex-grow w-full max-w-2xl overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-8 pb-20 px-8 no-scrollbar mx-auto"></div>
+        <div id="gallery-list"
+            class="flex-grow w-full max-w-2xl overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-8 pb-20 px-8 no-scrollbar mx-auto">
+        </div>
     </div>
 
     <!-- 削除確認 -->
@@ -236,8 +289,10 @@
         <div class="custom-dialog">
             <p class="text-gray-700 text-xl font-bold mb-6">これを けしちゃう？</p>
             <div class="flex space-x-4 justify-center">
-                <button onclick="closeDeleteConfirm()" class="bg-gray-200 text-gray-600 px-6 py-3 rounded-full font-bold">やめる</button>
-                <button id="confirm-delete-ok" class="bg-red-500 text-white px-8 py-3 rounded-full font-bold shadow-lg">けす！</button>
+                <button onclick="closeDeleteConfirm()"
+                    class="bg-gray-200 text-gray-600 px-6 py-3 rounded-full font-bold">やめる</button>
+                <button id="confirm-delete-ok"
+                    class="bg-red-500 text-white px-8 py-3 rounded-full font-bold shadow-lg">けす！</button>
             </div>
         </div>
     </div>
@@ -264,7 +319,7 @@
             osc.start(); osc.stop(now + duration);
         }
 
-        const playDrawSound = () => playSound(250 + Math.random()*50, 0.08, 'triangle', 0.02);
+        const playDrawSound = () => playSound(250 + Math.random() * 50, 0.08, 'triangle', 0.02);
         const playEraseSound = () => playSound(600, 0.08, 'sine', 0.02);
         const playStampSound = () => playSound(500, 0.1, 'sine', 0.08);
         const playClearSound = () => playSound(300, 0.4, 'sawtooth', 0.05);
@@ -275,9 +330,9 @@
         let isDrawing = false;
         let lastX = 0, lastY = 0;
         let currentColor = 'black';
-        let currentMode = 'pen'; 
+        let currentMode = 'pen';
         let currentStamp = '⭐';
-        const stamps = ['⭐', '❤️', '🐶', '🚗', '🍎', '🌸', '👑', '🌈', '🍦', '✨', '🎈', '🐱', '🦋', '🦖', '⚽', '🍩', '🍓', '🎁'];
+        const stamps = ['⭐', '❤️', '🐶', '🚗', '🍎', '🌸', '👑', '🌈', '🍦', '✨', '🎈', '🐱', '🦋', '🦖', '⚽', '🍩', '🍓', '🎁', '💩'];
         let stampIndex = 0;
         let galleryImages = [];
         let longPressTimer = null;
@@ -286,7 +341,7 @@
         try {
             const saved = localStorage.getItem('magic_board_gallery_v8');
             if (saved) galleryImages = JSON.parse(saved);
-        } catch(e) { console.error(e); }
+        } catch (e) { console.error(e); }
 
         function resize() {
             const dpr = window.devicePixelRatio || 1;
@@ -335,7 +390,7 @@
             currentMode = mode;
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
             const idMap = { pen: 'btnPen', magic: 'btnMagic', stamp: 'btnStamp', eraser: 'btnEraser' };
-            if(idMap[mode]) document.getElementById(idMap[mode]).classList.add('active');
+            if (idMap[mode]) document.getElementById(idMap[mode]).classList.add('active');
         }
 
         function setColor(color, btn) {
@@ -350,7 +405,7 @@
             stampIndex = (stampIndex + 1) % stamps.length;
             currentStamp = stamps[stampIndex];
             document.getElementById('currentStampIcon').innerText = currentStamp;
-            setMode('stamp'); 
+            setMode('stamp');
         }
 
         function execClear() {
@@ -401,7 +456,7 @@
             sCtx.drawImage(canvas, 0, 0);
             const dataUrl = saveCanvas.toDataURL('image/png');
             galleryImages.unshift(dataUrl);
-            if(galleryImages.length > 30) galleryImages.pop();
+            if (galleryImages.length > 30) galleryImages.pop();
             syncStorage();
             const toast = document.getElementById('save-toast');
             toast.style.display = 'block';
@@ -409,7 +464,7 @@
         }
 
         function syncStorage() {
-            try { localStorage.setItem('magic_board_gallery_v8', JSON.stringify(galleryImages)); } catch(e) {}
+            try { localStorage.setItem('magic_board_gallery_v8', JSON.stringify(galleryImages)); } catch (e) { }
         }
 
         function showGallery() {
@@ -418,17 +473,17 @@
             const overlay = document.getElementById('gallery-overlay');
             const list = document.getElementById('gallery-list');
             list.innerHTML = '';
-            
+
             if (galleryImages.length === 0) {
                 list.innerHTML = '<div class="col-span-full text-pink-300 text-center mt-10 text-sm">まだ えがないよ！</div>';
             } else {
                 galleryImages.forEach((imgData, idx) => {
                     const itemContainer = document.createElement('div');
                     itemContainer.className = "gallery-item";
-                    
+
                     const imgWrapper = document.createElement('div');
                     imgWrapper.className = "gallery-img-wrapper";
-                    
+
                     const startPress = (e) => {
                         e.stopPropagation();
                         longPressTimer = setTimeout(() => {
@@ -488,8 +543,8 @@
             const img = new Image();
             img.onload = () => {
                 const dpr = window.devicePixelRatio || 1;
-                ctx.clearRect(0, 0, canvas.width/dpr, canvas.height/dpr);
-                ctx.drawImage(img, 0, 0, canvas.width/dpr, canvas.height/dpr);
+                ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+                ctx.drawImage(img, 0, 0, canvas.width / dpr, canvas.height / dpr);
                 hideGallery();
             };
             img.src = galleryImages[idx];
@@ -535,7 +590,7 @@
 
         function startDraw(e) {
             if (e.target !== canvas || isUIBusy) return;
-            initAudio(); 
+            initAudio();
             isDrawing = true;
             const pos = getPos(e);
             lastX = pos.x; lastY = pos.y;
@@ -589,18 +644,41 @@
         canvas.addEventListener('mousedown', startDraw);
         window.addEventListener('mousemove', moveDraw);
         window.addEventListener('mouseup', () => { isDrawing = false; });
-        canvas.addEventListener('touchstart', (e) => { 
+        canvas.addEventListener('touchstart', (e) => {
             if (isUIBusy) return;
-            e.preventDefault(); 
-            startDraw(e); 
+            e.preventDefault();
+            startDraw(e);
         }, { passive: false });
-        window.addEventListener('touchmove', (e) => { 
+        window.addEventListener('touchmove', (e) => {
             if (isUIBusy) return;
-            e.preventDefault(); 
-            moveDraw(e); 
+            e.preventDefault();
+            moveDraw(e);
         }, { passive: false });
         window.addEventListener('touchend', () => { isDrawing = false; });
+
+        // Removed custom touchmove listener as we now rely on native scrolling and CSS touch-action
+
+        let isUIHidden = false;
+        function toggleUI() {
+            initAudio(); playActionSound();
+            isUIHidden = !isUIHidden;
+            const footer = document.getElementById('ui-footer');
+            const icon = document.getElementById('ui-toggle-icon');
+            const btnContainer = document.getElementById('ui-toggle-btn');
+
+            if (isUIHidden) {
+                footer.classList.add('translate-y-[100%]');
+                btnContainer.classList.remove('bottom-36');
+                btnContainer.classList.add('bottom-4');
+                icon.innerText = '🙈';
+            } else {
+                footer.classList.remove('translate-y-[100%]');
+                btnContainer.classList.add('bottom-36');
+                btnContainer.classList.remove('bottom-4');
+                icon.innerText = '👀';
+            }
+        }
     </script>
 </body>
-</html>
 
+</html>
