@@ -97,35 +97,115 @@
         const VolumeX = (props) => (<IconBase {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" x2="17" y1="9" y2="15" /><line x1="17" x2="23" y1="9" y2="15" /></IconBase>);
         const MapIcon = (props) => (<IconBase {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" x2="8" y1="2" y2="18" /><line x1="16" x2="16" y1="6" y2="22" /></IconBase>); // Changed to Map Icon
 
-        // --- Half-Body Girl Character ---
-        const GirlHalfBody = ({ className }) => (
-            <svg viewBox="0 0 100 80" className={className} xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="2" dy="2" stdDeviation="2" floodOpacity="0.3" />
-                    </filter>
-                </defs>
-                <g filter="url(#shadow)">
-                    {/* Dress/Body */}
-                    <path d="M20 80 L80 80 L75 40 L25 40 Z" fill="#f472b6" />
-                    {/* Arms */}
-                    <path d="M25 45 L10 65 A5 5 0 0 0 15 70 L30 50 Z" fill="#fce5cd" />
-                    <path d="M75 45 L90 65 A5 5 0 0 0 85 70 L70 50 Z" fill="#fce5cd" />
-                    {/* Head */}
-                    <circle cx="50" cy="25" r="22" fill="#1f2937" />
-                    <path d="M28 25 A 22 22 0 0 1 72 25 L 75 45 Q 50 40 25 45 Z" fill="#1f2937" />
-                </g>
-            </svg>
+        // --- Clipboard Style Shopping List ---
+        const ClipboardList = ({ items, foundItems, onSpeak }) => (
+            <div className="relative bg-[#fdf6e3] rounded-sm shadow-lg border-2 border-[#d3c6aa] p-2 flex flex-col gap-2 min-h-[140px] w-20 md:w-24">
+                {/* Clipboard Top Clip */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-4 bg-gray-400 rounded-t-md border-b-2 border-gray-500 flex items-center justify-center z-10">
+                    <div className="w-4 h-1 bg-gray-300 rounded-full"></div>
+                </div>
+                <div className="text-[10px] font-bold text-gray-500 text-center border-b border-gray-300 pb-1 mb-1 mt-1">LIST</div>
+                <div className="flex flex-col gap-3">
+                    {items.map(item => {
+                        const done = foundItems.some(f => f.id === item.id);
+                        return (
+                            <div
+                                key={item.id}
+                                onClick={() => onSpeak(item.name)}
+                                className={`relative flex flex-col items-center justify-center transition-all ${done ? 'opacity-30' : 'scale-110'}`}
+                            >
+                                <div className="relative">
+                                    <span className="text-3xl md:text-4xl">{item.icon}</span>
+                                    {done && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-4xl text-green-600 font-bold drop-shadow-md">✓</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+
+        // --- Wire Mesh Shopping Cart SVG ---
+        const WireCart = ({ children, className }) => (
+            <div className={`relative ${className}`}>
+                <svg viewBox="0 0 120 100" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                    {/* Cart Body (Wire Mesh) */}
+                    <path d="M20 20 L100 20 L90 70 L30 70 Z" fill="none" stroke="#60a5fa" strokeWidth="2" />
+                    {/* Vertical Wires */}
+                    <line x1="35" y1="20" x2="40" y2="70" stroke="#60a5fa" strokeWidth="1" />
+                    <line x1="50" y1="20" x2="52" y2="70" stroke="#60a5fa" strokeWidth="1" />
+                    <line x1="65" y1="20" x2="63" y2="70" stroke="#60a5fa" strokeWidth="1" />
+                    <line x1="80" y1="20" x2="75" y2="70" stroke="#60a5fa" strokeWidth="1" />
+                    {/* Horizontal Wires */}
+                    <line x1="24" y1="35" x2="96" y2="35" stroke="#60a5fa" strokeWidth="1" />
+                    <line x1="27" y1="52" x2="93" y2="52" stroke="#60a5fa" strokeWidth="1" />
+                    {/* Handle */}
+                    <path d="M20 20 L10 20 Q 5 20 5 10 L 5 5" fill="none" stroke="#2563eb" strokeWidth="4" strokeLinecap="round" />
+                    {/* Chassis & Wheels */}
+                    <line x1="30" y1="70" x2="90" y2="70" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+                    <circle cx="40" cy="85" r="8" fill="#1e293b" />
+                    <circle cx="40" cy="85" r="3" fill="#94a3b8" />
+                    <circle cx="80" cy="85" r="8" fill="#1e293b" />
+                    <circle cx="80" cy="85" r="3" fill="#94a3b8" />
+                </svg>
+                {/* Content Overlay Container */}
+                <div className="absolute top-[20%] left-[20%] right-[10%] bottom-[30%] flex items-center justify-center flex-wrap gap-1 pointer-events-none">
+                    {children}
+                </div>
+            </div>
+        );
+
+        // --- Wooden Shelf Component ---
+        const ShelfLayer = ({ children }) => (
+            <div className="relative w-full h-40 flex flex-col items-center justify-end group">
+                {/* The Wooden Board */}
+                <div className="absolute inset-x-0 bottom-0 h-6 bg-[#8b4513] rounded shadow-lg z-0 overflow-hidden">
+                    {/* Wood Texture Lines */}
+                    <div className="absolute top-1 left-0 right-0 h-[1px] bg-white/10"></div>
+                    <div className="absolute top-3 left-0 right-0 h-[1px] bg-black/20"></div>
+                    <div className="absolute top-4 left-0 right-0 h-[1px] bg-white/5"></div>
+                </div>
+                {/* Depth Lip */}
+                <div className="absolute inset-x-2 bottom-6 h-1 bg-[#654321] rounded-full z-0"></div>
+                {/* Items Container */}
+                <div className="relative z-10 flex items-end justify-center w-full h-full pb-4 px-2">
+                    {children}
+                </div>
+            </div>
+        );
+
+        // --- Half-Body Girl Character ---        const GirlHalfBody = ({ className }) => (
+        <svg viewBox="0 0 100 80" className={className} xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="2" dy="2" stdDeviation="2" floodOpacity="0.3" />
+                </filter>
+            </defs>
+            <g filter="url(#shadow)">
+                {/* Dress/Body */}
+                <path d="M20 80 L80 80 L75 40 L25 40 Z" fill="#f472b6" />
+                {/* Arms */}
+                <path d="M25 45 L10 65 A5 5 0 0 0 15 70 L30 50 Z" fill="#fce5cd" />
+                <path d="M75 45 L90 65 A5 5 0 0 0 85 70 L70 50 Z" fill="#fce5cd" />
+                {/* Head */}
+                <circle cx="50" cy="25" r="22" fill="#1f2937" />
+                <path d="M28 25 A 22 22 0 0 1 72 25 L 75 45 Q 50 40 25 45 Z" fill="#1f2937" />
+            </g>
+        </svg>
         );
 
         const SHOPS = [
-            { id: 'greengrocer', name: 'やおやさん', icon: '🥕', bg: 'bg-green-50', border: 'border-green-300', items: [{ id: 'v1', name: 'にんじん', icon: '🥕' }, { id: 'v2', name: 'じゃがいも', icon: '🥔' }, { id: 'v3', name: 'コーン', icon: '🌽' }, { id: 'v4', name: 'トマト', icon: '🍅' }, { id: 'v5', name: 'なす', icon: '🍆' }, { id: 'v6', name: 'きゅうり', icon: '🥒' }, { id: 'v7', name: 'たまねぎ', icon: '🧅' }, { id: 'v8', name: 'ブロッコリー', icon: '🥦' }, { id: 'v9', name: 'かぼちゃ', icon: '🎃' }, { id: 'v10', name: 'さつまいも', icon: '🍠' }, { id: 'v11', name: 'ぶどう', icon: '🍇' }, { id: 'v12', name: 'メロン', icon: '🍈' }, { id: 'v13', name: 'すいか', icon: '🍉' }, { id: 'v14', name: 'いちご', icon: '🍓' }, { id: 'v15', name: 'もも', icon: '🍑' }, { id: 'v16', name: 'りんご', icon: '🍎' }, { id: 'v17', name: 'キノコ', icon: '🍄' }, { id: 'v18', name: 'さくらんぼ', icon: '🍒' }] },
-            { id: 'fish', name: 'おさかなや', icon: '🐟', bg: 'bg-blue-50', border: 'border-blue-300', items: [{ id: 'f1', name: 'さかな', icon: '🐟' }, { id: 'f2', name: 'たこ', icon: '🐙' }, { id: 'f3', name: 'いか', icon: '🦑' }, { id: 'f4', name: 'えび', icon: '🦐' }, { id: 'f5', name: 'かに', icon: '🦀' }, { id: 'f6', name: 'ふぐ', icon: '🐡' }, { id: 'f7', name: 'かい', icon: '🐚' }, { id: 'f8', name: 'さめ', icon: '🦈' }, { id: 'f9', name: 'くじら', icon: '🐋' }, { id: 'f10', name: 'いるか', icon: '🐬' }, { id: 'f11', name: 'ねったいぎょ', icon: '🐠' }, { id: 'f12', name: 'ロブスター', icon: '🦞' }, { id: 'f13', name: 'ペンギン', icon: '🐧' }, { id: 'f14', name: 'かめ', icon: '🐢' }] },
-            { id: 'sweets', name: 'おかしや', icon: '🍬', bg: 'bg-pink-50', border: 'border-pink-300', items: [{ id: 's1', name: 'あめ', icon: '🍬' }, { id: 's2', name: 'クッキー', icon: '🍪' }, { id: 's3', name: 'チョコ', icon: '🍫' }, { id: 's4', name: 'ドーナツ', icon: '🍩' }, { id: 's5', name: 'ケーキ', icon: '🍰' }, { id: 's6', name: 'プリン', icon: '🍮' }, { id: 's7', name: 'アイス', icon: '🍦' }, { id: 's8', name: 'だんご', icon: '🍡' }, { id: 's9', name: 'ペロペロキャンディ', icon: '🍭' }, { id: 's10', name: 'かきごおり', icon: '🍧' }, { id: 's11', name: 'はちみつ', icon: '🍯' }, { id: 's12', name: 'ポップコーン', icon: '🍿' }, { id: 's13', name: 'バースデーケーキ', icon: '🎂' }, { id: 's14', name: 'クロワッサン', icon: '🥐' }] },
-            { id: 'bakery', name: 'パンやさん', icon: '🍞', bg: 'bg-orange-50', border: 'border-orange-300', items: [{ id: 'b1', name: 'しょくパン', icon: '🍞' }, { id: 'b2', name: 'クロワッサン', icon: '🥐' }, { id: 'b3', name: 'フランスパン', icon: '🥖' }, { id: 'b4', name: 'ベーグル', icon: '🥯' }, { id: 'b5', name: 'パンケーキ', icon: '🥞' }, { id: 'b6', name: 'ワッフル', icon: '🧇' }, { id: 'b7', name: 'サンドイッチ', icon: '🥪' }, { id: 'b8', name: 'ホットドッグ', icon: '🌭' }, { id: 'b9', name: 'ピザ', icon: '🍕' }, { id: 'b10', name: 'プレッツェル', icon: '🥨' }] },
-            { id: 'toys', name: 'おもちゃや', icon: '🧸', bg: 'bg-yellow-50', border: 'border-yellow-300', items: [{ id: 't1', name: 'くまさん', icon: '🧸' }, { id: 't2', name: 'ロボット', icon: '🤖' }, { id: 't3', name: 'くるま', icon: '🚗' }, { id: 't4', name: 'きしゃ', icon: '🚂' }, { id: 't5', name: 'ボール', icon: '⚽' }, { id: 't6', name: 'ゲーム', icon: '🎮' }, { id: 't7', name: 'パズル', icon: '🧩' }, { id: 't8', name: 'たいこ', icon: '🥁' }, { id: 't9', name: 'きょうりゅう', icon: '🦖' }, { id: 't10', name: 'UFO', icon: '🛸' }, { id: 't11', name: 'しょうぼうしゃ', icon: '🚒' }, { id: 't12', name: 'パトカー', icon: '🚓' }] },
-            { id: 'flowers', name: 'おはなや', icon: '💐', bg: 'bg-rose-50', border: 'border-rose-300', items: [{ id: 'fl1', name: 'はなたば', icon: '💐' }, { id: 'fl2', name: 'バラ', icon: '🌹' }, { id: 'fl3', name: 'ひまわり', icon: '🌻' }, { id: 'fl4', name: 'チューリップ', icon: '🌷' }, { id: 'fl5', name: 'ハイビスカス', icon: '🌺' }, { id: 'fl6', name: 'サクラ', icon: '🌸' }, { id: 'fl7', name: 'マーガレット', icon: '🌼' }, { id: 'fl8', name: 'サボテン', icon: '🌵' }, { id: 'fl9', name: 'ツリー', icon: '🌲' }, { id: 'fl10', name: 'クローバー', icon: '🍀' }, { id: 'fl11', name: 'もみじ', icon: '🍁' }, { id: 'fl12', name: 'おちば', icon: '🍂' }] },
-            { id: 'convenience', name: 'コンビニ', icon: '🏪', bg: 'bg-slate-50', border: 'border-slate-300', items: [{ id: 'c1', name: 'おにぎり', icon: '🍙' }, { id: 'c2', name: 'ハンバーガー', icon: '🍔' }, { id: 'c3', name: 'ポテト', icon: '🍟' }, { id: 'c4', name: 'ぎゅうにゅう', icon: '🥛' }, { id: 'c5', name: 'おべんとう', icon: '🍱' }, { id: 'c6', name: 'おちゃ', icon: '🍵' }, { id: 'c7', name: 'バナナ', icon: '🍌' }, { id: 'c8', name: 'ジュース', icon: '🧃' }, { id: 'c9', name: 'たまご', icon: '🥚' }, { id: 'c10', name: 'コーヒー', icon: '☕' }, { id: 'c11', name: 'かさ', icon: '☔' }, { id: 'c12', name: 'しんぶん', icon: '📰' }] }
+            { id: 'greengrocer', name: 'やおやさん', icon: '🥕', bg: 'bg-[#f7fee7]', border: 'border-[#bef264]', items: [{ id: 'v1', name: 'にんじん', icon: '🥕' }, { id: 'v2', name: 'じゃがいも', icon: '🥔' }, { id: 'v3', name: 'コーン', icon: '🌽' }, { id: 'v4', name: 'トマト', icon: '🍅' }, { id: 'v5', name: 'なす', icon: '🍆' }, { id: 'v6', name: 'きゅうり', icon: '🥒' }, { id: 'v7', name: 'たまねぎ', icon: '🧅' }, { id: 'v8', name: 'ブロッコリー', icon: '🥦' }, { id: 'v9', name: 'かぼちゃ', icon: '🎃' }, { id: 'v10', name: 'さつまいも', icon: '🍠' }, { id: 'v11', name: 'ぶどう', icon: '🍇' }, { id: 'v12', name: 'メロン', icon: '🍈' }, { id: 'v13', name: 'すいか', icon: '🍉' }, { id: 'v14', name: 'いちご', icon: '🍓' }, { id: 'v15', name: 'もも', icon: '🍑' }, { id: 'v16', name: 'りんご', icon: '🍎' }, { id: 'v17', name: 'キノコ', icon: '🍄' }, { id: 'v18', name: 'さくらんぼ', icon: '🍒' }] },
+            { id: 'fish', name: 'おさかなや', icon: '🐟', bg: 'bg-[#f0f9ff]', border: 'border-[#7dd3fc]', items: [{ id: 'f1', name: 'さかな', icon: '🐟' }, { id: 'f2', name: 'たこ', icon: '🐙' }, { id: 'f3', name: 'いか', icon: '🦑' }, { id: 'f4', name: 'えび', icon: '🦐' }, { id: 'f5', name: 'かに', icon: '🦀' }, { id: 'f6', name: 'ふぐ', icon: '🐡' }, { id: 'f7', name: 'かい', icon: '🐚' }, { id: 'f8', name: 'さめ', icon: '🦈' }, { id: 'f9', name: 'くじら', icon: '🐋' }, { id: 'f10', name: 'いるか', icon: '🐬' }, { id: 'f11', name: 'ねったいぎょ', icon: '🐠' }, { id: 'f12', name: 'ロブスター', icon: '🦞' }, { id: 'f13', name: 'ペンギン', icon: '🐧' }, { id: 'f14', name: 'かめ', icon: '🐢' }] },
+            { id: 'sweets', name: 'おかしや', icon: '🍬', bg: 'bg-[#fff1f2]', border: 'border-[#fba1b7]', items: [{ id: 's1', name: 'あめ', icon: '🍬' }, { id: 's2', name: 'クッキー', icon: '🍪' }, { id: 's3', name: 'チョコ', icon: '🍫' }, { id: 's4', name: 'ドーナツ', icon: '🍩' }, { id: 's5', name: 'ケーキ', icon: '🍰' }, { id: 's6', name: 'プリン', icon: '🍮' }, { id: 's7', name: 'アイス', icon: '🍦' }, { id: 's8', name: 'だんご', icon: '🍡' }, { id: 's9', name: 'ペロペロキャンディ', icon: '🍭' }, { id: 's10', name: 'かきごおり', icon: '🍧' }, { id: 's11', name: 'はちみつ', icon: '🍯' }, { id: 's12', name: 'ポップコーン', icon: '🍿' }, { id: 's13', name: 'バースデーケーキ', icon: '🎂' }, { id: 's14', name: 'クロワッサン', icon: '🥐' }] },
+            { id: 'bakery', name: 'パンやさん', icon: '🍞', bg: 'bg-[#fff7ed]', border: 'border-[#fdba74]', items: [{ id: 'b1', name: 'しょくパン', icon: '🍞' }, { id: 'b2', name: 'クロワッサン', icon: '🥐' }, { id: 'b3', name: 'フランスパン', icon: '🥖' }, { id: 'b4', name: 'ベーグル', icon: '🥯' }, { id: 'b5', name: 'パンケーキ', icon: '🥞' }, { id: 'b6', name: 'ワッフル', icon: 'カートリッジ' }, { id: 'b7', name: 'サンドイッチ', icon: '🥪' }, { id: 'b8', name: 'ホットドッグ', icon: '🌭' }, { id: 'b9', name: 'ピザ', icon: '🍕' }, { id: 'b10', name: 'プレッツェル', icon: '🥨' }] },
+            { id: 'toys', name: 'おもちゃや', icon: '🧸', bg: 'bg-[#fefce8]', border: 'border-[#fde047]', items: [{ id: 't1', name: 'くまさん', icon: '🧸' }, { id: 't2', name: 'ロボット', icon: '🤖' }, { id: 't3', name: 'くるま', icon: '🚗' }, { id: 't4', name: 'きしゃ', icon: '🚂' }, { id: 't5', name: 'ボール', icon: '⚽' }, { id: 't6', name: 'ゲーム', icon: '🎮' }, { id: 't7', name: 'パズル', icon: '🧩' }, { id: 't8', name: 'たいこ', icon: '🥁' }, { id: 't9', name: 'きょうりゅう', icon: '🦖' }, { id: 't10', name: 'UFO', icon: '🛸' }, { id: 't11', name: 'しょうぼうしゃ', icon: '🚒' }, { id: 't12', name: 'パトカー', icon: '🚓' }] },
+            { id: 'flowers', name: 'おはなや', icon: '💐', bg: 'bg-[#fff1f2]', border: 'border-[#fda4af]', items: [{ id: 'fl1', name: 'はなたば', icon: '💐' }, { id: 'fl2', name: 'バラ', icon: '🌹' }, { id: 'fl3', name: 'ひまわり', icon: '🌻' }, { id: 'fl4', name: 'チューリップ', icon: '🌷' }, { id: 'fl5', name: 'ハイビスカス', icon: '🌺' }, { id: 'fl6', name: 'サクラ', icon: '🌸' }, { id: 'fl7', name: 'マーガレット', icon: '🌼' }, { id: 'fl8', name: 'サボテン', icon: '🌵' }, { id: 'fl9', name: 'ツリー', icon: '🌲' }, { id: 'fl10', name: 'クローバー', icon: '🍀' }, { id: 'fl11', name: 'もみじ', icon: '🍁' }, { id: 'fl12', name: 'おちば', icon: '🍂' }] },
+            { id: 'convenience', name: 'コンビニ', icon: '🏪', bg: 'bg-[#f8fafc]', border: 'border-[#cbd5e1]', items: [{ id: 'c1', name: 'おにぎり', icon: '🍙' }, { id: 'c2', name: 'ハンバーガー', icon: '🍔' }, { id: 'c3', name: 'ポテト', icon: '🍟' }, { id: 'c4', name: 'ぎゅうにゅう', icon: '🥛' }, { id: 'c5', name: 'おべんとう', icon: '🍱' }, { id: 'c6', name: 'おちゃ', icon: '🍵' }, { id: 'c7', name: 'バナナ', icon: '🍌' }, { id: 'c8', name: 'ジュース', icon: '🧃' }, { id: 'c9', name: 'たまご', icon: '🥚' }, { id: 'c10', name: 'コーヒー', icon: '☕' }, { id: 'c11', name: 'かさ', icon: '☔' }, { id: 'c12', name: 'しんぶん', icon: '📰' }] }
         ];
 
         const speak = (text) => {
@@ -338,69 +418,55 @@
                     {gameState === 'playing' || gameState === 'result' ? (
                         <div className={`relative w-full h-full flex flex-col ${currentShop.bg}`}>
 
-                            {/* Compact Shopping List (Sidebar) */}
-                            <div className="absolute top-20 left-4 bottom-32 w-16 z-30 flex flex-col gap-1 pointer-events-auto">
-                                <span className="bg-white/90 text-gray-600 font-bold px-1 py-0.5 rounded-full text-[10px] text-center shadow-sm border border-orange-200">かうもの</span>
-                                <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar h-full py-1">
-                                    {targetItems.map(item => {
-                                        const done = foundItems.some(f => f.id === item.id);
-                                        return (
-                                            <div
-                                                key={item.id}
-                                                onClick={() => speak(item.name)}
-                                                className={`bg-white/90 p-1 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center w-14 h-14 shrink-0 transition-all ${done ? 'opacity-30 grayscale' : 'shadow-md scale-100'}`}
-                                            >
-                                                <span className="text-3xl leading-none">{item.icon}</span>
-                                                {/* Text removed as requested for compact view, user said "image smaller", but text makes it tall. kept icon only? User said "scroll shitakunai". Removing text helps. */}
-                                                {done && <span className="absolute text-4xl text-green-500 font-bold">✓</span>}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                            {/* Clipboard Shopping List (Sidebar) */}
+                            <div className="absolute top-24 left-2 z-30 pointer-events-auto">
+                                <ClipboardList items={targetItems} foundItems={foundItems} onSpeak={speak} />
                             </div>
 
-                            {/* Shelves */}
-                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex items-center pb-28 no-scrollbar scroll-smooth" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}>
-                                <div className="min-w-[5rem] h-full shrink-0"></div>
-                                <div className="grid grid-rows-2 grid-flow-col gap-4 px-2 h-3/4 items-center">
-                                    {shelfItems.map((item, idx) => {
-                                        const isCollected = foundItems.some(f => f.id === item.id);
-                                        return (
-                                            <div key={item.uniqueId} className="relative w-28 h-24 md:w-36 md:h-32 flex flex-col items-center justify-end pb-2 group shrink-0">
-                                                <div className="absolute bottom-2 left-0 right-0 h-3 bg-amber-700/80 rounded-sm shadow-md z-0"></div>
-                                                {!isCollected && (
-                                                    <div
-                                                        className="relative z-10 flex flex-col items-center cursor-grab active:cursor-grabbing mb-1"
-                                                        style={{ touchAction: 'none' }}
-                                                        onPointerDown={(e) => handlePointerDown(e, item)}
-                                                    >
-                                                        <span className="text-5xl md:text-6xl drop-shadow-xl select-none filter">{item.icon}</span>
-                                                        <span className="bg-white/90 px-1.5 py-0.5 rounded-full text-[10px] font-bold mt-0.5 shadow-sm select-none text-slate-700 border border-slate-200">{item.name}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                            {/* Shelves Layout */}
+                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex items-center pb-32 no-scrollbar scroll-smooth">
+                                <div className="min-w-[8rem] h-full shrink-0"></div>
+                                <div className="flex flex-nowrap gap-8 h-full items-center">
+                                    {/* Chunk results into shelf rows (e.g. 5 items per shelf row segment) */}
+                                    {[0, 5, 10, 15].map(startIdx => (
+                                        <div key={startIdx} className="flex flex-col gap-8 w-[500px] shrink-0">
+                                            <ShelfLayer>
+                                                {shelfItems.slice(startIdx, startIdx + 5).map(item => {
+                                                    const isCollected = foundItems.some(f => f.id === item.id);
+                                                    return (
+                                                        <div key={item.uniqueId} className="w-24 h-24 flex flex-col items-center justify-end shrink-0">
+                                                            {!isCollected && (
+                                                                <div
+                                                                    className="flex flex-col items-center cursor-grab active:cursor-grabbing transform transition-transform hover:scale-110"
+                                                                    onPointerDown={(e) => handlePointerDown(e, item)}
+                                                                >
+                                                                    <span className="text-5xl md:text-6xl drop-shadow-md">{item.icon}</span>
+                                                                    <span className="bg-white/90 px-1.5 py-0.5 rounded-full text-[10px] font-bold mt-1 shadow-sm border border-orange-100">{item.name}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </ShelfLayer>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="min-w-[5rem] h-full shrink-0"></div>
+                                <div className="min-w-[8rem] h-full shrink-0"></div>
                             </div>
 
-                            {/* Basket & Character */}
-                            <div ref={basketRef} className="absolute bottom-0 left-0 right-0 h-28 z-40 flex items-end justify-center pointer-events-none">
-                                {/* Character Half Body - Bottom Left of Basket Container but visible */}
-                                <div className="absolute bottom-[-10px] left-0 md:left-20 z-50 animate-sway opacity-90">
-                                    <GirlHalfBody className="w-24 h-24 drop-shadow-lg" />
-                                </div>
-
-                                <div className="relative w-full max-w-sm h-full mx-auto flex items-end justify-center pb-2">
-                                    <div className="absolute bottom-[-20%] w-60 h-20 bg-red-500 rounded-[2rem] shadow-2xl border-4 border-red-700 z-10 flex items-center justify-center">
-                                        <span className="text-white font-bold mb-4 opacity-80">カゴ</span>
+                            {/* Basket & Character Side-by-Side */}
+                            <div ref={basketRef} className="absolute bottom-0 left-0 right-0 h-32 z-40 flex items-end justify-center pointer-events-none gap-4">
+                                <div className="w-full max-w-2xl flex items-end justify-center px-4 pb-2">
+                                    {/* Character */}
+                                    <div className="shrink-0 animate-sway">
+                                        <GirlHalfBody className="w-24 h-24 drop-shadow-lg" />
                                     </div>
-                                    <div className="absolute bottom-4 w-full flex justify-center gap-1 z-0 flex-wrap">
+                                    {/* Wire Cart */}
+                                    <WireCart className="w-48 h-40 -ml-4">
                                         {foundItems.map((item, idx) => (
-                                            <span key={idx} className="text-2xl animate-in zoom-in slide-in-from-top-4 duration-300 drop-shadow-md">{item.icon}</span>
+                                            <span key={idx} className="text-3xl animate-in zoom-in slide-in-from-top-4 duration-300 drop-shadow-md">{item.icon}</span>
                                         ))}
-                                    </div>
+                                    </WireCart>
                                 </div>
                             </div>
 
