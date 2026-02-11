@@ -178,24 +178,25 @@
             </div>
         );
 
-        // --- Half-Body Girl Character ---        const GirlHalfBody = ({ className }) => (
-        <svg viewBox="0 0 100 80" className={className} xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="2" dy="2" stdDeviation="2" floodOpacity="0.3" />
-                </filter>
-            </defs>
-            <g filter="url(#shadow)">
-                {/* Dress/Body */}
-                <path d="M20 80 L80 80 L75 40 L25 40 Z" fill="#f472b6" />
-                {/* Arms */}
-                <path d="M25 45 L10 65 A5 5 0 0 0 15 70 L30 50 Z" fill="#fce5cd" />
-                <path d="M75 45 L90 65 A5 5 0 0 0 85 70 L70 50 Z" fill="#fce5cd" />
-                {/* Head */}
-                <circle cx="50" cy="25" r="22" fill="#1f2937" />
-                <path d="M28 25 A 22 22 0 0 1 72 25 L 75 45 Q 50 40 25 45 Z" fill="#1f2937" />
-            </g>
-        </svg>
+        // --- Half-Body Girl Character ---
+        const GirlHalfBody = ({ className }) => (
+            <svg viewBox="0 0 100 80" className={className} xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="2" dy="2" stdDeviation="2" floodOpacity="0.3" />
+                    </filter>
+                </defs>
+                <g filter="url(#shadow)">
+                    {/* Dress/Body */}
+                    <path d="M20 80 L80 80 L75 40 L25 40 Z" fill="#f472b6" />
+                    {/* Arms */}
+                    <path d="M25 45 L10 65 A5 5 0 0 0 15 70 L30 50 Z" fill="#fce5cd" />
+                    <path d="M75 45 L90 65 A5 5 0 0 0 85 70 L70 50 Z" fill="#fce5cd" />
+                    {/* Head */}
+                    <circle cx="50" cy="25" r="22" fill="#1f2937" />
+                    <path d="M28 25 A 22 22 0 0 1 72 25 L 75 45 Q 50 40 25 45 Z" fill="#1f2937" />
+                </g>
+            </svg>
         );
 
         const SHOPS = [
