@@ -408,12 +408,12 @@
 
                     {/* Shop Select: Horizontal Scroll / Optimized for Landscape */}
                     {gameState === 'select_shop' && (
-                        <div className="w-full h-full bg-orange-50 flex flex-col p-4 items-center justify-center">
-                            <h2 className="text-2xl font-bold text-orange-600 mb-4 shrink-0">どこの おみせに いく？</h2>
+                        <div className="w-full h-full bg-orange-50 flex flex-col p-4 items-center justify-center gap-8">
+                            <h2 className="text-3xl md:text-4xl font-bold text-orange-600 shrink-0 drop-shadow-sm">どこの おみせに いく？</h2>
                             {/* Horizontal Scroll Container */}
-                            <div className="w-full flex-1 flex items-center overflow-x-auto gap-6 px-8 no-scrollbar snap-x">
+                            <div className="w-full flex items-center overflow-x-auto gap-6 px-8 no-scrollbar snap-x py-4">
                                 {SHOPS.map(shop => (
-                                    <button key={shop.id} onClick={() => startShopping(shop)} className={`shrink-0 w-40 h-40 md:w-56 md:h-56 flex flex-col items-center justify-center p-2 ${shop.bg} rounded-[2rem] border-4 ${shop.border} shadow-lg active:scale-95 scroll-ml-6 snap-center`}>
+                                    <button key={shop.id} onClick={() => startShopping(shop)} className={`shrink-0 w-40 h-40 md:w-56 md:h-56 flex flex-col items-center justify-center p-2 ${shop.bg} rounded-[2rem] border-4 ${shop.border} shadow-lg active:scale-95 scroll-ml-6 snap-center hover:rotate-2 transition-all`}>
                                         <span className="text-6xl md:text-8xl mb-2">{shop.icon}</span>
                                         <span className="text-xl md:text-2xl font-bold text-gray-700">{shop.name}</span>
                                     </button>
@@ -461,7 +461,7 @@
                             </div>
 
                             {/* Basket & Character Side-by-Side: Responsive Scale & Half-Body Clip */}
-                            <div ref={basketRef} className="absolute bottom-[-5%] md:bottom-[-10%] left-0 right-0 h-28 md:h-48 z-40 flex items-end justify-center pointer-events-none gap-4">
+                            <div ref={basketRef} className="absolute bottom-[-2%] md:bottom-[-4%] left-0 right-0 h-28 md:h-48 z-40 flex items-end justify-center pointer-events-none gap-4">
                                 <div className="w-full max-w-4xl flex items-end justify-center px-4">
                                     {/* Character */}
                                     <div className="shrink-0 animate-sway">
