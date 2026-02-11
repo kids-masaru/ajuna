@@ -417,19 +417,20 @@
                                     {shelfItems.map((item, idx) => {
                                         const isCollected = foundItems.some(f => f.id === item.id);
                                         return (
-                                            <div key={item.uniqueId} className="relative w-28 h-28 md:w-40 md:h-40 flex flex-col items-center justify-center group shrink-0">
-                                                {/* Shelf Visual Background */}
-                                                <div className="absolute inset-x-0 bottom-2 top-2 bg-amber-100/40 rounded-xl border-b-4 border-amber-200 -z-10"></div>
+                                            <div key={item.uniqueId} className="relative w-28 h-28 md:w-40 md:h-40 flex flex-col items-center justify-end pb-4 group shrink-0">
+                                                {/* Shelf Visual: Wood Board for individual item */}
+                                                <div className="absolute bottom-2 left-0 right-0 h-3 md:h-4 bg-amber-700/80 rounded-sm shadow-md z-0"></div>
+                                                <div className="absolute bottom-[-2px] left-1 right-1 h-1 bg-amber-900/20 blur-[1px] z-[-1]"></div>
 
                                                 {/* Item - Added touch-action: none to prioritize drag */}
                                                 {!isCollected && (
                                                     <div
-                                                        className="relative z-10 flex flex-col items-center cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+                                                        className="relative z-10 flex flex-col items-center cursor-grab active:cursor-grabbing hover:scale-105 transition-transform mb-1"
                                                         style={{ touchAction: 'none' }}
                                                         onPointerDown={(e) => handlePointerDown(e, item)}
                                                     >
-                                                        <span className="text-5xl md:text-7xl drop-shadow-md select-none">{item.icon}</span>
-                                                        <span className="bg-white/80 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold mt-1 shadow-sm select-none">{item.name}</span>
+                                                        <span className="text-5xl md:text-7xl drop-shadow-xl select-none filter">{item.icon}</span>
+                                                        <span className="bg-white/90 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold mt-1 shadow-sm select-none text-slate-700 border border-slate-200">{item.name}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -444,7 +445,7 @@
                             <div
                                 ref={basketRef}
                                 className={`absolute bottom-0 left-0 right-0 h-28 md:h-40 z-40 flex items-end justify-center pointer-events-none transition-all duration-300
-                                ${dragState ? 'bg-orange-200/50 scale-105' : 'bg-transparent'}`}
+                                ${dragState ? 'bg-orange-200/20' : 'bg-transparent'}`}
                             >
                                 <div className="relative w-full max-w-md h-full mx-auto flex items-end justify-center pb-2">
                                     {/* Basket Visuals */}
