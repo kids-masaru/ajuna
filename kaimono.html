@@ -253,9 +253,8 @@
 
             const startShopping = (shop) => {
                 initAudio();
-                // Shelf logic: Repeat items to make shelf long / scrollable
                 const pool = [...shop.items, ...shop.items, ...shop.items].sort(() => 0.5 - Math.random());
-                const shelfContent = pool.slice(0, 16).map((item, idx) => ({ ...item, uniqueId: `${item.id}-${idx}` }));
+                const shelfContent = pool.slice(0, 20).map((item, idx) => ({ ...item, uniqueId: `${item.id}-${idx}` }));
 
                 const uniqueItemsOnShelf = [...new Set(shelfContent.map(i => i.id))].map(id => shop.items.find(i => i.id === id));
                 const shuffledUnique = uniqueItemsOnShelf.sort(() => 0.5 - Math.random());
@@ -286,24 +285,19 @@
             };
 
             const handlePointerDown = (e, item) => {
-                // Ignore touches on non-primary buttons if mouse
                 if (e.button && e.button !== 0) return;
-
-                // Important: Don't prevent default immediately if we want to allow scrolling via swipe on background
-                // BUT if we want to drag item, we must capture it.
-                // Strategy: If touching an item, assume drag.
-
-                // e.currentTarget.setPointerCapture(e.pointerId); // React handles synthetic events, this might be tricky with re-rendering ghost
+                // Capture pointer to ensure we track it even if it leaves the element
+                e.currentTarget.setPointerCapture(e.pointerId);
 
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                setDragState({ item, x: clientX, y: clientY });
+                setDragState({ item, x: clientX, y: clientY, pointerId: e.pointerId });
                 playSound(440, 'sine', 0.1);
             };
 
             const handlePointerMove = (e) => {
                 if (!dragState) return;
-                e.preventDefault(); // Stop scrolling while dragging item
+                e.preventDefault();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 setDragState(prev => ({ ...prev, x: clientX, y: clientY }));
@@ -394,70 +388,72 @@
                     {(gameState === 'playing' || gameState === 'result') && (
                         <div className={`relative w-full h-full flex flex-col ${currentShop.bg} transition-all duration-500`}>
 
-                            {/* Top Bar: Shopping List */}
-                            <div className="h-24 md:h-32 bg-white/90 backdrop-blur-sm border-b-4 border-orange-200 flex items-center px-4 gap-4 z-50 shadow-md shrink-0 overflow-x-auto">
-                                <span className="bg-orange-100 text-orange-600 font-bold px-3 py-1 rounded-full whitespace-nowrap">かうもの</span>
-                                {targetItems.map(item => {
-                                    const done = foundItems.some(f => f.id === item.id);
-                                    return (
-                                        <div key={item.id} className={`flex flex-col items-center justify-center min-w-[4rem] p-1 rounded-lg transition-all ${done ? 'opacity-30 grayscale' : 'animate-bounce-slow'}`}>
-                                            <span className="text-3xl md:text-4xl">{item.icon}</span>
-                                            <span className="text-xs font-bold text-gray-600">{item.name}</span>
-                                            {done && <span className="absolute text-4xl text-green-500 font-bold">✓</span>}
-                                        </div>
-                                    );
-                                })}
-                                <div className="ml-auto">
-                                    <button onClick={() => { setGameState('select_shop'); stopBGM(); }} className="bg-gray-100 text-gray-500 text-sm font-bold px-4 py-2 rounded-full whitespace-nowrap">
-                                        もどる
-                                    </button>
+                            {/* Left Side: Shopping List (Sidebar) */}
+                            <div className="absolute top-20 left-4 bottom-32 w-16 md:w-24 z-30 flex flex-col gap-2 pointer-events-none">
+                                <span className="bg-white/90 text-gray-600 font-bold px-2 py-1 rounded-full text-xs md:text-sm text-center shadow-sm border border-orange-200">かうもの</span>
+                                <div className="flex flex-col gap-2 overflow-y-auto pb-4 no-scrollbar">
+                                    {targetItems.map(item => {
+                                        const done = foundItems.some(f => f.id === item.id);
+                                        return (
+                                            <div key={item.id} className={`bg-white/90 backdrop-blur-sm p-1 rounded-lg shadow-md border-2 border-dashed border-gray-300 flex flex-col items-center transition-all ${done ? 'opacity-40 grayscale' : ''}`}>
+                                                <span className="text-3xl md:text-4xl">{item.icon}</span>
+                                                <span className="text-[10px] md:text-xs font-bold text-gray-600 text-center leading-tight">{item.name}</span>
+                                                {done && <span className="absolute inset-0 flex items-center justify-center text-3xl text-green-500 font-bold">✓</span>}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            {/* Middle: Scrolling Shelves */}
-                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex items-end pb-8 no-scrollbar scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
-                                <div className="flex px-10 h-3/4 items-end gap-0 min-w-max">
+                            {/* Middle: Scrolling Shelves (Walking Area) */}
+                            {/* Added touch-action: pan-x to allow horizontal scrolling on the background */}
+                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex items-center pb-32 no-scrollbar scroll-smooth" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}>
+
+                                {/* Padding for sidebar */}
+                                <div className="min-w-[5rem] md:min-w-[8rem] h-full shrink-0"></div>
+
+                                {/* Flexible grid container for 2 rows */}
+                                <div className="grid grid-rows-2 grid-flow-col gap-4 px-4 h-3/4 items-center">
                                     {shelfItems.map((item, idx) => {
                                         const isCollected = foundItems.some(f => f.id === item.id);
                                         return (
-                                            <div key={item.uniqueId} className="relative w-32 md:w-48 h-full flex flex-col justify-end group">
-                                                {/* Shelf Board */}
-                                                <div className="absolute bottom-4 left-0 right-0 h-4 bg-amber-800 rounded shadow-md z-0"></div>
-                                                <div className="absolute bottom-0 left-2 right-2 h-full bg-amber-100/50 -z-10 border-x-2 border-amber-200"></div>
+                                            <div key={item.uniqueId} className="relative w-28 h-28 md:w-40 md:h-40 flex flex-col items-center justify-center group shrink-0">
+                                                {/* Shelf Visual Background */}
+                                                <div className="absolute inset-x-0 bottom-2 top-2 bg-amber-100/40 rounded-xl border-b-4 border-amber-200 -z-10"></div>
 
-                                                {/* Item On Shelf */}
+                                                {/* Item - Added touch-action: none to prioritize drag */}
                                                 {!isCollected && (
                                                     <div
-                                                        className="relative z-10 flex flex-col items-center mb-6 cursor-grab active:cursor-grabbing transition-transform hover:scale-110"
+                                                        className="relative z-10 flex flex-col items-center cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+                                                        style={{ touchAction: 'none' }}
                                                         onPointerDown={(e) => handlePointerDown(e, item)}
                                                     >
-                                                        <span className="text-6xl md:text-8xl drop-shadow-lg">{item.icon}</span>
-                                                        <span className="bg-white/80 px-2 py-1 rounded-full text-xs font-bold mt-1 shadow-sm">{item.name}</span>
+                                                        <span className="text-5xl md:text-7xl drop-shadow-md select-none">{item.icon}</span>
+                                                        <span className="bg-white/80 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold mt-1 shadow-sm select-none">{item.name}</span>
                                                     </div>
                                                 )}
                                             </div>
                                         );
                                     })}
-                                    <div className="w-48"></div>
                                 </div>
+                                {/* End padding */}
+                                <div className="min-w-[5rem] h-full shrink-0"></div>
                             </div>
 
                             {/* Bottom: Basket Area */}
                             <div
                                 ref={basketRef}
-                                className={`h-32 md:h-48 z-40 flex items-center justify-center shrink-0 transition-all duration-300
+                                className={`absolute bottom-0 left-0 right-0 h-28 md:h-40 z-40 flex items-end justify-center pointer-events-none transition-all duration-300
                                 ${dragState ? 'bg-orange-200/50 scale-105' : 'bg-transparent'}`}
                             >
-                                <div className="relative w-full max-w-lg h-full mx-auto flex items-end justify-center pb-4">
-                                    <div className="absolute bottom-0 w-64 md:w-96 h-24 md:h-32 bg-red-500 rounded-b-[3rem] rounded-t-lg shadow-2xl flex items-center justify-center border-4 border-red-700">
-                                        <span className="text-white font-bold text-xl opacity-80">ここに入れる</span>
+                                <div className="relative w-full max-w-md h-full mx-auto flex items-end justify-center pb-2">
+                                    {/* Basket Visuals */}
+                                    <div className="absolute bottom-[-10%] w-64 md:w-80 h-24 md:h-32 bg-red-500 rounded-[2rem] shadow-2xl flex items-center justify-center border-4 border-red-700 z-10">
+                                        <span className="text-white font-bold text-lg opacity-90 mb-6">ここに入れる</span>
                                     </div>
-                                    <div className="absolute bottom-20 md:bottom-28 w-72 md:w-[28rem] h-8 bg-red-700/50 rounded-full blur-xl"></div>
-                                    <ShoppingBag size={80} className="text-white/20 absolute bottom-6" />
-
-                                    <div className="absolute bottom-6 flex gap-[-10px] justify-center w-full px-10 flex-wrap pointer-events-none">
+                                    <div className="absolute bottom-6 w-full flex justify-center gap-1 z-0 px-8 flex-wrap">
                                         {foundItems.map((item, idx) => (
-                                            <span key={idx} className="text-4xl md:text-5xl animate-in zoom-in slide-in-from-top-10 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                                            <span key={idx} className="text-3xl md:text-4xl animate-in zoom-in slide-in-from-top-4 duration-300 drop-shadow-md">
                                                 {item.icon}
                                             </span>
                                         ))}
@@ -472,10 +468,10 @@
                                         <div className="text-8xl mb-4 animate-bounce">💮</div>
                                         <h2 className="text-4xl font-bold text-orange-500 mb-2">じょうず！</h2>
                                         <div className="flex flex-col gap-4 mt-8">
-                                            <button onClick={() => startShopping(currentShop)} className="bg-green-500 text-white text-2xl font-bold py-4 px-8 rounded-full shadow-lg active:scale-95">
+                                            <button onClick={() => startShopping(currentShop)} className="bg-green-500 text-white text-2xl font-bold py-4 px-8 rounded-full shadow-lg active:scale-95 pointer-events-auto">
                                                 もういっかい
                                             </button>
-                                            <button onClick={() => setGameState('select_shop')} className="bg-orange-100 text-orange-600 text-xl font-bold py-3 px-8 rounded-full active:scale-95">
+                                            <button onClick={() => setGameState('select_shop')} className="bg-orange-100 text-orange-600 text-xl font-bold py-3 px-8 rounded-full active:scale-95 pointer-events-auto">
                                                 おみせを かえる
                                             </button>
                                         </div>
