@@ -299,6 +299,32 @@
 
             useEffect(() => { if (gameState === 'playing') startBGM(); else stopBGM(); }, [gameState]);
 
+            // Robust Drag & Drop using Window Listeners
+            useEffect(() => {
+                if (!dragState) return;
+
+                const handleMove = (e) => {
+                    setDragState(prev => ({ ...prev, x: e.clientX, y: e.clientY }));
+                };
+
+                const handleUp = (e) => {
+                    if (basketRef.current) {
+                        const rect = basketRef.current.getBoundingClientRect();
+                        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                            handleDropInBasket(dragState.item);
+                        }
+                    }
+                    setDragState(null);
+                };
+
+                window.addEventListener('pointermove', handleMove);
+                window.addEventListener('pointerup', handleUp);
+                return () => {
+                    window.removeEventListener('pointermove', handleMove);
+                    window.removeEventListener('pointerup', handleUp);
+                };
+            }, [dragState]);
+
             const startShopping = (shop) => {
                 initAudio();
                 const pool = [...shop.items, ...shop.items, ...shop.items].sort(() => 0.5 - Math.random());
@@ -335,11 +361,9 @@
                 }
             };
 
-            // Improved Pointer Event Handlers for Smoother Dragging
+            // Simple Pointer Down Handler
             const handlePointerDown = (e, item) => {
                 if (e.button && e.button !== 0) return;
-                const target = e.currentTarget;
-                target.setPointerCapture(e.pointerId);
                 setDragState({
                     item,
                     x: e.clientX,
@@ -349,29 +373,9 @@
                 playSound(440, 'sine');
             };
 
-            const handlePointerMove = (e) => {
-                if (!dragState) return;
-                // Directly use e.clientX/Y which works for both touch and mouse in PointerEvents
-                setDragState(prev => ({ ...prev, x: e.clientX, y: e.clientY }));
-            };
-
-            const handlePointerUp = (e) => {
-                if (!dragState) return;
-                if (basketRef.current) {
-                    const rect = basketRef.current.getBoundingClientRect();
-                    // Check if drop is within basket area
-                    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                        handleDropInBasket(dragState.item);
-                    }
-                }
-                setDragState(null);
-            };
-
             return (
                 <div
-                    className="fixed inset-0 bg-slate-900 overflow-hidden font-sans select-none touch-none text-gray-800"
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
+                    className={`relative min-h-screen ${currentShop.bg} transition-colors duration-700 flex flex-col overflow-hidden select-none touch-none font-sans`}
                     onPointerCancel={() => setDragState(null)}
                 >
                     <audio ref={bgmRef} src="./ajunano_okaimono.mp3" loop />
@@ -440,6 +444,7 @@
                                                             {!isCollected && (
                                                                 <div
                                                                     className="flex flex-col items-center cursor-grab active:cursor-grabbing transform transition-transform hover:scale-110"
+                                                                    style={{ touchAction: 'none' }}
                                                                     onPointerDown={(e) => handlePointerDown(e, item)}
                                                                 >
                                                                     <span className="text-4xl md:text-7xl drop-shadow-md">{item.icon}</span>
