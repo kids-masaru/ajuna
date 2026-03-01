@@ -452,9 +452,7 @@
                 el: char,
                 x: startX,
                 y: startY,
-                offsetX: (Math.random() - 0.5) * 80, // 少しばらけさせる
-                offsetY: (Math.random() - 0.5) * 80,
-                speed: 0.05 + Math.random() * 0.03 // フンワリ感
+                speed: 0.15 // 追従スピードを少し速めにして連なりやすくする
             });
 
             setTimeout(() => {
@@ -500,22 +498,29 @@
                 if (particles[i].life <= 0) particles.splice(i, 1);
             }
 
-            // --- Update following characters ---
-            followingCharacters.forEach((c) => {
-                // targetX/Y に対してオフセットを足したゴールへ向かう
-                const goalX = targetX + c.offsetX;
-                const goalY = targetY + c.offsetY + 30; // 指より少し下についてくるように
+            // --- Update following characters (Snake-like follow) ---
+            followingCharacters.forEach((c, index) => {
+                let goalX, goalY;
+
+                if (index === 0) {
+                    // 最初に出現したキャラ（先頭）はタッチ位置を追う
+                    goalX = targetX;
+                    goalY = targetY + 60; // 指の下あたりを目標に
+                } else {
+                    // 2番目以降のキャラは、1つ前のキャラを追う
+                    const leader = followingCharacters[index - 1];
+                    goalX = leader.x;
+                    goalY = leader.y + 10; // 少しだけ下げる
+                }
 
                 // 距離に応じて移動（イージング）
                 c.x += (goalX - c.x) * c.speed;
                 c.y += (goalY - c.y) * c.speed;
 
-                // 位置更新 (CSS の translate は character-pop のアニメーションで上書きされるため left/topのみで制御するか工夫が必要)
-                // 今回は translateY() がアニメーションで使われているため、left/topでベース位置を指定します。
-                // 厳密な中央は .el.style.transform='translate(-50%, -50%)' でやりたいため、
-                // keyframesと競合しないよう left/top 値のみで更新する。
+                // 位置更新
                 c.el.style.left = c.x + 'px';
                 c.el.style.top = c.y + 'px';
+                c.el.style.zIndex = 50 - index; // 先頭ほど上になるように
             });
 
             requestAnimationFrame(gameLoop);
