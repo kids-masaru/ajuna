@@ -80,7 +80,7 @@
         class="portrait-warning fixed inset-0 z-[9999] bg-orange-100 flex-col items-center justify-center p-8 text-center animate-in zoom-in">
         <div class="text-8xl mb-8">📱🔄</div>
         <h1 class="text-4xl text-orange-600 font-bold mb-4">スマホを<br>よこにしてね</h1>
-        <p class="text-xl text-orange-400">あじゅなのおかいものごっこ</p>
+        <p class="text-xl text-orange-400">げーむのひろばのおかいものごっこ</p>
     </div>
 
     <div id="root" class="w-full h-full game-content"></div>
@@ -378,12 +378,12 @@
                     className={`relative min-h-screen ${currentShop.bg} transition-colors duration-700 flex flex-col overflow-hidden select-none touch-none font-sans`}
                     onPointerCancel={() => setDragState(null)}
                 >
-                    <audio ref={bgmRef} src="./ajunano_okaimono.mp3" loop />
+                    <audio ref={bgmRef} src="./kaimono_bgm.mp3" loop />
                     {dragState && <DragItem item={dragState.item} x={dragState.x} y={dragState.y} />}
 
                     {/* Pre-Start Screen with Orientation Lock Trigger */}
                     {gameState === 'pre_start' && (
-                        <div className="w-full h-full bg-orange-50 flex items-center justify-center">
+                        <div className="absolute inset-0 z-[200] bg-orange-50 flex items-center justify-center">
                             <button onClick={startGame} className="bg-orange-500 text-white text-3xl font-bold py-8 px-16 rounded-[3rem] shadow-[0_10px_0_rgb(180,60,20)] active:translate-y-2 active:shadow-[0_2px_0_rgb(180,60,20)] transition-all animate-bounce-slow">
                                 はじめる！ ▶
                             </button>
