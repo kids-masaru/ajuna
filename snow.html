@@ -135,7 +135,7 @@
         </h1>
         <button id="startBtn"
             class="bg-white text-blue-600 text-3xl font-bold py-6 px-16 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.4)] transform active:scale-90 transition-all">
-            まほうをはじめる ▶
+            はじめる ▶
         </button>
         <p class="text-white/60 mt-10 text-lg animate-pulse">がめんを なぞってね 🔊</p>
     </div>
@@ -259,48 +259,12 @@
             { score: 5000, emoji: '👑', text: 'まほうの おうさま！', bg: 'stage-6', rank: 'きらきら マスター' }
         ];
 
-        // Drag Handling
-        let dragItem = null;
-        let dragOffset = { x: 0, y: 0 };
+        // Target for characters to follow
+        let targetX = window.innerWidth / 2;
+        let targetY = window.innerHeight / 2;
 
-        function startDrag(e) {
-            e.preventDefault();
-            dragItem = e.target;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const rect = dragItem.getBoundingClientRect();
-            dragOffset.x = clientX - rect.left;
-            dragOffset.y = clientY - rect.top;
-            dragItem.style.transition = 'none'; // dragging中はアニメーションなし
-            dragItem.style.zIndex = 100;
-        }
-
-        function moveDrag(e) {
-            if (!dragItem) return;
-            e.preventDefault();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            // 画面外にはみ出さないようにガード（簡易）
-            const x = clientX - dragOffset.x;
-            const y = clientY - dragOffset.y;
-
-            dragItem.style.left = x + 'px';
-            dragItem.style.top = y + 'px';
-            dragItem.style.bottom = 'auto';
-        }
-
-        function endDrag() {
-            if (dragItem) {
-                dragItem.style.zIndex = '';
-                dragItem = null;
-            }
-        }
-
-        window.addEventListener('touchmove', moveDrag, { passive: false });
-        window.addEventListener('mousemove', moveDrag);
-        window.addEventListener('touchend', endDrag);
-        window.addEventListener('mouseup', endDrag);
+        // Characters that have appeared
+        let followingCharacters = [];
 
         class Snowflake {
             constructor() {
@@ -411,6 +375,10 @@
         function handleInteraction(x, y, isMove = false) {
             if (!isPlaying) return;
 
+            // --- Update target for followers ---
+            targetX = x;
+            targetY = y;
+
             // --- 魔法の軌跡（Trail）---
             // レベルに応じた色
             let trailColor = "#fff";
@@ -466,20 +434,28 @@
             milestoneMsg.classList.remove('hidden');
             milestoneMsg.classList.add('fade-in-up');
 
-            // 固定キャラの追加
+            // キャラクター追加
+            const startX = (Math.random() * window.innerWidth * 0.6) + (window.innerWidth * 0.2);
+            const startY = (Math.random() * window.innerHeight * 0.5) + (window.innerHeight * 0.4);
+
             const char = document.createElement('div');
             char.className = 'absolute character-pop text-7xl drop-shadow-lg';
-            char.style.left = (Math.random() * 60 + 20) + '%';
-            char.style.bottom = (Math.random() * 20 + 5) + '%';
+            char.style.left = startX + 'px';
+            char.style.top = startY + 'px';
+            char.style.bottom = 'auto'; // 追従させるため絶対座標にする
             char.textContent = m.emoji;
-
-            // Make Draggable
-            char.style.pointerEvents = 'auto'; // 親がpointer-events-noneなので、これを有効化
-            char.style.cursor = 'grab';
-            char.addEventListener('touchstart', startDrag, { passive: false });
-            char.addEventListener('mousedown', startDrag);
+            char.style.transform = 'translate(-50%, -50%)'; // 中心基準に
 
             stageChars.appendChild(char);
+
+            followingCharacters.push({
+                el: char,
+                x: startX,
+                y: startY,
+                offsetX: (Math.random() - 0.5) * 80, // 少しばらけさせる
+                offsetY: (Math.random() - 0.5) * 80,
+                speed: 0.05 + Math.random() * 0.03 // フンワリ感
+            });
 
             setTimeout(() => {
                 milestoneMsg.classList.add('hidden');
@@ -523,6 +499,24 @@
                 particles[i].draw();
                 if (particles[i].life <= 0) particles.splice(i, 1);
             }
+
+            // --- Update following characters ---
+            followingCharacters.forEach((c) => {
+                // targetX/Y に対してオフセットを足したゴールへ向かう
+                const goalX = targetX + c.offsetX;
+                const goalY = targetY + c.offsetY + 30; // 指より少し下についてくるように
+
+                // 距離に応じて移動（イージング）
+                c.x += (goalX - c.x) * c.speed;
+                c.y += (goalY - c.y) * c.speed;
+
+                // 位置更新 (CSS の translate は character-pop のアニメーションで上書きされるため left/topのみで制御するか工夫が必要)
+                // 今回は translateY() がアニメーションで使われているため、left/topでベース位置を指定します。
+                // 厳密な中央は .el.style.transform='translate(-50%, -50%)' でやりたいため、
+                // keyframesと競合しないよう left/top 値のみで更新する。
+                c.el.style.left = c.x + 'px';
+                c.el.style.top = c.y + 'px';
+            });
 
             requestAnimationFrame(gameLoop);
         }
