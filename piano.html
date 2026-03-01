@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -12,7 +13,8 @@
             font-family: 'M PLUS Rounded 1c', sans-serif;
             touch-action: none;
             overflow: hidden;
-            background-color: #fff1f2; /* Rose-50 */
+            background-color: #fff1f2;
+            /* Rose-50 */
             user-select: none;
             margin: 0;
             padding: 0;
@@ -28,7 +30,8 @@
             flex-direction: column;
             align-items: center;
             transition: transform 0.3s;
-            position: relative; /* 戻るボタンの配置基準 */
+            position: relative;
+            /* 戻るボタンの配置基準 */
         }
 
         /* 戻るボタン（回転時も追従するようにコンテナ内へ） */
@@ -41,7 +44,7 @@
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border: 2px solid #fbcfe8;
             font-size: 1.5rem;
             text-decoration: none;
@@ -54,7 +57,7 @@
         #start-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(255,241,242, 0.98);
+            background: rgba(255, 241, 242, 0.98);
             z-index: 9999;
             display: flex;
             flex-direction: column;
@@ -76,9 +79,12 @@
 
         /* Rotation Hint Overlay */
         #rotate-overlay {
-            display: none; 
+            display: none;
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(255, 255, 255, 0.95);
             color: #db2777;
             z-index: 5000;
@@ -88,9 +94,11 @@
             text-align: center;
             padding: 20px;
         }
-        
+
         @media (orientation: portrait) {
-            #rotate-overlay { display: flex; }
+            #rotate-overlay {
+                display: flex;
+            }
         }
 
         .rotate-btn {
@@ -106,24 +114,34 @@
             font-weight: bold;
             animation: pulse-btn 2s infinite;
         }
+
         @keyframes pulse-btn {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         /* --- Header --- */
         .header {
             width: 100%;
-            height: 16vh; 
+            height: 16vh;
             min-height: 55px;
             background: white;
             border-bottom: 2px solid #fbcfe8;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 0.5rem 0 3.5rem; /* 左側にホームボタン分の余白 */
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 0 0.5rem 0 3.5rem;
+            /* 左側にホームボタン分の余白 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             z-index: 20;
             gap: 8px;
         }
@@ -138,6 +156,7 @@
             padding: 3px;
             border: 1px solid #e5e7eb;
         }
+
         .mode-label {
             padding: 4px 12px;
             border-radius: 999px;
@@ -149,14 +168,16 @@
             align-items: center;
             white-space: nowrap;
         }
+
         .mode-label.active {
             background: white;
             color: #db2777;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             font-weight: bold;
         }
+
         .mode-label.active.play-mode {
-            color: #d97706; 
+            color: #d97706;
         }
 
         /* Song Scroll Area */
@@ -168,7 +189,10 @@
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
             -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
         }
-        .song-scroll-wrapper::-webkit-scrollbar { display: none; }
+
+        .song-scroll-wrapper::-webkit-scrollbar {
+            display: none;
+        }
 
         .song-group {
             display: flex;
@@ -176,6 +200,7 @@
             padding: 0 1rem;
             width: max-content;
         }
+
         .icon-btn {
             width: 44px;
             height: 44px;
@@ -190,14 +215,18 @@
             transition: all 0.1s;
             flex-shrink: 0;
         }
-        .icon-btn:active { transform: scale(0.9); }
-        
+
+        .icon-btn:active {
+            transform: scale(0.9);
+        }
+
         .icon-btn.active-song {
             background: #0ea5e9;
             color: white;
             border-color: #0284c7;
             animation: pulse 1s infinite;
         }
+
         .icon-btn.active-guide {
             background: #f59e0b;
             color: white;
@@ -211,6 +240,7 @@
             display: flex;
             gap: 0.3rem;
         }
+
         .inst-btn {
             width: 44px;
             height: 44px;
@@ -223,24 +253,42 @@
             cursor: pointer;
             border: 1px solid #e5e7eb;
         }
+
         .inst-btn.active {
             background: #ec4899;
             color: white;
             border-color: #be185d;
         }
 
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(14, 165, 233, 0); } }
-        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); } }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(14, 165, 233, 0);
+            }
+        }
+
+        @keyframes pulse-orange {
+            0% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+            }
+        }
 
         /* --- Keyboard Area --- */
         .piano-container {
             position: relative;
             width: 98%;
-            height: 82vh; 
+            height: 82vh;
             margin-top: 0.5vh;
             background: #fff;
             border-radius: 0 0 12px 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             display: flex;
             overflow: hidden;
         }
@@ -264,15 +312,19 @@
             font-size: 1.1rem;
             font-weight: bold;
         }
-        .white-key:active, .white-key.active {
+
+        .white-key:active,
+        .white-key.active {
             border-bottom-width: 2px;
             transform: translateY(6px);
             background: #fce7f3;
         }
+
         .white-key.guide-target {
             background: #fef08a !important;
             box-shadow: inset 0 -20px 40px #facc15;
         }
+
         .white-key.guide-target::after {
             content: '👇';
             position: absolute;
@@ -290,17 +342,21 @@
             border-radius: 0 0 6px 6px;
             z-index: 10;
             cursor: pointer;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
         }
-        .black-key:active, .black-key.active {
+
+        .black-key:active,
+        .black-key.active {
             border-bottom-width: 3px;
             transform: translateY(5px);
             background: #374151;
         }
+
         .black-key.guide-target {
             background: #fbbf24 !important;
             border-bottom-color: #b45309;
         }
+
         .black-key.guide-target::after {
             content: '👇';
             position: absolute;
@@ -311,9 +367,33 @@
             animation: bounce 0.8s infinite;
         }
 
-        @keyframes bounce { 0%, 100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-10px) translateX(0); } }
-        .black-key.guide-target::after { animation: bounce-bk 0.8s infinite; }
-        @keyframes bounce-bk { 0%, 100% { transform: translateY(0) translateX(-50%); } 50% { transform: translateY(-10px) translateX(-50%); } }
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-10px) translateX(0);
+            }
+        }
+
+        .black-key.guide-target::after {
+            animation: bounce-bk 0.8s infinite;
+        }
+
+        @keyframes bounce-bk {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(-50%);
+            }
+
+            50% {
+                transform: translateY(-10px) translateX(-50%);
+            }
+        }
 
         /* Sparkles */
         .particle {
@@ -323,15 +403,24 @@
             font-size: 3rem;
             z-index: 50;
         }
+
         @keyframes floatUp {
-            0% { transform: translateY(0) scale(0.5); opacity: 1; }
-            100% { transform: translateY(-150px) scale(1.5); opacity: 0; }
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-150px) scale(1.5);
+                opacity: 0;
+            }
         }
 
         /* Success Message */
         #bravo-msg {
             position: absolute;
-            top: 60%; left: 50%;
+            top: 60%;
+            left: 50%;
             transform: translate(-50%, -50%);
             font-size: 8rem;
             z-index: 60;
@@ -340,17 +429,25 @@
             filter: drop-shadow(0 0 10px white);
             animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
         @keyframes popIn {
-            from { transform: translate(-50%, -50%) scale(0); }
-            to { transform: translate(-50%, -50%) scale(1); }
+            from {
+                transform: translate(-50%, -50%) scale(0);
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(1);
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div id="start-overlay">
         <div class="text-6xl mb-4">🎹</div>
-        <button id="start-btn" class="bg-pink-500 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-lg active:scale-95 transition-transform">
+        <button id="start-btn"
+            class="bg-pink-500 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-lg active:scale-95 transition-transform">
             あそぶ！
         </button>
     </div>
@@ -365,7 +462,7 @@
     </div>
 
     <div id="app-container">
-        
+
         <a href="index.html" class="home-btn">🏠</a>
 
         <header class="header">
@@ -380,7 +477,6 @@
                     <button class="icon-btn" onclick="selectSong('tulip')" title="チューリップ">🌷</button>
                     <button class="icon-btn" onclick="selectSong('kaeru')" title="かえるのうた">🐸</button>
                     <button class="icon-btn" onclick="selectSong('choucho')" title="ちょうちょ">🦋</button>
-                    <button class="icon-btn" onclick="selectSong('atama')" title="あたま・かた・ひざ・ポン">💪</button>
                     <button class="icon-btn" onclick="selectSong('bunbun')" title="ぶんぶんぶん">🐝</button>
                 </div>
             </div>
@@ -419,9 +515,9 @@
 
         // --- State ---
         let currentInstrument = 'piano';
-        let currentMode = 'auto'; 
-        let currentSessionId = 0; 
-        
+        let currentMode = 'auto';
+        let currentSessionId = 0;
+
         let guideNoteIndex = 0;
         let guideSongData = [];
 
@@ -443,38 +539,47 @@
         // Melodies
         const songs = {
             'twinkle': [
-                {n:'C4',d:400}, {n:'C4',d:400}, {n:'G4',d:400}, {n:'G4',d:400}, {n:'A4',d:400}, {n:'A4',d:400}, {n:'G4',d:800},
-                {n:'F4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'D4',d:400}, {n:'C4',d:800}
+                { n: 'C4', d: 400 }, { n: 'C4', d: 400 }, { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'A4', d: 400 }, { n: 'A4', d: 400 }, { n: 'G4', d: 800 },
+                { n: 'F4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 800 },
+                { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'F4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 800 },
+                { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'F4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 800 },
+                { n: 'C4', d: 400 }, { n: 'C4', d: 400 }, { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'A4', d: 400 }, { n: 'A4', d: 400 }, { n: 'G4', d: 800 },
+                { n: 'F4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 800 }
             ],
             'tulip': [
-                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:800},
-                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:800},
-                {n:'G4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:400},
-                {n:'D4',d:400}, {n:'E4',d:400}, {n:'D4',d:800}
+                { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 800 },
+                { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 400 }, { n: 'C4', d: 800 },
+                { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'G4', d: 400 }, { n: 'A4', d: 400 }, { n: 'A4', d: 400 }, { n: 'G4', d: 800 },
+                { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 800 }
             ],
             'kaeru': [
-                {n:'C4',d:300}, {n:'D4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'D4',d:300}, {n:'C4',d:600},
-                {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:300}, {n:'A4',d:300}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:600},
-                {n:'C4',d:600}
+                { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 800 },
+                { n: 'E4', d: 400 }, { n: 'F4', d: 400 }, { n: 'G4', d: 400 }, { n: 'A4', d: 400 }, { n: 'G4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'C4', d: 800 }, { n: 'C4', d: 800 }, { n: 'C4', d: 800 }, { n: 'C4', d: 800 },
+                { n: 'C4', d: 200 }, { n: 'C4', d: 200 }, { n: 'D4', d: 200 }, { n: 'D4', d: 200 }, { n: 'E4', d: 200 }, { n: 'E4', d: 200 }, { n: 'F4', d: 200 }, { n: 'F4', d: 200 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 800 }
             ],
             'choucho': [
-                {n:'G4',d:400}, {n:'E4',d:400}, {n:'E4',d:800},
-                {n:'F4',d:400}, {n:'D4',d:400}, {n:'D4',d:800},
-                {n:'C4',d:400}, {n:'D4',d:400}, {n:'E4',d:400}, {n:'F4',d:400},
-                {n:'G4',d:400}, {n:'G4',d:400}, {n:'G4',d:800}
-            ],
-            'atama': [
-                {n:'G4',d:400}, {n:'A4',d:400}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
-                {n:'D4',d:300}, {n:'E4',d:300}, {n:'F4',d:600},
-                {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
-                {n:'G4',d:400}, {n:'A4',d:400}, {n:'G4',d:300}, {n:'F4',d:300}, {n:'E4',d:300}, {n:'F4',d:300}, {n:'G4',d:600},
-                {n:'D4',d:600}, {n:'G4',d:600}, {n:'E4',d:400}, {n:'C4',d:400}
+                { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'F4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 800 },
+                { n: 'C4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 400 }, { n: 'F4', d: 400 }, { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'G4', d: 800 },
+                { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'F4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 800 },
+                { n: 'C4', d: 400 }, { n: 'E4', d: 400 }, { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'D4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 400 }, { n: 'E4', d: 400 }, { n: 'F4', d: 800 },
+                { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'F4', d: 400 }, { n: 'G4', d: 800 },
+                { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 800 },
+                { n: 'F4', d: 400 }, { n: 'D4', d: 400 }, { n: 'D4', d: 800 },
+                { n: 'C4', d: 400 }, { n: 'E4', d: 400 }, { n: 'G4', d: 400 }, { n: 'G4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 400 }, { n: 'E4', d: 800 }
             ],
             'bunbun': [
-                {n:'G4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:800},
-                {n:'D4',d:200}, {n:'D4',d:200}, {n:'D4',d:200}, {n:'D4',d:200}, {n:'E4',d:200}, {n:'F4',d:400},
-                {n:'E4',d:200}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'E4',d:200}, {n:'F4',d:200}, {n:'G4',d:400},
-                {n:'G4',d:400}, {n:'F4',d:400}, {n:'E4',d:400}, {n:'D4',d:400}, {n:'C4',d:800}
+                { n: 'G4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 800 },
+                { n: 'D4', d: 200 }, { n: 'D4', d: 200 }, { n: 'D4', d: 200 }, { n: 'D4', d: 200 }, { n: 'E4', d: 200 }, { n: 'F4', d: 400 },
+                { n: 'E4', d: 200 }, { n: 'E4', d: 200 }, { n: 'E4', d: 200 }, { n: 'E4', d: 200 }, { n: 'F4', d: 200 }, { n: 'G4', d: 400 },
+                { n: 'G4', d: 400 }, { n: 'F4', d: 400 }, { n: 'E4', d: 400 }, { n: 'D4', d: 400 }, { n: 'C4', d: 800 }
             ]
         };
 
@@ -500,7 +605,7 @@
 
             const unitPct = 100 / whiteKeysList.length;
             const widthPct = unitPct * 0.70;
-            
+
             blackKeysMap.forEach((bk) => {
                 const key = document.createElement('div');
                 key.className = 'black-key';
@@ -513,7 +618,7 @@
                 pianoContainer.appendChild(key);
             });
         }
-        
+
         function noteToLabel(note) {
             return note.replace(/[0-9]/, '')
                 .replace('C', 'ド').replace('D', 'レ').replace('E', 'ミ')
@@ -530,7 +635,7 @@
             document.getElementById('mode-auto').classList.toggle('active', mode === 'auto');
             document.getElementById('mode-guide').classList.toggle('active', mode === 'guide');
             document.getElementById('mode-guide').classList.toggle('play-mode', mode === 'guide');
-            
+
             document.querySelectorAll('.icon-btn').forEach(b => {
                 b.classList.remove('active-song');
                 b.classList.remove('active-guide');
@@ -546,14 +651,14 @@
 
         function selectSong(songId) {
             initAudio();
-            stopAll(); 
-            currentSessionId++; 
-            
+            stopAll();
+            currentSessionId++;
+
             document.querySelectorAll('.icon-btn').forEach(b => {
                 b.classList.remove('active-song');
                 b.classList.remove('active-guide');
             });
-            
+
             const btn = document.querySelector(`button[onclick="selectSong('${songId}')"]`);
 
             if (currentMode === 'auto') {
@@ -566,7 +671,7 @@
         }
 
         function stopAll() {
-            currentSessionId++; 
+            currentSessionId++;
             resetGuide();
             document.querySelectorAll('.active').forEach(k => k.classList.remove('active'));
             document.querySelector('#bravo-msg').style.display = 'none';
@@ -576,19 +681,19 @@
         // --- Auto Play ---
         async function playSongLoop(songId, sessionId) {
             const melody = songs[songId];
-            
+
             for (let noteData of melody) {
                 if (sessionId !== currentSessionId) return;
 
                 const key = keyElements[noteData.n];
-                if(key) {
+                if (key) {
                     key.classList.add('active');
                     playTone(noteData.n);
                 }
-                
+
                 await new Promise(r => setTimeout(r, noteData.d));
-                
-                if(key) key.classList.remove('active');
+
+                if (key) key.classList.remove('active');
                 await new Promise(r => setTimeout(r, 50));
             }
 
@@ -612,7 +717,7 @@
 
         function highlightNextGuideNote() {
             document.querySelectorAll('.guide-target').forEach(k => k.classList.remove('guide-target'));
-            
+
             if (guideNoteIndex >= guideSongData.length) {
                 showBravo();
                 document.querySelector('.active-guide')?.classList.remove('active-guide');
@@ -621,7 +726,7 @@
 
             const nextNote = guideSongData[guideNoteIndex].n;
             const key = keyElements[nextNote];
-            if(key) key.classList.add('guide-target');
+            if (key) key.classList.add('guide-target');
         }
 
         function handleGuideInput(note) {
@@ -638,12 +743,12 @@
             const msg = document.getElementById('bravo-msg');
             msg.style.display = 'block';
             setTimeout(() => {
-                playTone('C5'); 
+                playTone('C5');
                 setTimeout(() => playTone('E5'), 100);
                 setTimeout(() => playTone('G5'), 200);
                 setTimeout(() => playTone('C5'), 300);
             }, 100);
-            
+
             setTimeout(() => {
                 msg.style.display = 'none';
             }, 2500);
@@ -697,19 +802,19 @@
         }
 
         function spawnSparkle(keyEl) {
-            if(!keyEl) return;
+            if (!keyEl) return;
             const rect = keyEl.getBoundingClientRect();
             const p = document.createElement('div');
             p.className = 'particle';
             const icons = ['💖', '✨', '🌸', '🎶', '⭐'];
-            p.textContent = icons[Math.floor(Math.random()*icons.length)];
-            
+            p.textContent = icons[Math.floor(Math.random() * icons.length)];
+
             const left = rect.left + (rect.width / 2) - 20;
             const top = rect.top + (rect.height / 2);
-            
+
             p.style.left = left + 'px';
             p.style.top = top + 'px';
-            
+
             document.body.appendChild(p);
             setTimeout(() => p.remove(), 800);
         }
@@ -732,11 +837,12 @@
             el.addEventListener('mouseup', release);
             el.addEventListener('mouseleave', release);
             // Passive false for smoother touch
-            el.addEventListener('touchstart', hit, {passive: false});
+            el.addEventListener('touchstart', hit, { passive: false });
             el.addEventListener('touchend', release);
         }
 
         document.body.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
     </script>
 </body>
+
 </html>
