@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ひらがな なぞりっこ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+            overscroll-behavior: none;
+            background-color: #f0f9ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // ひらがなのリスト（あ〜ん）
+        const HIRAGANA_LIST = [
+          'あ', 'い', 'う', 'え', 'お',
+          'か', 'き', 'く', 'け', 'こ',
+          'さ', 'し', 'す', 'せ', 'そ',
+          'た', 'ち', 'つ', 'て', 'と',
+          'な', 'に', 'ぬ', 'ね', 'の',
+          'は', 'ひ', 'ふ', 'へ', 'ほ',
+          'ま', 'み', 'む', 'め', 'も',
+          'や', 'ゆ', 'よ',
+          'ら', 'り', 'る', 'れ', 'ろ',
+          'わ', 'を', 'ん'
+        ];
+
+        // 使えるペンの色
+        const COLORS = [
+          { name: 'あか', value: '#ef4444' },
+          { name: 'あお', value: '#3b82f6' },
+          { name: 'きいろ', value: '#eab308' },
+          { name: 'みどり', value: '#22c55e' },
+          { name: 'ぴんく', value: '#ec4899' },
+          { name: 'くろ', value: '#1f2937' },
+        ];
+
+        function App() {
+          const [currentIndex, setCurrentIndex] = useState(() =>
+            Math.floor(Math.random() * HIRAGANA_LIST.length)
+          );
+          const [currentColor, setCurrentColor] = useState(COLORS[0].value);
+          const [isDrawing, setIsDrawing] = useState(false);
+          const [showSuccess, setShowSuccess] = useState(false);
+
+          const canvasRef = useRef(null);
+          const targetPixelsRef = useRef([]);
+          const isSuccessRef = useRef(false);
+          const drawCountRef = useRef(0);
+
+          const currentLetter = HIRAGANA_LIST[currentIndex];
+
+          // 音声を読み上げる関数
+          const speakText = (text, rate = 0.8) => {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+              const utterance = new SpeechSynthesisUtterance(text);
+              utterance.lang = 'ja-JP';
+              utterance.rate = rate;
+              window.speechSynthesis.speak(utterance);
+            }
+          };
+
+          // キャンバスの初期化と判定用データの作成
+          const initCanvas = () => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.font = `bold ${height * 0.75}px "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Meiryo", sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            ctx.fillStyle = '#000000';
+            ctx.fillText(currentLetter, width / 2, height / 2 + (height * 0.05));
+
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            const targetPixels = [];
+
+            for (let i = 0; i < data.length; i += 4) {
+              if (data[i] + data[i+1] + data[i+2] < 300) {
+                targetPixels.push(i);
+              }
+            }
+            targetPixelsRef.current = targetPixels;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#e5e7eb';
+            ctx.fillText(currentLetter, width / 2, height / 2 + (height * 0.05));
+
+            isSuccessRef.current = false;
+            setShowSuccess(false);
+            drawCountRef.current = 0;
+          };
+
+          useEffect(() => {
+            initCanvas();
+            speakText(currentLetter);
+          }, [currentIndex]);
+
+          const getCoordinates = (e) => {
+            const canvas = canvasRef.current;
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+              x: (clientX - rect.left) * scaleX,
+              y: (clientY - rect.top) * scaleY
+            };
+          };
+
+          const checkCompletion = () => {
+            if (isSuccessRef.current) return;
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            const targetPixels = targetPixelsRef.current;
+            if (targetPixels.length === 0) return;
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            let filledCount = 0;
+
+            for (let j = 0; j < targetPixels.length; j++) {
+              const i = targetPixels[j];
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              if (r + g + b < 600) {
+                filledCount++;
+              }
+            }
+
+            const ratio = filledCount / targetPixels.length;
+            if (ratio >= 0.8) {
+              handleSuccess();
+            }
+          };
+
+          const startDrawing = (e) => {
+            e.preventDefault();
+            if (isSuccessRef.current) return;
+            setIsDrawing(true);
+            const coords = getCoordinates(e);
+            const ctx = canvasRef.current.getContext('2d');
+            ctx.beginPath();
+            ctx.moveTo(coords.x, coords.y);
+          };
+
+          const draw = (e) => {
+            e.preventDefault();
+            if (!isDrawing || isSuccessRef.current) return;
+            const coords = getCoordinates(e);
+            const ctx = canvasRef.current.getContext('2d');
+            ctx.lineTo(coords.x, coords.y);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = 36;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            drawCountRef.current += 1;
+            if (drawCountRef.current % 15 === 0) {
+              checkCompletion();
+            }
+          };
+
+          const stopDrawing = () => {
+            setIsDrawing(false);
+            checkCompletion();
+          };
+
+          const handleSuccess = () => {
+            isSuccessRef.current = true;
+            setShowSuccess(true);
+            setIsDrawing(false);
+            speakText('よくできました！', 1.0);
+          };
+
+          const handleNext = () => {
+            let nextIndex;
+            do {
+              nextIndex = Math.floor(Math.random() * HIRAGANA_LIST.length);
+            } while (nextIndex === currentIndex);
+            setCurrentIndex(nextIndex);
+          };
+
+          return (
+            <div className="min-h-screen bg-sky-50 flex flex-col items-center py-6 touch-none select-none">
+
+              {/* ホームに戻るボタン */}
+              <div className="w-full max-w-[450px] px-2 mb-2 flex">
+                <button
+                  onClick={() => { window.location.href = 'index.html'; }}
+                  className="bg-white/90 p-2 rounded-full shadow-lg border-2 border-sky-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform"
+                >
+                  🏠
+                </button>
+              </div>
+
+              <div className="text-center mb-4">
+                <h1 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">
+                  ひらがな なぞりっこ
+                </h1>
+                <p className="text-gray-600 text-lg">
+                  「<span className="font-bold text-pink-500 text-2xl">{currentLetter}</span>」をなぞってみよう！
+                </p>
+              </div>
+
+              <div className="relative bg-white p-2 rounded-3xl shadow-xl mb-6">
+                <canvas
+                  ref={canvasRef}
+                  width={400}
+                  height={400}
+                  className="w-[85vw] max-w-[400px] aspect-square rounded-2xl border-4 border-sky-100 bg-white"
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={startDrawing}
+                  onPointerMove={draw}
+                  onPointerUp={stopDrawing}
+                  onPointerOut={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                />
+
+                {showSuccess && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 rounded-2xl backdrop-blur-sm">
+                    <div className="text-8xl md:text-9xl animate-bounce drop-shadow-lg mb-4">💮</div>
+                    <h2 className="text-3xl font-bold text-pink-500 mb-6 drop-shadow-md">
+                      よくできました！
+                    </h2>
+                    <button
+                      onClick={handleNext}
+                      className="px-8 py-4 bg-orange-400 active:bg-orange-600 text-white text-2xl font-bold rounded-full shadow-lg transition active:scale-95 flex items-center gap-2"
+                    >
+                      つぎへ <span>👉</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="w-[90vw] max-w-[450px] bg-white p-4 rounded-3xl shadow-md flex flex-col gap-4">
+
+                <div className="flex flex-col items-center">
+                  <p className="text-gray-500 text-sm font-bold mb-2">いろをえらぼう</p>
+                  <div className="flex justify-center gap-3 md:gap-4">
+                    {COLORS.map((color) => (
+                      <button
+                        key={color.name}
+                        onClick={() => setCurrentColor(color.value)}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full shadow-sm transform transition-transform ${
+                          currentColor === color.value ? 'scale-125 ring-4 ring-offset-2 ring-sky-300' : 'hover:scale-110'
+                        }`}
+                        style={{ backgroundColor: color.value }}
+                        aria-label={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="w-full h-px bg-gray-100 my-1"></div>
+
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={initCanvas}
+                    className="w-full py-3 md:py-4 bg-gray-200 active:bg-gray-400 text-gray-700 text-xl font-bold rounded-2xl shadow-sm transform transition active:scale-95 flex justify-center items-center gap-2"
+                  >
+                    やりなおす <span>🔄</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

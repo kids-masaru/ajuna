@@ -1,6 +1,6 @@
 {
-  "name": "あじゅなのげーむ",
-  "short_name": "あじゅなの",
+  "name": "げーむのひろば",
+  "short_name": "げーむのひろば",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#fdf2f8",
