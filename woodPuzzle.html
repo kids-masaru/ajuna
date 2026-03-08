@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>かたちパズル</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+            overscroll-behavior: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ==========================================
+        // 木製パズルのカラーパレット
+        // ==========================================
+        const C = {
+          red: '#E03C31',
+          blue: '#0071C5',
+          lightblue: '#4BB4E6',
+          green: '#00A046',
+          yellow: '#F7D708',
+          orange: '#F47A00',
+          pink: '#F08C96',
+          brown: '#78461E',
+          white: '#F8FAFC',
+          black: '#333333'
+        };
+
+        // ==========================================
+        // パズルの問題データ（元のサイズ）
+        // ==========================================
+        const RAW_LEVELS = [
+          {
+            id: 'airplane',
+            name: 'ひこうき',
+            shapes: [
+              { id: 'nose', type: 'circle', cx: 280, cy: 140, r: 25, color: C.blue },
+              { id: 'beak', type: 'polygon', points: '295,120 335,140 295,160', color: C.orange },
+              { id: 'body_f', type: 'rect', x: 180, y: 120, width: 80, height: 40, color: C.white },
+              { id: 'body_m', type: 'rect', x: 100, y: 120, width: 80, height: 40, color: C.blue },
+              { id: 'body_b', type: 'polygon', points: '20,120 100,120 100,160 40,160', color: C.white },
+              { id: 'tail_t', type: 'polygon', points: '20,120 60,120 20,60', color: C.green },
+              { id: 'tail_b', type: 'polygon', points: '20,140 40,140 20,170 -10,170', color: C.lightblue },
+              { id: 'wing', type: 'polygon', points: '100,140 220,140 160,180 40,180', color: C.blue },
+              { id: 'base', type: 'polygon', points: '120,160 180,160 200,200 100,200', color: C.red }
+            ]
+          },
+          {
+            id: 'penguin',
+            name: 'ペンギン',
+            shapes: [
+              { id: 'crest', type: 'polygon', points: '160,80 200,80 200,40', color: C.red },
+              { id: 'head', type: 'circle', cx: 200, cy: 100, r: 25, color: C.blue },
+              { id: 'eye', type: 'circle', cx: 206, cy: 95, r: 10, color: C.white },
+              { id: 'beak', type: 'polygon', points: '220,80 260,100 220,120', color: C.orange },
+              { id: 'back', type: 'polygon', points: '180,140 220,120 220,200 200,240 180,240', color: C.blue },
+              { id: 'belly', type: 'polygon', points: '220,120 240,140 240,200 220,240', color: C.white },
+              { id: 'tail', type: 'polygon', points: '120,200 160,200 180,240 140,240', color: C.green },
+              { id: 'wing', type: 'polygon', points: '180,160 240,200 180,200', color: C.blue },
+              { id: 'base', type: 'polygon', points: '160,260 240,260 260,280 140,280', color: C.red }
+            ]
+          },
+          {
+            id: 'bird',
+            name: 'とりさん',
+            shapes: [
+              { id: 'head', type: 'path', d: 'M 155 120 A 25 25 0 0 1 205 120 Z', color: C.red },
+              { id: 'comb', type: 'polygon', points: '155,100 180,50 205,100', color: C.red },
+              { id: 'beak', type: 'polygon', points: '160,100 120,120 160,140', color: C.red },
+              { id: 'eye', type: 'circle', cx: 175, cy: 105, r: 10, color: C.white },
+              { id: 'neck', type: 'polygon', points: '160,120 200,120 240,160 160,160', color: C.yellow },
+              { id: 'body', type: 'polygon', points: '160,160 280,160 280,240 200,240 160,200', color: C.orange },
+              { id: 'wing', type: 'rect', x: 220, y: 180, width: 40, height: 40, color: C.blue },
+              { id: 'tail', type: 'polygon', points: '280,160 380,160 300,180', color: C.green },
+              { id: 'leg_l', type: 'polygon', points: '180,240 200,240 200,280 210,300 170,300 180,280', color: C.brown },
+              { id: 'leg_r', type: 'polygon', points: '220,240 240,240 240,280 250,300 210,300 220,280', color: C.brown }
+            ]
+          }
+        ];
+
+        const LEVELS = RAW_LEVELS.map(level => {
+          let minX = 1000, maxX = -1000, minY = 1000, maxY = -1000;
+          level.shapes.forEach(shape => {
+            let xs = [], ys = [];
+            if (shape.type === 'rect') {
+              xs = [shape.x, shape.x + shape.width]; ys = [shape.y, shape.y + shape.height];
+            } else if (shape.type === 'circle') {
+              xs = [shape.cx - shape.r, shape.cx + shape.r]; ys = [shape.cy - shape.r, shape.cy + shape.r];
+            } else if (shape.type === 'polygon') {
+              const pts = shape.points.split(' ').map(pt => pt.split(',').map(Number));
+              xs = pts.map(p => p[0]); ys = pts.map(p => p[1]);
+            } else if (shape.type === 'path') {
+              const coords = shape.d.match(/-?\d+(\.\d+)?/g).map(Number);
+              xs = coords.filter((_, i) => i % 2 === 0); ys = coords.filter((_, i) => i % 2 === 1);
+            }
+            minX = Math.min(minX, ...xs); maxX = Math.max(maxX, ...xs);
+            minY = Math.min(minY, ...ys); maxY = Math.max(maxY, ...ys);
+          });
+
+          const currentWidth = maxX - minX;
+          const currentHeight = maxY - minY;
+          let scale = Math.min(1.6, 320 / currentWidth);
+          const currentCenterX = minX + currentWidth / 2;
+          const currentCenterY = minY + currentHeight / 2;
+          const offsetX = 200 - (currentCenterX * scale);
+          const offsetY = 170 - (currentCenterY * scale);
+
+          const round = Math.round;
+
+          const scaledShapes = level.shapes.map(shape => {
+            const s = { ...shape };
+            if (s.type === 'rect') {
+              s.x = round(s.x * scale + offsetX); s.y = round(s.y * scale + offsetY);
+              s.width = round(s.width * scale); s.height = round(s.height * scale);
+            } else if (s.type === 'circle') {
+              s.cx = round(s.cx * scale + offsetX); s.cy = round(s.cy * scale + offsetY);
+              s.r = round(s.r * scale);
+            } else if (s.type === 'polygon') {
+              s.points = s.points.split(' ').map(pt => {
+                const [x, y] = pt.split(',').map(Number);
+                return `${round(x * scale + offsetX)},${round(y * scale + offsetY)}`;
+              }).join(' ');
+            } else if (s.type === 'path') {
+              const parts = s.d.split(' ');
+              if (parts[0] === 'M') {
+                const mx = round(Number(parts[1]) * scale + offsetX);
+                const my = round(Number(parts[2]) * scale + offsetY);
+                const rx = round(Number(parts[4]) * scale);
+                const ry = round(Number(parts[5]) * scale);
+                const ax = round(Number(parts[11]) * scale + offsetX);
+                const ay = round(Number(parts[12]) * scale + offsetY);
+                s.d = `M ${mx} ${my} A ${rx} ${ry} 0 0 1 ${ax} ${ay} Z`;
+              }
+            }
+            return s;
+          });
+
+          return { ...level, shapes: scaledShapes };
+        });
+
+        // ==========================================
+        // 音の準備
+        // ==========================================
+        let audioCtx = null;
+        const initAudio = () => {
+          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        };
+
+        const playSnapSound = () => {
+          if (!audioCtx) return;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+          osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        };
+
+        const playClearSound = () => {
+          if (!audioCtx) return;
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.3);
+            osc.start(audioCtx.currentTime + i * 0.1); osc.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+          });
+        };
+
+        // ==========================================
+        // コンポーネント群
+        // ==========================================
+        const areShapesCompatible = (s1, s2) => {
+          if (s1.type !== s2.type || s1.color !== s2.color) return false;
+          if (s1.type === 'rect') return s1.width === s2.width && s1.height === s2.height;
+          if (s1.type === 'circle') return s1.r === s2.r;
+          if (s1.type === 'polygon') return s1.points === s2.points;
+          if (s1.type === 'path') return s1.d === s2.d;
+          return false;
+        };
+
+        const getShapeCenter = (shape) => {
+          if (shape.type === 'rect') return { x: shape.x + shape.width / 2, y: shape.y + shape.height / 2 };
+          if (shape.type === 'circle') return { x: shape.cx, y: shape.cy };
+          if (shape.type === 'polygon') {
+            const pts = shape.points.split(' ').map(p => p.split(',').map(Number));
+            const xs = pts.map(p => p[0]); const ys = pts.map(p => p[1]);
+            return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
+          }
+          if (shape.type === 'path') {
+            const coords = shape.d.match(/-?\d+(\.\d+)?/g).map(Number);
+            const xs = coords.filter((_, i) => i % 2 === 0); const ys = coords.filter((_, i) => i % 2 === 1);
+            return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
+          }
+          return { x: 0, y: 0 };
+        };
+
+        const Silhouette = ({ shape }) => {
+          const props = { fill: "#F1F5F9", stroke: "#CBD5E1", strokeWidth: 3, strokeDasharray: "6 6" };
+          if (shape.type === 'rect') return <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={2} {...props} />;
+          if (shape.type === 'circle') return <circle cx={shape.cx} cy={shape.cy} r={shape.r} {...props} />;
+          if (shape.type === 'polygon') return <polygon points={shape.points} strokeLinejoin="round" {...props} />;
+          if (shape.type === 'path') return <path d={shape.d} fillRule="evenodd" strokeLinejoin="round" {...props} />;
+          return null;
+        };
+
+        const SampleShape = ({ shape }) => {
+          const props = { fill: shape.color };
+          if (shape.type === 'rect') return <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={2} {...props} />;
+          if (shape.type === 'circle') return <circle cx={shape.cx} cy={shape.cy} r={shape.r} {...props} />;
+          if (shape.type === 'polygon') return <polygon points={shape.points} strokeLinejoin="round" {...props} />;
+          if (shape.type === 'path') return <path d={shape.d} fillRule="evenodd" strokeLinejoin="round" {...props} />;
+          return null;
+        };
+
+        const DraggableShape = ({ shape, opacity, onPointerDown, styleExtensions }) => {
+          const transform = `translate(${shape.dx}, ${shape.dy})`;
+          const props = {
+            fill: shape.color,
+            stroke: shape.isLocked ? "none" : "rgba(0,0,0,0.15)",
+            strokeWidth: shape.isLocked ? 0 : 3,
+            transform,
+            opacity: opacity,
+            onPointerDown: onPointerDown ? (e) => onPointerDown(e, shape.id) : undefined,
+            style: { cursor: shape.isLocked ? 'default' : 'grab', touchAction: 'none', ...styleExtensions }
+          };
+
+          if (shape.type === 'rect') return <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={2} {...props} />;
+          if (shape.type === 'circle') return <circle cx={shape.cx} cy={shape.cy} r={shape.r} {...props} />;
+          if (shape.type === 'polygon') return <polygon points={shape.points} strokeLinejoin="round" {...props} />;
+          if (shape.type === 'path') return <path d={shape.d} fillRule="evenodd" strokeLinejoin="round" {...props} />;
+          return null;
+        };
+
+        const Confetti = () => {
+          return (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {[...Array(40)].map((_, i) => {
+                const left = Math.random() * 100;
+                const duration = 1.5 + Math.random() * 2;
+                const delay = Math.random() * 0.5;
+                const color = Object.values(C)[Math.floor(Math.random() * 6)];
+                return (
+                  <div
+                    key={i}
+                    className="absolute top-0 w-5 h-5 rounded-sm shadow-sm"
+                    style={{
+                      left: `${left}%`, backgroundColor: color,
+                      animation: `fall ${duration}s linear ${delay}s infinite`,
+                      transform: `rotate(${Math.random() * 360}deg)`
+                    }}
+                  />
+                );
+              })}
+              <style>{`
+                @keyframes fall {
+                  0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+                  100% { transform: translateY(800px) rotate(720deg); opacity: 0; }
+                }
+              `}</style>
+            </div>
+          );
+        };
+
+        // ==========================================
+        // メインアプリ
+        // ==========================================
+        function App() {
+          const [levelOrder, setLevelOrder] = useState([]);
+          const [currentIndex, setCurrentIndex] = useState(0);
+          const [pieces, setPieces] = useState([]);
+          const [isCleared, setIsCleared] = useState(false);
+          const [draggingId, setDraggingId] = useState(null);
+          const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+          const svgRef = useRef(null);
+
+          useEffect(() => {
+            const shuffled = [...LEVELS].sort(() => Math.random() - 0.5);
+            const targetIndex = shuffled.findIndex(l => l.id === 'airplane');
+            if (targetIndex > 0) {
+              const temp = shuffled[0];
+              shuffled[0] = shuffled[targetIndex];
+              shuffled[targetIndex] = temp;
+            }
+            setLevelOrder(shuffled);
+          }, []);
+
+          useEffect(() => {
+            if (levelOrder.length === 0) return;
+            const level = levelOrder[currentIndex];
+            const initialPieces = level.shapes.map((shape, i) => {
+              const center = getShapeCenter(shape);
+              const cols = 3;
+              const col = i % cols;
+              const row = Math.floor(i / cols);
+              const cellW = 340 / cols;
+              const cellH = 80;
+              const targetX = 30 + col * cellW + cellW / 2 + (Math.random() * 10 - 5);
+              const targetY = 390 + row * cellH + (Math.random() * 10 - 5);
+              return {
+                ...shape,
+                dx: targetX - center.x,
+                dy: targetY - center.y,
+                isLocked: false,
+                lockedToId: null
+              };
+            });
+            setPieces(initialPieces);
+            setIsCleared(false);
+          }, [levelOrder, currentIndex]);
+
+          useEffect(() => {
+            if (pieces.length > 0 && pieces.every(p => p.isLocked)) {
+              if (!isCleared) {
+                setIsCleared(true);
+                playClearSound();
+              }
+            }
+          }, [pieces, isCleared]);
+
+          const getPointerPos = (e) => {
+            const svg = svgRef.current;
+            if (!svg) return { x: 0, y: 0 };
+            const point = svg.createSVGPoint();
+            point.x = e.clientX;
+            point.y = e.clientY;
+            const ctm = svg.getScreenCTM();
+            if (!ctm) return { x: 0, y: 0 };
+            return point.matrixTransform(ctm.inverse());
+          };
+
+          const handlePointerDown = (e, id) => {
+            initAudio();
+            if (isCleared) return;
+            const piece = pieces.find(p => p.id === id);
+            if (piece.isLocked) return;
+            if (e.target && e.target.setPointerCapture) {
+              try { e.target.setPointerCapture(e.pointerId); } catch (err) {}
+            }
+            const pos = getPointerPos(e);
+            setDraggingId(id);
+            setDragOffset({ x: pos.x - piece.dx, y: pos.y - piece.dy });
+          };
+
+          const handlePointerMove = (e) => {
+            if (!draggingId) return;
+            e.preventDefault();
+            const pos = getPointerPos(e);
+            setPieces(prev => prev.map(p =>
+              p.id === draggingId
+                ? { ...p, dx: pos.x - dragOffset.x, dy: pos.y - dragOffset.y }
+                : p
+            ));
+          };
+
+          const handlePointerUp = () => {
+            if (!draggingId) return;
+            const currentLevel = levelOrder[currentIndex];
+            setPieces(prev => {
+              const draggedPiece = prev.find(p => p.id === draggingId);
+              if (!draggedPiece) return prev;
+
+              const draggedBaseCenter = getShapeCenter(draggedPiece);
+              const currentCenterX = draggedBaseCenter.x + draggedPiece.dx;
+              const currentCenterY = draggedBaseCenter.y + draggedPiece.dy;
+
+              const lockedTargetIds = prev.filter(p => p.isLocked).map(p => p.lockedToId);
+              let bestTarget = null;
+              let minDistance = 60;
+
+              currentLevel.shapes.forEach(targetShape => {
+                if (lockedTargetIds.includes(targetShape.id)) return;
+                if (!areShapesCompatible(draggedPiece, targetShape)) return;
+
+                const targetCenter = getShapeCenter(targetShape);
+                const dist = Math.sqrt(
+                  Math.pow(currentCenterX - targetCenter.x, 2) +
+                  Math.pow(currentCenterY - targetCenter.y, 2)
+                );
+
+                if (dist < minDistance) {
+                  minDistance = dist;
+                  bestTarget = targetShape;
+                }
+              });
+
+              return prev.map(p => {
+                if (p.id === draggingId) {
+                  if (bestTarget) {
+                    playSnapSound();
+                    const targetCenter = getShapeCenter(bestTarget);
+                    return {
+                      ...p,
+                      dx: targetCenter.x - draggedBaseCenter.x,
+                      dy: targetCenter.y - draggedBaseCenter.y,
+                      isLocked: true,
+                      lockedToId: bestTarget.id
+                    };
+                  }
+                }
+                return p;
+              });
+            });
+            setDraggingId(null);
+          };
+
+          const nextLevel = () => {
+            setCurrentIndex((prev) => (prev + 1) % levelOrder.length);
+          };
+
+          if (levelOrder.length === 0) return null;
+          const currentLevel = levelOrder[currentIndex];
+
+          return (
+            <div
+              className="min-h-screen w-full flex flex-col items-center select-none py-4 px-2"
+              style={{
+                backgroundColor: '#f0fdf4',
+                backgroundImage: `linear-gradient(90deg, rgba(134, 239, 172, 0.25) 2px, transparent 2px), linear-gradient(rgba(134, 239, 172, 0.25) 2px, transparent 2px)`,
+                backgroundSize: '40px 40px',
+                fontFamily: '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Quicksand", sans-serif'
+              }}
+            >
+              {/* ホームに戻るボタン */}
+              <div className="w-full max-w-md mb-3 flex">
+                <button
+                  onClick={() => { window.location.href = 'index.html'; }}
+                  className="bg-white/90 p-2 rounded-full shadow-lg border-2 border-green-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform"
+                >
+                  🏠
+                </button>
+              </div>
+
+              <div className="w-full max-w-md bg-white rounded-3xl shadow-sm p-4 mb-3 flex justify-between items-center border-4 border-green-200">
+                <div className="flex flex-col gap-1">
+                  <div className="bg-green-500 text-white font-bold py-1 px-3 rounded-full text-xs inline-block w-max shadow-sm">
+                    かたちパズル
+                  </div>
+                  <div className="text-base font-bold text-gray-700 mt-1">
+                    「{currentLevel.name}」をつくろう
+                  </div>
+                </div>
+
+                <div className="w-28 h-28 bg-blue-50 rounded-2xl border-4 border-blue-100 overflow-hidden shadow-inner flex-shrink-0">
+                  <svg viewBox="0 0 400 350" className="w-full h-full p-2">
+                    {currentLevel.shapes.map(shape => (
+                      <SampleShape key={shape.id} shape={shape} />
+                    ))}
+                  </svg>
+                </div>
+              </div>
+
+              <div className="w-full max-w-md bg-white rounded-3xl shadow-lg overflow-hidden relative border-4 border-green-200">
+                <svg
+                  ref={svgRef}
+                  viewBox="0 0 400 680"
+                  className="w-full h-auto block touch-none"
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                >
+                  <line x1="20" y1="350" x2="380" y2="350" stroke="#E2E8F0" strokeWidth="4" strokeDasharray="10 10" strokeLinecap="round" />
+
+                  {currentLevel.shapes.map(shape => (
+                    <Silhouette key={`sil-${shape.id}`} shape={shape} />
+                  ))}
+
+                  {currentLevel.shapes.map(baseShape => {
+                    const piece = pieces.find(p => p.id === baseShape.id);
+                    if (!piece) return null;
+                    const isDragging = piece.id === draggingId;
+                    const pieceOpacity = isCleared ? 1 : (piece.isLocked ? 0.7 : 1);
+                    return (
+                      <DraggableShape
+                        key={piece.id}
+                        shape={piece}
+                        opacity={isDragging ? 0 : pieceOpacity}
+                        onPointerDown={handlePointerDown}
+                      />
+                    );
+                  })}
+
+                  {draggingId && pieces.find(p => p.id === draggingId) && (
+                    <DraggableShape
+                      key={`drag-clone-${draggingId}`}
+                      shape={pieces.find(p => p.id === draggingId)}
+                      opacity={0.7}
+                      styleExtensions={{ pointerEvents: 'none' }}
+                    />
+                  )}
+                </svg>
+
+                {isCleared && (
+                  <div className="absolute inset-0 bg-white/50 flex flex-col items-center justify-center z-10 backdrop-blur-[2px]">
+                    <Confetti />
+                    <h2 className="text-6xl font-black text-orange-500 mb-8 drop-shadow-lg tracking-widest animate-bounce" style={{ textShadow: '2px 4px 0px #FFD93D' }}>
+                      やったね！
+                    </h2>
+                    <button
+                      onClick={nextLevel}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-white text-3xl font-black py-4 px-12 rounded-full shadow-xl transform transition active:scale-95 border-b-8 border-yellow-600 z-20"
+                    >
+                      つぎへ
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>いくつあるかな</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+            overscroll-behavior: none;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const EMOJI_LIST = [
+          "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
+          "🦁", "🐮", "🐷", "🐸", "🐵", "🐧", "🐦", "🐤", "🦆", "🐢",
+          "🚗", "🚕", "🚙", "🚌", "🚓", "🚑", "🚒", "🚜", "🚲", "✈️",
+          "🚀", "🚁", "⛵", "🚢", "🚂", "🍎", "🍌", "🍇", "🍓", "🍉",
+          "🍊", "🍋", "🍍", "🥝", "🍅", "🍆", "🌽", "🥕", "🍄", "🍔",
+          "🍟", "🍕", "🌭", "🍦", "🍩", "🍪", "🍫", "🍬", "🍭", "🍰"
+        ];
+
+        const playSound = (type) => {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          const ctx = new AudioContext();
+
+          if (type === 'correct') {
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            osc1.type = 'sine';
+            osc2.type = 'sine';
+            osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
+            osc2.frequency.setValueAtTime(880.00, ctx.currentTime + 0.15);
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+            osc1.connect(gainNode);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.15);
+            osc2.connect(gainNode);
+            osc2.start(ctx.currentTime + 0.15);
+            osc2.stop(ctx.currentTime + 0.5);
+            gainNode.connect(ctx.destination);
+          } else if (type === 'incorrect') {
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, ctx.currentTime);
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.4);
+          }
+        };
+
+        const TracingCanvas = ({ number, onDraw, clearTrigger }) => {
+          const canvasRef = useRef(null);
+          const [isDrawing, setIsDrawing] = useState(false);
+
+          useEffect(() => {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }, [clearTrigger]);
+
+          const startDrawing = (e) => {
+            e.preventDefault();
+            setIsDrawing(true);
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            const { x, y } = getCoordinates(e, canvas);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#FF6B6B';
+            onDraw();
+          };
+
+          const draw = (e) => {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            const { x, y } = getCoordinates(e, canvas);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            onDraw();
+          };
+
+          const stopDrawing = (e) => {
+            e.preventDefault();
+            setIsDrawing(false);
+          };
+
+          const getCoordinates = (e, canvas) => {
+            const rect = canvas.getBoundingClientRect();
+            if (e.touches && e.touches.length > 0) {
+              return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+              };
+            } else {
+              return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+              };
+            }
+          };
+
+          return (
+            <div className="relative w-32 h-40 sm:w-40 sm:h-48 border-4 border-dashed border-gray-300 rounded-2xl bg-white shadow-sm overflow-hidden touch-none">
+              <div className="absolute inset-0 flex items-center justify-center text-gray-200 select-none" style={{ fontSize: '8rem', fontFamily: 'sans-serif', fontWeight: 'bold' }}>
+                {number}
+              </div>
+              <canvas
+                ref={canvasRef}
+                width={160}
+                height={192}
+                className="absolute inset-0 w-full h-full z-10 cursor-crosshair"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+              />
+            </div>
+          );
+        };
+
+        function App() {
+          const [targetCount, setTargetCount] = useState(0);
+          const [currentEmoji, setCurrentEmoji] = useState("");
+          const [options, setOptions] = useState([0, 0]);
+          const [drawCounts, setDrawCounts] = useState([0, 0]);
+          const [clearTrigger, setClearTrigger] = useState(0);
+          const [resultMessage, setResultMessage] = useState(null);
+
+          const generateProblem = () => {
+            const newCount = Math.floor(Math.random() * 10) + 1;
+            const emojiIndex = Math.floor(Math.random() * EMOJI_LIST.length);
+            let wrongCount = Math.floor(Math.random() * 10) + 1;
+            while (wrongCount === newCount) {
+              wrongCount = Math.floor(Math.random() * 10) + 1;
+            }
+            const newOptions = Math.random() > 0.5 ? [newCount, wrongCount] : [wrongCount, newCount];
+            setTargetCount(newCount);
+            setCurrentEmoji(EMOJI_LIST[emojiIndex]);
+            setOptions(newOptions);
+            setDrawCounts([0, 0]);
+            setClearTrigger(prev => prev + 1);
+            setResultMessage(null);
+          };
+
+          useEffect(() => {
+            generateProblem();
+          }, []);
+
+          const handleDraw = (index) => {
+            if (resultMessage !== null) return;
+            setDrawCounts(prev => {
+              const newCounts = [...prev];
+              newCounts[index] += 1;
+              return newCounts;
+            });
+          };
+
+          const checkAnswer = () => {
+            if (drawCounts[0] === 0 && drawCounts[1] === 0) {
+              alert("どちらかの すうじを なぞってね！");
+              return;
+            }
+            const selectedIndex = drawCounts[0] > drawCounts[1] ? 0 : 1;
+            const selectedNumber = options[selectedIndex];
+            if (selectedNumber === targetCount) {
+              setResultMessage('correct');
+              playSound('correct');
+            } else {
+              setResultMessage('incorrect');
+              playSound('incorrect');
+            }
+          };
+
+          const handleResetDrawing = () => {
+            setDrawCounts([0, 0]);
+            setClearTrigger(prev => prev + 1);
+          };
+
+          const handleRetry = () => {
+            setResultMessage(null);
+            setDrawCounts([0, 0]);
+            setClearTrigger(prev => prev + 1);
+          };
+
+          const emojiArray = Array.from({ length: targetCount }, (_, i) => i);
+
+          return (
+            <div className="min-h-screen bg-blue-50 flex flex-col items-center py-6 px-4 touch-manipulation">
+              {/* ホームに戻るボタン */}
+              <div className="w-full max-w-lg mb-3 flex">
+                <button
+                  onClick={() => { window.location.href = 'index.html'; }}
+                  className="bg-white/90 p-2 rounded-full shadow-lg border-2 border-blue-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform"
+                >
+                  🏠
+                </button>
+              </div>
+
+              <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col items-center p-6">
+                <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-6 text-center">
+                  いくつ あるかな？
+                </h1>
+
+                <div className="min-h-[160px] flex flex-wrap justify-center items-center gap-2 sm:gap-4 mb-8 p-4 bg-blue-100 rounded-2xl w-full">
+                  {emojiArray.map((i) => (
+                    <span key={i} className="text-4xl sm:text-5xl animate-bounce" style={{ animationDelay: `${i * 0.1}s` }}>
+                      {currentEmoji}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="text-lg text-gray-700 mb-4 font-bold text-center">
+                  せいかいの すうじを なぞってね！
+                </p>
+
+                <div className="flex justify-center gap-6 sm:gap-12 mb-6 w-full relative">
+                  <TracingCanvas
+                    number={options[0]}
+                    onDraw={() => handleDraw(0)}
+                    clearTrigger={clearTrigger}
+                  />
+                  <TracingCanvas
+                    number={options[1]}
+                    onDraw={() => handleDraw(1)}
+                    clearTrigger={clearTrigger}
+                  />
+                </div>
+
+                {!resultMessage && (
+                  <button
+                    onClick={handleResetDrawing}
+                    className="mb-6 px-6 py-2 bg-gray-200 text-gray-700 font-bold rounded-full shadow-sm active:bg-gray-300 transform active:scale-95 transition-all"
+                  >
+                    なぞりなおす（けす）
+                  </button>
+                )}
+
+                {!resultMessage ? (
+                  <button
+                    onClick={checkAnswer}
+                    className="w-full py-4 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-2xl shadow-lg shadow-green-200 transform active:scale-95 transition-all"
+                  >
+                    こたえあわせ！
+                  </button>
+                ) : (
+                  <div className="w-full flex flex-col items-center">
+                    <div className={`text-3xl font-bold mb-6 ${resultMessage === 'correct' ? 'text-red-500' : 'text-blue-500'}`}>
+                      {resultMessage === 'correct' ? '🎉 せいかい！ 🎉' : '😢 ちがうよ 😢'}
+                    </div>
+                    {resultMessage === 'correct' ? (
+                      <button
+                        onClick={generateProblem}
+                        className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-2xl font-bold rounded-2xl shadow-lg shadow-yellow-200 transform active:scale-95 transition-all"
+                      >
+                        つぎの もんだい！
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleRetry}
+                        className="w-full py-4 bg-blue-400 hover:bg-blue-500 text-white text-2xl font-bold rounded-2xl shadow-lg shadow-blue-200 transform active:scale-95 transition-all"
+                      >
+                        もういっかい！
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

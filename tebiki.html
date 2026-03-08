@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>つかいかたせつめい</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #fff7ed;
+            user-select: none;
+        }
+
+        .card {
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .step-badge {
+            min-width: 2rem;
+            min-height: 2rem;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen py-8 px-4">
+
+    <!-- ヘッダー -->
+    <div class="max-w-lg mx-auto mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <a href="index.html"
+                class="bg-white p-2 rounded-full shadow-md border-2 border-orange-200 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform flex-shrink-0">
+                🏠
+            </a>
+            <h1 class="text-2xl font-bold text-orange-500">つかいかたせつめい</h1>
+        </div>
+        <p class="text-sm text-gray-500 font-bold pl-1">ゲームのあそびかたをみてみよう！</p>
+    </div>
+
+    <div class="max-w-lg mx-auto flex flex-col gap-6">
+
+        <!-- えあわせ -->
+        <div class="card bg-white rounded-3xl border-4 border-violet-300 overflow-hidden">
+            <!-- タイトルバー -->
+            <div class="bg-violet-400 px-5 py-3 flex items-center gap-3">
+                <div class="bg-white w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border-2 border-violet-200 flex-shrink-0">
+                    🔗
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white">えあわせ</h2>
+                    <p class="text-violet-100 text-xs font-bold">eawase.html</p>
+                </div>
+            </div>
+            <!-- 内容 -->
+            <div class="px-5 py-4">
+                <p class="text-gray-700 font-bold text-sm mb-4">
+                    ひだりとみぎに ならんだ えを、おなじものどうし せんでつなごう！
+                </p>
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-violet-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">１</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">ひだりがわの えを おしながら みぎがわの おなじ えまで ゆびをはこぼう</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-violet-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">２</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">せいかいなら みどりのせんで つながるよ。まちがえたら あかくブルブルするよ</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-violet-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">３</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">５こ ぜんぶ つなげたら 「ぜんぶせいかい！」だよ。「つぎへ！」で あたらしい もんだいがはじまるよ</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-violet-50 rounded-2xl px-4 py-3 border-2 border-violet-100">
+                    <p class="text-xs text-violet-600 font-bold">💡 みぎがわから ひだりへ ひっぱってもOKだよ！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- かたちパズル -->
+        <div class="card bg-white rounded-3xl border-4 border-green-300 overflow-hidden">
+            <div class="bg-green-400 px-5 py-3 flex items-center gap-3">
+                <div class="bg-white w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border-2 border-green-200 flex-shrink-0">
+                    🧱
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white">かたちパズル</h2>
+                    <p class="text-green-100 text-xs font-bold">woodPuzzle.html</p>
+                </div>
+            </div>
+            <div class="px-5 py-4">
+                <p class="text-gray-700 font-bold text-sm mb-4">
+                    いろとりどりの かたちを、うえのシルエットに ぴったりはめよう！
+                </p>
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-green-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">１</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">みぎうえの「かんせいれい」をみて、どんな かたちをつくるか かくにんしよう</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-green-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">２</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">したにある カラフルな かたちを ゆびで おしながら ドラッグして、うえの シルエットに かさねよう</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-green-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">３</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">ちかくに もっていくと パチン！ってはまるよ。ぜんぶはまったら 「やったね！」だよ</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-green-50 rounded-2xl px-4 py-3 border-2 border-green-100">
+                    <p class="text-xs text-green-600 font-bold">💡 ひこうき→ペンギン→とりさん の３しゅるい あるよ！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ひらがな -->
+        <div class="card bg-white rounded-3xl border-4 border-sky-300 overflow-hidden">
+            <div class="bg-sky-400 px-5 py-3 flex items-center gap-3">
+                <div class="bg-white w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border-2 border-sky-200 flex-shrink-0">
+                    ✏️
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white">ひらがな なぞりっこ</h2>
+                    <p class="text-sky-100 text-xs font-bold">hiragana.html</p>
+                </div>
+            </div>
+            <div class="px-5 py-4">
+                <p class="text-gray-700 font-bold text-sm mb-4">
+                    ひらがな４６もじを なぞって れんしゅうしよう！ こえもよんでくれるよ。
+                </p>
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-sky-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">１</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">もじが よみあげられるよ。オレンジの ガイドせんに そって ゆびで なぞろう</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-sky-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">２</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">もじのほとんどを なぞると 「よくできました！💮」があらわれるよ</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-sky-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">３</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">したの まるいボタンで かくいろをかえられるよ。「やりなおす」で せんをけせるよ</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-sky-50 rounded-2xl px-4 py-3 border-2 border-sky-100">
+                    <p class="text-xs text-sky-600 font-bold">💡 かくすうと かくじゅんも みられるよ！インターネットがひつようだよ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- かずかぞえ -->
+        <div class="card bg-white rounded-3xl border-4 border-blue-300 overflow-hidden">
+            <div class="bg-blue-400 px-5 py-3 flex items-center gap-3">
+                <div class="bg-white w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border-2 border-blue-200 flex-shrink-0">
+                    🔢
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white">かずかぞえ</h2>
+                    <p class="text-blue-100 text-xs font-bold">kazukazoe.html</p>
+                </div>
+            </div>
+            <div class="px-5 py-4">
+                <p class="text-gray-700 font-bold text-sm mb-4">
+                    えをかぞえて、せいかいのかずを なぞろう！１〜１０の れんしゅうができるよ。
+                </p>
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-blue-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">１</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">うえにならんだ えをかぞえよう。いくつ あるかな？</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-blue-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">２</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">ふたつの すうじのうち、せいかいだとおもう ほうの すうじを ゆびで なぞろう</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-badge bg-blue-400 text-white text-sm font-bold rounded-full flex items-center justify-center flex-shrink-0">３</div>
+                        <p class="text-sm text-gray-600 font-bold pt-0.5">「こたえあわせ！」を おして、せいかいなら 「🎉せいかい！」、まちがいなら 「もういっかい！」がでるよ</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-blue-50 rounded-2xl px-4 py-3 border-2 border-blue-100">
+                    <p class="text-xs text-blue-600 font-bold">💡 「なぞりなおす」で かいた せんを けしてやりなおせるよ！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- もどる -->
+        <div class="flex justify-center pb-4">
+            <a href="index.html"
+                class="bg-orange-400 active:bg-orange-600 text-white font-bold text-lg py-3 px-10 rounded-full shadow-lg flex items-center gap-2 transition-transform active:scale-95"
+                style="box-shadow: 0 6px 0 rgba(194,65,12,0.4);">
+                🏠 ホームにもどる
+            </a>
+        </div>
+
+    </div>
+</body>
+
+</html>
