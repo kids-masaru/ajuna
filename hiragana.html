@@ -65,7 +65,10 @@
           const [strokeInfo, setStrokeInfo] = useState({ current: 0, total: 0 });
 
           const canvasRef = useRef(null);
+          // 判定用：文字全体のピクセル（もともとの仕組みそのまま）
           const targetPixelsRef = useRef([]);
+          // 書き順ガイド用：現在の筆順のピクセル（ガイド色を変えるだけに使う）
+          const currentStrokePixelsRef = useRef([]);
           const isSuccessRef = useRef(false);
           const drawCountRef = useRef(0);
           const strokePathsRef = useRef([]);
@@ -83,69 +86,15 @@
             }
           };
 
-          // SVGパスの最初のM座標を取得（スタート丸印のため）
+          // SVGパスの最初のM座標を取得
           const getStartPoint = (pathStr) => {
             const m = pathStr.match(/M\s*([\d.]+)[,\s]+([\d.]+)/);
             if (m) return { x: parseFloat(m[1]) * SCALE, y: parseFloat(m[2]) * SCALE };
             return null;
           };
 
-          // キャンバスに書き順ガイドを描画
-          const drawStrokesOnCanvas = (ctx, paths, currentIdx) => {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-            // まだ来ていない筆順（とても薄いグレー）
-            for (let i = currentIdx + 1; i < paths.length; i++) {
-              ctx.save();
-              ctx.scale(SCALE, SCALE);
-              ctx.strokeStyle = '#eeeeee';
-              ctx.lineWidth = 10 / SCALE;
-              ctx.lineCap = 'round';
-              ctx.lineJoin = 'round';
-              ctx.stroke(new Path2D(paths[i]));
-              ctx.restore();
-            }
-
-            // 完了した筆順（薄いグレー）
-            for (let i = 0; i < currentIdx; i++) {
-              ctx.save();
-              ctx.scale(SCALE, SCALE);
-              ctx.strokeStyle = '#d1d5db';
-              ctx.lineWidth = 10 / SCALE;
-              ctx.lineCap = 'round';
-              ctx.lineJoin = 'round';
-              ctx.stroke(new Path2D(paths[i]));
-              ctx.restore();
-            }
-
-            // 今の筆順（薄めのオレンジ）
-            if (currentIdx < paths.length) {
-              ctx.save();
-              ctx.scale(SCALE, SCALE);
-              ctx.strokeStyle = '#fdba74';
-              ctx.lineWidth = 13 / SCALE;
-              ctx.lineCap = 'round';
-              ctx.lineJoin = 'round';
-              ctx.stroke(new Path2D(paths[currentIdx]));
-              ctx.restore();
-
-              // スタート地点に丸印
-              const start = getStartPoint(paths[currentIdx]);
-              if (start) {
-                ctx.beginPath();
-                ctx.arc(start.x, start.y, 10, 0, Math.PI * 2);
-                ctx.fillStyle = '#fb923c';
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-              }
-            }
-          };
-
-          // 現在の筆順の目標ピクセルを計算
-          const calcTargetPixels = (pathStr) => {
+          // オフスクリーンで特定の筆順のピクセルを計算（ガイド進行判定用のみ）
+          const calcStrokePixels = (pathStr) => {
             const offscreen = document.createElement('canvas');
             offscreen.width = CANVAS_SIZE;
             offscreen.height = CANVAS_SIZE;
@@ -155,14 +104,12 @@
             ctx.save();
             ctx.scale(SCALE, SCALE);
             ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 16 / SCALE; // 少し太めにして判定を甘くする
+            ctx.lineWidth = 16 / SCALE;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.stroke(new Path2D(pathStr));
             ctx.restore();
-
-            const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-            const data = imageData.data;
+            const data = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
             const pixels = [];
             for (let i = 0; i < data.length; i += 4) {
               if (data[i] + data[i+1] + data[i+2] < 300) pixels.push(i);
@@ -170,27 +117,43 @@
             return pixels;
           };
 
-          // 筆順ガイドありで初期化
-          const initForStroke = (paths, strokeIdx) => {
+          // 次の筆順ガイドをキャンバスに重ねて描く（消さない！）
+          const drawNextStrokeGuide = (paths, nextIdx) => {
             const canvas = canvasRef.current;
             if (!canvas) return;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            drawStrokesOnCanvas(ctx, paths, strokeIdx);
-            if (paths.length > 0 && strokeIdx < paths.length) {
-              targetPixelsRef.current = calcTargetPixels(paths[strokeIdx]);
+
+            ctx.save();
+            ctx.scale(SCALE, SCALE);
+            ctx.strokeStyle = '#fdba74';
+            ctx.lineWidth = 13 / SCALE;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke(new Path2D(paths[nextIdx]));
+            ctx.restore();
+
+            const start = getStartPoint(paths[nextIdx]);
+            if (start) {
+              ctx.beginPath();
+              ctx.arc(start.x, start.y, 10, 0, Math.PI * 2);
+              ctx.fillStyle = '#fb923c';
+              ctx.fill();
+              ctx.strokeStyle = '#ffffff';
+              ctx.lineWidth = 2;
+              ctx.stroke();
             }
-            isSuccessRef.current = false;
-            drawCountRef.current = 0;
           };
 
-          // 書き順データなし（フォールバック）
-          const initCanvasFallback = (letter) => {
+          // キャンバス初期化（文字が変わった時だけ呼ぶ）
+          const initCanvas = (letter, paths) => {
             const canvas = canvasRef.current;
             if (!canvas) return;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+            // --- 判定用ピクセルを計算（もともとの仕組み：文字全体） ---
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-            ctx.font = `bold ${CANVAS_SIZE * 0.75}px "Hiragino Maru Gothic ProN", "Meiryo", sans-serif`;
+            ctx.font = `bold ${CANVAS_SIZE * 0.75}px "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Meiryo", sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#000000';
@@ -198,53 +161,89 @@
 
             const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             const data = imageData.data;
-            const pixels = [];
+            const allPixels = [];
             for (let i = 0; i < data.length; i += 4) {
-              if (data[i] + data[i+1] + data[i+2] < 300) pixels.push(i);
+              if (data[i] + data[i+1] + data[i+2] < 300) allPixels.push(i);
             }
-            targetPixelsRef.current = pixels;
+            targetPixelsRef.current = allPixels; // ← 判定は文字全体のまま
 
+            // --- 画面に表示するガイドを描く ---
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-            ctx.fillStyle = '#fdba74'; // オレンジで全体ガイド
-            ctx.fillText(letter, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.05);
+
+            if (paths.length > 0) {
+              // 全筆順を薄いグレーで表示
+              for (let i = 0; i < paths.length; i++) {
+                ctx.save();
+                ctx.scale(SCALE, SCALE);
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.lineWidth = 10 / SCALE;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke(new Path2D(paths[i]));
+                ctx.restore();
+              }
+              // 最初の筆順をオレンジで上書き
+              ctx.save();
+              ctx.scale(SCALE, SCALE);
+              ctx.strokeStyle = '#fdba74';
+              ctx.lineWidth = 13 / SCALE;
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.stroke(new Path2D(paths[0]));
+              ctx.restore();
+
+              // スタート丸印
+              const start = getStartPoint(paths[0]);
+              if (start) {
+                ctx.beginPath();
+                ctx.arc(start.x, start.y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = '#fb923c';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+              }
+
+              // 1筆目の進行判定用ピクセルをセット
+              currentStrokePixelsRef.current = calcStrokePixels(paths[0]);
+            } else {
+              // 書き順データなし：薄いオレンジで文字全体をガイド表示
+              ctx.fillStyle = '#fdba74';
+              ctx.fillText(letter, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.05);
+              currentStrokePixelsRef.current = [];
+            }
 
             isSuccessRef.current = false;
             setShowSuccess(false);
             drawCountRef.current = 0;
+            currentStrokeRef.current = 0;
           };
 
           // KanjiVGから書き順データを取得
-          const fetchStrokeData = async (char) => {
+          const fetchStrokeData = async (letter) => {
             setIsLoading(true);
-            setShowSuccess(false);
-            isSuccessRef.current = false;
+            setStrokeInfo({ current: 0, total: 0 });
             try {
-              const code = char.codePointAt(0).toString(16).padStart(5, '0');
+              const code = letter.codePointAt(0).toString(16).padStart(5, '0');
               const url = `https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/${code}.svg`;
               const res = await fetch(url);
               if (!res.ok) throw new Error('fetch failed');
               const text = await res.text();
               const parser = new DOMParser();
               const doc = parser.parseFromString(text, 'image/svg+xml');
-
-              // StrokePathsグループを優先して取得
               const strokeGroup = doc.querySelector('g[id*="StrokePaths"]');
               const paths = strokeGroup
                 ? Array.from(strokeGroup.querySelectorAll('path[d]')).map(p => p.getAttribute('d'))
                 : Array.from(doc.querySelectorAll('path[d]')).map(p => p.getAttribute('d'));
 
               if (paths.length === 0) throw new Error('no paths');
-
               strokePathsRef.current = paths;
-              currentStrokeRef.current = 0;
               setStrokeInfo({ current: 1, total: paths.length });
-              initForStroke(paths, 0);
+              initCanvas(letter, paths);
             } catch(e) {
               strokePathsRef.current = [];
-              currentStrokeRef.current = 0;
-              setStrokeInfo({ current: 0, total: 0 });
-              initCanvasFallback(char);
+              initCanvas(letter, []);
             }
             setIsLoading(false);
           };
@@ -269,37 +268,41 @@
             if (isSuccessRef.current) return;
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
-            const targetPixels = targetPixelsRef.current;
-            if (targetPixels.length === 0) return;
-
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
-            let filledCount = 0;
 
+            // --- もともとの判定：文字全体の80%で成功 ---
+            const targetPixels = targetPixelsRef.current;
+            if (targetPixels.length === 0) return;
+            let filledCount = 0;
             for (let j = 0; j < targetPixels.length; j++) {
               const i = targetPixels[j];
               if (data[i] + data[i+1] + data[i+2] < 600) filledCount++;
             }
+            if (filledCount / targetPixels.length >= 0.8) {
+              handleSuccess();
+              return;
+            }
 
-            const ratio = filledCount / targetPixels.length;
+            // --- 書き順ガイドの進行：現在の筆順が70%以上なぞれたら次へ ---
+            const paths = strokePathsRef.current;
+            const strokeIdx = currentStrokeRef.current;
+            if (paths.length === 0 || strokeIdx >= paths.length - 1) return;
 
-            if (ratio >= 0.8) {
-              const paths = strokePathsRef.current;
-              const strokeIdx = currentStrokeRef.current;
-
-              if (paths.length > 0 && strokeIdx < paths.length - 1) {
-                // 次の筆順へ
-                isSuccessRef.current = true;
-                setIsDrawing(false);
-                const nextIdx = strokeIdx + 1;
-                currentStrokeRef.current = nextIdx;
-                setStrokeInfo({ current: nextIdx + 1, total: paths.length });
-                setTimeout(() => {
-                  initForStroke(paths, nextIdx);
-                }, 400);
-              } else {
-                handleSuccess();
-              }
+            const strokePixels = currentStrokePixelsRef.current;
+            if (strokePixels.length === 0) return;
+            let strokeFilled = 0;
+            for (let j = 0; j < strokePixels.length; j++) {
+              const i = strokePixels[j];
+              if (data[i] + data[i+1] + data[i+2] < 600) strokeFilled++;
+            }
+            if (strokeFilled / strokePixels.length >= 0.7) {
+              const nextIdx = strokeIdx + 1;
+              currentStrokeRef.current = nextIdx;
+              setStrokeInfo({ current: nextIdx + 1, total: paths.length });
+              currentStrokePixelsRef.current = calcStrokePixels(paths[nextIdx]);
+              // キャンバスを消さずに次の筆順ガイドを重ね描き
+              drawNextStrokeGuide(paths, nextIdx);
             }
           };
 
@@ -351,14 +354,8 @@
 
           const handleReset = () => {
             const paths = strokePathsRef.current;
-            if (paths.length > 0) {
-              currentStrokeRef.current = 0;
-              setStrokeInfo({ current: 1, total: paths.length });
-              initForStroke(paths, 0);
-            } else {
-              initCanvasFallback(currentLetter);
-            }
-            setShowSuccess(false);
+            initCanvas(currentLetter, paths);
+            if (paths.length > 0) setStrokeInfo({ current: 1, total: paths.length });
           };
 
           return (
@@ -381,7 +378,6 @@
                 <p className="text-gray-600 text-lg">
                   「<span className="font-bold text-pink-500 text-2xl">{currentLetter}</span>」をなぞってみよう！
                 </p>
-                {/* 書き順カウンター */}
                 {strokeInfo.total > 0 && !showSuccess && (
                   <p className="text-orange-400 font-bold text-sm mt-1">
                     {strokeInfo.current}かくめ（ぜんぶで {strokeInfo.total}かく）
