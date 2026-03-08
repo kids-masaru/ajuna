@@ -150,22 +150,39 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-            // --- 判定用ピクセルを計算（もともとの仕組み：文字全体） ---
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-            ctx.font = `bold ${CANVAS_SIZE * 0.75}px "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Meiryo", sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#000000';
-            ctx.fillText(letter, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.05);
+            // --- 判定用ピクセルを計算 ---
+            // KanjiVGパスがある場合はそれを使う（ガイドと判定を一致させる）
+            // ない場合はフォント文字で計算（フォールバック）
+            const offscreen = document.createElement('canvas');
+            offscreen.width = CANVAS_SIZE;
+            offscreen.height = CANVAS_SIZE;
+            const offCtx = offscreen.getContext('2d');
+            offCtx.fillStyle = '#ffffff';
+            offCtx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-            const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-            const data = imageData.data;
-            const allPixels = [];
-            for (let i = 0; i < data.length; i += 4) {
-              if (data[i] + data[i+1] + data[i+2] < 300) allPixels.push(i);
+            if (paths.length > 0) {
+              offCtx.save();
+              offCtx.scale(SCALE, SCALE);
+              offCtx.strokeStyle = '#000000';
+              offCtx.lineWidth = 16 / SCALE;
+              offCtx.lineCap = 'round';
+              offCtx.lineJoin = 'round';
+              for (const p of paths) offCtx.stroke(new Path2D(p));
+              offCtx.restore();
+            } else {
+              offCtx.font = `bold ${CANVAS_SIZE * 0.75}px "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Meiryo", sans-serif`;
+              offCtx.textAlign = 'center';
+              offCtx.textBaseline = 'middle';
+              offCtx.fillStyle = '#000000';
+              offCtx.fillText(letter, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.05);
             }
-            targetPixelsRef.current = allPixels; // ← 判定は文字全体のまま
+
+            const offData = offscreen.getContext('2d').getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+            const allPixels = [];
+            for (let i = 0; i < offData.length; i += 4) {
+              if (offData[i] + offData[i+1] + offData[i+2] < 300) allPixels.push(i);
+            }
+            targetPixelsRef.current = allPixels;
 
             // --- 画面に表示するガイドを描く ---
             ctx.fillStyle = '#ffffff';
