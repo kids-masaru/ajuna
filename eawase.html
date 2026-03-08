@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>おなじえをつなごう</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+            overscroll-behavior: none;
+            background-color: #f0f9ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        const ALL_ITEMS = [
+          { id: 'apple', emoji: '🍎' }, { id: 'banana', emoji: '🍌' },
+          { id: 'grape', emoji: '🍇' }, { id: 'strawberry', emoji: '🍓' },
+          { id: 'melon', emoji: '🍈' }, { id: 'dog', emoji: '🐶' },
+          { id: 'cat', emoji: '🐱' }, { id: 'mouse', emoji: '🐭' },
+          { id: 'rabbit', emoji: '🐰' }, { id: 'fox', emoji: '🦊' },
+          { id: 'bear', emoji: '🐻' }, { id: 'panda', emoji: '🐼' },
+          { id: 'lion', emoji: '🦁' }, { id: 'pig', emoji: '🐷' },
+          { id: 'frog', emoji: '🐸' }, { id: 'car', emoji: '🚗' },
+          { id: 'bus', emoji: '🚌' }, { id: 'train', emoji: '🚆' },
+          { id: 'airplane', emoji: '✈️' }, { id: 'rocket', emoji: '🚀' },
+          { id: 'star', emoji: '⭐' }, { id: 'sun', emoji: '☀️' },
+          { id: 'flower', emoji: '🌷' }, { id: 'tree', emoji: '🌳' },
+          { id: 'fish', emoji: '🐟' }, { id: 'turtle', emoji: '🐢' },
+          { id: 'butterfly', emoji: '🦋' }, { id: 'cake', emoji: '🍰' }
+        ];
+
+        const ITEM_COUNT = 5;
+
+        class SoundManager {
+          constructor() {
+            this.ctx = null;
+            this.initialized = false;
+            this.bgmAudio = new Audio('gemini_generated_media_a459635d.mp3');
+            this.bgmAudio.loop = true;
+            this.bgmAudio.volume = 0.3;
+            this.isBgmPlaying = false;
+          }
+
+          init() {
+            if (this.initialized) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+              this.ctx = new AudioContext();
+              this.initialized = true;
+            }
+          }
+
+          resume() {
+            if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            this.playBgmIfNeeded();
+          }
+
+          playBgmIfNeeded() {
+            if (!this.isBgmPlaying) {
+              this.bgmAudio.play().then(() => { this.isBgmPlaying = true; }).catch(() => {});
+            }
+          }
+
+          playTone(freq, type, duration, vol = 0.1) {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+          }
+
+          playDrag() { this.playTone(600, 'sine', 0.1, 0.05); }
+          playMatch() {
+            this.playTone(800, 'sine', 0.1, 0.1);
+            setTimeout(() => this.playTone(1200, 'sine', 0.2, 0.1), 100);
+          }
+          playWrong() { this.playTone(200, 'sawtooth', 0.3, 0.1); }
+          playClear() {
+            [523.25, 659.25, 783.99].forEach((f, i) => {
+              setTimeout(() => this.playTone(f, 'sine', 0.15, 0.1), i * 150);
+            });
+            setTimeout(() => this.playTone(1046.50, 'sine', 0.5, 0.15), 450);
+          }
+        }
+        const sound = new SoundManager();
+
+        function App() {
+          const [leftItems, setLeftItems] = useState([]);
+          const [rightItems, setRightItems] = useState([]);
+          const [matches, setMatches] = useState([]);
+          const [message, setMessage] = useState(null);
+          const [isWon, setIsWon] = useState(false);
+          const [wrongPair, setWrongPair] = useState(null);
+          const [dragState, setDragState] = useState(null);
+          const [fixedLines, setFixedLines] = useState([]);
+
+          const containerRef = useRef(null);
+          const leftRefs = useRef({});
+          const rightRefs = useRef({});
+
+          const initGame = useCallback(() => {
+            const shuffledAll = [...ALL_ITEMS].sort(() => Math.random() - 0.5);
+            const selectedItems = shuffledAll.slice(0, ITEM_COUNT);
+            const shuffledLeft = [...selectedItems].sort(() => Math.random() - 0.5);
+            let shuffledRight = [...selectedItems].sort(() => Math.random() - 0.5);
+            while (shuffledLeft.every((item, i) => item.id === shuffledRight[i].id)) {
+              shuffledRight = [...selectedItems].sort(() => Math.random() - 0.5);
+            }
+            setLeftItems(shuffledLeft);
+            setRightItems(shuffledRight);
+            setMatches([]);
+            setDragState(null);
+            setFixedLines([]);
+            setMessage(null);
+            setIsWon(false);
+            setWrongPair(null);
+          }, []);
+
+          useEffect(() => { initGame(); }, [initGame]);
+
+          const updateFixedLines = useCallback(() => {
+            if (!containerRef.current) return;
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const newLines = matches.map(id => {
+              const lEl = leftRefs.current[id];
+              const rEl = rightRefs.current[id];
+              if (!lEl || !rEl) return null;
+              const lRect = lEl.getBoundingClientRect();
+              const rRect = rEl.getBoundingClientRect();
+              return {
+                id,
+                x1: lRect.left + lRect.width / 2 - containerRect.left,
+                y1: lRect.top + lRect.height / 2 - containerRect.top,
+                x2: rRect.left + rRect.width / 2 - containerRect.left,
+                y2: rRect.top + rRect.height / 2 - containerRect.top,
+              };
+            }).filter(Boolean);
+            setFixedLines(newLines);
+          }, [matches]);
+
+          useEffect(() => {
+            updateFixedLines();
+            const observer = new ResizeObserver(() => updateFixedLines());
+            if (containerRef.current) observer.observe(containerRef.current);
+            return () => observer.disconnect();
+          }, [updateFixedLines]);
+
+          const handlePointerDown = (e, id, side) => {
+            sound.init();
+            sound.resume();
+            if (matches.includes(id) || isWon || wrongPair) return;
+            sound.playDrag();
+            e.target.setPointerCapture(e.pointerId);
+            const rect = e.currentTarget.getBoundingClientRect();
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const startX = rect.left + rect.width / 2 - containerRect.left;
+            const startY = rect.top + rect.height / 2 - containerRect.top;
+            const currentX = e.clientX - containerRect.left;
+            const currentY = e.clientY - containerRect.top;
+            setDragState({ startId: id, startSide: side, startX, startY, currentX, currentY });
+          };
+
+          const handlePointerMove = (e) => {
+            if (!dragState || !containerRef.current) return;
+            const containerRect = containerRef.current.getBoundingClientRect();
+            setDragState(prev => ({
+              ...prev,
+              currentX: e.clientX - containerRect.left,
+              currentY: e.clientY - containerRect.top
+            }));
+          };
+
+          const handlePointerUp = (e) => {
+            if (!dragState) return;
+            const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
+            const targetBtn = elemBelow?.closest('[data-item-id]');
+            if (targetBtn) {
+              const targetId = targetBtn.getAttribute('data-item-id');
+              const targetSide = targetBtn.getAttribute('data-item-side');
+              if (targetSide !== dragState.startSide) {
+                if (targetId === dragState.startId) {
+                  const newMatches = [...matches, targetId];
+                  setMatches(newMatches);
+                  if (newMatches.length === ITEM_COUNT) {
+                    sound.playClear();
+                    setIsWon(true);
+                    setMessage({ icon: '🎉', text: 'ぜんぶせいかい！', type: 'success' });
+                  } else {
+                    sound.playMatch();
+                    setMessage({ icon: '⭕', text: 'いいね！', type: 'success' });
+                    setTimeout(() => setMessage(null), 1000);
+                  }
+                } else {
+                  sound.playWrong();
+                  setWrongPair({
+                    left: dragState.startSide === 'left' ? dragState.startId : targetId,
+                    right: dragState.startSide === 'right' ? dragState.startId : targetId
+                  });
+                  setMessage({ icon: '❌', text: 'ちがうよ！', type: 'error' });
+                  setTimeout(() => { setWrongPair(null); setMessage(null); }, 1200);
+                }
+              }
+            }
+            setDragState(null);
+          };
+
+          return (
+            <div
+              className="min-h-screen bg-sky-50 flex flex-col items-center justify-center p-4 select-none overflow-hidden"
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+            >
+              <style>{`
+                .touch-none-area { touch-action: none; }
+                @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  20%, 60% { transform: translateX(-10px) rotate(-5deg); }
+                  40%, 80% { transform: translateX(10px) rotate(5deg); }
+                }
+                .shake-anim { animation: shake 0.5s ease-in-out; }
+                @keyframes popIn {
+                  0% { transform: scale(0.5) translate(-50%, -50%); opacity: 0; }
+                  70% { transform: scale(1.1) translate(-45%, -45%); }
+                  100% { transform: scale(1) translate(-50%, -50%); opacity: 1; }
+                }
+                .pop-in-center {
+                  position: absolute; top: 50%; left: 50%;
+                  transform: translate(-50%, -50%);
+                  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                  z-index: 50;
+                }
+                @keyframes dash { to { stroke-dashoffset: 0; } }
+                .path-line {
+                  stroke-dasharray: 1000; stroke-dashoffset: 1000;
+                  animation: dash 0.6s ease-in-out forwards;
+                }
+              `}</style>
+
+              {/* ホームに戻るボタン */}
+              <div className="w-full max-w-lg mb-3 flex">
+                <button
+                  onClick={() => { window.location.href = 'index.html'; }}
+                  className="bg-white/90 p-2 rounded-full shadow-lg border-2 border-sky-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform"
+                >
+                  🏠
+                </button>
+              </div>
+
+              <h1 className="text-2xl md:text-3xl font-extrabold text-sky-700 mb-6 drop-shadow-sm text-center whitespace-nowrap">
+                おなじ え を つなごう！
+              </h1>
+
+              {/* ゲームボード */}
+              <div
+                ref={containerRef}
+                className="relative w-full max-w-lg flex justify-between bg-white p-6 md:p-8 rounded-3xl shadow-xl border-4 border-sky-200 touch-none-area"
+                style={{ minHeight: '450px' }}
+              >
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
+                  {fixedLines.map(line => (
+                    <line
+                      key={`fixed-${line.id}`}
+                      x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2}
+                      stroke="#34d399" strokeWidth="14" strokeLinecap="round"
+                      className="path-line opacity-80"
+                    />
+                  ))}
+                  {dragState && (
+                    <line
+                      x1={dragState.startX} y1={dragState.startY}
+                      x2={dragState.currentX} y2={dragState.currentY}
+                      stroke="#fbbf24" strokeWidth="14" strokeLinecap="round"
+                      strokeDasharray="1 24" className="opacity-90"
+                    />
+                  )}
+                </svg>
+
+                {/* 左側 */}
+                <div className="flex flex-col gap-5 relative z-20">
+                  {leftItems.map((item) => {
+                    const isMatched = matches.includes(item.id);
+                    const isWrong = wrongPair?.left === item.id;
+                    const isDragging = dragState?.startId === item.id && dragState?.startSide === 'left';
+                    return (
+                      <button
+                        key={`left-${item.id}`}
+                        ref={el => leftRefs.current[item.id] = el}
+                        data-item-id={item.id}
+                        data-item-side="left"
+                        onPointerDown={(e) => handlePointerDown(e, item.id, 'left')}
+                        className={`w-20 h-20 sm:w-24 sm:h-24 text-5xl sm:text-6xl flex items-center justify-center rounded-2xl border-4 transition-all duration-200
+                          ${isMatched ? 'bg-green-100 border-green-400 opacity-50 cursor-default scale-95' :
+                            isWrong ? 'bg-red-100 border-red-500 shake-anim' :
+                            isDragging ? 'bg-amber-100 border-amber-400 scale-110 shadow-lg' :
+                            'bg-white border-sky-300 shadow-sm'}`}
+                        style={{ touchAction: 'none' }}
+                      >
+                        <span className="pointer-events-none">{item.emoji}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 右側 */}
+                <div className="flex flex-col gap-5 relative z-20">
+                  {rightItems.map((item) => {
+                    const isMatched = matches.includes(item.id);
+                    const isWrong = wrongPair?.right === item.id;
+                    const isDragging = dragState?.startId === item.id && dragState?.startSide === 'right';
+                    return (
+                      <button
+                        key={`right-${item.id}`}
+                        ref={el => rightRefs.current[item.id] = el}
+                        data-item-id={item.id}
+                        data-item-side="right"
+                        onPointerDown={(e) => handlePointerDown(e, item.id, 'right')}
+                        className={`w-20 h-20 sm:w-24 sm:h-24 text-5xl sm:text-6xl flex items-center justify-center rounded-2xl border-4 transition-all duration-200
+                          ${isMatched ? 'bg-green-100 border-green-400 opacity-50 cursor-default scale-95' :
+                            isWrong ? 'bg-red-100 border-red-500 shake-anim' :
+                            isDragging ? 'bg-amber-100 border-amber-400 scale-110 shadow-lg' :
+                            'bg-white border-sky-300 shadow-sm'}`}
+                        style={{ touchAction: 'none' }}
+                      >
+                        <span className="pointer-events-none">{item.emoji}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* メッセージ */}
+                {message && !isWon && (
+                  <div className="pop-in-center pointer-events-none z-50">
+                    <div className={`px-6 py-4 rounded-3xl font-bold text-white shadow-xl flex flex-col items-center justify-center ${message.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>
+                      <span className="text-4xl sm:text-5xl leading-none mb-2">{message.icon}</span>
+                      <span className="text-xl sm:text-2xl leading-none">{message.text}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* クリア画面 */}
+              {isWon && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+                  <div className="bg-white rounded-3xl p-6 sm:p-8 w-11/12 max-w-lg text-center shadow-2xl flex flex-col items-center border-8 border-yellow-400">
+                    <h2 className="text-3xl sm:text-4xl font-black text-rose-500 mb-4 drop-shadow-sm whitespace-nowrap">
+                      🎉 ぜんぶせいかい！ 🎉
+                    </h2>
+                    <p className="text-lg sm:text-xl font-bold text-gray-600 mb-8">すごい！よくできたね！👏</p>
+                    <button
+                      onClick={initGame}
+                      className="bg-sky-400 active:bg-sky-600 text-white text-xl sm:text-2xl font-bold py-3 px-12 rounded-full shadow-lg transition-transform active:scale-95"
+                    >
+                      つぎへ！
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
