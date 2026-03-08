@@ -296,7 +296,7 @@
               const i = targetPixels[j];
               if (data[i] + data[i+1] + data[i+2] < 600) filledCount++;
             }
-            if (filledCount / targetPixels.length >= 0.8) {
+            if (filledCount / targetPixels.length >= 0.95) {
               handleSuccess();
               return;
             }
