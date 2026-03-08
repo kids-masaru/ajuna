@@ -28,7 +28,6 @@
     <script type="text/babel">
         const { useState, useRef, useEffect } = React;
 
-        // ひらがなのリスト（あ〜ん）
         const HIRAGANA_LIST = [
           'あ', 'い', 'う', 'え', 'お',
           'か', 'き', 'く', 'け', 'こ',
@@ -42,7 +41,6 @@
           'わ', 'を', 'ん'
         ];
 
-        // 使えるペンの色
         const COLORS = [
           { name: 'あか', value: '#ef4444' },
           { name: 'あお', value: '#3b82f6' },
@@ -52,6 +50,10 @@
           { name: 'くろ', value: '#1f2937' },
         ];
 
+        const CANVAS_SIZE = 400;
+        const KANJIVG_SIZE = 109;
+        const SCALE = CANVAS_SIZE / KANJIVG_SIZE;
+
         function App() {
           const [currentIndex, setCurrentIndex] = useState(() =>
             Math.floor(Math.random() * HIRAGANA_LIST.length)
@@ -59,15 +61,18 @@
           const [currentColor, setCurrentColor] = useState(COLORS[0].value);
           const [isDrawing, setIsDrawing] = useState(false);
           const [showSuccess, setShowSuccess] = useState(false);
+          const [isLoading, setIsLoading] = useState(false);
+          const [strokeInfo, setStrokeInfo] = useState({ current: 0, total: 0 });
 
           const canvasRef = useRef(null);
           const targetPixelsRef = useRef([]);
           const isSuccessRef = useRef(false);
           const drawCountRef = useRef(0);
+          const strokePathsRef = useRef([]);
+          const currentStrokeRef = useRef(0);
 
           const currentLetter = HIRAGANA_LIST[currentIndex];
 
-          // 音声を読み上げる関数
           const speakText = (text, rate = 0.8) => {
             if ('speechSynthesis' in window) {
               window.speechSynthesis.cancel();
@@ -78,47 +83,174 @@
             }
           };
 
-          // キャンバスの初期化と判定用データの作成
-          const initCanvas = () => {
+          // SVGパスの最初のM座標を取得（スタート丸印のため）
+          const getStartPoint = (pathStr) => {
+            const m = pathStr.match(/M\s*([\d.]+)[,\s]+([\d.]+)/);
+            if (m) return { x: parseFloat(m[1]) * SCALE, y: parseFloat(m[2]) * SCALE };
+            return null;
+          };
+
+          // キャンバスに書き順ガイドを描画
+          const drawStrokesOnCanvas = (ctx, paths, currentIdx) => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            // まだ来ていない筆順（とても薄いグレー）
+            for (let i = currentIdx + 1; i < paths.length; i++) {
+              ctx.save();
+              ctx.scale(SCALE, SCALE);
+              ctx.strokeStyle = '#eeeeee';
+              ctx.lineWidth = 10 / SCALE;
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.stroke(new Path2D(paths[i]));
+              ctx.restore();
+            }
+
+            // 完了した筆順（薄いグレー）
+            for (let i = 0; i < currentIdx; i++) {
+              ctx.save();
+              ctx.scale(SCALE, SCALE);
+              ctx.strokeStyle = '#d1d5db';
+              ctx.lineWidth = 10 / SCALE;
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.stroke(new Path2D(paths[i]));
+              ctx.restore();
+            }
+
+            // 今の筆順（薄めのオレンジ）
+            if (currentIdx < paths.length) {
+              ctx.save();
+              ctx.scale(SCALE, SCALE);
+              ctx.strokeStyle = '#fdba74';
+              ctx.lineWidth = 13 / SCALE;
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.stroke(new Path2D(paths[currentIdx]));
+              ctx.restore();
+
+              // スタート地点に丸印
+              const start = getStartPoint(paths[currentIdx]);
+              if (start) {
+                ctx.beginPath();
+                ctx.arc(start.x, start.y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = '#fb923c';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+              }
+            }
+          };
+
+          // 現在の筆順の目標ピクセルを計算
+          const calcTargetPixels = (pathStr) => {
+            const offscreen = document.createElement('canvas');
+            offscreen.width = CANVAS_SIZE;
+            offscreen.height = CANVAS_SIZE;
+            const ctx = offscreen.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.save();
+            ctx.scale(SCALE, SCALE);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 16 / SCALE; // 少し太めにして判定を甘くする
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke(new Path2D(pathStr));
+            ctx.restore();
+
+            const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            const data = imageData.data;
+            const pixels = [];
+            for (let i = 0; i < data.length; i += 4) {
+              if (data[i] + data[i+1] + data[i+2] < 300) pixels.push(i);
+            }
+            return pixels;
+          };
+
+          // 筆順ガイドありで初期化
+          const initForStroke = (paths, strokeIdx) => {
             const canvas = canvasRef.current;
             if (!canvas) return;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            const width = canvas.width;
-            const height = canvas.height;
+            drawStrokesOnCanvas(ctx, paths, strokeIdx);
+            if (paths.length > 0 && strokeIdx < paths.length) {
+              targetPixelsRef.current = calcTargetPixels(paths[strokeIdx]);
+            }
+            isSuccessRef.current = false;
+            drawCountRef.current = 0;
+          };
 
+          // 書き順データなし（フォールバック）
+          const initCanvasFallback = (letter) => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.font = `bold ${height * 0.75}px "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Meiryo", sans-serif`;
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.font = `bold ${CANVAS_SIZE * 0.75}px "Hiragino Maru Gothic ProN", "Meiryo", sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-
             ctx.fillStyle = '#000000';
-            ctx.fillText(currentLetter, width / 2, height / 2 + (height * 0.05));
+            ctx.fillText(letter, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.05);
 
-            const imageData = ctx.getImageData(0, 0, width, height);
+            const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             const data = imageData.data;
-            const targetPixels = [];
-
+            const pixels = [];
             for (let i = 0; i < data.length; i += 4) {
-              if (data[i] + data[i+1] + data[i+2] < 300) {
-                targetPixels.push(i);
-              }
+              if (data[i] + data[i+1] + data[i+2] < 300) pixels.push(i);
             }
-            targetPixelsRef.current = targetPixels;
+            targetPixelsRef.current = pixels;
 
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-            ctx.fillStyle = '#e5e7eb';
-            ctx.fillText(currentLetter, width / 2, height / 2 + (height * 0.05));
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.fillStyle = '#fdba74'; // オレンジで全体ガイド
+            ctx.fillText(letter, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.05);
 
             isSuccessRef.current = false;
             setShowSuccess(false);
             drawCountRef.current = 0;
           };
 
+          // KanjiVGから書き順データを取得
+          const fetchStrokeData = async (char) => {
+            setIsLoading(true);
+            setShowSuccess(false);
+            isSuccessRef.current = false;
+            try {
+              const code = char.codePointAt(0).toString(16).padStart(5, '0');
+              const url = `https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/${code}.svg`;
+              const res = await fetch(url);
+              if (!res.ok) throw new Error('fetch failed');
+              const text = await res.text();
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(text, 'image/svg+xml');
+
+              // StrokePathsグループを優先して取得
+              const strokeGroup = doc.querySelector('g[id*="StrokePaths"]');
+              const paths = strokeGroup
+                ? Array.from(strokeGroup.querySelectorAll('path[d]')).map(p => p.getAttribute('d'))
+                : Array.from(doc.querySelectorAll('path[d]')).map(p => p.getAttribute('d'));
+
+              if (paths.length === 0) throw new Error('no paths');
+
+              strokePathsRef.current = paths;
+              currentStrokeRef.current = 0;
+              setStrokeInfo({ current: 1, total: paths.length });
+              initForStroke(paths, 0);
+            } catch(e) {
+              strokePathsRef.current = [];
+              currentStrokeRef.current = 0;
+              setStrokeInfo({ current: 0, total: 0 });
+              initCanvasFallback(char);
+            }
+            setIsLoading(false);
+          };
+
           useEffect(() => {
-            initCanvas();
+            fetchStrokeData(currentLetter);
             speakText(currentLetter);
           }, [currentIndex]);
 
@@ -127,11 +259,9 @@
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
             return {
-              x: (clientX - rect.left) * scaleX,
-              y: (clientY - rect.top) * scaleY
+              x: (clientX - rect.left) * (canvas.width / rect.width),
+              y: (clientY - rect.top) * (canvas.height / rect.height)
             };
           };
 
@@ -148,17 +278,28 @@
 
             for (let j = 0; j < targetPixels.length; j++) {
               const i = targetPixels[j];
-              const r = data[i];
-              const g = data[i + 1];
-              const b = data[i + 2];
-              if (r + g + b < 600) {
-                filledCount++;
-              }
+              if (data[i] + data[i+1] + data[i+2] < 600) filledCount++;
             }
 
             const ratio = filledCount / targetPixels.length;
+
             if (ratio >= 0.8) {
-              handleSuccess();
+              const paths = strokePathsRef.current;
+              const strokeIdx = currentStrokeRef.current;
+
+              if (paths.length > 0 && strokeIdx < paths.length - 1) {
+                // 次の筆順へ
+                isSuccessRef.current = true;
+                setIsDrawing(false);
+                const nextIdx = strokeIdx + 1;
+                currentStrokeRef.current = nextIdx;
+                setStrokeInfo({ current: nextIdx + 1, total: paths.length });
+                setTimeout(() => {
+                  initForStroke(paths, nextIdx);
+                }, 400);
+              } else {
+                handleSuccess();
+              }
             }
           };
 
@@ -185,9 +326,7 @@
             ctx.stroke();
 
             drawCountRef.current += 1;
-            if (drawCountRef.current % 15 === 0) {
-              checkCompletion();
-            }
+            if (drawCountRef.current % 15 === 0) checkCompletion();
           };
 
           const stopDrawing = () => {
@@ -210,6 +349,18 @@
             setCurrentIndex(nextIndex);
           };
 
+          const handleReset = () => {
+            const paths = strokePathsRef.current;
+            if (paths.length > 0) {
+              currentStrokeRef.current = 0;
+              setStrokeInfo({ current: 1, total: paths.length });
+              initForStroke(paths, 0);
+            } else {
+              initCanvasFallback(currentLetter);
+            }
+            setShowSuccess(false);
+          };
+
           return (
             <div className="min-h-screen bg-sky-50 flex flex-col items-center py-6 touch-none select-none">
 
@@ -223,13 +374,22 @@
                 </button>
               </div>
 
-              <div className="text-center mb-4">
-                <h1 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">
+              <div className="text-center mb-3">
+                <h1 className="text-2xl md:text-3xl font-bold text-sky-600 mb-1">
                   ひらがな なぞりっこ
                 </h1>
                 <p className="text-gray-600 text-lg">
                   「<span className="font-bold text-pink-500 text-2xl">{currentLetter}</span>」をなぞってみよう！
                 </p>
+                {/* 書き順カウンター */}
+                {strokeInfo.total > 0 && !showSuccess && (
+                  <p className="text-orange-400 font-bold text-sm mt-1">
+                    {strokeInfo.current}かくめ（ぜんぶで {strokeInfo.total}かく）
+                  </p>
+                )}
+                {isLoading && (
+                  <p className="text-gray-400 text-xs mt-1">よみこみちゅう…</p>
+                )}
               </div>
 
               <div className="relative bg-white p-2 rounded-3xl shadow-xl mb-6">
@@ -285,14 +445,12 @@
 
                 <div className="w-full h-px bg-gray-100 my-1"></div>
 
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={initCanvas}
-                    className="w-full py-3 md:py-4 bg-gray-200 active:bg-gray-400 text-gray-700 text-xl font-bold rounded-2xl shadow-sm transform transition active:scale-95 flex justify-center items-center gap-2"
-                  >
-                    やりなおす <span>🔄</span>
-                  </button>
-                </div>
+                <button
+                  onClick={handleReset}
+                  className="w-full py-3 md:py-4 bg-gray-200 active:bg-gray-400 text-gray-700 text-xl font-bold rounded-2xl shadow-sm transform transition active:scale-95 flex justify-center items-center gap-2"
+                >
+                  やりなおす <span>🔄</span>
+                </button>
               </div>
             </div>
           );
