@@ -284,26 +284,7 @@
               return;
             }
 
-            // --- 書き順ガイドの進行：現在の筆順が70%以上なぞれたら次へ ---
-            const paths = strokePathsRef.current;
-            const strokeIdx = currentStrokeRef.current;
-            if (paths.length === 0 || strokeIdx >= paths.length - 1) return;
-
-            const strokePixels = currentStrokePixelsRef.current;
-            if (strokePixels.length === 0) return;
-            let strokeFilled = 0;
-            for (let j = 0; j < strokePixels.length; j++) {
-              const i = strokePixels[j];
-              if (data[i] + data[i+1] + data[i+2] < 600) strokeFilled++;
-            }
-            if (strokeFilled / strokePixels.length >= 0.7) {
-              const nextIdx = strokeIdx + 1;
-              currentStrokeRef.current = nextIdx;
-              setStrokeInfo({ current: nextIdx + 1, total: paths.length });
-              currentStrokePixelsRef.current = calcStrokePixels(paths[nextIdx]);
-              // キャンバスを消さずに次の筆順ガイドを重ね描き
-              drawNextStrokeGuide(paths, nextIdx);
-            }
+            // 書き順ガイドの自動進行はなし。色表示のみ。
           };
 
           const startDrawing = (e) => {
