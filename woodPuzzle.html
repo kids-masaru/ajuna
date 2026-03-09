@@ -11,13 +11,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
-
-        body {
-            font-family: 'M PLUS Rounded 1c', sans-serif;
-            user-select: none;
-            touch-action: manipulation;
-            overscroll-behavior: none;
-        }
+        body { font-family: 'M PLUS Rounded 1c', sans-serif; user-select: none; touch-action: manipulation; overscroll-behavior: none; }
     </style>
 </head>
 
@@ -28,367 +22,254 @@
         const { useState, useEffect, useRef } = React;
 
         const C = {
-          red: '#E03C31', blue: '#0071C5', lightblue: '#4BB4E6',
-          green: '#00A046', yellow: '#F7D708', orange: '#F47A00',
-          pink: '#F08C96', brown: '#78461E', white: '#F8FAFC', black: '#333333'
+          red:'#E03C31', blue:'#0071C5', lightblue:'#4BB4E6', green:'#00A046',
+          yellow:'#F7D708', orange:'#F47A00', pink:'#F08C96', brown:'#78461E',
+          white:'#F8FAFC', black:'333333'
         };
 
-        // トレイの定数
-        const TRAY_START_Y = 375;
-        const CELL_H = 80;
-        const TRAY_COLS = 3;
+        // トレイ配置定数
+        const COLS = 4;
+        const CELL_H = 70;
+        const TRAY_Y = 365;
 
         const RAW_LEVELS = [
           // ひこうき
-          {
-            id: 'airplane', name: 'ひこうき',
-            shapes: [
-              { id: 'nose',   type: 'circle',  cx: 280, cy: 140, r: 25,                                         color: C.blue },
-              { id: 'beak',   type: 'polygon', points: '295,120 335,140 295,160',                               color: C.orange },
-              { id: 'body_f', type: 'rect',    x: 180, y: 120, width: 80,  height: 40,                         color: C.white },
-              { id: 'body_m', type: 'rect',    x: 100, y: 120, width: 80,  height: 40,                         color: C.blue },
-              { id: 'body_b', type: 'polygon', points: '20,120 100,120 100,160 40,160',                         color: C.white },
-              { id: 'tail_t', type: 'polygon', points: '20,120 60,120 20,60',                                   color: C.green },
-              { id: 'tail_b', type: 'polygon', points: '20,140 40,140 20,170 -10,170',                          color: C.lightblue },
-              { id: 'wing',   type: 'polygon', points: '100,140 220,140 160,180 40,180',                        color: C.blue },
-              { id: 'base',   type: 'polygon', points: '120,160 180,160 200,200 100,200',                       color: C.red },
-            ]
-          },
+          { id:'airplane', name:'ひこうき', shapes:[
+            { id:'nose',   type:'circle',  cx:280,cy:140,r:25,                                       color:C.blue },
+            { id:'beak',   type:'polygon', points:'295,120 335,140 295,160',                         color:C.orange },
+            { id:'body_f', type:'rect',    x:180,y:120,width:80,height:40,                           color:C.white },
+            { id:'body_m', type:'rect',    x:100,y:120,width:80,height:40,                           color:C.blue },
+            { id:'body_b', type:'polygon', points:'20,120 100,120 100,160 40,160',                   color:C.white },
+            { id:'tail_t', type:'polygon', points:'20,120 60,120 20,60',                             color:C.green },
+            { id:'tail_b', type:'polygon', points:'20,140 40,140 20,170 -10,170',                    color:C.lightblue },
+            { id:'wing',   type:'polygon', points:'100,140 220,140 160,180 40,180',                  color:C.blue },
+            { id:'base',   type:'polygon', points:'120,160 180,160 200,200 100,200',                 color:C.red },
+          ]},
           // ペンギン
-          {
-            id: 'penguin', name: 'ペンギン',
-            shapes: [
-              { id: 'crest',  type: 'polygon', points: '160,80 200,80 200,40',                                  color: C.red },
-              { id: 'head',   type: 'circle',  cx: 200, cy: 100, r: 25,                                         color: C.blue },
-              { id: 'eye',    type: 'circle',  cx: 206, cy:  95, r: 10,                                         color: C.white },
-              { id: 'beak',   type: 'polygon', points: '220,80 260,100 220,120',                                color: C.orange },
-              { id: 'back',   type: 'polygon', points: '180,140 220,120 220,200 200,240 180,240',               color: C.blue },
-              { id: 'belly',  type: 'polygon', points: '220,120 240,140 240,200 220,240',                       color: C.white },
-              { id: 'tail',   type: 'polygon', points: '120,200 160,200 180,240 140,240',                       color: C.green },
-              { id: 'wing',   type: 'polygon', points: '180,160 240,200 180,200',                               color: C.blue },
-              { id: 'base',   type: 'polygon', points: '160,260 240,260 260,280 140,280',                       color: C.red },
-            ]
-          },
+          { id:'penguin', name:'ペンギン', shapes:[
+            { id:'crest',  type:'polygon', points:'160,80 200,80 200,40',                            color:C.red },
+            { id:'head',   type:'circle',  cx:200,cy:100,r:25,                                       color:C.blue },
+            { id:'eye',    type:'circle',  cx:206,cy:95,r:10,                                        color:C.white },
+            { id:'beak',   type:'polygon', points:'220,80 260,100 220,120',                          color:C.orange },
+            { id:'back',   type:'polygon', points:'180,140 220,120 220,200 200,240 180,240',         color:C.blue },
+            { id:'belly',  type:'polygon', points:'220,120 240,140 240,200 220,240',                 color:C.white },
+            { id:'tail',   type:'polygon', points:'120,200 160,200 180,240 140,240',                 color:C.green },
+            { id:'wing',   type:'polygon', points:'180,160 240,200 180,200',                         color:C.blue },
+            { id:'base',   type:'polygon', points:'160,260 240,260 260,280 140,280',                 color:C.red },
+          ]},
           // とりさん
-          {
-            id: 'bird', name: 'とりさん',
-            shapes: [
-              { id: 'comb',   type: 'polygon', points: '155,100 180,50 205,100',                                color: C.red },
-              { id: 'head',   type: 'path',    d: 'M 155 120 A 25 25 0 0 1 205 120 Z',                         color: C.red },
-              { id: 'beak',   type: 'polygon', points: '160,100 120,120 160,140',                               color: C.red },
-              { id: 'eye',    type: 'circle',  cx: 175, cy: 105, r: 10,                                         color: C.white },
-              { id: 'neck',   type: 'polygon', points: '160,120 200,120 240,160 160,160',                       color: C.yellow },
-              { id: 'body',   type: 'polygon', points: '160,160 280,160 280,240 200,240 160,200',               color: C.orange },
-              { id: 'wing',   type: 'rect',    x: 220, y: 180, width: 40, height: 40,                          color: C.blue },
-              { id: 'tail',   type: 'polygon', points: '280,160 380,160 300,180',                               color: C.green },
-              { id: 'leg_l',  type: 'polygon', points: '175,240 195,240 195,275 205,290 165,290 175,275',       color: C.brown },
-              { id: 'leg_r',  type: 'polygon', points: '215,240 235,240 235,275 245,290 205,290 215,275',       color: C.brown },
-            ]
-          },
+          { id:'bird', name:'とりさん', shapes:[
+            { id:'comb',   type:'polygon', points:'155,100 180,50 205,100',                          color:C.red },
+            { id:'head',   type:'path',    d:'M 155 120 A 25 25 0 0 1 205 120 Z',                   color:C.red },
+            { id:'beak',   type:'polygon', points:'160,100 120,120 160,140',                         color:C.red },
+            { id:'eye',    type:'circle',  cx:175,cy:105,r:10,                                       color:C.white },
+            { id:'neck',   type:'polygon', points:'160,120 200,120 240,160 160,160',                 color:C.yellow },
+            { id:'body',   type:'polygon', points:'160,160 280,160 280,240 200,240 160,200',         color:C.orange },
+            { id:'wing',   type:'rect',    x:220,y:180,width:40,height:40,                           color:C.blue },
+            { id:'tail',   type:'polygon', points:'280,160 380,160 300,180',                         color:C.green },
+            { id:'leg_l',  type:'polygon', points:'175,240 195,240 195,275 205,290 165,290 175,275', color:C.brown },
+            { id:'leg_r',  type:'polygon', points:'215,240 235,240 235,275 245,290 205,290 215,275', color:C.brown },
+          ]},
           // くるま
-          {
-            id: 'car', name: 'くるま',
-            shapes: [
-              { id: 'body',    type: 'rect',    x: 40,  y: 140, width: 302, height: 72,                        color: C.red },
-              { id: 'roof',    type: 'polygon', points: '105,140 295,140 268,82 130,82',                        color: C.blue },
-              { id: 'win_f',   type: 'rect',    x: 226, y: 88,  width: 60,  height: 46,                        color: C.lightblue },
-              { id: 'win_r',   type: 'rect',    x: 132, y: 88,  width: 78,  height: 46,                        color: C.lightblue },
-              { id: 'wheel_f', type: 'circle',  cx: 278, cy: 222, r: 30,                                        color: C.black },
-              { id: 'wheel_r', type: 'circle',  cx:  98, cy: 222, r: 30,                                        color: C.black },
-              { id: 'light',   type: 'rect',    x: 324, y: 155, width: 22,  height: 18,                        color: C.yellow },
-            ]
-          },
+          { id:'car', name:'くるま', shapes:[
+            { id:'body',    type:'rect',    x:40,y:140,width:302,height:72,                          color:C.red },
+            { id:'roof',    type:'polygon', points:'105,140 295,140 268,82 130,82',                  color:C.blue },
+            { id:'win_f',   type:'rect',    x:226,y:88,width:60,height:46,                           color:C.lightblue },
+            { id:'win_r',   type:'rect',    x:132,y:88,width:78,height:46,                           color:C.lightblue },
+            { id:'wheel_f', type:'circle',  cx:278,cy:222,r:30,                                      color:C.black },
+            { id:'wheel_r', type:'circle',  cx:98,cy:222,r:30,                                       color:C.black },
+            { id:'light',   type:'rect',    x:324,y:155,width:22,height:18,                          color:C.yellow },
+          ]},
           // きしゃ
-          {
-            id: 'train', name: 'きしゃ',
-            shapes: [
-              { id: 'body',    type: 'rect',    x:  20, y: 115, width: 258, height: 95,                        color: C.blue },
-              { id: 'cab',     type: 'rect',    x: 278, y:  88, width:  95, height: 122,                       color: C.green },
-              { id: 'chimney', type: 'rect',    x:  55, y:  58, width:  38, height:  58,                       color: C.brown },
-              { id: 'stripe',  type: 'rect',    x:  20, y: 112, width: 258, height:  22,                       color: C.red },
-              { id: 'window',  type: 'rect',    x: 292, y: 101, width:  62, height:  50,                       color: C.lightblue },
-              { id: 'wheel_b', type: 'circle',  cx:  80, cy: 228, r: 28,                                        color: C.black },
-              { id: 'wheel_f', type: 'circle',  cx: 320, cy: 228, r: 28,                                        color: C.black },
-            ]
-          },
+          { id:'train', name:'きしゃ', shapes:[
+            { id:'body',    type:'rect',    x:20,y:115,width:258,height:95,                          color:C.blue },
+            { id:'cab',     type:'rect',    x:278,y:88,width:95,height:122,                          color:C.green },
+            { id:'chimney', type:'rect',    x:55,y:58,width:38,height:58,                            color:C.brown },
+            { id:'stripe',  type:'rect',    x:20,y:112,width:258,height:22,                          color:C.red },
+            { id:'window',  type:'rect',    x:292,y:101,width:62,height:50,                          color:C.lightblue },
+            { id:'wheel_b', type:'circle',  cx:80,cy:228,r:28,                                       color:C.black },
+            { id:'wheel_f', type:'circle',  cx:320,cy:228,r:28,                                      color:C.black },
+          ]},
           // いえ
-          {
-            id: 'house', name: 'いえ',
-            shapes: [
-              { id: 'chimney', type: 'rect',    x: 255, y:  10, width:  35, height:  80,                       color: C.brown },
-              { id: 'roof',    type: 'polygon', points: '40,155 360,155 200,30',                                color: C.red },
-              { id: 'wall',    type: 'rect',    x:  60, y: 155, width: 280, height: 155,                       color: C.yellow },
-              { id: 'door',    type: 'rect',    x: 163, y: 225, width:  74, height:  85,                       color: C.brown },
-              { id: 'win_l',   type: 'rect',    x:  80, y: 177, width:  62, height:  52,                       color: C.lightblue },
-              { id: 'win_r',   type: 'rect',    x: 258, y: 177, width:  62, height:  52,                       color: C.lightblue },
-            ]
-          },
+          { id:'house', name:'いえ', shapes:[
+            { id:'chimney', type:'rect',    x:255,y:10,width:35,height:80,                           color:C.brown },
+            { id:'roof',    type:'polygon', points:'40,155 360,155 200,30',                          color:C.red },
+            { id:'wall',    type:'rect',    x:60,y:155,width:280,height:155,                         color:C.yellow },
+            { id:'door',    type:'rect',    x:163,y:225,width:74,height:85,                          color:C.brown },
+            { id:'win_l',   type:'rect',    x:80,y:177,width:62,height:52,                           color:C.lightblue },
+            { id:'win_r',   type:'rect',    x:258,y:177,width:62,height:52,                          color:C.lightblue },
+          ]},
+          // ロケット
+          { id:'rocket', name:'ロケット', shapes:[
+            { id:'body',    type:'rect',    x:155,y:80,width:90,height:160,                          color:C.blue },
+            { id:'nose',    type:'polygon', points:'155,80 200,10 245,80',                           color:C.red },
+            { id:'window',  type:'circle',  cx:200,cy:135,r:22,                                      color:C.lightblue },
+            { id:'fin_l',   type:'polygon', points:'155,200 115,265 155,245',                        color:C.red },
+            { id:'fin_r',   type:'polygon', points:'245,200 285,265 245,245',                        color:C.red },
+            { id:'flame',   type:'polygon', points:'170,240 200,295 230,240',                        color:C.yellow },
+            { id:'stripe',  type:'rect',    x:155,y:185,width:90,height:20,                          color:C.orange },
+          ]},
+          // おはな
+          { id:'flower', name:'おはな', shapes:[
+            { id:'petal_t', type:'circle',  cx:200,cy:70,r:35,                                       color:C.pink },
+            { id:'petal_b', type:'circle',  cx:200,cy:200,r:35,                                      color:C.pink },
+            { id:'petal_l', type:'circle',  cx:135,cy:135,r:35,                                      color:C.pink },
+            { id:'petal_r', type:'circle',  cx:265,cy:135,r:35,                                      color:C.pink },
+            { id:'center',  type:'circle',  cx:200,cy:135,r:38,                                      color:C.yellow },
+            { id:'stem',    type:'rect',    x:186,y:233,width:28,height:65,                          color:C.green },
+            { id:'leaf_l',  type:'polygon', points:'148,265 186,248 186,278',                        color:C.green },
+            { id:'leaf_r',  type:'polygon', points:'214,248 252,265 214,278',                        color:C.green },
+          ]},
         ];
 
-        // 自動スケーリング
+        // 自動スケーリング（上下限を考慮した改良版）
         const LEVELS = RAW_LEVELS.map(level => {
-          let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+          let mnX=1e9, mxX=-1e9, mnY=1e9, mxY=-1e9;
           level.shapes.forEach(s => {
-            let xs = [], ys = [];
-            if (s.type === 'rect')    { xs = [s.x, s.x+s.width]; ys = [s.y, s.y+s.height]; }
-            if (s.type === 'circle')  { xs = [s.cx-s.r, s.cx+s.r]; ys = [s.cy-s.r, s.cy+s.r]; }
-            if (s.type === 'polygon') { const p=s.points.split(' ').map(pt=>pt.split(',').map(Number)); xs=p.map(q=>q[0]); ys=p.map(q=>q[1]); }
-            if (s.type === 'path')    { const c=s.d.match(/-?\d+(\.\d+)?/g).map(Number); xs=c.filter((_,i)=>i%2===0); ys=c.filter((_,i)=>i%2===1); }
-            minX=Math.min(minX,...xs); maxX=Math.max(maxX,...xs);
-            minY=Math.min(minY,...ys); maxY=Math.max(maxY,...ys);
+            let xs=[], ys=[];
+            if (s.type==='rect')    { xs=[s.x,s.x+s.width];        ys=[s.y,s.y+s.height]; }
+            if (s.type==='circle')  { xs=[s.cx-s.r,s.cx+s.r];      ys=[s.cy-s.r,s.cy+s.r]; }
+            if (s.type==='polygon') { const p=s.points.split(' ').map(q=>q.split(',').map(Number)); xs=p.map(q=>q[0]); ys=p.map(q=>q[1]); }
+            if (s.type==='path')    { const c=s.d.match(/-?\d+(\.\d+)?/g).map(Number); xs=c.filter((_,i)=>i%2===0); ys=c.filter((_,i)=>i%2===1); }
+            mnX=Math.min(mnX,...xs); mxX=Math.max(mxX,...xs);
+            mnY=Math.min(mnY,...ys); mxY=Math.max(mxY,...ys);
           });
-          const w = maxX-minX, h = maxY-minY;
-          const scale = Math.min(1.6, 320/w);
-          const cx = minX+w/2, cy = minY+h/2;
-          const ox = 200-(cx*scale), oy = 170-(cy*scale);
-          const r = Math.round;
+          const w=mxX-mnX, h=mxY-mnY;
+          const cx=mnX+w/2, cy=mnY+h/2;
+          // 幅・高さ両方に対してスケール制限：上端y≥5, 下端y≤340 に収める
+          const scTop    = cy>mnY ? 160/(cy-mnY) : 1.6;
+          const scBottom = mxY>cy ? 165/(mxY-cy) : 1.6;
+          const scale = Math.min(1.6, 310/w, scTop, scBottom);
+          const ox=200-cx*scale, oy=170-cy*scale;
+          const r=Math.round;
           const scaledShapes = level.shapes.map(s => {
-            const ns = {...s};
+            const ns={...s};
             if (ns.type==='rect')    { ns.x=r(ns.x*scale+ox); ns.y=r(ns.y*scale+oy); ns.width=r(ns.width*scale); ns.height=r(ns.height*scale); }
             if (ns.type==='circle')  { ns.cx=r(ns.cx*scale+ox); ns.cy=r(ns.cy*scale+oy); ns.r=r(ns.r*scale); }
             if (ns.type==='polygon') { ns.points=ns.points.split(' ').map(pt=>{const[x,y]=pt.split(',').map(Number);return`${r(x*scale+ox)},${r(y*scale+oy)}`;}).join(' '); }
-            if (ns.type==='path')    { const p=ns.d.split(' '); if(p[0]==='M'){const mx=r(+p[1]*scale+ox),my=r(+p[2]*scale+oy),rx=r(+p[4]*scale),ry=r(+p[5]*scale),ax=r(+p[11]*scale+ox),ay=r(+p[12]*scale+oy); ns.d=`M ${mx} ${my} A ${rx} ${ry} 0 0 1 ${ax} ${ay} Z`;} }
+            if (ns.type==='path')    { const p=ns.d.split(' ');if(p[0]==='M'){const mx=r(+p[1]*scale+ox),my=r(+p[2]*scale+oy),rx=r(+p[4]*scale),ry=r(+p[5]*scale),ax=r(+p[11]*scale+ox),ay=r(+p[12]*scale+oy);ns.d=`M ${mx} ${my} A ${rx} ${ry} 0 0 1 ${ax} ${ay} Z`;} }
             return ns;
           });
-          return {...level, shapes: scaledShapes};
+          return {...level, shapes:scaledShapes};
         });
 
         // 音
-        let audioCtx = null;
-        const initAudio = () => {
-          if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-          if (audioCtx.state==='suspended') audioCtx.resume();
-        };
-        const playSnapSound = () => {
-          if (!audioCtx) return;
-          const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-          o.connect(g); g.connect(audioCtx.destination);
-          o.type='sine'; o.frequency.setValueAtTime(800,audioCtx.currentTime);
-          o.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime+0.05);
-          g.gain.setValueAtTime(0.3,audioCtx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.1);
-          o.start(); o.stop(audioCtx.currentTime+0.1);
-        };
-        const playClearSound = () => {
-          if (!audioCtx) return;
-          [523.25,659.25,783.99,1046.50].forEach((f,i)=>{
-            const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-            o.connect(g); g.connect(audioCtx.destination); o.type='triangle'; o.frequency.value=f;
-            g.gain.setValueAtTime(0.3,audioCtx.currentTime+i*0.1);
-            g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+i*0.1+0.3);
-            o.start(audioCtx.currentTime+i*0.1); o.stop(audioCtx.currentTime+i*0.1+0.3);
-          });
-        };
+        let actx=null;
+        const initAudio=()=>{ if(!actx) actx=new(window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); };
+        const playSnap=()=>{ if(!actx)return; const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.setValueAtTime(800,actx.currentTime);o.frequency.exponentialRampToValueAtTime(1200,actx.currentTime+0.05);g.gain.setValueAtTime(0.3,actx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,actx.currentTime+0.1);o.start();o.stop(actx.currentTime+0.1); };
+        const playClear=()=>{ if(!actx)return; [523.25,659.25,783.99,1046.50].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(0.3,actx.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(0.01,actx.currentTime+i*.1+.3);o.start(actx.currentTime+i*.1);o.stop(actx.currentTime+i*.1+.3);}); };
 
         // ユーティリティ
-        const areShapesCompatible = (s1,s2) => {
-          if (s1.type!==s2.type||s1.color!==s2.color) return false;
-          if (s1.type==='rect')    return s1.width===s2.width&&s1.height===s2.height;
-          if (s1.type==='circle')  return s1.r===s2.r;
-          if (s1.type==='polygon') return s1.points===s2.points;
-          if (s1.type==='path')    return s1.d===s2.d;
-          return false;
-        };
-        const getShapeCenter = s => {
-          if (s.type==='rect')    return {x:s.x+s.width/2, y:s.y+s.height/2};
-          if (s.type==='circle')  return {x:s.cx, y:s.cy};
-          if (s.type==='polygon') { const p=s.points.split(' ').map(q=>q.split(',').map(Number)); const xs=p.map(q=>q[0]),ys=p.map(q=>q[1]); return {x:(Math.min(...xs)+Math.max(...xs))/2, y:(Math.min(...ys)+Math.max(...ys))/2}; }
-          if (s.type==='path')    { const c=s.d.match(/-?\d+(\.\d+)?/g).map(Number); const xs=c.filter((_,i)=>i%2===0),ys=c.filter((_,i)=>i%2===1); return {x:(Math.min(...xs)+Math.max(...xs))/2, y:(Math.min(...ys)+Math.max(...ys))/2}; }
-          return {x:0,y:0};
-        };
+        const compat=(s1,s2)=>{ if(s1.type!==s2.type||s1.color!==s2.color)return false; if(s1.type==='rect')return s1.width===s2.width&&s1.height===s2.height; if(s1.type==='circle')return s1.r===s2.r; if(s1.type==='polygon')return s1.points===s2.points; if(s1.type==='path')return s1.d===s2.d; return false; };
+        const center=s=>{ if(s.type==='rect')return{x:s.x+s.width/2,y:s.y+s.height/2}; if(s.type==='circle')return{x:s.cx,y:s.cy}; if(s.type==='polygon'){const p=s.points.split(' ').map(q=>q.split(',').map(Number));const xs=p.map(q=>q[0]),ys=p.map(q=>q[1]);return{x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2};} if(s.type==='path'){const c=s.d.match(/-?\d+(\.\d+)?/g).map(Number);const xs=c.filter((_,i)=>i%2===0),ys=c.filter((_,i)=>i%2===1);return{x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2};} return{x:0,y:0}; };
 
         // SVGコンポーネント
-        const Silhouette = ({shape}) => {
-          const p={fill:"#F1F5F9",stroke:"#CBD5E1",strokeWidth:3,strokeDasharray:"6 6"};
-          if (shape.type==='rect')    return <rect    x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={2} {...p}/>;
-          if (shape.type==='circle')  return <circle  cx={shape.cx} cy={shape.cy} r={shape.r} {...p}/>;
-          if (shape.type==='polygon') return <polygon points={shape.points} strokeLinejoin="round" {...p}/>;
-          if (shape.type==='path')    return <path    d={shape.d} fillRule="evenodd" strokeLinejoin="round" {...p}/>;
-          return null;
-        };
-        const SampleShape = ({shape}) => {
-          const p={fill:shape.color};
-          if (shape.type==='rect')    return <rect    x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={2} {...p}/>;
-          if (shape.type==='circle')  return <circle  cx={shape.cx} cy={shape.cy} r={shape.r} {...p}/>;
-          if (shape.type==='polygon') return <polygon points={shape.points} strokeLinejoin="round" {...p}/>;
-          if (shape.type==='path')    return <path    d={shape.d} fillRule="evenodd" strokeLinejoin="round" {...p}/>;
-          return null;
-        };
-        const DraggableShape = ({shape, opacity, onPointerDown, styleExtensions}) => {
-          const t=`translate(${shape.dx},${shape.dy})`;
-          const p={fill:shape.color,stroke:shape.isLocked?"none":"rgba(0,0,0,0.15)",strokeWidth:shape.isLocked?0:3,transform:t,opacity,onPointerDown:onPointerDown?(e)=>onPointerDown(e,shape.id):undefined,style:{cursor:shape.isLocked?'default':'grab',touchAction:'none',...styleExtensions}};
-          if (shape.type==='rect')    return <rect    x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={2} {...p}/>;
-          if (shape.type==='circle')  return <circle  cx={shape.cx} cy={shape.cy} r={shape.r} {...p}/>;
-          if (shape.type==='polygon') return <polygon points={shape.points} strokeLinejoin="round" {...p}/>;
-          if (shape.type==='path')    return <path    d={shape.d} fillRule="evenodd" strokeLinejoin="round" {...p}/>;
-          return null;
-        };
-        const Confetti = () => (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(40)].map((_,i)=>{
-              const color=Object.values(C)[Math.floor(Math.random()*6)];
-              return <div key={i} className="absolute top-0 w-5 h-5 rounded-sm" style={{left:`${Math.random()*100}%`,backgroundColor:color,animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*0.5}s infinite`,transform:`rotate(${Math.random()*360}deg)`}}/>;
-            })}
-            <style>{`@keyframes fall{0%{transform:translateY(-50px) rotate(0deg);opacity:1}100%{transform:translateY(800px) rotate(720deg);opacity:0}}`}</style>
-          </div>
-        );
+        const Sil=({s})=>{ const p={fill:"#F1F5F9",stroke:"#CBD5E1",strokeWidth:3,strokeDasharray:"6 6"};if(s.type==='rect')return<rect x={s.x}y={s.y}width={s.width}height={s.height}rx={2}{...p}/>;if(s.type==='circle')return<circle cx={s.cx}cy={s.cy}r={s.r}{...p}/>;if(s.type==='polygon')return<polygon points={s.points}strokeLinejoin="round"{...p}/>;if(s.type==='path')return<path d={s.d}fillRule="evenodd"strokeLinejoin="round"{...p}/>;return null; };
+        const Sample=({s})=>{ const p={fill:s.color};if(s.type==='rect')return<rect x={s.x}y={s.y}width={s.width}height={s.height}rx={2}{...p}/>;if(s.type==='circle')return<circle cx={s.cx}cy={s.cy}r={s.r}{...p}/>;if(s.type==='polygon')return<polygon points={s.points}strokeLinejoin="round"{...p}/>;if(s.type==='path')return<path d={s.d}fillRule="evenodd"strokeLinejoin="round"{...p}/>;return null; };
+        const Piece=({s,op,onPD,ext})=>{ const t=`translate(${s.dx},${s.dy})`;const p={fill:s.color,stroke:s.isLocked?"none":"rgba(0,0,0,0.15)",strokeWidth:s.isLocked?0:3,transform:t,opacity:op,onPointerDown:onPD?(e)=>onPD(e,s.id):undefined,style:{cursor:s.isLocked?'default':'grab',touchAction:'none',...ext}};if(s.type==='rect')return<rect x={s.x}y={s.y}width={s.width}height={s.height}rx={2}{...p}/>;if(s.type==='circle')return<circle cx={s.cx}cy={s.cy}r={s.r}{...p}/>;if(s.type==='polygon')return<polygon points={s.points}strokeLinejoin="round"{...p}/>;if(s.type==='path')return<path d={s.d}fillRule="evenodd"strokeLinejoin="round"{...p}/>;return null; };
+        const Confetti=()=>(<div className="absolute inset-0 pointer-events-none overflow-hidden">{[...Array(40)].map((_,i)=>{const color=Object.values(C)[Math.floor(Math.random()*6)];return<div key={i}className="absolute top-0 w-5 h-5 rounded-sm"style={{left:`${Math.random()*100}%`,backgroundColor:color,animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*.5}s infinite`,transform:`rotate(${Math.random()*360}deg)`}}/>;})}<style>{`@keyframes fall{0%{transform:translateY(-50px) rotate(0);opacity:1}100%{transform:translateY(800px) rotate(720deg);opacity:0}}`}</style></div>);
 
         // メインアプリ
         function App() {
-          const [levelOrder, setLevelOrder] = useState([]);
-          const [currentIndex, setCurrentIndex] = useState(0);
-          const [pieces, setPieces] = useState([]);
-          const [isCleared, setIsCleared] = useState(false);
-          const [draggingId, setDraggingId] = useState(null);
-          const [dragOffset, setDragOffset] = useState({x:0,y:0});
-          const svgRef = useRef(null);
-          const currentLevelRef = useRef(null);
+          const [order, setOrder]       = useState([]);
+          const [idx, setIdx]           = useState(0);
+          const [pieces, setPieces]     = useState([]);
+          const [cleared, setCleared]   = useState(false);
+          const [dragId, setDragId]     = useState(null);
+          const [dragOff, setDragOff]   = useState({x:0,y:0});
+          const svgRef  = useRef(null);
+          const lvlRef  = useRef(null);
 
-          useEffect(() => {
-            setLevelOrder([...LEVELS].sort(()=>Math.random()-0.5));
-          }, []);
+          useEffect(()=>{ setOrder([...LEVELS].sort(()=>Math.random()-.5)); },[]);
 
-          useEffect(() => {
-            if (levelOrder.length===0) return;
-            const level = levelOrder[currentIndex];
-            currentLevelRef.current = level;
-            const initialPieces = level.shapes.map((shape,i) => {
-              const center = getShapeCenter(shape);
-              const col = i % TRAY_COLS;
-              const row = Math.floor(i / TRAY_COLS);
-              const cellW = 340 / TRAY_COLS;
-              const targetX = 30 + col*cellW + cellW/2 + (Math.random()*10-5);
-              const targetY = TRAY_START_Y + row*CELL_H + (Math.random()*10-5);
-              return {...shape, dx:targetX-center.x, dy:targetY-center.y, isLocked:false, lockedToId:null};
+          useEffect(()=>{
+            if(order.length===0)return;
+            const lv=order[idx]; lvlRef.current=lv;
+            const ip=lv.shapes.map((s,i)=>{
+              const c=center(s);
+              const col=i%COLS, row=Math.floor(i/COLS);
+              const cw=340/COLS;
+              return{...s, dx:30+col*cw+cw/2+(Math.random()*10-5)-c.x, dy:TRAY_Y+row*CELL_H+(Math.random()*10-5)-c.y, isLocked:false, lockedToId:null};
             });
-            setPieces(initialPieces);
-            setIsCleared(false);
-          }, [levelOrder, currentIndex]);
+            setPieces(ip); setCleared(false);
+          },[order,idx]);
 
-          useEffect(() => {
-            if (pieces.length>0 && pieces.every(p=>p.isLocked) && !isCleared) {
-              setIsCleared(true);
-              playClearSound();
-            }
-          }, [pieces, isCleared]);
+          useEffect(()=>{
+            if(pieces.length>0&&pieces.every(p=>p.isLocked)&&!cleared){ setCleared(true); playClear(); }
+          },[pieces,cleared]);
 
-          const getPointerPos = e => {
-            const svg = svgRef.current;
-            if (!svg) return {x:0,y:0};
-            const pt = svg.createSVGPoint();
-            pt.x=e.clientX; pt.y=e.clientY;
-            const ctm = svg.getScreenCTM();
-            return ctm ? pt.matrixTransform(ctm.inverse()) : {x:0,y:0};
-          };
+          const getPos=e=>{ const sv=svgRef.current;if(!sv)return{x:0,y:0};const pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const ctm=sv.getScreenCTM();return ctm?pt.matrixTransform(ctm.inverse()):{x:0,y:0}; };
 
-          const handlePointerDown = (e, id) => {
-            initAudio();
-            if (isCleared) return;
-            const piece = pieces.find(p=>p.id===id);
-            if (!piece||piece.isLocked) return;
-            try { e.target.setPointerCapture(e.pointerId); } catch(_) {}
-            const pos = getPointerPos(e);
-            setDraggingId(id);
-            setDragOffset({x:pos.x-piece.dx, y:pos.y-piece.dy});
-          };
-
-          const handlePointerMove = e => {
-            if (!draggingId) return;
-            e.preventDefault();
-            const pos = getPointerPos(e);
-            setPieces(prev=>prev.map(p=>p.id===draggingId?{...p,dx:pos.x-dragOffset.x,dy:pos.y-dragOffset.y}:p));
-          };
-
-          const handlePointerUp = () => {
-            if (!draggingId) return;
-            const level = currentLevelRef.current;
-            if (!level) { setDraggingId(null); return; }
-            setPieces(prev => {
-              const dragged = prev.find(p=>p.id===draggingId);
-              if (!dragged) return prev;
-              const dc = getShapeCenter(dragged);
-              const curX = dc.x+dragged.dx, curY = dc.y+dragged.dy;
-              const lockedIds = prev.filter(p=>p.isLocked).map(p=>p.lockedToId);
-              let best=null, minDist=60;
-              level.shapes.forEach(ts => {
-                if (lockedIds.includes(ts.id)) return;
-                if (!areShapesCompatible(dragged,ts)) return;
-                const tc = getShapeCenter(ts);
-                const d = Math.sqrt((curX-tc.x)**2+(curY-tc.y)**2);
-                if (d<minDist) { minDist=d; best=ts; }
+          const onPD=(e,id)=>{ initAudio();if(cleared)return;const p=pieces.find(p=>p.id===id);if(!p||p.isLocked)return;try{e.target.setPointerCapture(e.pointerId);}catch(_){}const pos=getPos(e);setDragId(id);setDragOff({x:pos.x-p.dx,y:pos.y-p.dy}); };
+          const onPM=e=>{ if(!dragId)return;e.preventDefault();const pos=getPos(e);setPieces(prev=>prev.map(p=>p.id===dragId?{...p,dx:pos.x-dragOff.x,dy:pos.y-dragOff.y}:p)); };
+          const onPU=()=>{
+            if(!dragId)return;
+            const lv=lvlRef.current; if(!lv){setDragId(null);return;}
+            setPieces(prev=>{
+              const drag=prev.find(p=>p.id===dragId);if(!drag)return prev;
+              const dc=center(drag),cx=dc.x+drag.dx,cy=dc.y+drag.dy;
+              const locked=prev.filter(p=>p.isLocked).map(p=>p.lockedToId);
+              let best=null,minD=60;
+              lv.shapes.forEach(ts=>{
+                if(locked.includes(ts.id)||!compat(drag,ts))return;
+                const tc=center(ts),d=Math.sqrt((cx-tc.x)**2+(cy-tc.y)**2);
+                if(d<minD){minD=d;best=ts;}
               });
-              return prev.map(p => {
-                if (p.id===draggingId && best) {
-                  playSnapSound();
-                  const tc = getShapeCenter(best);
-                  return {...p, dx:tc.x-dc.x, dy:tc.y-dc.y, isLocked:true, lockedToId:best.id};
-                }
-                return p;
-              });
+              return prev.map(p=>{ if(p.id===dragId&&best){playSnap();const tc=center(best);return{...p,dx:tc.x-dc.x,dy:tc.y-dc.y,isLocked:true,lockedToId:best.id};}return p; });
             });
-            setDraggingId(null);
+            setDragId(null);
           };
 
-          if (levelOrder.length===0) return null;
-          const currentLevel = levelOrder[currentIndex];
-          const trayRows = Math.ceil(currentLevel.shapes.length / TRAY_COLS);
-          const svgHeight = TRAY_START_Y + trayRows * CELL_H + 30;
+          if(order.length===0)return null;
+          const lv=order[idx];
+          const rows=Math.ceil(lv.shapes.length/COLS);
+          const svgH=TRAY_Y+rows*CELL_H+25;
 
-          return (
+          return(
             <div className="min-h-screen w-full flex flex-col items-center select-none py-4 px-2"
               style={{backgroundColor:'#f0fdf4',backgroundImage:`linear-gradient(90deg,rgba(134,239,172,.25) 2px,transparent 2px),linear-gradient(rgba(134,239,172,.25) 2px,transparent 2px)`,backgroundSize:'40px 40px',fontFamily:'"M PLUS Rounded 1c",sans-serif'}}>
 
               {/* ホームボタン */}
               <div className="w-full max-w-md mb-3 flex">
                 <button onClick={()=>window.location.href='index.html'}
-                  className="bg-white/90 p-2 rounded-full shadow-lg border-2 border-green-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform">
-                  🏠
-                </button>
+                  className="bg-white/90 p-2 rounded-full shadow-lg border-2 border-green-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform">🏠</button>
               </div>
 
               {/* ヘッダー */}
               <div className="w-full max-w-md bg-white rounded-3xl shadow-sm p-4 mb-3 flex justify-between items-center border-4 border-green-200">
                 <div className="flex flex-col gap-1">
-                  <div className="bg-green-500 text-white font-bold py-1 px-3 rounded-full text-xs inline-block w-max shadow-sm">かたちパズル</div>
-                  <div className="text-base font-bold text-gray-700 mt-1">「{currentLevel.name}」をつくろう</div>
+                  <div className="bg-green-500 text-white font-bold py-1 px-3 rounded-full text-xs inline-block w-max">かたちパズル</div>
+                  <div className="text-base font-bold text-gray-700 mt-1">「{lv.name}」をつくろう</div>
                 </div>
-                <div className="w-28 h-28 bg-blue-50 rounded-2xl border-4 border-blue-100 overflow-hidden shadow-inner flex-shrink-0">
+                <div className="w-28 h-28 bg-blue-50 rounded-2xl border-4 border-blue-100 overflow-hidden flex-shrink-0">
                   <svg viewBox="0 0 400 340" className="w-full h-full p-2">
-                    {currentLevel.shapes.map(s=><SampleShape key={s.id} shape={s}/>)}
+                    {lv.shapes.map(s=><Sample key={s.id} s={s}/>)}
                   </svg>
                 </div>
               </div>
 
               {/* パズルエリア */}
               <div className="w-full max-w-md bg-white rounded-3xl shadow-lg overflow-hidden relative border-4 border-green-200">
-                <svg ref={svgRef} viewBox={`0 0 400 ${svgHeight}`} className="w-full h-auto block touch-none"
-                  onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}
-                  onPointerLeave={handlePointerUp} onPointerCancel={handlePointerUp}>
-
+                <svg ref={svgRef} viewBox={`0 0 400 ${svgH}`} className="w-full h-auto block touch-none"
+                  onPointerMove={onPM} onPointerUp={onPU} onPointerLeave={onPU} onPointerCancel={onPU}>
                   {/* 仕切り線 */}
-                  <line x1="20" y1={TRAY_START_Y-15} x2="380" y2={TRAY_START_Y-15} stroke="#E2E8F0" strokeWidth="4" strokeDasharray="10 10" strokeLinecap="round"/>
-
-                  {currentLevel.shapes.map(s=><Silhouette key={`sil-${s.id}`} shape={s}/>)}
-
-                  {currentLevel.shapes.map(bs => {
-                    const piece = pieces.find(p=>p.id===bs.id);
-                    if (!piece) return null;
-                    return <DraggableShape key={piece.id} shape={piece} opacity={piece.id===draggingId?0:(isCleared?1:(piece.isLocked?0.7:1))} onPointerDown={handlePointerDown}/>;
+                  <line x1="20" y1={TRAY_Y-12} x2="380" y2={TRAY_Y-12} stroke="#E2E8F0" strokeWidth="4" strokeDasharray="10 10" strokeLinecap="round"/>
+                  {lv.shapes.map(s=><Sil key={`sl-${s.id}`} s={s}/>)}
+                  {lv.shapes.map(bs=>{
+                    const p=pieces.find(p=>p.id===bs.id);if(!p)return null;
+                    return<Piece key={p.id} s={p} op={p.id===dragId?0:(cleared?1:(p.isLocked?.7:1))} onPD={onPD}/>;
                   })}
-
-                  {draggingId && pieces.find(p=>p.id===draggingId) && (
-                    <DraggableShape key={`drag-${draggingId}`} shape={pieces.find(p=>p.id===draggingId)} opacity={0.7} styleExtensions={{pointerEvents:'none'}}/>
+                  {dragId&&pieces.find(p=>p.id===dragId)&&(
+                    <Piece key={`dc-${dragId}`} s={pieces.find(p=>p.id===dragId)} op={0.75} ext={{pointerEvents:'none'}}/>
                   )}
                 </svg>
 
-                {isCleared && (
+                {cleared&&(
                   <div className="absolute inset-0 bg-white/50 flex flex-col items-center justify-center z-10 backdrop-blur-[2px]">
                     <Confetti/>
-                    <h2 className="text-6xl font-black text-orange-500 mb-8 drop-shadow-lg tracking-widest animate-bounce" style={{textShadow:'2px 4px 0px #FFD93D'}}>やったね！</h2>
-                    <button onClick={()=>setCurrentIndex(i=>(i+1)%levelOrder.length)}
-                      className="bg-yellow-400 text-white text-3xl font-black py-4 px-12 rounded-full shadow-xl active:scale-95 border-b-8 border-yellow-600 z-20">
-                      つぎへ
-                    </button>
+                    <h2 className="text-6xl font-black text-orange-500 mb-8 drop-shadow-lg animate-bounce" style={{textShadow:'2px 4px 0 #FFD93D'}}>やったね！</h2>
+                    <button onClick={()=>setIdx(i=>(i+1)%order.length)}
+                      className="bg-yellow-400 text-white text-3xl font-black py-4 px-12 rounded-full shadow-xl active:scale-95 border-b-8 border-yellow-600 z-20">つぎへ</button>
                   </div>
                 )}
               </div>
