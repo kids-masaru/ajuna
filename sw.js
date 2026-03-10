@@ -1,50 +1,68 @@
-// バージョンを v7 に上げました
-const CACHE_NAME = 'oekaki-v7';
+const CACHE_NAME = 'ajuna-v1';
 
-// 保存するファイルの一覧
-const urlsToCache = [
+// ローカルファイル（インストール時にまとめてキャッシュ）
+const LOCAL_FILES = [
   './',
   './index.html',
+  './eawase.html',
+  './hiragana.html',
+  './kaimono.html',
+  './karuta.html',
+  './kazukazoe.html',
   './oekaki.html',
   './piano.html',
+  './puzzle.html',
   './snow.html',
-  './karuta.html',
-  './puzzle.html',    // ← ★ここに追加！
+  './tebiki.html',
+  './woodPuzzle.html',
   './manifest.json',
   './icon.png',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap'
+  './eawase.mp3',
+  './kaimono_bgm.mp3',
 ];
 
+// インストール時：ローカルファイルを全部キャッシュ
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(LOCAL_FILES))
   );
 });
 
+// アクティベート時：古いキャッシュを削除
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
+// フェッチ時：キャッシュ優先、なければネットワーク取得してキャッシュ保存
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
+  const url = new URL(event.request.url);
+  const isExternal = url.origin !== self.location.origin;
+
+  if (isExternal) {
+    // 外部リソース（Tailwind CSS、Google Fonts）：キャッシュがあれば使う、なければ取得してキャッシュ
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(response => {
+          if (response.ok || response.type === 'opaque') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
           return response;
-        }
-        return fetch(event.request);
+        }).catch(() => cached);
       })
-  );
+    );
+  } else {
+    // ローカルリソース：キャッシュ優先
+    event.respondWith(
+      caches.match(event.request).then(cached => cached || fetch(event.request))
+    );
+  }
 });
