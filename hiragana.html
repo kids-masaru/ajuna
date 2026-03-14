@@ -41,6 +41,8 @@
           'わ', 'を', 'ん'
         ];
 
+        const NAMAE_SEQUENCE = ['い', 'ざ', 'き', 'あ', 'じ', 'ゅ', 'な'];
+
         const COLORS = [
           { name: 'あか', value: '#ef4444' },
           { name: 'あお', value: '#3b82f6' },
@@ -55,8 +57,9 @@
         const SCALE = CANVAS_SIZE / KANJIVG_SIZE;
 
         function App() {
+          const [sequenceIndex, setSequenceIndex] = useState(0);
           const [currentIndex, setCurrentIndex] = useState(() =>
-            Math.floor(Math.random() * HIRAGANA_LIST.length)
+            HIRAGANA_LIST.indexOf(NAMAE_SEQUENCE[0])
           );
           const [currentColor, setCurrentColor] = useState(COLORS[0].value);
           const [isDrawing, setIsDrawing] = useState(false);
@@ -74,7 +77,9 @@
           const strokePathsRef = useRef([]);
           const currentStrokeRef = useRef(0);
 
-          const currentLetter = HIRAGANA_LIST[currentIndex];
+          const currentLetter = sequenceIndex < NAMAE_SEQUENCE.length 
+            ? NAMAE_SEQUENCE[sequenceIndex] 
+            : HIRAGANA_LIST[currentIndex];
 
           const speakText = (text, rate = 0.8) => {
             if ('speechSynthesis' in window) {
@@ -296,7 +301,7 @@
               const i = targetPixels[j];
               if (data[i] + data[i+1] + data[i+2] < 600) filledCount++;
             }
-            if (filledCount / targetPixels.length >= 0.95) {
+            if (filledCount / targetPixels.length >= 1.0) {
               handleSuccess();
               return;
             }
@@ -343,11 +348,22 @@
           };
 
           const handleNext = () => {
-            let nextIndex;
-            do {
-              nextIndex = Math.floor(Math.random() * HIRAGANA_LIST.length);
-            } while (nextIndex === currentIndex);
-            setCurrentIndex(nextIndex);
+            if (sequenceIndex < NAMAE_SEQUENCE.length - 1) {
+              const nextSeqIndex = sequenceIndex + 1;
+              setSequenceIndex(nextSeqIndex);
+              // Update currentIndex to match the next sequence character for consistency
+              setCurrentIndex(HIRAGANA_LIST.indexOf(NAMAE_SEQUENCE[nextSeqIndex]));
+            } else {
+              // Once sequence is done, move to random (or increment sequenceIndex once more to stay in random mode)
+              if (sequenceIndex < NAMAE_SEQUENCE.length) {
+                setSequenceIndex(NAMAE_SEQUENCE.length);
+              }
+              let nextIndex;
+              do {
+                nextIndex = Math.floor(Math.random() * HIRAGANA_LIST.length);
+              } while (nextIndex === currentIndex);
+              setCurrentIndex(nextIndex);
+            }
           };
 
           const handleReset = () => {
