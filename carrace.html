@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🏎️ ユニコーン・スロットレース</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f8f0ff;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+
+  /* --- UI Layers --- */
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  #menu-layer {
+    background: rgba(248, 240, 255, 0.9);
+    backdrop-filter: blur(10px);
+  }
+
+  h1 {
+    font-size: 32px;
+    color: #8e44ad;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0px #fff;
+    text-align: center;
+  }
+  
+  .subtitle {
+    font-size: 14px;
+    color: #ff7eb9;
+    margin-bottom: 30px;
+    font-weight: 700;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .menu-btn {
+    width: 260px;
+    padding: 16px;
+    border: none;
+    border-radius: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    pointer-events: auto;
+    box-shadow: 0 6px 15px rgba(142, 68, 173, 0.15);
+  }
+
+  #btn-1p { background: #ff7eb9; color: white; }
+  #btn-2p { background: #54a0ff; color: white; }
+  #btn-com-easy { background: #a29bfe; color: white; }
+  #btn-com-hard { background: #d63031; color: white; }
+  .btn-course { background: #fff; color: #8e44ad; border: 2px solid #e0c3fc; }
+  .back-btn { background: #dcd0ff; color: #5a2e70; margin-top: 10px; }
+  .menu-btn:active { transform: scale(0.95); }
+
+  #countdown-text {
+    font-size: 120px;
+    font-weight: 900;
+    color: #ff7eb9;
+    text-shadow: 4px 4px 0px #fff;
+    display: none;
+  }
+
+  #message {
+    font-size: 64px;
+    font-weight: 900;
+    color: #ff7eb9;
+    text-shadow: 3px 3px 0px #fff;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    text-align: center;
+  }
+  #message.show { opacity: 1; transform: scale(1.1); }
+
+  #hud {
+    position: fixed;
+    top: 25px;
+    display: flex;
+    gap: 15px;
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  .lap-box {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(5px);
+    border: 2px solid #e0c3fc;
+    border-radius: 15px;
+    padding: 8px 18px;
+    color: #8e44ad;
+    font-size: 15px;
+    min-width: 110px;
+    text-align: center;
+    transition: opacity 0.2s;
+  }
+  .crashed-hud { opacity: 0.5; color: #ff0000; border-color: #ff0000; }
+
+  #difficulty-box {
+    position: fixed;
+    top: 25px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(5px);
+    border: 2px solid #e0c3fc;
+    border-radius: 15px;
+    padding: 8px 18px;
+    color: #8e44ad;
+    font-size: 15px;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  #instruction {
+    position: fixed;
+    bottom: 30px;
+    color: #8e44ad;
+    font-size: 14px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 20px;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(142, 68, 173, 0.1);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  #home-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transition: transform 0.1s;
+    border: 2px solid #e0c3fc;
+  }
+  #home-btn:active {
+    transform: scale(0.9);
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ホームボタン -->
+<a href="index.html" id="home-btn">🏠</a>
+
+<!-- BGMオーディオ要素 -->
+<audio id="bgm" src="carraceBGM.mp3" loop></audio>
+
+<canvas id="game"></canvas>
+
+<!-- メインメニュー -->
+<div id="menu-layer" class="overlay">
+  <!-- モード選択 -->
+  <div id="mode-select">
+    <h1>ユニコーン・レース 🏎️</h1>
+    <div class="subtitle">⚠️ 振動（バイブ）が来たら指を離してね！</div>
+    <div class="btn-group">
+      <button id="btn-1p" class="menu-btn">1 PLAYER (vs COM)</button>
+      <button id="btn-2p" class="menu-btn">2 PLAYERS (対戦)</button>
+    </div>
+  </div>
+
+  <!-- COMの強さ選択 -->
+  <div id="com-level-select" class="hidden">
+    <h1>コンピューターのつよさ</h1>
+    <div class="btn-group">
+      <button id="btn-com-easy" class="menu-btn" id="btn-com-easy">よわい (よく飛ぶ)</button>
+      <button id="btn-com-hard" class="menu-btn" id="btn-com-hard">つよい (手強い)</button>
+      <button id="btn-back-from-level" class="menu-btn back-btn">🔙 もどる</button>
+    </div>
+  </div>
+
+  <!-- コース選択 -->
+  <div id="course-select" class="hidden">
+    <h1>コースをえらんでね</h1>
+    <div class="btn-group">
+      <button id="btn-course-rect" class="menu-btn btn-course">しかく (Square)</button>
+      <button id="btn-course-oval" class="menu-btn btn-course">まる (Oval)</button>
+      <button id="btn-course-heart" class="menu-btn btn-course">💖 ハート (Heart)</button>
+      <button id="btn-back-from-course" class="menu-btn back-btn">🔙 もどる</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" style="pointer-events: none;">
+  <div id="countdown-text">3</div>
+  <div id="message"></div>
+</div>
+
+<div id="hud" class="hidden">
+  <div class="lap-box" id="p1-box" style="border-color: #ff4757;">RED: <span id="p1-lap">0</span> / 3</div>
+  <div class="lap-box" id="p2-box" style="border-color: #54a0ff;"><span id="p2-label">COM</span>: <span id="p2-lap">0</span> / 3</div>
+</div>
+
+<div id="difficulty-box" class="hidden">COM: よわい</div>
+
+<div id="instruction" class="hidden">長押しで加速！<br>ブルッときたら2秒以内に離せばセーフ⚠️</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const bgm = document.getElementById('bgm');
+
+// --- Web Audio API (効果音用) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+// ピッ、ポーンの音
+function playBeep(freq, type, duration, vol = 0.1) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+// クラッシュ音（ノイズ）
+function playCrashSound(duration = 0.6, vol = 0.25) {
+  if (!audioCtx) return;
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1; // ホワイトノイズ
+  }
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  
+  // 少しこもった音（ドシャーン）にするフィルター
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 1000;
+  
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  noise.start();
+}
+// ------------------------------
+
+let W, H, cx, cy, trackW, trackH, cornerR;
+let gameState = 'MENU'; 
+let gameMode = '1P';    
+let comLevel = 'EASY';  // EASY or HARD
+let selectedCourse = 'RECT'; 
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2;
+  cy = H / 2;
+  trackW = Math.min(W * 0.75, 500);
+  trackH = Math.min(H * 0.55, 300);
+  cornerR = Math.min(trackW, trackH) * 0.35;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// 車のプロパティ初期化
+let p1 = {}, p2 = {};
+function initCars() {
+  p1 = { 
+    progress: 0, speed: 0, laps: 0, color: '#ff4757', isPlayer: true, 
+    pressing: false, isCrashed: false, crashTimer: 0, 
+    isWarning: false, warningCounter: 0, warningDuration: 0 
+  };
+  p2 = { 
+    progress: 0.02, speed: 0, laps: 0, color: '#54a0ff', isPlayer: false, 
+    pressing: false, isCrashed: false, crashTimer: 0, 
+    isWarning: false, warningCounter: 0, warningDuration: 0 
+  };
+  document.getElementById('p1-lap').textContent = '0';
+  document.getElementById('p2-lap').textContent = '0';
+  document.getElementById('p1-box').classList.remove('crashed-hud');
+  document.getElementById('p2-box').classList.remove('crashed-hud');
+}
+initCars();
+
+// --- 走行パラメータ (ゆっくりスピード) ---
+const MAX_SPEED = 0.0040;    // 直線での最高速度
+const CRASH_SPEED = 0.0035;  // この速度を超えたままカーブに入るとクラッシュ
+const WARN_SPEED = 0.0030;   // この速度を超えてカーブに近づくと警告（バイブ＆震え）が発生
+const ACCEL = 0.00009;       // 加速度
+const FRICTION = 0.00011;    // 減速度
+
+// --- コースの座標と「カーブ判定」 ---
+function getTrackPoint(p) {
+  p = ((p % 1) + 1) % 1;
+  let x, y, angle, isCurve = false;
+
+  if (selectedCourse === 'RECT') {
+    const sw = trackW - cornerR * 2;
+    const sh = trackH - cornerR * 2;
+    const al = (Math.PI * 2 * cornerR) / 4;
+    const total = (sw * 2) + (sh * 2) + (al * 4);
+    const d = p * total;
+    if (d < sw) { x = cx - sw/2 + d; y = cy + trackH/2; angle = 0; }
+    else if (d < sw + al) {
+      const r = (d - sw) / al; const a = r * (Math.PI / 2);
+      x = cx + sw/2 + Math.sin(a) * cornerR; y = cy + sh/2 + Math.cos(a) * cornerR; angle = a;
+      isCurve = true;
+    }
+    else if (d < sw + al + sh) {
+      const o = d - (sw + al); x = cx + trackW/2; y = cy + sh/2 - o; angle = Math.PI/2;
+    }
+    else if (d < sw + al * 2 + sh) {
+      const r = (d - (sw + al + sh)) / al; const a = r * (Math.PI / 2);
+      x = cx + sw/2 + Math.cos(a) * cornerR; y = cy - sh/2 - Math.sin(a) * cornerR; angle = Math.PI/2 + a;
+      isCurve = true;
+    }
+    else if (d < sw * 2 + al * 2 + sh) {
+      const o = d - (sw + al * 2 + sh); x = cx + sw/2 - o; y = cy - trackH/2; angle = Math.PI;
+    }
+    else if (d < sw * 2 + al * 3 + sh) {
+      const r = (d - (sw * 2 + al * 2 + sh)) / al; const a = r * (Math.PI / 2);
+      x = cx - sw/2 - Math.sin(a) * cornerR; y = cy - sh/2 - Math.cos(a) * cornerR; angle = Math.PI + a;
+      isCurve = true;
+    }
+    else if (d < sw * 2 + al * 3 + sh * 2) {
+      const o = d - (sw * 2 + al * 3 + sh); x = cx - trackW/2; y = cy - sh/2 + o; angle = (Math.PI * 3) / 2;
+    }
+    else {
+      const r = (d - (sw * 2 + al * 3 + sh * 2)) / al; const a = r * (Math.PI / 2);
+      x = cx - sw/2 - Math.cos(a) * cornerR; y = cy + sh/2 + Math.sin(a) * cornerR; angle = (Math.PI * 3) / 2 + a;
+      isCurve = true;
+    }
+  } else if (selectedCourse === 'OVAL') {
+    const rx = trackW / 2, ry = trackH / 2;
+    const aR = p * Math.PI * 2;
+    x = cx + Math.cos(aR) * rx; y = cy + Math.sin(aR) * ry;
+    const dx = -Math.sin(aR) * rx; const dy = Math.cos(aR) * ry;
+    angle = Math.atan2(dy, dx);
+    isCurve = Math.abs(Math.cos(aR)) > 0.5;
+  } else if (selectedCourse === 'HEART') {
+    const t = -p * Math.PI * 2 + Math.PI / 2;
+    const scale = trackW / 32;
+    x = cx + scale * (16 * Math.pow(Math.sin(t), 3));
+    y = cy - scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) + scale * 2;
+    const nextP = p + 0.001;
+    const nt = -nextP * Math.PI * 2 + Math.PI / 2;
+    const nx = cx + scale * (16 * Math.pow(Math.sin(nt), 3));
+    const ny = cy - scale * (13 * Math.cos(nt) - 5 * Math.cos(2*nt) - 2 * Math.cos(3*nt) - Math.cos(4*nt)) + scale * 2;
+    angle = Math.atan2(ny - y, nx - x);
+    const inR = (v, min, max) => v > min && v < max;
+    isCurve = inR(p, 0.02, 0.1) || inR(p, 0.28, 0.4) || inR(p, 0.47, 0.53) || inR(p, 0.6, 0.72) || inR(p, 0.9, 0.98);
+  }
+  return { x, y, angle, isCurve };
+}
+
+function getCarPosInfo(car, isP1) {
+  const pt = getTrackPoint(car.progress);
+  const offset = isP1 ? 9 : -9;
+  const cxPos = pt.x - Math.sin(pt.angle) * offset;
+  const cyPos = pt.y + Math.cos(pt.angle) * offset;
+  return { x: cxPos, y: cyPos, angle: pt.angle, isCurve: pt.isCurve };
+}
+
+function drawTrack() {
+  const x = cx - trackW/2, y = cy - trackH/2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const renderPath = () => {
+    if (selectedCourse === 'RECT') drawRoundedRectPath(x, y, trackW, trackH, cornerR);
+    else if (selectedCourse === 'OVAL') ctx.ellipse(cx, cy, trackW/2, trackH/2, 0, 0, Math.PI * 2);
+    else if (selectedCourse === 'HEART') {
+      for (let i = 0; i <= 200; i++) {
+        const pt = getTrackPoint(i / 200);
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.closePath();
+    }
+  };
+
+  ctx.beginPath(); ctx.lineWidth = 50; ctx.strokeStyle = '#fff'; renderPath(); ctx.stroke();
+  ctx.beginPath(); ctx.lineWidth = 44; ctx.strokeStyle = '#f0e6ff'; renderPath(); ctx.stroke();
+  ctx.beginPath(); ctx.lineWidth = 2; ctx.strokeStyle = '#dcd0ff';
+  ctx.setLineDash([12, 18]); renderPath(); ctx.stroke(); ctx.setLineDash([]);
+
+  const start = getTrackPoint(0);
+  ctx.save(); ctx.translate(start.x, start.y); ctx.rotate(start.angle);
+  ctx.fillStyle = '#ff7eb9'; ctx.fillRect(-2, -22, 4, 44); ctx.restore();
+}
+
+function drawRoundedRectPath(x, y, w, h, r) {
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, h + y - r);
+  ctx.arcTo(x + w, h + y, x + w - r, h + y, r); ctx.lineTo(x + r, h + y);
+  ctx.arcTo(x, h + y, x, h + y - r, r); ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+}
+
+function drawCar(car, isP1) {
+  let cxPos, cyPos, cAngle;
+
+  if (car.isCrashed) {
+    cxPos = car.crashX; cyPos = car.crashY; cAngle = car.crashAngle;
+    if (car.crashTimer < 30 && Math.floor(Date.now() / 100) % 2 === 0) return;
+  } else {
+    const info = getCarPosInfo(car, isP1);
+    cxPos = info.x; cyPos = info.y; cAngle = info.angle;
+    
+    if (car.isWarning) {
+      cxPos += (Math.random() - 0.5) * 4;
+      cyPos += (Math.random() - 0.5) * 4;
+    }
+  }
+
+  ctx.save(); 
+  ctx.translate(cxPos, cyPos); 
+  ctx.rotate(cAngle); 
+  
+  if (!car.isCrashed) {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)'; 
+    ctx.fillRect(-15, -6, 34, 20);
+  }
+
+  ctx.fillStyle = car.color; 
+  ctx.fillRect(-16, -9, 32, 18);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; 
+  ctx.fillRect(4, -7, 8, 14);
+
+  if (car.isCrashed) {
+    ctx.font = '24px sans-serif';
+    ctx.fillText('💥', -12, -15);
+  } else if (car.isWarning) {
+    ctx.font = '24px sans-serif';
+    ctx.fillText('⚠️', -12, -15);
+  }
+
+  ctx.restore();
+}
+
+function updateCar(car, isP1) {
+  const boxId = isP1 ? 'p1-box' : 'p2-box';
+  const hudBox = document.getElementById(boxId);
+
+  // --- クラッシュ中（飛んでいる最中）の処理 ---
+  if (car.isCrashed) {
+    car.crashX += car.crashVx; car.crashY += car.crashVy;
+    car.crashVx *= 0.92; car.crashVy *= 0.92;
+    car.crashAngle += 0.6; car.crashTimer--;
+    
+    if (car.crashTimer <= 0) {
+      car.isCrashed = false; car.speed = 0; car.isWarning = false;
+      car.warningDuration = 0;
+      hudBox.classList.remove('crashed-hud');
+    }
+    return;
+  }
+
+  // --- 速度の更新 ---
+  if (gameState === 'FINISHED') {
+    car.speed *= 0.96;
+  } else if (gameState === 'RACING') {
+    if (car.isPlayer) {
+      if (car.pressing) car.speed = Math.min(car.speed + ACCEL, MAX_SPEED);
+      else car.speed = Math.max(car.speed - FRICTION, 0);
+    } else {
+      // COM AI
+      if (comLevel === 'EASY') {
+        car.speed = Math.min(car.speed + ACCEL, MAX_SPEED);
+      } else {
+        let willCrash = false;
+        for (let offset = 0; offset <= 0.05; offset += 0.01) {
+          if (getTrackPoint(car.progress + offset).isCurve) willCrash = true;
+        }
+        if (willCrash) car.speed = Math.max(car.speed - FRICTION, WARN_SPEED - 0.0005);
+        else car.speed = Math.min(car.speed + ACCEL, MAX_SPEED);
+      }
+    }
+  }
+
+  const posInfo = getCarPosInfo(car, isP1);
+
+  // --- 警告開始の判定 ---
+  let nearCurve = false;
+  if (gameState === 'RACING' && car.speed > WARN_SPEED) {
+    for (let offset = 0; offset <= 0.05; offset += 0.01) {
+      if (getTrackPoint(car.progress + offset).isCurve) {
+        nearCurve = true;
+        break;
+      }
+    }
+  }
+  
+  // --- タイマーと警告の更新 ---
+  if (car.isPlayer) {
+    if (!car.pressing) {
+      // 指を離せば即座に警告・タイマーをリセット（セーフ！）
+      car.isWarning = false;
+      car.warningDuration = 0;
+      car.warningCounter = 0;
+    } else {
+      if (nearCurve && !car.isWarning) car.isWarning = true;
+
+      if (car.isWarning) {
+        car.warningDuration++; 
+        car.warningCounter++;
+        if (car.warningCounter % 15 === 0 && navigator.vibrate) {
+          navigator.vibrate([40]);
+        }
+      }
+    }
+  } else {
+    // コンピューター(COM)の場合
+    if (nearCurve && comLevel === 'EASY') {
+      car.isWarning = true;
+      car.warningDuration++;
+    } else {
+      car.isWarning = false;
+      car.warningDuration = 0;
+    }
+  }
+
+  // --- クラッシュ判定（強制スリップ） ---
+  const crashLimit = car.isPlayer ? 120 : (comLevel === 'EASY' ? 15 : 120); 
+  
+  if (gameState === 'RACING' && car.isWarning && car.warningDuration > crashLimit) {
+    car.isCrashed = true;
+    car.isWarning = false;
+    car.warningDuration = 0;
+    car.crashTimer = 60; 
+    car.crashX = posInfo.x; 
+    car.crashY = posInfo.y; 
+    car.crashAngle = posInfo.angle;
+    
+    const flyAngle = posInfo.angle + (Math.random() * 0.5 - 0.25);
+    car.crashVx = Math.cos(flyAngle) * MAX_SPEED * 800;
+    car.crashVy = Math.sin(flyAngle) * MAX_SPEED * 800;
+    car.speed = 0;
+    
+    hudBox.classList.add('crashed-hud');
+    
+    // ★ クラッシュ音再生
+    playCrashSound();
+    
+    if (car.isPlayer && navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+    return;
+  }
+
+  // --- 進行度の更新 ---
+  const prev = car.progress;
+  car.progress += car.speed;
+
+  // ラップ判定
+  if (Math.floor(car.progress) > Math.floor(prev)) {
+    car.laps++;
+    const id = isP1 ? 'p1-lap' : 'p2-lap';
+    document.getElementById(id).textContent = Math.min(car.laps, 3);
+    if (car.laps >= 3 && gameState === 'RACING') {
+      gameState = 'FINISHED';
+      
+      let msg = '';
+      if (gameMode === '1P') {
+        if (isP1) msg = 'YOU WIN! 🏆';
+        else msg = 'YOU LOSE... 😢';
+      } else {
+        if (isP1) msg = 'RED WIN! 🏆';
+        else msg = 'BLUE WIN! 🏆';
+      }
+      showMsg(msg);
+      
+      // ゲーム終了時にピロロロンと鳴らす
+      setTimeout(() => playBeep(880, 'sine', 0.1), 0);
+      setTimeout(() => playBeep(1108, 'sine', 0.1), 100);
+      setTimeout(() => playBeep(1318, 'sine', 0.3), 200);
+
+      setTimeout(resetToMenu, 4000);
+    }
+  }
+}
+
+function showMsg(text) {
+  const el = document.getElementById('message');
+  el.textContent = text; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function startCountdown() {
+  const el = document.getElementById('countdown-text');
+  el.style.display = 'block';
+  let count = 3;
+  el.textContent = count;
+  
+  // 最初の「ピッ」
+  playBeep(880, 'sine', 0.1);
+  
+  // BGM再生
+  bgm.currentTime = 0;
+  bgm.play().catch(e => console.log("BGM自動再生ブロック"));
+
+  const timer = setInterval(() => {
+    count--;
+    if (count > 0) {
+      el.textContent = count;
+      playBeep(880, 'sine', 0.1); // ピッ
+    }
+    else if (count === 0) { 
+      el.textContent = 'GO!'; 
+      gameState = 'RACING';
+      playBeep(1760, 'sine', 0.4); // ポーン！
+    }
+    else { 
+      el.style.display = 'none'; 
+      clearInterval(timer); 
+    }
+  }, 1000);
+}
+
+function resetToMenu() {
+  initCars();
+  gameState = 'MENU';
+  
+  bgm.pause();
+
+  document.getElementById('menu-layer').classList.remove('hidden');
+  document.getElementById('mode-select').classList.remove('hidden');
+  document.getElementById('com-level-select').classList.add('hidden');
+  document.getElementById('course-select').classList.add('hidden');
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('difficulty-box').classList.add('hidden');
+  document.getElementById('instruction').classList.add('hidden');
+}
+
+function gameLoop() {
+  ctx.fillStyle = '#f8f0ff';
+  ctx.fillRect(0, 0, W, H);
+  drawTrack();
+  
+  updateCar(p1, true);
+  updateCar(p2, false);
+  
+  if (p2.isCrashed) { drawCar(p1, true); drawCar(p2, false); }
+  else { drawCar(p2, false); drawCar(p1, true); }
+  
+  requestAnimationFrame(gameLoop);
+}
+
+// --- メニュー操作 ---
+document.getElementById('btn-1p').onclick = () => {
+  gameMode = '1P'; p2.isPlayer = false;
+  document.getElementById('p2-label').textContent = 'COM';
+  document.getElementById('mode-select').classList.add('hidden');
+  document.getElementById('com-level-select').classList.remove('hidden');
+};
+
+document.getElementById('btn-2p').onclick = () => {
+  gameMode = '2P'; p2.isPlayer = true;
+  document.getElementById('p2-label').textContent = 'BLUE';
+  document.getElementById('mode-select').classList.add('hidden');
+  document.getElementById('course-select').classList.remove('hidden');
+};
+
+document.getElementById('btn-com-easy').onclick = () => {
+  comLevel = 'EASY';
+  document.getElementById('com-level-select').classList.add('hidden');
+  document.getElementById('course-select').classList.remove('hidden');
+};
+
+document.getElementById('btn-com-hard').onclick = () => {
+  comLevel = 'HARD';
+  document.getElementById('com-level-select').classList.add('hidden');
+  document.getElementById('course-select').classList.remove('hidden');
+};
+
+document.getElementById('btn-course-rect').onclick = () => { selectedCourse = 'RECT'; startGame(); };
+document.getElementById('btn-course-oval').onclick = () => { selectedCourse = 'OVAL'; startGame(); };
+document.getElementById('btn-course-heart').onclick = () => { selectedCourse = 'HEART'; startGame(); };
+
+// --- 戻るボタンの操作 ---
+document.getElementById('btn-back-from-level').onclick = () => {
+  document.getElementById('com-level-select').classList.add('hidden');
+  document.getElementById('mode-select').classList.remove('hidden');
+};
+
+document.getElementById('btn-back-from-course').onclick = () => {
+  document.getElementById('course-select').classList.add('hidden');
+  if (gameMode === '1P') {
+    document.getElementById('com-level-select').classList.remove('hidden');
+  } else {
+    document.getElementById('mode-select').classList.remove('hidden');
+  }
+};
+
+function startGame() {
+  // オーディオコンテキストの初期化（ユーザー操作のタイミングで行う）
+  initAudio();
+
+  document.getElementById('menu-layer').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('instruction').classList.remove('hidden');
+  
+  if (gameMode === '1P') {
+    document.getElementById('instruction').innerHTML = "長押しで加速！<br>ブルッときたら2秒以内に離せばセーフ⚠️";
+    document.getElementById('difficulty-box').classList.remove('hidden');
+    document.getElementById('difficulty-box').textContent = comLevel === 'EASY' ? 'COM: よわい' : 'COM: つよい';
+  } else {
+    document.getElementById('instruction').innerHTML = "左側:RED 右側:BLUE<br>ブルッときたら2秒以内に離せばセーフ⚠️";
+    document.getElementById('difficulty-box').classList.add('hidden');
+  }
+
+  gameState = 'COUNTDOWN';
+  startCountdown();
+}
+
+// --- 操作入力 (マルチタッチ対応) ---
+const activePointers = new Map();
+
+function updatePressingStates() {
+  if (gameState !== 'RACING') return;
+  let p1Press = false, p2Press = false;
+
+  activePointers.forEach((x) => {
+    if (gameMode === '1P') p1Press = true;
+    else {
+      if (x < W / 2) p1Press = true;
+      else p2Press = true;
+    }
+  });
+  p1.pressing = p1Press;
+  p2.pressing = p2Press;
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  activePointers.set(e.pointerId, e.clientX);
+  updatePressingStates();
+});
+
+const endPtr = (e) => {
+  activePointers.delete(e.pointerId);
+  updatePressingStates();
+};
+window.addEventListener('pointerup', endPtr);
+window.addEventListener('pointercancel', endPtr);
+canvas.addEventListener('pointermove', (e) => {
+  if (activePointers.has(e.pointerId)) {
+    activePointers.set(e.pointerId, e.clientX);
+    updatePressingStates();
+  }
+});
+
+// キーボード
+window.addEventListener('keydown', (e) => {
+  if (gameState !== 'RACING') return;
+  if (e.code === 'Space') p1.pressing = true;
+  if (e.code === 'Enter') p2.pressing = true;
+});
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'Space') p1.pressing = false;
+  if (e.code === 'Enter') p2.pressing = false;
+});
+
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+</html>
