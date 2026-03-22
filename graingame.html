@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>クレーンゲーム</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+const DEFAULT_PRIZES = ["🐻", "🐰", "🐱", "🐶", "🦊", "🐼", "🐨", "🐸", "🦄", "🐙", "🦁", "🐯"];
+
+const GAME_WIDTH = 380;
+const GAME_HEIGHT = 320;
+const CLAW_WIDTH = 60;
+const PRIZE_SIZE = 42; // 52から約20%小さくしました
+
+// スピード（低速設定）
+const CLAW_SPEED = 1.6; 
+const DROP_SPEED = 2.0;
+
+const PRIZE_COUNT = 6;
+const GOAL_X = 10; 
+const HOLE_WIDTH = 80;
+
+// --- Web Audio API を使った効果音ジェネレーター ---
+let audioCtx = null;
+
+const initAudio = () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+};
+
+const playTone = (freqStart, freqEnd, type, duration, vol = 0.05, isMuted = false) => {
+  if (!audioCtx || isMuted) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
+  if (freqStart !== freqEnd) {
+    osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
+  }
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+};
+
+// ---------------------------------------------
+
+function generatePrizes() {
+  const prizes = [];
+  const usedPositions = [];
+  
+  // 必ずユニコーン(🦄)を1つ入れる
+  const prizeItems = ["🦄"];
+  for (let i = 0; i < PRIZE_COUNT - 1; i++) {
+    prizeItems.push(DEFAULT_PRIZES[Math.floor(Math.random() * DEFAULT_PRIZES.length)]);
+  }
+  // 配置位置と紐づくアイテムが毎回変わるようにシャッフル
+  prizeItems.sort(() => Math.random() - 0.5);
+
+  for (let i = 0; i < PRIZE_COUNT; i++) {
+    let x, y, tries = 0;
+    do {
+      // はみ出さないように配置範囲を厳密に制限
+      const minX = HOLE_WIDTH + 15;
+      const maxX = GAME_WIDTH - PRIZE_SIZE - 15;
+      x = minX + Math.random() * (maxX - minX);
+      
+      // 重ならないようにするためには横幅が足りないので、Y軸（縦）のばらつきを少し大きくして山積みにする
+      y = GAME_HEIGHT - 16 - PRIZE_SIZE - (Math.random() * 60);
+      tries++;
+    } while (
+      tries < 150 &&
+      // 景品サイズが42pxに対し、中心同士の距離を38px以上離すことで重なりを調整
+      usedPositions.some(p => Math.hypot(p.x - x, p.y - y) < 38)
+    );
+    usedPositions.push({ x, y });
+    prizes.push({
+      id: i,
+      x, y,
+      item: prizeItems[i],
+      caught: false,
+    });
+  }
+  return prizes;
+}
+
+function App() {
+  const [clawX, setClawX] = useState(GAME_WIDTH / 2 - CLAW_WIDTH / 2);
+  const [clawY, setClawY] = useState(40);
+  const [prizes, setPrizes] = useState(() => generatePrizes());
+  const [collectedPrizes, setCollectedPrizes] = useState([]);
+  const [clawOpen, setClawOpen] = useState(true);
+  const [moving, setMoving] = useState(null);
+  const [disabled, setDisabled] = useState(false);
+  const [caughtPrize, setCaughtPrize] = useState(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  
+  const [scale, setScale] = useState(1);
+
+  const animRef = useRef();
+  const clawXRef = useRef(clawX);
+  const clawYRef = useRef(clawY);
+  const droppingRef = useRef(false);
+  const risingRef = useRef(false);
+  const returningToGoalRef = useRef(false);
+  const releasingRef = useRef(false);
+  const caughtRef = useRef(null);
+  const movingRef = useRef(null);
+  const prizesRef = useRef(prizes);
+  const isMutedRef = useRef(isMuted);
+  const bgmRef = useRef(null); 
+
+  useEffect(() => {
+    const handleResize = () => {
+      const availableWidth = window.innerWidth - 32;
+      if (availableWidth < GAME_WIDTH) {
+        setScale(availableWidth / GAME_WIDTH);
+      } else {
+        setScale(1);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => { clawXRef.current = clawX; }, [clawX]);
+  useEffect(() => { clawYRef.current = clawY; }, [clawY]);
+  useEffect(() => { caughtRef.current = caughtPrize; }, [caughtPrize]);
+  useEffect(() => { movingRef.current = moving; }, [moving]);
+  useEffect(() => { prizesRef.current = prizes; }, [prizes]);
+  useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
+
+  useEffect(() => {
+    if (bgmRef.current) {
+      bgmRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  const handleInteraction = useCallback(() => {
+    initAudio();
+    if (bgmRef.current && bgmRef.current.paused) {
+      bgmRef.current.volume = 0.3; 
+      bgmRef.current.play().catch(err => console.log("BGM自動再生ブロック:", err));
+    }
+  }, []);
+
+  const sfx = useRef({
+    motor: () => playTone(200, 200, 'sine', 0.1, 0.03, isMutedRef.current),
+    drop: () => playTone(600, 300, 'sine', 0.8, 0.05, isMutedRef.current),
+    clack: () => playTone(300, 300, 'square', 0.1, 0.05, isMutedRef.current),
+    catch: () => {
+      playTone(800, 1200, 'sine', 0.15, 0.05, isMutedRef.current);
+      setTimeout(() => playTone(1200, 1600, 'sine', 0.15, 0.05, isMutedRef.current), 150);
+    },
+    rise: () => playTone(300, 600, 'sine', 0.8, 0.05, isMutedRef.current),
+    release: () => playTone(1200, 800, 'sine', 0.1, 0.05, isMutedRef.current),
+    fanfare: () => {
+      if (isMutedRef.current) return;
+      const notes = [523.25, 659.25, 783.99, 1046.50]; 
+      notes.forEach((freq, i) => {
+        setTimeout(() => playTone(freq, freq, 'square', 0.2, 0.05, false), i * 150);
+      });
+    }
+  }).current;
+
+  const startDrop = useCallback(() => {
+    handleInteraction();
+    if (disabled || showComplete) return;
+    setClawOpen(false);
+    droppingRef.current = true;
+    setDisabled(true);
+    setShowCelebration(false);
+    sfx.drop();
+  }, [disabled, showComplete, sfx, handleInteraction]);
+
+  useEffect(() => {
+    let lastMotorTime = 0;
+
+    const loop = () => {
+      const now = Date.now();
+
+      if ((movingRef.current || returningToGoalRef.current) && now - lastMotorTime > 150) {
+        sfx.motor();
+        lastMotorTime = now;
+      }
+
+      // 1. 手動移動
+      if (!droppingRef.current && !risingRef.current && !returningToGoalRef.current && !releasingRef.current) {
+        if (movingRef.current === "left") {
+          const nx = Math.max(HOLE_WIDTH, clawXRef.current - CLAW_SPEED);
+          clawXRef.current = nx;
+          setClawX(nx);
+        } else if (movingRef.current === "right") {
+          const nx = Math.min(GAME_WIDTH - CLAW_WIDTH, clawXRef.current + CLAW_SPEED);
+          clawXRef.current = nx;
+          setClawX(nx);
+        }
+      }
+
+      // 2. 下降
+      if (droppingRef.current) {
+        const ny = clawYRef.current + DROP_SPEED;
+        clawYRef.current = ny;
+        setClawY(ny);
+
+        const cx = clawXRef.current + CLAW_WIDTH / 2;
+        const cy = ny + 30; // アームの爪付近の高さ
+        
+        let caughtId = null;
+        let hitBottom = ny >= GAME_HEIGHT - 65;
+
+        // 毎フレーム「アームが人形に触れたか」をチェックする
+        for (let i = prizesRef.current.length - 1; i >= 0; i--) {
+          const p = prizesRef.current[i];
+          // X軸がしっかり合っており、かつアームが人形の高さまで降りてきた瞬間にヒット！
+          if (!p.caught && Math.abs(p.x + PRIZE_SIZE / 2 - cx) < 14 && Math.abs(p.y + PRIZE_SIZE / 2 - cy) < 12) {
+            caughtId = p.id;
+            break;
+          }
+        }
+
+        // 人形に触れた、または底についた時に下降をストップ
+        if (caughtId !== null || hitBottom) {
+          sfx.clack();
+          
+          let caught = null;
+          if (caughtId !== null) {
+            const updated = prizesRef.current.map(p => {
+              if (p.id === caughtId) {
+                caught = { ...p, caught: true };
+                return caught;
+              }
+              return p;
+            });
+            prizesRef.current = updated;
+            setPrizes(updated);
+            caughtRef.current = caught;
+            setCaughtPrize(caught);
+            setTimeout(() => sfx.catch(), 100);
+          }
+          
+          droppingRef.current = false;
+          risingRef.current = true;
+          sfx.rise();
+        }
+      }
+
+      // 3. 上昇
+      if (risingRef.current) {
+        const ny = clawYRef.current - DROP_SPEED;
+        if (ny <= 40) {
+          clawYRef.current = 40;
+          setClawY(40);
+          risingRef.current = false;
+          if (caughtRef.current) {
+            returningToGoalRef.current = true;
+          } else {
+            setClawOpen(true);
+            setDisabled(false);
+          }
+        } else {
+          clawYRef.current = ny;
+          setClawY(ny);
+        }
+      }
+
+      // 4. 自動ゴール移動
+      if (returningToGoalRef.current) {
+        const nx = clawXRef.current - CLAW_SPEED;
+        if (nx <= GOAL_X) {
+          clawXRef.current = GOAL_X;
+          setClawX(GOAL_X);
+          returningToGoalRef.current = false;
+          releasingRef.current = true;
+          setCaughtPrize(prev => prev ? { ...prev, x: GOAL_X + CLAW_WIDTH / 2 - PRIZE_SIZE / 2 } : null);
+        } else {
+          clawXRef.current = nx;
+          setClawX(nx);
+        }
+      }
+
+      // 5. 景品リリース (落下)
+      if (releasingRef.current) {
+        if (!clawOpen) {
+          setClawOpen(true);
+          sfx.release();
+        }
+        
+        if (caughtRef.current) {
+          setCaughtPrize(prev => {
+            if (!prev) return null;
+            const nextY = prev.y + 5.0; 
+            if (nextY > GAME_HEIGHT) {
+              const p = { ...prev };
+              setCollectedPrizes(old => {
+                const newCollected = [...old, p];
+                // コンプリート判定
+                if (newCollected.length >= PRIZE_COUNT) {
+                  setShowComplete(true);
+                  sfx.fanfare();
+                } else {
+                  setShowCelebration(true); 
+                  sfx.fanfare(); 
+                  setTimeout(() => setShowCelebration(false), 800);
+                }
+                return newCollected;
+              });
+              
+              releasingRef.current = false;
+              setCaughtPrize(null);
+              caughtRef.current = null;
+              setDisabled(false);
+              return null;
+            }
+            return { ...prev, y: nextY };
+          });
+        } else {
+          releasingRef.current = false;
+          setDisabled(false);
+        }
+      }
+
+      animRef.current = requestAnimationFrame(loop);
+    };
+    animRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [clawOpen, sfx]);
+
+  const resetGame = () => {
+    handleInteraction();
+    const newPrizes = generatePrizes();
+    prizesRef.current = newPrizes;
+    setPrizes(newPrizes);
+    setCollectedPrizes([]);
+    setClawX(GAME_WIDTH / 2 - CLAW_WIDTH / 2);
+    setClawY(40);
+    setCaughtPrize(null);
+    setClawOpen(true);
+    setDisabled(false);
+    droppingRef.current = false;
+    risingRef.current = false;
+    returningToGoalRef.current = false;
+    releasingRef.current = false;
+    caughtRef.current = null;
+    setShowCelebration(false);
+    setShowComplete(false);
+  };
+
+  const startMove = (dir) => {
+    handleInteraction();
+    if (disabled || showComplete) return;
+    setMoving(dir);
+  };
+  const stopMove = () => setMoving(null);
+
+  const toggleMute = () => {
+    handleInteraction();
+    setIsMuted(!isMuted);
+  };
+
+  const currentPrizeX = releasingRef.current && caughtPrize 
+    ? caughtPrize.x 
+    : (clawX + CLAW_WIDTH / 2 - PRIZE_SIZE / 2);
+  
+  const currentPrizeY = releasingRef.current && caughtPrize 
+    ? caughtPrize.y 
+    : (clawY + 20);
+
+    return (
+      <div style={{
+        minHeight: "100vh",
+        background: "#fff0f5",
+        backgroundImage: "radial-gradient(#ffb6c1 20%, transparent 20%)",
+        backgroundSize: "20px 20px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif",
+        padding: "16px",
+        userSelect: "none",
+        overflowX: "hidden",
+      }}>
+        {/* ホームボタン */}
+        <div style={{
+          position: "fixed",
+          top: "20px",
+          left: "20px",
+          zIndex: 1000,
+        }}>
+          <button
+            onClick={() => { window.location.href = 'index.html'; }}
+            style={{
+              background: "white",
+              border: "2px solid #ff99cc",
+              borderRadius: "50%",
+              width: 48,
+              height: 48,
+              fontSize: 24,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 10px rgba(255,105,180,0.3)",
+              transition: "transform 0.1s",
+            }}
+            onPointerDown={(e) => e.currentTarget.style.transform = "scale(0.9)"}
+            onPointerUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+          >
+            🏠
+          </button>
+        </div>
+
+        <audio ref={bgmRef} src="graingameBGM.mp3" loop />
+
+      <div style={{
+        transform: `scale(${scale})`,
+        transformOrigin: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: GAME_WIDTH,
+      }}>
+
+        {/* Title & Sound Toggle */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: GAME_WIDTH, marginBottom: 12 }}>
+          <div style={{ width: 40 }}></div>
+          <div style={{
+            fontSize: 26, fontWeight: "bold", color: "#ff69b4",
+            textShadow: "0 2px 4px rgba(255,105,180,0.3), 0 2px 0 #ff1493",
+            letterSpacing: 1,
+            animation: "pulse 2s ease-in-out infinite",
+            textAlign: "center"
+          }}>
+            🎪 クレーンゲーム 🎪
+          </div>
+          <button 
+            onClick={toggleMute}
+            style={{
+              background: "#fff", border: "2px solid #ff99cc",
+              borderRadius: "50%", width: 40, height: 40, fontSize: 20,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#ff66aa", transition: "all 0.2s", boxShadow: "0 2px 5px rgba(255,105,180,0.2)"
+            }}
+          >
+            {isMuted ? "🔇" : "🔊"}
+          </button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", width: GAME_WIDTH }}>
+          {/* Machine outer */}
+          <div style={{
+            background: "linear-gradient(180deg, #ffb3d9 0%, #ff66aa 100%)",
+            borderRadius: 24, padding: "6px 6px 12px",
+            boxShadow: "0 8px 40px rgba(255, 105, 180, 0.4), inset 0 2px 0 #ffe6f2",
+            border: "3px solid #ff99cc",
+            width: "100%", boxSizing: "border-box"
+          }}>
+            {/* Glass window */}
+            <div style={{
+              width: "100%", height: GAME_HEIGHT,
+              background: "linear-gradient(180deg, #ffffff 0%, #fff0f5 70%, #ffe6f2 100%)",
+              borderRadius: 16, position: "relative", overflow: "hidden",
+              boxShadow: "inset 0 0 20px rgba(255, 182, 193, 0.5)",
+              border: "2px solid #ffb3d9", boxSizing: "border-box"
+            }}>
+              {/* Cute Dots bg */}
+              {[...Array(12)].map((_, i) => (
+                <div key={i} style={{
+                  position: "absolute", left: `${(i * 37 + 11) % 100}%`, top: `${(i * 53 + 7) % 70}%`,
+                  width: 6, height: 6, borderRadius: "50%", background: "#ffb6c1", opacity: 0.5,
+                }} />
+              ))}
+
+              {/* Goal Hole */}
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, width: HOLE_WIDTH, height: 110,
+                background: "linear-gradient(180deg, #ffe6f2, #ffb3d9)",
+                borderTopRightRadius: 24,
+                boxShadow: "inset -5px 5px 15px rgba(255, 105, 180, 0.1), 5px 0 10px rgba(0,0,0,0.05)",
+                zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+                border: "2px solid #fff", borderLeft: "none", borderBottom: "none"
+              }}>
+                 <div style={{ 
+                   background: "#fff", color: "#ff66aa", fontSize: 12, padding: "2px 8px", 
+                   borderRadius: 10, fontWeight: "bold", marginTop: 15,
+                   boxShadow: "0 2px 4px rgba(255,105,180,0.2)"
+                 }}>GET!</div>
+                 <div style={{ width: "100%", height: "4px", background: "rgba(255,255,255,0.8)", marginTop: "auto", marginBottom: 20 }}></div>
+              </div>
+
+              {/* Celebration Effect (1個取った時) */}
+              {showCelebration && !showComplete && (
+                <div style={{
+                  position: "absolute", top: "40%", left: "50%", transform: "translate(-50%, -50%)",
+                  zIndex: 10, textAlign: "center", pointerEvents: "none",
+                  animation: "celebratePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
+                }}>
+                  <div style={{
+                    fontSize: 32, color: "#ff66aa", fontWeight: "bold",
+                    textShadow: "0 2px 4px rgba(255,105,180,0.3), 0 2px 0 #fff", whiteSpace: "nowrap"
+                  }}>✨ やったね！ ✨</div>
+                </div>
+              )}
+
+              {/* Complete Effect (全部取った時) */}
+              {showComplete && (
+                <div style={{
+                  position: "absolute", inset: 0, background: "rgba(255, 255, 255, 0.85)",
+                  zIndex: 20, display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center",
+                  animation: "fadeIn 0.5s ease forwards", borderRadius: 16
+                }}>
+                  <div style={{
+                    fontSize: 36, color: "#ff66aa", fontWeight: "bold",
+                    textShadow: "0 2px 4px rgba(255,105,180,0.3)",
+                    textAlign: "center", lineHeight: 1.2,
+                    animation: "scalePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
+                  }}>
+                    🎉 PERFECT! 🎉<br/>
+                    <span style={{ fontSize: 18, color: "#ff99cc", textShadow: "none" }}>ぜんぶとれたよ！</span>
+                  </div>
+                  <button
+                    className="game-btn"
+                    onClick={resetGame}
+                    style={{
+                      ...btnStyle("#ff66aa", "#ff3388"),
+                      marginTop: 24, fontSize: 16, padding: "10px 20px",
+                      animation: "pulse 1.5s infinite"
+                    }}
+                  >
+                    🔄 もう１かいあそぶ
+                  </button>
+                </div>
+              )}
+
+              {/* Rail */}
+              <div style={{
+                position: "absolute", top: 36, left: 0, right: 0, height: 6,
+                background: "linear-gradient(90deg, #ffe6f2, #fff, #ffe6f2)",
+                borderRadius: 3, boxShadow: "0 2px 4px rgba(255,105,180,0.2)",
+              }} />
+
+              {/* Wire */}
+              <div style={{
+                position: "absolute", left: clawX + CLAW_WIDTH / 2 - 1.5, top: 36,
+                width: 3, height: clawY - 36,
+                background: "linear-gradient(180deg, #ddd, #bbb)", borderRadius: 2,
+              }} />
+
+              {/* Claw */}
+              <div style={{
+                position: "absolute", left: clawX, top: clawY,
+                width: CLAW_WIDTH, height: 36, zIndex: 5,
+              }}>
+                <div style={{
+                  position: "absolute", left: "50%", transform: "translateX(-50%)",
+                  top: 0, width: 14, height: 16,
+                  background: "linear-gradient(180deg, #ff99cc, #ff66aa)", borderRadius: "4px 4px 0 0",
+                }} />
+                <div style={{
+                  position: "absolute", left: clawOpen ? 4 : 14, top: 14,
+                  width: 5, height: 22, background: "#ffb3d9", borderRadius: 3,
+                  transform: `rotate(${clawOpen ? -25 : -5}deg)`, transformOrigin: "top center", transition: "all 0.2s",
+                  boxShadow: "1px 0 4px rgba(255,105,180,0.3)",
+                }} />
+                <div style={{
+                  position: "absolute", right: clawOpen ? 4 : 14, top: 14,
+                  width: 5, height: 22, background: "#ffb3d9", borderRadius: 3,
+                  transform: `rotate(${clawOpen ? 25 : 5}deg)`, transformOrigin: "top center", transition: "all 0.2s",
+                  boxShadow: "-1px 0 4px rgba(255,105,180,0.3)",
+                }} />
+              </div>
+
+              {/* Caught prize */}
+              {caughtPrize && (
+                <div style={{
+                  position: "absolute", left: currentPrizeX, top: currentPrizeY,
+                  fontSize: PRIZE_SIZE, lineHeight: 1, filter: "drop-shadow(0 0 10px #FFE566)", zIndex: 4,
+                }}>
+                  {caughtPrize.item}
+                </div>
+              )}
+
+              {/* Floor Prizes */}
+              {prizes.filter(p => !p.caught).map(p => (
+                <div key={p.id} style={{
+                  position: "absolute", left: p.x, top: p.y,
+                  fontSize: PRIZE_SIZE, lineHeight: 1, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))",
+                  animation: `wobble ${2 + (p.id % 3) * 0.4}s ease-in-out infinite`, animationDelay: `${p.id * 0.25}s`,
+                }}>
+                  {p.item}
+                </div>
+              ))}
+
+              {/* Floor */}
+              <div style={{
+                position: "absolute", bottom: 0, left: HOLE_WIDTH, right: 0, height: 16,
+                background: "linear-gradient(180deg, #99ffcc, #66cc99)", borderTop: "2px solid #b3ffe6",
+              }} />
+            </div>
+
+            {/* Controls */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 12 }}>
+              <button
+                className="game-btn"
+                onPointerDown={() => startMove("left")}
+                onPointerUp={stopMove} onPointerLeave={stopMove}
+                disabled={disabled || showComplete} style={btnStyle("#ff99cc", "#ff66aa")}
+              >⬅️</button>
+
+              <button
+                className="game-btn"
+                onPointerDown={startDrop} disabled={disabled || showComplete}
+                style={{ ...btnStyle("#ff66aa", "#ff3388"), fontSize: 18, padding: "12px 18px" }}
+              >
+                ⬇️<br/><span style={{ fontSize: 12 }}>キャッチ！</span>
+              </button>
+
+              <button
+                className="game-btn"
+                onPointerDown={() => startMove("right")}
+                onPointerUp={stopMove} onPointerLeave={stopMove}
+                disabled={disabled || showComplete} style={btnStyle("#ff99cc", "#ff66aa")}
+              >➡️</button>
+            </div>
+          </div>
+
+          {/* Footer Area */}
+          <div style={{ width: "100%", display: "flex", gap: "10px", alignItems: "stretch" }}>
+            <div style={{
+              flex: 1, background: "rgba(255, 255, 255, 0.7)", borderRadius: 16, padding: "8px 12px",
+              border: "2px solid #ffb3d9", minHeight: "50px", display: "flex", flexDirection: "column"
+            }}>
+              <div style={{ color: "#ff69b4", fontSize: 11, marginBottom: 4, fontWeight: "bold" }}>🏆 ゲットした景品 ({collectedPrizes.length}/{PRIZE_COUNT})</div>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {collectedPrizes.length === 0 && <span style={{ color: "#aaa", fontSize: 13 }}>あなに おとして ゲット！</span>}
+                {collectedPrizes.map((p, i) => (
+                  <div key={i} style={{ 
+                    fontSize: 22, background: "#fff", borderRadius: "50%", 
+                    width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 2px 4px rgba(255,105,180,0.2)", border: "1px solid #ffe6f2"
+                  }}>{p.item}</div>
+                ))}
+              </div>
+            </div>
+
+            <button 
+              className="game-btn" onClick={resetGame} 
+              style={{ ...btnStyle("#ff99cc", "#ff66aa"), fontSize: 12, padding: "0 12px", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              🔄<br/>はじめから
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <style>{`
+        @keyframes wobble {
+          0%, 100% { transform: rotate(-4deg) scale(1); }
+          50% { transform: rotate(4deg) scale(1.02); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(0.95); }
+        }
+        @keyframes celebratePop {
+          0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+          70% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        @keyframes scalePop {
+          0% { transform: scale(0.5); opacity: 0; }
+          70% { transform: scale(1.2); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .game-btn:active:not(:disabled) {
+          transform: translateY(4px) !important;
+          box-shadow: 0 2px 0 var(--shadow-color, #000) !important;
+        }
+        .game-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          filter: grayscale(0.5);
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function btnStyle(bg, shadow) {
+  return {
+    "--shadow-color": shadow,
+    background: `linear-gradient(180deg, ${bg}, ${shadow})`,
+    border: `2px solid ${bg}`,
+    borderRadius: 16,
+    color: "white",
+    fontSize: 24,
+    padding: "12px 16px",
+    cursor: "pointer",
+    boxShadow: `0 5px 0 ${shadow}, 0 6px 15px rgba(255,105,180,0.2)`,
+    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+    fontFamily: "inherit",
+    WebkitTapHighlightColor: "transparent",
+    transition: "transform 0.1s, box-shadow 0.1s",
+  };
+}
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
