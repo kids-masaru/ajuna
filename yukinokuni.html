@@ -133,7 +133,101 @@
     const imgBg     = new Image(); imgBg.onload     = onImageLoad; imgBg.src     = 'haikei.png';
 
     // ==========================================
-    // 2. ゲームシステム本体
+    // 2. 効果音 (Web Audio API)
+    // ==========================================
+    let audioCtx = null;
+    function getACtx() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+    }
+
+    function playShoot() {
+        const ac = getACtx();
+        const osc = ac.createOscillator(), g = ac.createGain();
+        osc.connect(g); g.connect(ac.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(900, ac.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ac.currentTime + 0.08);
+        g.gain.setValueAtTime(0.06, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
+        osc.start(); osc.stop(ac.currentTime + 0.08);
+    }
+
+    function playEnemyHit() {
+        const ac = getACtx();
+        const len = Math.floor(ac.sampleRate * 0.15);
+        const buf = ac.createBuffer(1, len, ac.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+        const src = ac.createBufferSource(), g = ac.createGain();
+        src.buffer = buf; src.connect(g); g.connect(ac.destination);
+        g.gain.setValueAtTime(0.25, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.15);
+        src.start(); src.stop(ac.currentTime + 0.15);
+    }
+
+    function playPlayerHit() {
+        const ac = getACtx();
+        const osc = ac.createOscillator(), g = ac.createGain();
+        osc.connect(g); g.connect(ac.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, ac.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, ac.currentTime + 0.35);
+        g.gain.setValueAtTime(0.3, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
+        osc.start(); osc.stop(ac.currentTime + 0.35);
+    }
+
+    function playItemPickup() {
+        const ac = getACtx();
+        [523, 659, 784].forEach((freq, i) => {
+            const osc = ac.createOscillator(), g = ac.createGain();
+            osc.connect(g); g.connect(ac.destination);
+            osc.type = 'sine';
+            const t = ac.currentTime + i * 0.07;
+            osc.frequency.setValueAtTime(freq, t);
+            g.gain.setValueAtTime(0.15, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+            osc.start(t); osc.stop(t + 0.18);
+        });
+    }
+
+    function playBossAppear() {
+        const ac = getACtx();
+        [400, 800, 400, 800].forEach((freq, i) => {
+            const osc = ac.createOscillator(), g = ac.createGain();
+            osc.connect(g); g.connect(ac.destination);
+            osc.type = 'square';
+            const t = ac.currentTime + i * 0.18;
+            osc.frequency.setValueAtTime(freq, t);
+            g.gain.setValueAtTime(0.2, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+            osc.start(t); osc.stop(t + 0.15);
+        });
+    }
+
+    function playBossDeath() {
+        const ac = getACtx();
+        const len = Math.floor(ac.sampleRate * 1.2);
+        const buf = ac.createBuffer(1, len, ac.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+        const src = ac.createBufferSource(), g = ac.createGain();
+        src.buffer = buf; src.connect(g); g.connect(ac.destination);
+        g.gain.setValueAtTime(0.5, ac.currentTime);
+        src.start(); src.stop(ac.currentTime + 1.2);
+        const osc = ac.createOscillator(), og = ac.createGain();
+        osc.connect(og); og.connect(ac.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(80, ac.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(20, ac.currentTime + 1.2);
+        og.gain.setValueAtTime(0.4, ac.currentTime);
+        og.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 1.2);
+        osc.start(); osc.stop(ac.currentTime + 1.2);
+    }
+
+    // ==========================================
+    // 3. ゲームシステム本体
     // ==========================================
     let isGameStarted = false; 
     let gameState = 'start'; 
@@ -235,6 +329,7 @@
                 touchState.lastY = touchState.y;
 
                 if (this.cooldown <= 0) {
+                    playShoot();
                     const bx = this.x + this.width + 10;
                     const by = this.y + this.height/2;
                     
@@ -261,6 +356,7 @@
         // ★ダメージを受ける処理
         takeDamage() {
             if (this.invincible <= 0) {
+                playPlayerHit();
                 this.hp--;
                 this.invincible = 60; // 約1秒無敵
                 for(let k=0; k<15; k++) particles.push(new Particle(this.x+this.width/2, this.y+this.height/2, '#ef4444'));
@@ -447,8 +543,9 @@
         if (score >= 500 && !isBossActive && !boss) {
             isBossActive = true;
             warningTimer = 180;
-            enemies = []; 
+            enemies = [];
             items = [];
+            playBossAppear();
         }
 
         // 自機の更新
@@ -484,7 +581,8 @@
             // 自機がアイテムを取ったか
             if (player.x < item.x + item.w && player.x + player.width > item.x &&
                 player.y < item.y + item.h && player.y + player.height > item.y) {
-                player.hp = Math.min(player.maxHp, player.hp + 1); // HP回復(最大値を超えない)
+                playItemPickup();
+                player.hp = Math.min(player.maxHp, player.hp + 1);
                 score += 50;
                 item.del = true;
                 for(let k=0; k<15; k++) particles.push(new Particle(item.x+item.w/2, item.y+item.h/2, '#22c55e'));
@@ -524,6 +622,7 @@
 
                 // ボス撃破
                 if (boss.hp <= 0) {
+                    playBossDeath();
                     for(let k=0; k<100; k++) particles.push(new Particle(boss.x+boss.w/2, boss.y+boss.h/2, '#ef4444'));
                     score += 1000;
                     boss = null;
@@ -556,9 +655,10 @@
                 bullets.forEach((b, j) => {
                     if (b.x + b.w > e.x && b.x - b.w < e.x + e.w && 
                         b.y + b.w > e.y && b.y - b.w < e.y + e.h) { 
-                        enemies.splice(i, 1); 
-                        bullets.splice(j, 1); 
-                        score += 10; 
+                        playEnemyHit();
+                        enemies.splice(i, 1);
+                        bullets.splice(j, 1);
+                        score += 10;
                         for(let k=0; k<8; k++) particles.push(new Particle(e.x+e.w/2, e.y+e.h/2, '#ef4444'));
                     }
                 });
@@ -604,6 +704,7 @@
         if (doc.requestFullscreen) doc.requestFullscreen().catch(() => {});
         else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
         
+        getACtx().resume();
         isGameStarted = true; applyOrientation();
         player = new Player();
         bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
