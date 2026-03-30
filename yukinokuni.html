@@ -150,6 +150,9 @@
     let isBossActive = false;
     let boss = null;
     let warningTimer = 0;
+    let lastTime = 0;
+    let enemySpawnTimer = 0;
+    let itemSpawnTimer = 0;
 
     function applyOrientation() {
         const w = window.innerWidth;
@@ -217,8 +220,8 @@
             if (this.invincible > 0 && Math.floor(this.invincible / 5) % 2 === 0) return;
             ctx.drawImage(imgPlayer, this.x, this.y, this.width, this.height);
         }
-        update() {
-            if (this.invincible > 0) this.invincible--;
+        update(dt) {
+            if (this.invincible > 0) this.invincible -= dt;
 
             if (touchState.active) {
                 this.x += (touchState.x - touchState.lastX);
@@ -249,9 +252,9 @@
                     this.cooldown = 18; 
                 }
             }
-            if (this.cooldown > 0) this.cooldown--;
+            if (this.cooldown > 0) this.cooldown -= dt;
         }
-        
+
         // ★ダメージを受ける処理
         takeDamage() {
             if (this.invincible <= 0) {
@@ -275,9 +278,9 @@
             ctx.beginPath(); ctx.arc(this.x, this.y, this.w, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(this.x, this.y, this.w/2, 0, Math.PI*2); ctx.fill();
         }
-        update() { 
-            this.x += this.vx; this.y += this.vy; this.w += 0.1; 
-            if (this.x > canvas.width) this.del = true; 
+        update(dt) {
+            this.x += this.vx * dt; this.y += this.vy * dt; this.w += 0.1 * dt;
+            if (this.x > canvas.width) this.del = true;
         }
     }
 
@@ -292,10 +295,10 @@
             ctx.fillStyle = '#ef4444';
             ctx.beginPath(); ctx.arc(this.x, this.y, this.w/2, 0, Math.PI*2); ctx.fill();
         }
-        update() { 
-            this.x += this.vx; this.y += this.vy; 
+        update(dt) {
+            this.x += this.vx * dt; this.y += this.vy * dt;
             if (this.x < -20 || this.x > canvas.width + 20 || this.y < -20 || this.y > canvas.height + 20) {
-                this.del = true; 
+                this.del = true;
             }
         }
     }
@@ -314,9 +317,9 @@
             const img = this.type === 1 ? imgEnemy1 : imgEnemy2;
             ctx.drawImage(img, this.x, this.y, this.w, this.h);
         }
-        update() { 
-            this.x -= this.speed; 
-            if (this.x < -this.w) this.del = true; 
+        update(dt) {
+            this.x -= this.speed * dt;
+            if (this.x < -this.w) this.del = true;
         }
     }
 
@@ -342,16 +345,16 @@
             ctx.fillStyle = 'green';
             ctx.fillRect(this.x, this.y - 15, this.w * (this.hp/this.maxHp), 8);
         }
-        update() {
+        update(dt) {
             if (this.phase === "enter") {
-                this.x -= 2;
+                this.x -= 2 * dt;
                 if (this.x < canvas.width - this.w - 20) this.phase = "attack";
             } else {
-                this.angle += 0.03;
+                this.angle += 0.03 * dt;
                 this.y = this.baseY + Math.sin(this.angle) * 60;
-                
+
                 // ★ボスの攻撃処理
-                this.attackTimer--;
+                this.attackTimer -= dt;
                 if (this.attackTimer <= 0) {
                     const cx = this.x + 10;
                     const cy = this.y + this.h / 2;
@@ -391,9 +394,9 @@
             ctx.fillRect(this.x + 8, this.y + 4, 4, 12);
             ctx.fillRect(this.x + 4, this.y + 8, 12, 4);
         }
-        update() {
-            this.x -= this.speed;
-            this.y += Math.sin(frameCount * 0.05) * 1; // ふわふわ揺れる
+        update(dt) {
+            this.x -= this.speed * dt;
+            this.y += Math.sin(frameCount * 0.05) * 1;
             if (this.x < -this.w) this.del = true;
         }
     }
@@ -407,18 +410,22 @@
         draw() {
             ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
         }
-        update() { this.x += this.vx; this.y += this.vy; this.life--; }
+        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; }
     }
 
     // ==========================================
     // 3. メインゲームループ
     // ==========================================
-    function gameLoop() {
+    function gameLoop(timestamp) {
         if (gameState !== 'playing') return;
+        const rawDelta = lastTime ? timestamp - lastTime : 1000 / 120;
+        lastTime = timestamp;
+        const dt = Math.min(rawDelta, 50) / (1000 / 120);
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // 背景
-        bgScrollX -= 0.6;
+        bgScrollX -= 0.6 * dt;
         const bgW = imgBg.naturalWidth;
         const bgH = imgBg.naturalHeight;
         const scale = canvas.height / bgH;
@@ -442,18 +449,18 @@
         }
 
         // 自機の更新
-        player.update(); 
+        player.update(dt);
         player.draw();
 
         // 弾の更新
-        bullets.forEach((b, i) => { 
-            b.update(); b.draw(); 
-            if(b.del) bullets.splice(i, 1); 
+        bullets.forEach((b, i) => {
+            b.update(dt); b.draw();
+            if(b.del) bullets.splice(i, 1);
         });
 
         // 敵弾の更新（ボスなどが撃つ）
         enemyBullets.forEach((eb, i) => {
-            eb.update(); eb.draw();
+            eb.update(dt); eb.draw();
             // 自機との当たり判定 (円と四角の簡易判定)
             if (player.x < eb.x + eb.w && player.x + player.width > eb.x - eb.w &&
                 player.y < eb.y + eb.w && player.y + player.height > eb.y - eb.w) {
@@ -464,11 +471,13 @@
         });
         
         // アイテムの出現と更新
-        if (frameCount > 0 && frameCount % 400 === 0 && !isBossActive) {
+        itemSpawnTimer += dt;
+        if (itemSpawnTimer >= 400 && !isBossActive) {
             items.push(new Item());
+            itemSpawnTimer = 0;
         }
         items.forEach((item, i) => {
-            item.update(); item.draw();
+            item.update(dt); item.draw();
             // 自機がアイテムを取ったか
             if (player.x < item.x + item.w && player.x + player.width > item.x &&
                 player.y < item.y + item.h && player.y + player.height > item.y) {
@@ -482,17 +491,17 @@
         
         if (isBossActive) {
             if (warningTimer > 0) {
-                warningTimer--;
+                warningTimer -= dt;
                 ctx.fillStyle = '#ef4444';
                 ctx.font = 'bold 40px sans-serif';
                 ctx.textAlign = 'center';
                 if (Math.floor(warningTimer / 15) % 2 === 0) {
                     ctx.fillText('WARNING!! BOSS APPROACHING!!', canvas.width/2, canvas.height/2);
                 }
-                if (warningTimer === 0) boss = new Boss();
-            } 
+                if (warningTimer <= 0) boss = new Boss();
+            }
             else if (boss) {
-                boss.update();
+                boss.update(dt);
                 boss.draw();
                 
                 // 自機の弾とボスの当たり判定
@@ -525,9 +534,13 @@
         } 
         else {
             // 通常の敵フェーズ
-            if (frameCount % 80 === 0) enemies.push(new Enemy());
+            enemySpawnTimer += dt;
+            if (enemySpawnTimer >= 80) {
+                enemies.push(new Enemy());
+                enemySpawnTimer = 0;
+            }
             enemies.forEach((e, i) => {
-                e.update(); e.draw();
+                e.update(dt); e.draw();
                 
                 // 自機と敵の体当たり
                 if (player.x < e.x + e.w && player.x + player.width > e.x &&
@@ -551,7 +564,7 @@
         }
 
         particles.forEach((p, i) => {
-            p.update(); p.draw();
+            p.update(dt); p.draw();
             if (p.life <= 0) particles.splice(i, 1);
         });
 
@@ -588,9 +601,10 @@
         else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
         
         isGameStarted = true; applyOrientation();
-        player = new Player(); 
+        player = new Player();
         bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
         score = 0; frameCount = 0; powerLevel = 1; isBossActive = false; boss = null;
+        lastTime = 0; enemySpawnTimer = 0; itemSpawnTimer = 0;
         resultTitle.innerText = "GAME OVER";
         resultTitle.className = "text-6xl md:text-8xl font-bold mb-4 text-red-500";
         
@@ -599,12 +613,13 @@
     });
 
     restartBtn.addEventListener('click', () => {
-        player = new Player(); 
+        player = new Player();
         bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
         score = 0; frameCount = 0; powerLevel = 1; isBossActive = false; boss = null;
+        lastTime = 0; enemySpawnTimer = 0; itemSpawnTimer = 0;
         resultTitle.innerText = "GAME OVER";
         resultTitle.className = "text-6xl md:text-8xl font-bold mb-4 text-red-500";
-        
+
         gameState = 'playing'; gameOverScreen.classList.add('hidden');
         gameLoop();
     });
