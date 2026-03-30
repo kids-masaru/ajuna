@@ -75,6 +75,8 @@
 </head>
 <body>
 
+    <audio id="bgm" src="suno.mp3" loop></audio>
+
     <div id="game-wrapper">
         <a href="index.html" class="home-btn">🏠</a>
         <canvas id="gameCanvas"></canvas>
@@ -109,6 +111,7 @@
     const restartBtn = document.getElementById('restartBtn');
     const finalScoreEl = document.getElementById('finalScore');
     const resultTitle = document.getElementById('resultTitle');
+    const bgm = document.getElementById('bgm');
 
     // ==========================================
     // 1. 画像の読み込み
@@ -570,7 +573,8 @@
 
         // --- UI表示 ---
         if (gameState === 'over') {
-            finalScoreEl.innerText = score; 
+            bgm.pause();
+            finalScoreEl.innerText = score;
             gameOverScreen.classList.remove('hidden');
         } else {
             // スコア
@@ -609,6 +613,7 @@
         resultTitle.className = "text-6xl md:text-8xl font-bold mb-4 text-red-500";
         
         gameState = 'playing'; startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden');
+        bgm.currentTime = 0; bgm.play();
         gameLoop();
     });
 
@@ -621,6 +626,7 @@
         resultTitle.className = "text-6xl md:text-8xl font-bold mb-4 text-red-500";
 
         gameState = 'playing'; gameOverScreen.classList.add('hidden');
+        bgm.currentTime = 0; bgm.play();
         gameLoop();
     });
 
