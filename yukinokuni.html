@@ -204,8 +204,8 @@
     // ==========================================
     class Player {
         constructor() {
-            this.width = 40;
-            this.height = 30;
+            this.width = 120;
+            this.height = 90;
             this.x = 60;
             this.y = canvas.height / 2 - this.height / 2;
             this.cooldown = 0;
@@ -303,12 +303,12 @@
 
     class Enemy {
         constructor() {
-            this.type = Math.random() < 0.5 ? 1 : 2; 
-            this.w = 25;
-            this.h = 25;
+            this.type = Math.random() < 0.5 ? 1 : 2;
+            this.w = 75;
+            this.h = 75;
             this.x = canvas.width; 
             this.y = Math.random() * (canvas.height - this.h);
-            this.speed = 1.5 + (score * 0.005);
+            this.speed = 2.5;
             this.del = false;
         }
         draw() {
@@ -323,8 +323,8 @@
 
     class Boss {
         constructor() {
-            this.w = 120;
-            this.h = 100;
+            this.w = 360;
+            this.h = 300;
             this.x = canvas.width;
             this.y = canvas.height/2 - this.h/2;
             this.hp = 150; // ボスを少しタフに
@@ -424,10 +424,11 @@
         const bgH = imgBg.naturalHeight;
         const scale = canvas.height / bgH;
         const dw = bgW * scale;
-        if (bgScrollX <= -dw) bgScrollX = 0;
+        if (bgScrollX <= -dw) bgScrollX += dw;
         ctx.imageSmoothingEnabled = true;
-        ctx.drawImage(imgBg, bgScrollX, 0, dw, canvas.height);
-        ctx.drawImage(imgBg, bgScrollX + dw, 0, dw, canvas.height);
+        for (let x = bgScrollX; x < canvas.width; x += dw) {
+            ctx.drawImage(imgBg, x, 0, dw, canvas.height);
+        }
 
         // パワーアップ条件（最大3方向）
         if (score >= 300) powerLevel = 3;
