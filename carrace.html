@@ -108,6 +108,8 @@
   #hud {
     position: fixed;
     top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: 15px;
     pointer-events: none;
@@ -182,6 +184,40 @@
   }
 
   .hidden { display: none !important; }
+
+  /* モバイル向けレイアウト調整 */
+  @media (max-width: 480px) {
+    #home-btn {
+      top: 12px;
+      left: 12px;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+    }
+    #hud {
+      top: 18px;
+      gap: 8px;
+    }
+    .lap-box {
+      padding: 5px 10px;
+      font-size: 13px;
+      min-width: 90px;
+      border-radius: 12px;
+    }
+    #difficulty-box {
+      top: 18px;
+      right: 12px;
+      padding: 5px 10px;
+      font-size: 13px;
+      border-radius: 12px;
+    }
+    #instruction {
+      bottom: 20px;
+      padding: 8px 14px;
+      font-size: 12px;
+      border-radius: 16px;
+    }
+  }
 </style>
 </head>
 <body>
