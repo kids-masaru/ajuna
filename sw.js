@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v17';
+const CACHE_NAME = 'ajuna-v18';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -71,9 +71,13 @@ self.addEventListener('fetch', event => {
       })
     );
   } else {
-    // ローカルリソース：キャッシュ優先
+    // ローカルリソース：ネットワーク優先、失敗時のみキャッシュ（オフライン対応）
     event.respondWith(
-      caches.match(event.request).then(cached => cached || fetch(event.request))
+      fetch(event.request).then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      }).catch(() => caches.match(event.request))
     );
   }
 });
