@@ -183,6 +183,15 @@
     transform: scale(0.9);
   }
 
+  #version-label {
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+    font-size: 11px;
+    color: #c0a8d8;
+    pointer-events: none;
+  }
+
   .hidden { display: none !important; }
 
   /* モバイル向けレイアウト調整 */
@@ -262,6 +271,7 @@
       <button id="btn-back-from-course" class="menu-btn back-btn">🔙 もどる</button>
     </div>
   </div>
+  <div id="version-label">v1.1</div>
 </div>
 
 <div class="overlay" style="pointer-events: none;">
