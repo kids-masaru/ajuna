@@ -297,6 +297,7 @@
     }, {passive: false});
     
     canvas.addEventListener('touchend', () => touchState.active = false);
+    canvas.addEventListener('touchcancel', () => touchState.active = false);
 
     // ==========================================
     // キャラクタークラス群
@@ -540,7 +541,7 @@
         else if (score >= 100) powerLevel = 2;
 
         // ボス出現条件
-        if (score >= 500 && !isBossActive && !boss) {
+        if (score >= 1500 && !isBossActive && !boss) {
             isBossActive = true;
             warningTimer = 180;
             enemies = [];
