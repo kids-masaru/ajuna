@@ -121,30 +121,23 @@
     backdrop-filter: blur(5px);
     border: 2px solid #e0c3fc;
     border-radius: 15px;
-    padding: 8px 18px;
+    padding: 6px 14px;
     color: #8e44ad;
-    font-size: 15px;
-    min-width: 110px;
+    min-width: 60px;
     text-align: center;
     transition: opacity 0.2s;
   }
-  .crashed-hud { opacity: 0.5; color: #ff0000; border-color: #ff0000; }
-
-  #difficulty-box {
-    position: fixed;
-    top: 25px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(5px);
-    border: 2px solid #e0c3fc;
-    border-radius: 15px;
-    padding: 8px 18px;
-    color: #8e44ad;
-    font-size: 15px;
+  .lap-name {
+    font-size: 11px;
     font-weight: 700;
-    pointer-events: none;
-    z-index: 50;
+    line-height: 1.2;
   }
+  .lap-count {
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  .crashed-hud { opacity: 0.5; color: #ff0000; border-color: #ff0000; }
 
   #instruction {
     position: fixed;
@@ -208,17 +201,15 @@
       gap: 8px;
     }
     .lap-box {
-      padding: 5px 10px;
-      font-size: 13px;
-      min-width: 90px;
+      padding: 4px 10px;
+      min-width: 50px;
       border-radius: 12px;
     }
-    #difficulty-box {
-      top: 18px;
-      right: 12px;
-      padding: 5px 10px;
-      font-size: 13px;
-      border-radius: 12px;
+    .lap-name {
+      font-size: 10px;
+    }
+    .lap-count {
+      font-size: 14px;
     }
     #instruction {
       bottom: 20px;
@@ -280,11 +271,10 @@
 </div>
 
 <div id="hud" class="hidden">
-  <div class="lap-box" id="p1-box" style="border-color: #ff4757;">RED: <span id="p1-lap">0</span> / 3</div>
-  <div class="lap-box" id="p2-box" style="border-color: #54a0ff;"><span id="p2-label">COM</span>: <span id="p2-lap">0</span> / 3</div>
+  <div class="lap-box" id="p1-box" style="border-color: #ff4757;"><div class="lap-name">RED</div><div class="lap-count"><span id="p1-lap">0</span> / 3</div></div>
+  <div class="lap-box" id="p2-box" style="border-color: #54a0ff;"><div class="lap-name"><span id="p2-label">COM</span></div><div class="lap-count"><span id="p2-lap">0</span> / 3</div></div>
+  <div class="lap-box" id="difficulty-box" style="border-color: #e0c3fc;"><div class="lap-name">COM</div><div class="lap-count" id="difficulty-text">よわい</div></div>
 </div>
-
-<div id="difficulty-box" class="hidden">COM: よわい</div>
 
 <div id="instruction" class="hidden">長押しで加速！<br>ブルッときたら2秒以内に離せばセーフ⚠️</div>
 
@@ -810,7 +800,7 @@ function startGame() {
   if (gameMode === '1P') {
     document.getElementById('instruction').innerHTML = "長押しで加速！<br>ブルッときたら2秒以内に離せばセーフ⚠️";
     document.getElementById('difficulty-box').classList.remove('hidden');
-    document.getElementById('difficulty-box').textContent = comLevel === 'EASY' ? 'COM: よわい' : 'COM: つよい';
+    document.getElementById('difficulty-text').textContent = comLevel === 'EASY' ? 'よわい' : 'つよい';
   } else {
     document.getElementById('instruction').innerHTML = "左側:RED 右側:BLUE<br>ブルッときたら2秒以内に離せばセーフ⚠️";
     document.getElementById('difficulty-box').classList.add('hidden');
