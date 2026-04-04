@@ -408,9 +408,10 @@
             this.type = Math.random() < 0.5 ? 1 : 2;
             this.w = 75;
             this.h = 75;
-            this.x = canvas.width; 
+            this.x = canvas.width;
             this.y = Math.random() * (canvas.height - this.h);
             this.speed = 2.5;
+            this.hp = 3;
             this.del = false;
         }
         draw() {
@@ -654,13 +655,18 @@
                 
                 // 弾と敵の衝突
                 bullets.forEach((b, j) => {
-                    if (b.x + b.w > e.x && b.x - b.w < e.x + e.w && 
-                        b.y + b.w > e.y && b.y - b.w < e.y + e.h) { 
+                    if (b.x + b.w > e.x && b.x - b.w < e.x + e.w &&
+                        b.y + b.w > e.y && b.y - b.w < e.y + e.h) {
                         playEnemyHit();
-                        enemies.splice(i, 1);
                         bullets.splice(j, 1);
-                        score += 10;
-                        for(let k=0; k<8; k++) particles.push(new Particle(e.x+e.w/2, e.y+e.h/2, '#ef4444'));
+                        e.hp--;
+                        if (e.hp <= 0) {
+                            enemies.splice(i, 1);
+                            score += 10;
+                            for(let k=0; k<8; k++) particles.push(new Particle(e.x+e.w/2, e.y+e.h/2, '#ef4444'));
+                        } else {
+                            for(let k=0; k<3; k++) particles.push(new Particle(b.x, b.y, '#fbbf24'));
+                        }
                     }
                 });
                 if (e.del) enemies.splice(i, 1);
