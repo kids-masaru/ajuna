@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>プログラミングめいろ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'M PLUS Rounded 1c',sans-serif;background:#eff6ff;touch-action:manipulation;user-select:none;-webkit-user-select:none;overflow:hidden;height:100dvh;}
+#home-btn{position:fixed;top:12px;left:12px;width:44px;height:44px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;box-shadow:0 4px 10px rgba(0,0,0,0.1);z-index:1000;border:2px solid #e0c3fc;}
+#app{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;gap:4px;position:relative;}
+#confetti-container{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:50;}
+.confetti-piece{position:absolute;top:-5%;animation:fall linear infinite;}
+@keyframes fall{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+#difficulty-bar{display:flex;gap:6px;justify-content:center;}
+#difficulty-bar button{padding:4px 14px;border-radius:999px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .1s;}
+#difficulty-bar button.active-easy{background:#22c55e;color:#fff;transform:scale(1.05);}
+#difficulty-bar button.active-normal{background:#3b82f6;color:#fff;transform:scale(1.05);}
+#difficulty-bar button.active-hard{background:#ef4444;color:#fff;transform:scale(1.05);}
+#difficulty-bar button.inactive{background:#fff;color:#666;border:1px solid #ccc;}
+#title-bar{background:#fff;border-radius:12px;padding:4px 12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);border-bottom:2px solid #bfdbfe;width:100%;max-width:400px;}
+#title-bar h1{font-size:14px;color:#2563eb;margin:0;}
+#title-bar .hint{font-size:10px;color:#16a34a;font-weight:700;margin:0;}
+#grid-wrapper{background:#fff;padding:6px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-bottom:2px solid #e5e7eb;width:100%;max-width:300px;aspect-ratio:1;flex-shrink:0;transition:all .3s;}
+#grid-wrapper.success-glow{box-shadow:0 0 20px #facc15;border-color:#facc15;}
+#grid{display:grid;gap:2px;width:100%;height:100%;}
+#grid .cell{border:1px solid #bbf7d0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;position:relative;overflow:hidden;}
+#grid .cell.obstacle{background:#166534;} 
+#grid .cell.empty{background:#f0fdf4;}
+#grid .cell .player-emoji{position:absolute;z-index:10;transition:transform .3s;}
+#grid .cell .player-emoji.failed{animation:bounce .3s infinite alternate;}
+#grid .cell .player-emoji.won{transform:scale(1.4) translateY(-4px);}
+#grid .cell .route-arrow{position:absolute;z-index:0;opacity:.25;color:#3b82f6;font-size:22px;transform:scale(1.3);}
+@keyframes bounce{0%{transform:translateY(0);}100%{transform:translateY(-6px);}}
+#status{height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+#control-panel{background:#fff;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);padding:8px;border-bottom:2px solid #e5e7eb;width:100%;max-width:400px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+#cmd-queue{background:#f3f4f6;border-radius:8px;padding:6px;min-height:36px;max-height:54px;display:flex;flex-wrap:wrap;gap:3px;align-items:center;overflow-y:auto;box-shadow:inset 0 1px 3px rgba(0,0,0,.06);}
+#cmd-queue .cmd-item{padding:2px 4px;border-radius:4px;color:#fff;background:#3b82f6;font-size:16px;line-height:1;transition:all .2s;}
+#cmd-queue .cmd-item.active{background:#facc15;transform:scale(1.1);box-shadow:0 1px 4px rgba(0,0,0,.2);}
+#cmd-queue .placeholder{color:#9ca3af;font-size:11px;}
+#arrow-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+#arrow-btns button{padding:6px;background:#dbeafe;color:#1d4ed8;border:none;border-radius:8px;font-size:22px;font-weight:700;cursor:pointer;border-bottom:2px solid #93c5fd;transition:all .05s;}
+#arrow-btns button:active{border-bottom:0;transform:translateY(2px);}
+#arrow-btns button:disabled{opacity:.4;}
+#action-btns{display:flex;gap:4px;}
+#action-btns button{padding:6px 10px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all .05s;}
+#btn-del{background:#fee2e2;color:#dc2626;flex-shrink:0;}
+#btn-clear{background:#f3f4f6;color:#666;flex-shrink:0;}
+#btn-start{flex:1;background:#22c55e;color:#fff;border-bottom:3px solid #15803d;font-size:13px;}
+#btn-start:active{border-bottom:0;transform:translateY(3px);}
+#btn-start:disabled{background:#d1d5db;border-color:#9ca3af;transform:none;}
+#btn-retry{flex:1;background:#facc15;color:#713f12;border-bottom:3px solid #a16207;font-size:13px;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.7;}}
+#success-btns{display:flex;gap:6px;width:100%;}
+#success-btns button{flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+#btn-again{background:#e5e7eb;color:#374151;}
+#btn-next{background:#22c55e;color:#fff;border-bottom:3px solid #15803d;animation:bounce2 .6s infinite alternate;}
+@keyframes bounce2{0%{transform:translateY(0);}100%{transform:translateY(-3px);}}
+#btn-allclear{background:#facc15;color:#713f12;flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;}
+</style>
+</head>
+<body>
+<a href="index.html" id="home-btn">🏠</a>
+<div id="app">
+<div id="confetti-container"></div>
+<div id="difficulty-bar"></div>
+<div id="title-bar"><h1 id="level-title"></h1><p class="hint" id="hint-text"></p></div>
+<div id="grid-wrapper"><div id="grid"></div></div>
+<div id="status"></div>
+<div id="control-panel">
+<div id="cmd-queue"><span class="placeholder">ここにしれい（やじるし）がならぶよ</span></div>
+<div id="arrow-btns">
+<button onclick="addCmd('UP')">▲</button>
+<button onclick="addCmd('DOWN')">▼</button>
+<button onclick="addCmd('LEFT')">◀</button>
+<button onclick="addCmd('RIGHT')">▶</button>
+</div>
+<div id="action-btns">
+<button id="btn-del" onclick="removeLast()">✕</button>
+<button id="btn-clear" onclick="clearCmds()">ぜんぶけす</button>
+<button id="btn-start" onclick="runProgram()">▶ スタート！</button>
+<button id="btn-retry" style="display:none" onclick="retry()">↺ やりなおす</button>
+</div>
+<div id="success-btns" style="display:none"></div>
+</div>
+</div>
+<script>
+const THEMES=[
+{player:'🐶',obstacle:'🌳',goal:'🦴',name:'ワンちゃん',bgObs:'#166534',bgEmpty:'#f0fdf4'},
+{player:'🐱',obstacle:'💧',goal:'🐟',name:'ネコちゃん',bgObs:'#1e40af',bgEmpty:'#eff6ff'},
+{player:'🐰',obstacle:'🪨',goal:'🥕',name:'ウサギさん',bgObs:'#4b5563',bgEmpty:'#fff7ed'},
+{player:'🐵',obstacle:'🌵',goal:'🍌',name:'おサルさん',bgObs:'#15803d',bgEmpty:'#fefce8'},
+{player:'🐼',obstacle:'🎍',goal:'🎋',name:'パンダさん',bgObs:'#14532d',bgEmpty:'#ecfdf5'}
+];
+const CMDS={UP:{dx:0,dy:-1,arrow:'▲'},DOWN:{dx:0,dy:1,arrow:'▼'},LEFT:{dx:-1,dy:0,arrow:'◀'},RIGHT:{dx:1,dy:0,arrow:'▶'}};
+const BASE_MAPS={
+EASY:[
+"S....\n.....\n.....\n.....\n....G",
+"S....\n.X...\n.X...\n.X...\n.X..G",
+"S.XXX\n..X..\n..X..\n..X..\n....G",
+"S....\nXXXX.\n.....\n.XXXX\n....G",
+".....\nSXXX.\n...X.\n...XG\n.....",
+"S.X..\n..X..\n.XXX.\n...X.\n...XG",
+"S.X..\n.XX..\n.....\n..XX.\n...XG",
+"S.X..\n.XX..\n.XXX.\n.....\n....G",
+"S.XX.\n...X.\n...X.\n.X...\n.X..G",
+"S....\n.XXXX\n.X..G\n.X.XX\n.X..."
+],
+NORMAL:[
+"S.....\n.X....\n.X....\n.X....\n.X....\n.....G",
+"S.XXXX\n..X...\n..X...\n..X...\n..X...\n.....G",
+"S....X\nXXXX.X\n.....X\n.XXXXX\n.....X\n.....G",
+"S.X...\n.XX...\n.XX.X.\n....X.\n..XXX.\n.....G",
+"S.X.X.\n..X.X.\n.XX.X.\n.X..X.\n.X.XX.\n.....G",
+"S.X.XX\n.XX.XX\n.X...X\n.XXX.X\n.....X\n.XXXXG",
+"S.XX..\n...X..\n.XXX.X\n.X...X\n.X.XXX\n.X...G",
+"S....X\n.XXXXX\n.X...G\n.X.XXX\n.X...X\n.XXXXX",
+"S.X...\n..X.X.\n.XX.X.\n....X.\n.XXXX.\n.....G",
+"S.....\n.XXXX.\n.X..X.\n.X.GX.\n.X....\n.XXXXX"
+],
+HARD:[
+"S.X....\n..X....\n..X....\n..X.XX.\n..X.XX.\n..X....\n......G",
+"S....XX\nXXXX.XX\n.......\n.XXXXXX\n.......\nXXXXXX.\n......G",
+"S.X.X.X\n..X.X.X\n.XX.X.X\n.X..X.X\n.X.XX.X\n.X....X\n......G",
+"S.XXX..\n..X.X..\n.XX.X..\n.X..X.X\n.X.XX.X\n.X....X\n.X.XXXXG",
+"S.X.XX.\n.XX.XX.\n.X...X.\n.XXX.X.\n.....X.\n.XXXXX.\n......G",
+"S.XX...\n...X.X.\n.XXX.X.\n.X...X.\n.X.XXX.\n.X...X.\n.XXX.XG",
+"S....XX\n.XXXXXX\n.X....X\n.X.XX.X\n.X.XX.X\n.X....X\n.XXXXXG",
+"S.X....\n.XX.XXX\n.X....X\n.X.XX.X\n.X.XX.X\n.X....X\n.XXXXXG",
+"S.X.X..\n..X.X.X\n.XX.X.X\n.X..X.X\n.X.XX.X\n.X....X\n.XXXXXXG",
+"S......\n.XXXXX.\n.X...X.\n.X.X.X.\n.X.XGX.\n.X.....\n.XXXXXX"
+]};
+
+let difficulty='EASY',levelIdx=0,variant=0,theme=THEMES[0];
+let playerPos={x:0,y:0},commands=[],gameState='IDLE',activeIdx=-1,level=null;
+
+function transformMap(mapStr,v){
+const rows=mapStr.trim().split('\n');const s=rows.length;const g=rows.map(r=>r.split(''));
+if(v===0)return mapStr;
+let n=Array(s).fill(0).map(()=>Array(s).fill('.'));
+if(v===1){for(let y=0;y<s;y++)for(let x=0;x<s;x++)n[x][s-1-y]=g[y][x];}
+else{for(let y=0;y<s;y++)for(let x=0;x<s;x++)n[s-1-y][s-1-x]=g[y][x];}
+return n.map(r=>r.join('')).join('\n');
+}
+
+function parseMap(){
+const mapStr=transformMap(BASE_MAPS[difficulty][levelIdx],variant);
+const rows=mapStr.trim().split('\n');const size=rows.length;
+let start={x:0,y:0},goal={x:0,y:0};const obstacles=[];
+rows.forEach((row,y)=>{for(let x=0;x<row.length;x++){
+if(row[x]==='S')start={x,y};else if(row[x]==='G')goal={x,y};else if(row[x]==='X')obstacles.push({x,y});
+}});
+return{gridSize:size,start,goal,obstacles};
+}
+
+function playSound(type){
+try{
+const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+if(!window._actx)window._actx=new AC();const ctx=window._actx;
+if(ctx.state==='suspended')ctx.resume();
+const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);const n=ctx.currentTime;
+if(type==='button'){o.type='sine';o.frequency.setValueAtTime(600,n);o.frequency.exponentialRampToValueAtTime(1000,n+.05);g.gain.setValueAtTime(.1,n);g.gain.exponentialRampToValueAtTime(.01,n+.05);o.start(n);o.stop(n+.05);}
+else if(type==='delete'){o.type='sine';o.frequency.setValueAtTime(500,n);o.frequency.exponentialRampToValueAtTime(300,n+.05);g.gain.setValueAtTime(.1,n);g.gain.exponentialRampToValueAtTime(.01,n+.05);o.start(n);o.stop(n+.05);}
+else if(type==='move'){o.type='triangle';o.frequency.setValueAtTime(300,n);o.frequency.exponentialRampToValueAtTime(450,n+.1);g.gain.setValueAtTime(.05,n);g.gain.exponentialRampToValueAtTime(.01,n+.1);o.start(n);o.stop(n+.1);}
+else if(type==='success'){o.type='square';o.frequency.setValueAtTime(523.25,n);o.frequency.setValueAtTime(659.25,n+.1);o.frequency.setValueAtTime(783.99,n+.2);o.frequency.setValueAtTime(1046.5,n+.3);g.gain.setValueAtTime(.1,n);g.gain.linearRampToValueAtTime(0,n+.6);o.start(n);o.stop(n+.6);}
+else if(type==='error'){o.type='sawtooth';o.frequency.setValueAtTime(150,n);o.frequency.linearRampToValueAtTime(100,n+.3);g.gain.setValueAtTime(.1,n);g.gain.linearRampToValueAtTime(0,n+.3);o.start(n);o.stop(n+.3);}
+}catch(e){}
+}
+
+function initLevel(){
+level=parseMap();playerPos={...level.start};commands=[];gameState='IDLE';activeIdx=-1;
+render();
+}
+
+function setDifficulty(d){
+if(gameState==='RUNNING')return;playSound('button');
+difficulty=d;levelIdx=0;variant=Math.floor(Math.random()*3);
+theme=THEMES[Math.floor(Math.random()*THEMES.length)];initLevel();
+}
+
+function addCmd(id){
+if(gameState!=='IDLE'&&gameState!=='FAILED')return;if(commands.length>=60)return;
+playSound('button');commands.push(id);
+if(gameState==='FAILED'){playerPos={...level.start};gameState='IDLE';}
+render();
+}
+
+function removeLast(){
+if(gameState!=='IDLE'&&gameState!=='FAILED')return;if(commands.length===0)return;
+playSound('delete');commands.pop();
+if(gameState==='FAILED'){playerPos={...level.start};gameState='IDLE';}
+render();
+}
+
+function clearCmds(){
+if(gameState!=='IDLE'&&gameState!=='FAILED')return;
+playSound('delete');commands=[];playerPos={...level.start};gameState='IDLE';render();
+}
+
+function retry(){
+playSound('button');playerPos={...level.start};
+if(gameState==='FAILED'&&commands.length>0)commands.pop();
+else if(gameState==='SUCCESS')commands=[];
+gameState='IDLE';activeIdx=-1;render();
+}
+
+function nextLevel(){
+playSound('button');
+if(levelIdx<9){levelIdx++;variant=Math.floor(Math.random()*3);theme=THEMES[Math.floor(Math.random()*THEMES.length)];initLevel();}
+}
+
+async function runProgram(){
+if(commands.length===0||gameState==='RUNNING')return;
+playSound('button');gameState='RUNNING';playerPos={...level.start};render();
+let cx=level.start.x,cy=level.start.y,failed=false;
+await sleep(400);
+for(let i=0;i<commands.length;i++){
+activeIdx=i;const cmd=CMDS[commands[i]];cx+=cmd.dx;cy+=cmd.dy;
+playSound('move');playerPos={x:cx,y:cy};render();
+const oob=cx<0||cx>=level.gridSize||cy<0||cy>=level.gridSize;
+const hit=level.obstacles.some(o=>o.x===cx&&o.y===cy);
+if(oob||hit){failed=true;break;}
+await sleep(400);
+}
+activeIdx=-1;
+if(failed){playSound('error');gameState='FAILED';}
+else if(cx===level.goal.x&&cy===level.goal.y){playSound('success');gameState='SUCCESS';showConfetti();}
+else{playSound('error');gameState='FAILED';}
+render();
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function getExpectedRoute(){
+if(difficulty!=='EASY'||(gameState!=='IDLE'&&gameState!=='FAILED'))return[];
+let cx=level.start.x,cy=level.start.y;const route=[];
+for(let i=0;i<commands.length;i++){
+const cmd=CMDS[commands[i]];cx+=cmd.dx;cy+=cmd.dy;
+if(cx<0||cx>=level.gridSize||cy<0||cy>=level.gridSize)break;
+if(level.obstacles.some(o=>o.x===cx&&o.y===cy))break;
+route.push({x:cx,y:cy,cmdId:commands[i]});
+}
+return route;
+}
+
+function showConfetti(){
+const c=document.getElementById('confetti-container');c.innerHTML='';
+const colors=['#FFD700','#FF69B4','#00FFFF','#32CD32','#FF4500'];
+for(let i=0;i<50;i++){
+const d=document.createElement('div');d.className='confetti-piece';
+const sz=(Math.random()*6+6)+'px';
+Object.assign(d.style,{left:Math.random()*100+'%',width:sz,height:sz,
+backgroundColor:colors[Math.floor(Math.random()*5)],
+borderRadius:Math.random()>.5?'50%':'0',
+animationDuration:(Math.random()*1.5+1)+'s',
+animationDelay:(Math.random()*.5)+'s'});
+c.appendChild(d);
+}
+setTimeout(()=>c.innerHTML='',4000);
+}
+
+function render(){
+// Difficulty bar
+const db=document.getElementById('difficulty-bar');
+db.innerHTML=[{id:'EASY',label:'かんたん',cls:'active-easy'},{id:'NORMAL',label:'ふつう',cls:'active-normal'},{id:'HARD',label:'むずかしい',cls:'active-hard'}]
+.map(d=>`<button class="${difficulty===d.id?d.cls:'inactive'}" onclick="setDifficulty('${d.id}')" ${gameState==='RUNNING'?'disabled':''}>${d.label}</button>`).join('');
+
+// Title
+document.getElementById('level-title').textContent=`${theme.name}の大冒険：レベル${levelIdx+1} (${levelIdx+1}/10)`;
+document.getElementById('hint-text').textContent=difficulty==='EASY'?'💡 かんたんモード：すすむ道が見えるよ！':'';
+
+// Grid
+const gw=document.getElementById('grid-wrapper');
+gw.classList.toggle('success-glow',gameState==='SUCCESS');
+const grid=document.getElementById('grid');
+grid.style.gridTemplateColumns=`repeat(${level.gridSize},1fr)`;
+grid.style.gridTemplateRows=`repeat(${level.gridSize},1fr)`;
+const route=getExpectedRoute();
+let html='';
+const fs=level.gridSize>=7?'16px':'20px';
+for(let y=0;y<level.gridSize;y++){for(let x=0;x<level.gridSize;x++){
+const isObs=level.obstacles.some(o=>o.x===x&&o.y===y);
+const isGoal=level.goal.x===x&&level.goal.y===y;
+const isPlayer=playerPos.x===x&&playerPos.y===y;
+const routeStep=route.findLast(s=>s.x===x&&s.y===y);
+const bg=isObs?theme.bgObs:theme.bgEmpty;
+html+=`<div class="cell${isObs?' obstacle':' empty'}" style="background:${bg};font-size:${fs}">`;
+if(isObs)html+=theme.obstacle;
+if(isGoal&&!isPlayer)html+=`<span style="${gameState==='SUCCESS'?'transform:scale(1.4);transition:.5s':''}">${theme.goal}</span>`;
+if(routeStep&&!isPlayer&&!isObs&&!isGoal)html+=`<span class="route-arrow">${CMDS[routeStep.cmdId].arrow}</span>`;
+if(isPlayer)html+=`<span class="player-emoji${gameState==='FAILED'?' failed':''}${gameState==='SUCCESS'?' won':''}">${theme.player}</span>`;
+html+='</div>';
+}}
+grid.innerHTML=html;
+
+// Status
+const st=document.getElementById('status');
+if(gameState==='SUCCESS')st.innerHTML='<span style="color:#eab308;animation:pulse 1s infinite">🎉 ゴール！だいせいこう！ 🎉</span>';
+else if(gameState==='FAILED')st.innerHTML='<span style="color:#ef4444">💦 あちゃー、やりなおそう！</span>';
+else st.textContent='';
+
+// Command queue
+const cq=document.getElementById('cmd-queue');
+if(commands.length===0&&gameState==='IDLE')cq.innerHTML='<span class="placeholder">ここにしれい（やじるし）がならぶよ</span>';
+else cq.innerHTML=commands.map((c,i)=>`<span class="cmd-item${activeIdx===i?' active':''}">${CMDS[c].arrow}</span>`).join('');
+
+// Buttons
+const dis=gameState==='RUNNING';
+document.querySelectorAll('#arrow-btns button').forEach(b=>b.disabled=dis);
+document.getElementById('btn-del').disabled=commands.length===0||dis;
+document.getElementById('btn-clear').disabled=commands.length===0||dis;
+
+const btnStart=document.getElementById('btn-start');
+const btnRetry=document.getElementById('btn-retry');
+const successBtns=document.getElementById('success-btns');
+
+if(gameState==='SUCCESS'){
+btnStart.style.display='none';btnRetry.style.display='none';
+successBtns.style.display='flex';
+document.getElementById('arrow-btns').style.display='none';
+document.getElementById('btn-del').style.display='none';
+document.getElementById('btn-clear').style.display='none';
+if(levelIdx<9)successBtns.innerHTML=`<button id="btn-again" onclick="retry()">↺ もういちど</button><button id="btn-next" onclick="nextLevel()">つぎへ ▶</button>`;
+else successBtns.innerHTML=`<button id="btn-allclear">🏆 全クリ！おめでとう！</button>`;
+}else if(gameState==='FAILED'){
+btnStart.style.display='none';btnRetry.style.display='flex';
+successBtns.style.display='none';
+document.getElementById('arrow-btns').style.display='grid';
+document.getElementById('btn-del').style.display='';
+document.getElementById('btn-clear').style.display='';
+}else{
+btnStart.style.display='flex';btnRetry.style.display='none';
+btnStart.disabled=commands.length===0||dis;
+successBtns.style.display='none';
+document.getElementById('arrow-btns').style.display='grid';
+document.getElementById('btn-del').style.display='';
+document.getElementById('btn-clear').style.display='';
+}
+}
+
+// Init
+theme=THEMES[Math.floor(Math.random()*THEMES.length)];
+variant=Math.floor(Math.random()*3);
+initLevel();
+</script>
+</body>
+</html>
