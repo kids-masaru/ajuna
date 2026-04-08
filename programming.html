@@ -122,19 +122,19 @@ NORMAL:[
 ],
 HARD:[
 "S.X....\n..X....\n..X....\n..X.XX.\n..X.XX.\n..X....\n......G",
-"S....XX\nXXXX.XX\n.......\n.XXXXXX\n.......\nXXXXXX.\n......G",
-"S.X.X.X\n..X.X.X\n.XX.X.X\n.X..X.X\n.X.XX.X\n.X....X\n......G",
-"S.XXX..\n..X.X..\n.XX.X..\n.X..X.X\n.X.XX.X\n.X....X\n.X.XXXXG",
-"S.X.XX.\n.XX.XX.\n.X...X.\n.XXX.X.\n.....X.\n.XXXXX.\n......G",
-"S.XX...\n...X.X.\n.XXX.X.\n.X...X.\n.X.XXX.\n.X...X.\n.XXX.XG",
-"S....XX\n.XXXXXX\n.X....X\n.X.XX.X\n.X.XX.X\n.X....X\n.XXXXXG",
-"S.X....\n.XX.XXX\n.X....X\n.X.XX.X\n.X.XX.X\n.X....X\n.XXXXXG",
-"S.X.X..\n..X.X.X\n.XX.X.X\n.X..X.X\n.X.XX.X\n.X....X\n.XXXXXXG",
-"S......\n.XXXXX.\n.X...X.\n.X.X.X.\n.X.XGX.\n.X.....\n.XXXXXX"
+"S....XX\nXXXX.XX\n..C....\n.XXXXXX\n.......\nXXXXXX.\n......G",
+"S.X.X.X\n..X.X.X\n.XX.X.X\n.X..X.X\n.X.XX.X\n.XC...X\n......G",
+"S.XXX..\n..X.X..\n.XX.X..\n.XC.X.X\n.X.XX.X\n.X....X\n.X.XXXXG",
+"S.X.XX.\n.XX.XX.\n.XC..X.\n.XXX.X.\n.....X.\n.XXXXX.\n......G",
+"S.XX...\n...X.X.\n.XXX.X.\n.X..CX.\n.X.XXX.\n.X...X.\n.XXX.XG",
+"S....XX\n.XXXXXX\n.X.C..X\n.X.XX.X\n.X.XX.X\n.X....X\n.XXXXXG",
+"S.X....\n.XX.XXX\n.XC...X\n.X.XX.X\n.X.XXCX\n.X....X\n.XXXXXG",
+"S.X.X..\n..X.X.X\n.XXCX.X\n.X..X.X\n.X.XX.X\n.X..C.X\n.XXXXXXG",
+"S......\n.XXXXX.\n.X.C.X.\n.X.X.X.\n.X.XGX.\n.XC....\n.XXXXXX"
 ]};
 
 let difficulty='EASY',levelIdx=0,variant=0,theme=THEMES[0];
-let playerPos={x:0,y:0},commands=[],gameState='IDLE',activeIdx=-1,level=null;
+let playerPos={x:0,y:0},commands=[],gameState='IDLE',activeIdx=-1,level=null,collected=[];
 
 function transformMap(mapStr,v){
 const rows=mapStr.trim().split('\n');const s=rows.length;const g=rows.map(r=>r.split(''));
@@ -148,11 +148,12 @@ return n.map(r=>r.join('')).join('\n');
 function parseMap(){
 const mapStr=transformMap(BASE_MAPS[difficulty][levelIdx],variant);
 const rows=mapStr.trim().split('\n');const size=rows.length;
-let start={x:0,y:0},goal={x:0,y:0};const obstacles=[];
+let start={x:0,y:0},goal={x:0,y:0};const obstacles=[];const checkpoints=[];
 rows.forEach((row,y)=>{for(let x=0;x<row.length;x++){
 if(row[x]==='S')start={x,y};else if(row[x]==='G')goal={x,y};else if(row[x]==='X')obstacles.push({x,y});
+else if(row[x]==='C')checkpoints.push({x,y});
 }});
-return{gridSize:size,start,goal,obstacles};
+return{gridSize:size,start,goal,obstacles,checkpoints};
 }
 
 function playSound(type){
@@ -170,7 +171,7 @@ else if(type==='error'){o.type='sawtooth';o.frequency.setValueAtTime(150,n);o.fr
 }
 
 function initLevel(){
-level=parseMap();playerPos={...level.start};commands=[];gameState='IDLE';activeIdx=-1;
+level=parseMap();playerPos={...level.start};commands=[];gameState='IDLE';activeIdx=-1;collected=[];
 render();
 }
 
@@ -200,7 +201,7 @@ playSound('delete');commands=[];playerPos={...level.start};gameState='IDLE';rend
 }
 
 function retry(){
-playSound('button');playerPos={...level.start};
+playSound('button');playerPos={...level.start};collected=[];
 if(gameState==='FAILED'&&commands.length>0)commands.pop();
 else if(gameState==='SUCCESS')commands=[];
 gameState='IDLE';activeIdx=-1;render();
@@ -213,20 +214,25 @@ if(levelIdx<9){levelIdx++;variant=Math.floor(Math.random()*3);theme=THEMES[Math.
 
 async function runProgram(){
 if(commands.length===0||gameState==='RUNNING')return;
-playSound('button');gameState='RUNNING';playerPos={...level.start};render();
+playSound('button');gameState='RUNNING';playerPos={...level.start};collected=[];render();
 let cx=level.start.x,cy=level.start.y,failed=false;
 await sleep(400);
 for(let i=0;i<commands.length;i++){
 activeIdx=i;const cmd=CMDS[commands[i]];cx+=cmd.dx;cy+=cmd.dy;
-playSound('move');playerPos={x:cx,y:cy};render();
+playSound('move');playerPos={x:cx,y:cy};
+// アイテム拾い判定
+const cpIdx=level.checkpoints.findIndex(c=>c.x===cx&&c.y===cy);
+if(cpIdx!==-1&&!collected.includes(cpIdx)){collected.push(cpIdx);playSound('button');}
+render();
 const oob=cx<0||cx>=level.gridSize||cy<0||cy>=level.gridSize;
 const hit=level.obstacles.some(o=>o.x===cx&&o.y===cy);
 if(oob||hit){failed=true;break;}
 await sleep(400);
 }
 activeIdx=-1;
+const allCollected=collected.length>=level.checkpoints.length;
 if(failed){playSound('error');gameState='FAILED';}
-else if(cx===level.goal.x&&cy===level.goal.y){playSound('success');gameState='SUCCESS';showConfetti();}
+else if(cx===level.goal.x&&cy===level.goal.y&&allCollected){playSound('success');gameState='SUCCESS';showConfetti();}
 else{playSound('error');gameState='FAILED';}
 render();
 }
@@ -269,7 +275,9 @@ db.innerHTML=[{id:'EASY',label:'かんたん',cls:'active-easy'},{id:'NORMAL',la
 
 // Title
 document.getElementById('level-title').textContent=`${theme.name}の大冒険：レベル${levelIdx+1} (${levelIdx+1}/10)`;
-document.getElementById('hint-text').textContent=difficulty==='EASY'?'💡 かんたんモード：すすむ道が見えるよ！':'';
+if(difficulty==='EASY')document.getElementById('hint-text').textContent='💡 かんたんモード：すすむ道が見えるよ！';
+else if(difficulty==='HARD'&&level.checkpoints.length>0)document.getElementById('hint-text').innerHTML='⭐ <span style="color:#eab308">'+collected.length+'/'+level.checkpoints.length+'</span> アイテムを全部あつめてからゴールしよう！';
+else document.getElementById('hint-text').textContent='';
 
 // Grid
 const gw=document.getElementById('grid-wrapper');
@@ -284,12 +292,15 @@ for(let y=0;y<level.gridSize;y++){for(let x=0;x<level.gridSize;x++){
 const isObs=level.obstacles.some(o=>o.x===x&&o.y===y);
 const isGoal=level.goal.x===x&&level.goal.y===y;
 const isPlayer=playerPos.x===x&&playerPos.y===y;
+const cpI=level.checkpoints.findIndex(c=>c.x===x&&c.y===y);
+const isCp=cpI!==-1&&!collected.includes(cpI);
 const routeStep=route.findLast(s=>s.x===x&&s.y===y);
 const bg=isObs?theme.bgObs:theme.bgEmpty;
 html+=`<div class="cell${isObs?' obstacle':' empty'}" style="background:${bg};font-size:${fs}">`;
 if(isObs)html+=theme.obstacle;
+if(isCp&&!isPlayer)html+='<span style="animation:pulse 1.5s infinite">⭐</span>';
 if(isGoal&&!isPlayer)html+=`<span style="${gameState==='SUCCESS'?'transform:scale(1.4);transition:.5s':''}">${theme.goal}</span>`;
-if(routeStep&&!isPlayer&&!isObs&&!isGoal)html+=`<span class="route-arrow">${CMDS[routeStep.cmdId].arrow}</span>`;
+if(routeStep&&!isPlayer&&!isObs&&!isGoal&&!isCp)html+=`<span class="route-arrow">${CMDS[routeStep.cmdId].arrow}</span>`;
 if(isPlayer)html+=`<span class="player-emoji${gameState==='FAILED'?' failed':''}${gameState==='SUCCESS'?' won':''}">${theme.player}</span>`;
 html+='</div>';
 }}
