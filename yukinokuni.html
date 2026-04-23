@@ -406,8 +406,8 @@
     class Enemy {
         constructor() {
             this.type = Math.random() < 0.5 ? 1 : 2;
-            this.w = 75;
-            this.h = 75;
+            this.w = 45;
+            this.h = 45;
             this.x = canvas.width;
             this.y = Math.random() * (canvas.height - this.h);
             this.speed = 2.5;
@@ -426,8 +426,8 @@
 
     class Boss {
         constructor() {
-            this.w = 360;
-            this.h = 300;
+            this.w = 216;
+            this.h = 180;
             this.x = canvas.width;
             this.y = canvas.height/2 - this.h/2;
             this.hp = 150; // ボスを少しタフに

@@ -236,6 +236,9 @@
               currentStrokePixelsRef.current = calcStrokePixels(paths[0]);
             } else {
               // 書き順データなし：薄いオレンジで文字全体をガイド表示
+              ctx.font = `bold ${CANVAS_SIZE * 0.75}px "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Meiryo", sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
               ctx.fillStyle = '#fdba74';
               ctx.fillText(letter, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.05);
               currentStrokePixelsRef.current = [];
