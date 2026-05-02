@@ -64,17 +64,17 @@ function generatePreviewItems(req) {
   const isGunkan = hasNori && req.ikura;
   let id = 0;
   if (is2) {
-    const offsets = [-30, 30];
+    const yOffsets = [-28, 28];
     for (let i = 0; i < 2; i++) {
-      const cx = 120 + offsets[i];
+      const cy = 115 + yOffsets[i];
       let z = i * 10 + 1;
-      items.push({ id: `pv${id++}`, baseId: 'shari', type: 'css', x: cx, y: 130, rotation: 0, zIndex: z++ });
-      if (hasWasabi) items.push({ id: `pv${id++}`, baseId: 'wasabi', type: 'css', x: cx - 8, y: 123, rotation: 0, zIndex: z++ });
-      if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: cx, y: 120, rotation: 90, zIndex: z++ });
+      items.push({ id: `pv${id++}`, baseId: 'shari', type: 'css', x: 120, y: cy + 10, rotation: 0, zIndex: z++ });
+      if (hasWasabi) items.push({ id: `pv${id++}`, baseId: 'wasabi', type: 'css', x: 108, y: cy + 5, rotation: 0, zIndex: z++ });
+      if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: 120, y: cy, rotation: 90, zIndex: z++ });
       const n = neta[i] || neta[0];
       if (n) {
         const ing = INGREDIENTS.find(x => x.id === n[0]);
-        items.push({ id: `pv${id++}`, baseId: n[0], type: ing?.type || 'css', emoji: ing?.emoji, x: cx, y: isGunkan ? 100 : 110, rotation: 0, zIndex: z++ });
+        items.push({ id: `pv${id++}`, baseId: n[0], type: ing?.type || 'css', emoji: ing?.emoji, x: 120, y: isGunkan ? cy - 10 : cy - 5, rotation: 0, zIndex: z++ });
       }
     }
   } else {
