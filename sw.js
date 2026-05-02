@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v25';
+const CACHE_NAME = 'ajuna-v26';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -31,6 +31,7 @@ const LOCAL_FILES = [
   './boss.png',
   './haikei.png',
   './programming.html',
+  './sushi.html',
 ];
 
 // インストール時：ローカルファイルを全部キャッシュ
