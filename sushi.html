@@ -244,6 +244,22 @@ function App() {
     }
   };
 
+  const clearAllItems = () => {
+    if (isConveying || resultStatus !== null) return;
+    playSound('grab'); setItems([]); setSelectedId(null);
+  };
+
+  const undoLastItem = () => {
+    if (isConveying || resultStatus !== null) return;
+    playSound('grab');
+    setItems(prev => {
+      if (prev.length === 0) return prev;
+      const removed = prev[prev.length - 1];
+      if (selectedId === removed.id) setSelectedId(null);
+      return prev.slice(0, -1);
+    });
+  };
+
   const submitSushi = () => {
     if (isConveying || resultStatus !== null || !currentOrder) return;
     setSelectedId(null);
@@ -409,6 +425,14 @@ function App() {
               </div>
             )}
 
+            <div className="absolute bottom-2 left-3 z-10 flex gap-2">
+              <button onClick={undoLastItem} disabled={isConveying || resultStatus !== null || items.length === 0}
+                className={`w-12 h-12 rounded-full font-black text-lg shadow-md border-2 flex items-center justify-center
+                  ${(isConveying || resultStatus !== null || items.length === 0) ? 'bg-gray-300 border-gray-400 text-gray-400' : 'bg-yellow-400 border-yellow-600 text-yellow-800 active:scale-95'}`}>↩</button>
+              <button onClick={clearAllItems} disabled={isConveying || resultStatus !== null || items.length === 0}
+                className={`w-12 h-12 rounded-full font-black text-xs shadow-md border-2 flex items-center justify-center
+                  ${(isConveying || resultStatus !== null || items.length === 0) ? 'bg-gray-300 border-gray-400 text-gray-400' : 'bg-red-400 border-red-600 text-white active:scale-95'}`}>全消し</button>
+            </div>
             <div className="absolute bottom-2 right-3 z-10">
               <button onClick={submitSushi} disabled={isConveying || resultStatus !== null}
                 className={`w-20 h-20 rounded-full font-black text-base shadow-lg border-4 transition-transform active:scale-95 flex flex-col items-center justify-center
