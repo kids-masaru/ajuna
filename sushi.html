@@ -189,15 +189,15 @@ function App() {
     e.stopPropagation();
     e.target.setPointerCapture(e.pointerId);
     initAudio(); playSound('grab');
-    const nz = maxZ + 1; setMaxZ(nz); setSelectedId(id);
-    setItems(items.map(i => i.id === id ? { ...i, zIndex: nz } : i));
+    setMaxZ(prev => { const nz = prev + 1; setItems(p => p.map(i => i.id === id ? { ...i, zIndex: nz } : i)); return nz; });
+    setSelectedId(id);
     setDragInfo({ id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY });
   };
 
   const handlePointerMove = (e) => {
     if (!dragInfo) return;
     const dx = e.clientX - dragInfo.pointerX, dy = e.clientY - dragInfo.pointerY;
-    setItems(items.map(i => i.id === dragInfo.id ? { ...i, x: dragInfo.startX + dx, y: dragInfo.startY + dy } : i));
+    setItems(prev => prev.map(i => i.id === dragInfo.id ? { ...i, x: dragInfo.startX + dx, y: dragInfo.startY + dy } : i));
   };
 
   const handlePointerUp = () => { if (dragInfo) { playSound('put'); setDragInfo(null); } };
@@ -206,33 +206,42 @@ function App() {
   const addItem = (baseItem) => {
     if (isConveying || gameState !== 'playing' || resultStatus !== null) return;
     initAudio(); playSound('put');
-    const nz = maxZ + 1; setMaxZ(nz);
     const ox = Math.random() * 20 - 10, oy = Math.random() * 20 - 10;
-    const newItem = {
-      id: `item-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-      baseId: baseItem.id, type: baseItem.type, emoji: baseItem.emoji,
-      x: 100 + ox, y: 100 + oy, rotation: 0, zIndex: nz,
-    };
-    setItems([...items, newItem]);
-    setSelectedId(newItem.id);
+    const newId = `item-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+    setMaxZ(prev => {
+      const nz = prev + 1;
+      const newItem = {
+        id: newId, baseId: baseItem.id, type: baseItem.type, emoji: baseItem.emoji,
+        x: 100 + ox, y: 100 + oy, rotation: 0, zIndex: nz,
+      };
+      setItems(p => [...p, newItem]);
+      return nz;
+    });
+    setSelectedId(newId);
   };
 
   const updateSelectedItem = (changes) => {
     if (!selectedId || isConveying) return;
-    setItems(items.map(i => i.id === selectedId ? { ...i, ...changes } : i));
+    setItems(prev => prev.map(i => i.id === selectedId ? { ...i, ...changes } : i));
   };
 
   const deleteSelectedItem = () => {
     if (!selectedId || isConveying) return;
-    playSound('grab'); setItems(items.filter(i => i.id !== selectedId)); setSelectedId(null);
+    playSound('grab'); setItems(prev => prev.filter(i => i.id !== selectedId)); setSelectedId(null);
   };
 
   const moveZ = (dir) => {
     if (!selectedId || isConveying) return;
-    const item = items.find(i => i.id === selectedId); if (!item) return;
     playSound('grab');
-    if (dir === 'up') { const nz = maxZ + 1; setMaxZ(nz); updateSelectedItem({ zIndex: nz }); }
-    else updateSelectedItem({ zIndex: Math.max(1, item.zIndex - 1) });
+    if (dir === 'up') {
+      setMaxZ(prev => {
+        const nz = prev + 1;
+        setItems(p => p.map(i => i.id === selectedId ? { ...i, zIndex: nz } : i));
+        return nz;
+      });
+    } else {
+      setItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: Math.max(1, i.zIndex - 1) } : i));
+    }
   };
 
   const submitSushi = () => {
@@ -240,10 +249,11 @@ function App() {
     setSelectedId(null);
     const cc = {};
     items.forEach(item => { cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
-    let ok = true;
     const req = currentOrder.requiredCounts;
-    for (const [k, v] of Object.entries(req)) { if ((cc[k]||0) !== v) { ok = false; break; } }
-    if (ok) for (const k of Object.keys(cc)) { if (!req[k] || req[k] !== cc[k]) { ok = false; break; } }
+    const reqKeys = new Set(Object.keys(req));
+    const ccKeys = new Set(Object.keys(cc));
+    let ok = reqKeys.size === ccKeys.size;
+    if (ok) { for (const k of reqKeys) { if (cc[k] !== req[k]) { ok = false; break; } } }
     if (ok) {
       playSound('success'); setTimeout(() => playSound('slide'), 500);
       setResultStatus('success'); setIsConveying(true);
@@ -382,6 +392,9 @@ function App() {
                 style={{ touchAction: 'none' }}>
                 <div className="absolute w-[150px] h-[150px] rounded-full border-2 border-red-200"></div>
                 {items.map(item => renderShape(item))}
+                {items.length > 0 && (
+                  <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow z-50">{items.length}</div>
+                )}
               </div>
             </div>
 
