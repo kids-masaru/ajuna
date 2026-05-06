@@ -260,11 +260,16 @@ function App() {
     });
   };
 
+  const isOnPlate = (item) => {
+    const dx = item.x - 100, dy = item.y - 100;
+    return Math.sqrt(dx * dx + dy * dy) <= 90;
+  };
+
   const submitSushi = () => {
     if (isConveying || resultStatus !== null || !currentOrder) return;
     setSelectedId(null);
     const cc = {};
-    items.forEach(item => { cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
+    items.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
     const req = currentOrder.requiredCounts;
     const reqKeys = new Set(Object.keys(req));
     const ccKeys = new Set(Object.keys(cc));
@@ -409,7 +414,7 @@ function App() {
                 <div className="absolute w-[150px] h-[150px] rounded-full border-2 border-red-200"></div>
                 {items.map(item => renderShape(item))}
                 {items.length > 0 && (
-                  <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow z-50">{items.length}</div>
+                  <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow z-50">{items.filter(isOnPlate).length}</div>
                 )}
               </div>
             </div>
