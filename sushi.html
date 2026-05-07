@@ -157,14 +157,17 @@ function App() {
   const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
   const [items, setItems] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [maxZ, setMaxZ] = useState(10);
+  const maxZRef = useRef(10);
   const [dragInfo, setDragInfo] = useState(null);
+  const itemsRef = useRef([]);
   const [score, setScore] = useState(0);
   const [resultStatus, setResultStatus] = useState(null);
   const [isConveying, setIsConveying] = useState(false);
 
   const workspaceRef = useRef(null);
   const currentOrder = orders[currentOrderIndex];
+
+  itemsRef.current = items;
 
   const startGame = () => {
     initAudio();
@@ -178,10 +181,11 @@ function App() {
   };
 
   const resetOrder = () => {
-    setItems([]);
+    setItems([]); itemsRef.current = [];
     setSelectedId(null);
     setResultStatus(null);
     setIsConveying(false);
+    maxZRef.current = 10;
   };
 
   const handlePointerDown = (e, id, item) => {
@@ -189,7 +193,8 @@ function App() {
     e.stopPropagation();
     e.target.setPointerCapture(e.pointerId);
     initAudio(); playSound('grab');
-    setMaxZ(prev => { const nz = prev + 1; setItems(p => p.map(i => i.id === id ? { ...i, zIndex: nz } : i)); return nz; });
+    const nz = ++maxZRef.current;
+    setItems(prev => prev.map(i => i.id === id ? { ...i, zIndex: nz } : i));
     setSelectedId(id);
     setDragInfo({ id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY });
   };
@@ -208,15 +213,11 @@ function App() {
     initAudio(); playSound('put');
     const ox = Math.random() * 20 - 10, oy = Math.random() * 20 - 10;
     const newId = `item-${Date.now()}-${Math.floor(Math.random()*1000)}`;
-    setMaxZ(prev => {
-      const nz = prev + 1;
-      const newItem = {
-        id: newId, baseId: baseItem.id, type: baseItem.type, emoji: baseItem.emoji,
-        x: 100 + ox, y: 100 + oy, rotation: 0, zIndex: nz,
-      };
-      setItems(p => [...p, newItem]);
-      return nz;
-    });
+    const nz = ++maxZRef.current;
+    setItems(prev => [...prev, {
+      id: newId, baseId: baseItem.id, type: baseItem.type, emoji: baseItem.emoji,
+      x: 100 + ox, y: 100 + oy, rotation: 0, zIndex: nz,
+    }]);
     setSelectedId(newId);
   };
 
@@ -234,11 +235,8 @@ function App() {
     if (!selectedId || isConveying) return;
     playSound('grab');
     if (dir === 'up') {
-      setMaxZ(prev => {
-        const nz = prev + 1;
-        setItems(p => p.map(i => i.id === selectedId ? { ...i, zIndex: nz } : i));
-        return nz;
-      });
+      const nz = ++maxZRef.current;
+      setItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: nz } : i));
     } else {
       setItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: Math.max(1, i.zIndex - 1) } : i));
     }
@@ -246,7 +244,7 @@ function App() {
 
   const clearAllItems = () => {
     if (isConveying || resultStatus !== null) return;
-    playSound('grab'); setItems([]); setSelectedId(null);
+    playSound('grab'); setItems([]); itemsRef.current = []; setSelectedId(null);
   };
 
   const undoLastItem = () => {
@@ -269,7 +267,7 @@ function App() {
     if (isConveying || resultStatus !== null || !currentOrder) return;
     setSelectedId(null);
     const cc = {};
-    items.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
+    itemsRef.current.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
     const req = currentOrder.requiredCounts;
     const reqKeys = new Set(Object.keys(req));
     const ccKeys = new Set(Object.keys(cc));
