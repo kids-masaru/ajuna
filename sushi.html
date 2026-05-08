@@ -207,8 +207,12 @@ function App() {
   const handlePointerMove = (e) => {
     const di = dragInfoRef.current;
     if (!di) return;
-    const dx = e.clientX - di.pointerX, dy = e.clientY - di.pointerY;
-    itemsRef.current = itemsRef.current.map(i => i.id === di.id ? { ...i, x: di.startX + dx, y: di.startY + dy } : i);
+    let nx = di.startX + (e.clientX - di.pointerX);
+    let ny = di.startY + (e.clientY - di.pointerY);
+    const dx = nx - 90, dy = ny - 90;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 80) { nx = 90 + (dx / dist) * 80; ny = 90 + (dy / dist) * 80; }
+    itemsRef.current = itemsRef.current.map(i => i.id === di.id ? { ...i, x: nx, y: ny } : i);
     setRenderTick(n => n + 1);
   };
 
