@@ -155,19 +155,23 @@ function App() {
   const [gameState, setGameState] = useState('title');
   const [orders, setOrders] = useState([]);
   const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
-  const [items, setItems] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const maxZRef = useRef(10);
   const dragInfoRef = useRef(null);
   const itemsRef = useRef([]);
+  const [renderTick, setRenderTick] = useState(0);
   const [score, setScore] = useState(0);
   const [resultStatus, setResultStatus] = useState(null);
   const [isConveying, setIsConveying] = useState(false);
 
   const workspaceRef = useRef(null);
   const currentOrder = orders[currentOrderIndex];
+  const items = itemsRef.current;
 
-  itemsRef.current = items;
+  const updateItems = (updater) => {
+    itemsRef.current = typeof updater === 'function' ? updater(itemsRef.current) : updater;
+    setRenderTick(n => n + 1);
+  };
 
   const startGame = () => {
     initAudio();
@@ -181,7 +185,8 @@ function App() {
   };
 
   const resetOrder = () => {
-    setItems([]); itemsRef.current = [];
+    itemsRef.current = [];
+    setRenderTick(n => n + 1);
     setSelectedId(null);
     setResultStatus(null);
     setIsConveying(false);
@@ -194,7 +199,7 @@ function App() {
     e.target.setPointerCapture(e.pointerId);
     initAudio(); playSound('grab');
     const nz = ++maxZRef.current;
-    setItems(prev => prev.map(i => i.id === id ? { ...i, zIndex: nz } : i));
+    updateItems(prev => prev.map(i => i.id === id ? { ...i, zIndex: nz } : i));
     setSelectedId(id);
     dragInfoRef.current = { id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY };
   };
@@ -203,7 +208,8 @@ function App() {
     const di = dragInfoRef.current;
     if (!di) return;
     const dx = e.clientX - di.pointerX, dy = e.clientY - di.pointerY;
-    setItems(prev => prev.map(i => i.id === di.id ? { ...i, x: di.startX + dx, y: di.startY + dy } : i));
+    itemsRef.current = itemsRef.current.map(i => i.id === di.id ? { ...i, x: di.startX + dx, y: di.startY + dy } : i);
+    setRenderTick(n => n + 1);
   };
 
   const handlePointerUp = () => { if (dragInfoRef.current) { playSound('put'); dragInfoRef.current = null; } };
@@ -215,21 +221,22 @@ function App() {
     const ox = Math.random() * 20 - 10, oy = Math.random() * 20 - 10;
     const newId = `item-${Date.now()}-${Math.floor(Math.random()*1000)}`;
     const nz = ++maxZRef.current;
-    setItems(prev => [...prev, {
+    itemsRef.current = [...itemsRef.current, {
       id: newId, baseId: baseItem.id, type: baseItem.type, emoji: baseItem.emoji,
       x: 90 + ox, y: 90 + oy, rotation: 0, zIndex: nz,
-    }]);
+    }];
+    setRenderTick(n => n + 1);
     setSelectedId(newId);
   };
 
   const updateSelectedItem = (changes) => {
     if (!selectedId || isConveying) return;
-    setItems(prev => prev.map(i => i.id === selectedId ? { ...i, ...changes } : i));
+    updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, ...changes } : i));
   };
 
   const deleteSelectedItem = () => {
     if (!selectedId || isConveying) return;
-    playSound('grab'); setItems(prev => prev.filter(i => i.id !== selectedId)); setSelectedId(null);
+    playSound('grab'); updateItems(prev => prev.filter(i => i.id !== selectedId)); setSelectedId(null);
   };
 
   const moveZ = (dir) => {
@@ -237,26 +244,25 @@ function App() {
     playSound('grab');
     if (dir === 'up') {
       const nz = ++maxZRef.current;
-      setItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: nz } : i));
+      updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: nz } : i));
     } else {
-      setItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: Math.max(1, i.zIndex - 1) } : i));
+      updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: Math.max(1, i.zIndex - 1) } : i));
     }
   };
 
   const clearAllItems = () => {
     if (isConveying || resultStatus !== null) return;
-    playSound('grab'); setItems([]); itemsRef.current = []; setSelectedId(null);
+    playSound('grab'); itemsRef.current = []; setRenderTick(n => n + 1); setSelectedId(null);
   };
 
   const undoLastItem = () => {
     if (isConveying || resultStatus !== null) return;
+    if (itemsRef.current.length === 0) return;
     playSound('grab');
-    setItems(prev => {
-      if (prev.length === 0) return prev;
-      const removed = prev[prev.length - 1];
-      if (selectedId === removed.id) setSelectedId(null);
-      return prev.slice(0, -1);
-    });
+    const removed = itemsRef.current[itemsRef.current.length - 1];
+    itemsRef.current = itemsRef.current.slice(0, -1);
+    setRenderTick(n => n + 1);
+    if (selectedId === removed.id) setSelectedId(null);
   };
 
   const isOnPlate = (item) => {
@@ -267,8 +273,9 @@ function App() {
   const submitSushi = () => {
     if (isConveying || resultStatus !== null || !currentOrder) return;
     setSelectedId(null);
+    const currentItems = itemsRef.current;
     const cc = {};
-    itemsRef.current.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
+    currentItems.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
     const req = currentOrder.requiredCounts;
     const reqKeys = new Set(Object.keys(req));
     const ccKeys = new Set(Object.keys(cc));
