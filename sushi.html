@@ -158,7 +158,7 @@ function App() {
   const [items, setItems] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const maxZRef = useRef(10);
-  const [dragInfo, setDragInfo] = useState(null);
+  const dragInfoRef = useRef(null);
   const itemsRef = useRef([]);
   const [score, setScore] = useState(0);
   const [resultStatus, setResultStatus] = useState(null);
@@ -196,16 +196,17 @@ function App() {
     const nz = ++maxZRef.current;
     setItems(prev => prev.map(i => i.id === id ? { ...i, zIndex: nz } : i));
     setSelectedId(id);
-    setDragInfo({ id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY });
+    dragInfoRef.current = { id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY };
   };
 
   const handlePointerMove = (e) => {
-    if (!dragInfo) return;
-    const dx = e.clientX - dragInfo.pointerX, dy = e.clientY - dragInfo.pointerY;
-    setItems(prev => prev.map(i => i.id === dragInfo.id ? { ...i, x: dragInfo.startX + dx, y: dragInfo.startY + dy } : i));
+    const di = dragInfoRef.current;
+    if (!di) return;
+    const dx = e.clientX - di.pointerX, dy = e.clientY - di.pointerY;
+    setItems(prev => prev.map(i => i.id === di.id ? { ...i, x: di.startX + dx, y: di.startY + dy } : i));
   };
 
-  const handlePointerUp = () => { if (dragInfo) { playSound('put'); setDragInfo(null); } };
+  const handlePointerUp = () => { if (dragInfoRef.current) { playSound('put'); dragInfoRef.current = null; } };
   const handleWorkspaceClick = () => { if (!isConveying) setSelectedId(null); };
 
   const addItem = (baseItem) => {
@@ -216,7 +217,7 @@ function App() {
     const nz = ++maxZRef.current;
     setItems(prev => [...prev, {
       id: newId, baseId: baseItem.id, type: baseItem.type, emoji: baseItem.emoji,
-      x: 100 + ox, y: 100 + oy, rotation: 0, zIndex: nz,
+      x: 90 + ox, y: 90 + oy, rotation: 0, zIndex: nz,
     }]);
     setSelectedId(newId);
   };
@@ -259,8 +260,8 @@ function App() {
   };
 
   const isOnPlate = (item) => {
-    const dx = item.x - 100, dy = item.y - 100;
-    return Math.sqrt(dx * dx + dy * dy) <= 90;
+    const dx = item.x - 90, dy = item.y - 90;
+    return Math.sqrt(dx * dx + dy * dy) <= 95;
   };
 
   const submitSushi = () => {
