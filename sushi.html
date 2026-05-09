@@ -211,7 +211,7 @@ function App() {
     let ny = di.startY + (e.clientY - di.pointerY);
     const dx = nx - 90, dy = ny - 90;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 80) { nx = 90 + (dx / dist) * 80; ny = 90 + (dy / dist) * 80; }
+    if (dist > 88) { nx = 90 + (dx / dist) * 88; ny = 90 + (dy / dist) * 88; }
     itemsRef.current = itemsRef.current.map(i => i.id === di.id ? { ...i, x: nx, y: ny } : i);
     setRenderTick(n => n + 1);
   };
