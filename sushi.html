@@ -267,7 +267,7 @@ function App() {
   };
 
   const isOnPlate = (item) => {
-    const dx = item.x - 90, dy = (item.y - 78) / 1.3;
+    const dx = item.x - 90, dy = (item.y - 70) / 1.5;
     return Math.sqrt(dx * dx + dy * dy) <= 95;
   };
 
@@ -304,7 +304,7 @@ function App() {
     let content = null;
     switch (item.baseId) {
       case 'shari': content = <div className={`w-24 h-12 bg-[#fffff8] rounded-[60px] shadow-md border border-gray-100 ${sel}`} style={{ boxShadow: 'inset -2px -5px 10px rgba(0,0,0,0.05), 2px 5px 5px rgba(0,0,0,0.1)' }}></div>; break;
-      case 'gunkan': content = (<div className={`w-24 h-16 relative ${sel}`}><div className="absolute inset-x-0 bottom-0 h-12 bg-[#fffff8] rounded-[60px] shadow-md border border-gray-100" style={{ boxShadow: 'inset -2px -5px 10px rgba(0,0,0,0.05)' }}></div><div className="absolute inset-x-[-3px] bottom-[-2px] h-[64px] rounded-[12px] border-[5px] border-[#1a1c18] bg-transparent" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)', borderTop: 'none' }}></div></div>); break;
+      case 'gunkan': content = (<div className={`w-24 h-16 relative ${sel}`}><div className="absolute inset-x-[2px] bottom-0 h-[42px] bg-[#1a1c18] rounded-[10px]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px)' }}></div><div className="absolute inset-x-0 bottom-[8px] h-[30px] bg-[#fffff8] rounded-[60px] shadow-sm border border-gray-100"></div><div className="absolute inset-x-[-1px] top-0 h-[28px] bg-[#1a1c18] rounded-t-[14px] rounded-b-[50%]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px)' }}></div><div className="absolute inset-x-[6px] top-[3px] h-[20px] bg-[#fffff8] rounded-t-[10px] rounded-b-[40%] border border-gray-100"></div></div>); break;
       case 'maguro': content = <div className={`w-28 h-14 bg-red-600 rounded-[60px] opacity-95 ${sel}`} style={{ boxShadow: 'inset -5px -5px 15px rgba(0,0,0,0.2), inset 2px 2px 5px rgba(255,255,255,0.3)' }}></div>; break;
       case 'salmon': content = (<div className={`w-28 h-14 bg-orange-400 rounded-[60px] opacity-95 overflow-hidden relative ${sel}`} style={{ boxShadow: 'inset -5px -5px 15px rgba(0,0,0,0.1)' }}><div className="w-[150%] h-1 bg-white opacity-40 -rotate-12 absolute -left-2 top-3"></div><div className="w-[150%] h-1 bg-white opacity-40 -rotate-12 absolute -left-2 top-7"></div><div className="w-[150%] h-1 bg-white opacity-40 -rotate-12 absolute -left-2 top-11"></div></div>); break;
       case 'tamago': content = <div className={`w-24 h-12 bg-yellow-400 rounded-md shadow-sm border-b-4 border-yellow-500 ${sel}`}></div>; break;
