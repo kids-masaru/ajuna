@@ -8,9 +8,8 @@
 <style>
   html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#0c1020; }
   body { touch-action:none; -webkit-user-select:none; user-select:none; }
-  canvas#game { display:block; background:#7ec8ff; }
+  canvas#game { display:block; image-rendering:pixelated; }
 
-  /* 縦向き案内 */
   .rotate-notice { display:none; }
   @media (orientation: portrait) {
     .rotate-notice { position:fixed; inset:0; z-index:99999; background:#11141d; color:#fff;
@@ -28,21 +27,18 @@
   #stage.force-landscape { width:100vh; height:100vw; transform:rotate(90deg); transform-origin:top left; left:100%; top:0; }
   body.forced .rotate-notice { display:none !important; }
 
-  /* HUD */
   #hud { position:absolute; top:max(10px,env(safe-area-inset-top)); left:0; right:0; z-index:30;
     display:flex; justify-content:center; gap:10px; pointer-events:none; }
   .hud-box { background:rgba(16,20,30,.72); color:#fff; border:3px solid var(--gp-accent-soft);
     border-radius:12px; padding:5px 14px; font-weight:900; text-align:center; min-width:80px; backdrop-filter:blur(4px); }
   .hud-box small { display:block; font-size:10px; font-weight:800; color:#ffd84d; }
 
-  /* ハンドルボタン */
   .pedal { position:absolute; bottom:max(14px,env(safe-area-inset-bottom)); width:84px; height:84px; z-index:30;
     border-radius:50%; background:rgba(255,255,255,.22); border:3px solid rgba(255,255,255,.6); color:#fff;
     font-size:38px; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
   #btnL { left:18px; } #btnR { right:18px; }
   .pedal.on { background:rgba(255,255,255,.5); transform:scale(.94); }
 
-  /* 画面（タイトル/結果） */
   .screen { position:absolute; inset:0; z-index:50; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:14px; text-align:center; padding:20px; }
   .cover { background:radial-gradient(120% 90% at 50% 0%, color-mix(in srgb,var(--gp-accent) 55%,#11131f) 0%, transparent 60%), linear-gradient(180deg,#1b1e2c,#11131f); }
@@ -51,7 +47,6 @@
 </head>
 <body class="gp gp-fuchsia gp-dark">
 
-<!-- 縦向き案内 -->
 <div class="rotate-notice">
   <div class="ico">📱</div>
   <h2>よこむきにしてね</h2>
@@ -63,18 +58,15 @@
   <a href="index.html" class="gp-home">🏠</a>
   <canvas id="game"></canvas>
 
-  <!-- HUD -->
   <div id="hud" class="hidden">
     <div class="hud-box"><small>コイン</small><span id="coins">0</span></div>
     <div class="hud-box"><small>スピード</small><span id="spd">0</span></div>
     <div class="hud-box"><small>のこり</small><span id="time">60</span></div>
   </div>
 
-  <!-- ハンドル -->
   <div id="btnL" class="pedal hidden">◀</div>
   <div id="btnR" class="pedal hidden">▶</div>
 
-  <!-- タイトル -->
   <div id="title" class="screen cover">
     <div class="gp-hero gp-float">🏎️</div>
     <div class="gp-title" style="color:#fff">レーシング</div>
@@ -82,7 +74,6 @@
     <button id="startBtn" class="gp-btn gp-btn--lg">スタート</button>
   </div>
 
-  <!-- 結果 -->
   <div id="result" class="screen cover hidden">
     <div class="gp-hero gp-float">🏆</div>
     <div class="gp-title" style="color:#fff">ゴール！</div>
@@ -97,19 +88,26 @@
 
 <script>
 const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+const screen = canvas.getContext('2d');
+let ctx, buf;   // ctx = 低解像度バッファ（ドット絵）
 
 // ---- 強制横向き ----
 function forceLandscape(){ document.body.classList.add('forced'); document.getElementById('stage').classList.add('force-landscape'); resize(); }
 function tryLock(){ try{ const el=document.documentElement; if(el.requestFullscreen)el.requestFullscreen().catch(()=>{}); if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} }
 document.addEventListener('pointerdown', tryLock, { once:true });
 
-let W, H, RES;
+let W, H, DISPW, DISPH, PIX;
+let groundImg=null;
 function resize(){
   const forced = document.getElementById('stage').classList.contains('force-landscape');
-  W = canvas.width = forced ? window.innerHeight : window.innerWidth;
-  H = canvas.height = forced ? window.innerWidth : window.innerHeight;
-  RES = H / 480;
+  DISPW = canvas.width = forced ? window.innerHeight : window.innerWidth;
+  DISPH = canvas.height = forced ? window.innerWidth : window.innerHeight;
+  PIX = Math.max(2, Math.round(DISPH/150));   // SNES風の粗さ
+  W = Math.ceil(DISPW/PIX); H = Math.ceil(DISPH/PIX);
+  if(!buf){ buf=document.createElement('canvas'); ctx=buf.getContext('2d'); }
+  buf.width=W; buf.height=H;
+  ctx.imageSmoothingEnabled=false; screen.imageSmoothingEnabled=false;
+  groundImg=null;
 }
 resize();
 window.addEventListener('resize', resize);
@@ -117,219 +115,157 @@ window.addEventListener('resize', resize);
 // ---- 音 ----
 let actx=null;
 function beep(freq,type,dur,vol=0.15){ try{ if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(),g=actx.createGain(); o.type=type; o.frequency.value=freq; o.connect(g); g.connect(actx.destination); const t=actx.currentTime; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur); o.start(t); o.stop(t+dur);}catch(e){} }
-function coinSound(){ beep(880,'square',0.08,0.12); setTimeout(()=>beep(1320,'square',0.10,0.12),60); }
+function coinSound(){ beep(880,'square',0.07,0.12); setTimeout(()=>beep(1320,'square',0.09,0.12),55); }
 function hitSound(){ beep(120,'sawtooth',0.25,0.2); }
 
-// ---- 疑似3D 設定 ----
-const segLen = 220, rumbleLen = 3, roadW = 2200;
-const fov = 100, camDepth = 1/Math.tan((fov/2)*Math.PI/180);
-const camHeight = 1100;
-const drawDist = 140;
-let playerZ = camHeight * camDepth;
-const maxSpeed = segLen * 60;
-const accel = maxSpeed/4, decel = -maxSpeed/3, offDecel = -maxSpeed/1.6;
-const centrifugal = 0.32;
-
-let segments = [], trackLen = 0;
-let position=0, speed=0, playerX=0;
-let coins=0, timeLeft=60, state='title', last=0;
-const keys = { left:false, right:false };
-
-function lastY(){ return segments.length===0 ? 0 : segments[segments.length-1].p2.world.y; }
-function addSegment(curve, y){
-  const n = segments.length;
-  segments.push({
-    index:n,
-    p1:{ world:{x:0,y:lastY(),z:n*segLen}, camera:{}, screen:{} },
-    p2:{ world:{x:0,y:y,z:(n+1)*segLen}, camera:{}, screen:{} },
-    curve:curve, sprites:[],
-    color: Math.floor(n/rumbleLen)%2 ? 'dark':'light'
-  });
-}
-function ease(a,b,p){ return a + (b-a)*(p*p*(3-2*p)); }
-function addRoad(enter,hold,leave,curve,y){
-  const startY=lastY(), endY=startY+(y||0)*segLen;
-  const total=enter+hold+leave;
-  for(let n=0;n<enter;n++) addSegment(ease(0,curve,n/enter), ease(startY,endY,n/total));
-  for(let n=0;n<hold;n++)  addSegment(curve, ease(startY,endY,(enter+n)/total));
-  for(let n=0;n<leave;n++) addSegment(ease(curve,0,n/leave), ease(startY,endY,(enter+hold+n)/total));
-}
-function addSprite(seg, type, offset){ if(segments[seg]) segments[seg].sprites.push({ type, offset, gone:false }); }
-
-function buildTrack(){
-  segments=[];
-  const C=60, M=40;
-  addRoad(40,60,40,0,0);
-  addRoad(M,C,M,2.2,0);
-  addRoad(M,C,M,0,1.6);     // 上り
-  addRoad(M,C,M,-2.6,0);
-  addRoad(M,C,M,0,-1.6);    // 下り
-  addRoad(M,C,M,3.2,1.2);
-  addRoad(M,80,M,-1.8,0);
-  addRoad(M,C,M,1.4,-1.0);
-  addRoad(40,60,40,0,0);
-  trackLen = segments.length * segLen;
-  // 木（沿道）
-  for(let n=20;n<segments.length;n+=8){ addSprite(n,'tree', 2+Math.random()*2); addSprite(n+3,'tree', -(2+Math.random()*2)); }
-  // コイン（道の上に列）
-  for(let n=60;n<segments.length-30;n+=10){
-    const lane = (Math.random()*1.4-0.7);
-    for(let k=0;k<5;k++) addSprite(n+k,'coin', lane);
-  }
-  // コーン（よけてね）
-  for(let n=90;n<segments.length-40;n+=37){ addSprite(n,'cone', Math.random()*1.2-0.6); }
-}
-
-function findSeg(z){ return segments[Math.floor(z/segLen)%segments.length]; }
-function project(p, camX, camY, camZ){
-  p.camera.x=(p.world.x||0)-camX; p.camera.y=(p.world.y||0)-camY; p.camera.z=(p.world.z||0)-camZ;
-  p.screen.scale = camDepth/p.camera.z;
-  p.screen.x = Math.round(W/2 + p.screen.scale*p.camera.x*W/2);
-  p.screen.y = Math.round(H/2 - p.screen.scale*p.camera.y*H/2);
-  p.screen.w = Math.round(p.screen.scale*roadW*W/2);
-}
-function poly(x1,y1,x2,y2,x3,y3,x4,y4,col){ ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.lineTo(x4,y4); ctx.closePath(); ctx.fill(); }
-
-function renderSegment(x1,y1,w1,x2,y2,w2,light){
-  const grass = light ? '#46b94d' : '#3fae46';
-  const rumble= light ? '#ffffff' : '#d23b3b';
-  const road  = light ? '#8a8f99' : '#828791';
-  ctx.fillStyle=grass; ctx.fillRect(0,y2,W,y1-y2);
-  const r1=w1*0.22, r2=w2*0.22;
-  poly(x1-w1-r1,y1, x1-w1,y1, x2-w2,y2, x2-w2-r2,y2, rumble);
-  poly(x1+w1+r1,y1, x1+w1,y1, x2+w2,y2, x2+w2+r2,y2, rumble);
-  poly(x1-w1,y1, x1+w1,y1, x2+w2,y2, x2-w2,y2, road);
-  if(light){ const l1=w1*0.04,l2=w2*0.04; poly(x1-l1,y1,x1+l1,y1,x2+l2,y2,x2-l2,y2,'#f7d11e'); }
-}
-
-function spriteScreen(scale, type){
-  // ワールドの見かけ幅
-  let base = scale * roadW * W/2;
-  if(type==='tree') return base*0.0016*RES*70;
-  if(type==='coin') return base*0.00045*RES*70;
-  if(type==='cone') return base*0.0006*RES*70;
-  return base*0.001;
-}
-function drawSprite(sp, scale, sx, sy){
-  let s = scale*roadW*W/2; // road half width on screen at this depth
-  if(sp.type==='tree'){
-    const h = s*0.55, w=h*0.6;
-    ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(sx, sy, w*0.5, w*0.16,0,0,7); ctx.fill();
-    ctx.fillStyle='#7a4a22'; ctx.fillRect(sx-w*0.08, sy-h*0.42, w*0.16, h*0.42);
-    ctx.fillStyle='#1f7a34'; ctx.beginPath(); ctx.arc(sx, sy-h*0.6, w*0.5,0,7); ctx.fill();
-    ctx.fillStyle='#2f9a45'; ctx.beginPath(); ctx.arc(sx-w*0.12, sy-h*0.66, w*0.36,0,7); ctx.fill();
-  } else if(sp.type==='coin'){
-    const r = Math.max(6, s*0.09);
-    ctx.fillStyle='rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(sx, sy, r*0.9, r*0.3,0,0,7); ctx.fill();
-    ctx.fillStyle='#f4c20d'; ctx.beginPath(); ctx.arc(sx, sy-r, r,0,7); ctx.fill();
-    ctx.fillStyle='#ffe27a'; ctx.beginPath(); ctx.arc(sx, sy-r, r*0.62,0,7); ctx.fill();
-    ctx.fillStyle='#f4c20d'; ctx.font='bold '+Math.round(r*1.1)+'px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★', sx, sy-r);
-  } else if(sp.type==='cone'){
-    const h=Math.max(10,s*0.18), w=h*0.7;
-    ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(sx,sy,w*0.6,w*0.18,0,0,7); ctx.fill();
-    ctx.fillStyle='#f4731f'; ctx.beginPath(); ctx.moveTo(sx,sy-h); ctx.lineTo(sx-w*0.5,sy); ctx.lineTo(sx+w*0.5,sy); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.fillRect(sx-w*0.5, sy-h*0.45, w, h*0.16);
-  }
-}
-
-function drawKart(cx, cy, lean, bounce){
-  const s = H*0.0013;            // スケール
-  const bw = 150*s, bh = 70*s;
-  ctx.save(); ctx.translate(cx, cy+bounce); ctx.rotate(lean*0.12);
-  // 影
-  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0, 6*s, bw*0.62, 16*s,0,0,7); ctx.fill();
-  // 後輪
-  ctx.fillStyle='#15171c';
-  ctx.beginPath(); ctx.roundRect(-bw*0.62, -bh*0.5, bw*0.26, bh*1.0, 8*s); ctx.fill();
-  ctx.beginPath(); ctx.roundRect(bw*0.36, -bh*0.5, bw*0.26, bh*1.0, 8*s); ctx.fill();
-  // 車体
-  ctx.fillStyle='#e23b3b'; ctx.beginPath(); ctx.roundRect(-bw*0.5, -bh*0.55, bw, bh, 14*s); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.22)'; ctx.beginPath(); ctx.roundRect(-bw*0.5, -bh*0.55, bw, bh*0.4, 12*s); ctx.fill();
-  // スポイラー
-  ctx.fillStyle='#b3271f'; ctx.beginPath(); ctx.roundRect(-bw*0.5, -bh*0.78, bw, bh*0.22, 6*s); ctx.fill();
-  // ドライバー（ヘルメット）
-  ctx.fillStyle='#3478f6'; ctx.beginPath(); ctx.arc(0, -bh*0.78, 26*s,0,7); ctx.fill();
-  ctx.fillStyle='#bfe9ff'; ctx.beginPath(); ctx.roundRect(-18*s, -bh*0.86, 36*s, 16*s, 6*s); ctx.fill();
-  ctx.restore();
-}
-
+// ---- Mode-7 コース ----
+const mapW=1024, mapH=1024;
+const GRASS = 0xff4db946;        // 画面外＝芝生(ABGR)
+const ROAD_HALF = 80;
+const maxSpeed=300, accel=190, turnRate=2.5, offMul=0.4;
+let mapCanvas, map32, centerline=[];
+let camX=0, camZ=0, heading=0, speed=0;
+let coins=[], trees=[], coinsN=0, timeLeft=60, state='title', last=0;
+const keys={left:false,right:false};
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 
+function buildMap(){
+  mapCanvas=document.createElement('canvas'); mapCanvas.width=mapW; mapCanvas.height=mapH;
+  const m=mapCanvas.getContext('2d');
+  // 芝生（市松ドット）
+  m.fillStyle='#46b94d'; m.fillRect(0,0,mapW,mapH);
+  m.fillStyle='#3da642';
+  for(let y=0;y<mapH;y+=24){ const o=((y/24)%2)*24; for(let x=o;x<mapW;x+=48) m.fillRect(x,y,24,24); }
+  // 中心線（オーバル）
+  const cxm=mapW/2, cym=mapH/2, rx=mapW*0.33, ry=mapH*0.28, N=400;
+  centerline=[];
+  for(let i=0;i<N;i++){ const a=i/N*Math.PI*2; centerline.push({x:cxm+Math.cos(a)*rx, z:cym+Math.sin(a)*ry}); }
+  const stroke=(w,style,dash)=>{ m.lineWidth=w; m.lineJoin='round'; m.lineCap='round'; m.strokeStyle=style;
+    if(dash)m.setLineDash(dash); else m.setLineDash([]); m.beginPath();
+    for(let i=0;i<=N;i++){ const p=centerline[i%N]; if(i===0)m.moveTo(p.x,p.z); else m.lineTo(p.x,p.z);} m.closePath(); m.stroke(); m.setLineDash([]); };
+  stroke(ROAD_HALF*2+24,'#eef0f3');                 // 縁石(白)
+  stroke(ROAD_HALF*2+24,'#d23b3b',[30,30]);         // 縁石(赤しま)
+  stroke(ROAD_HALF*2,'#8a8f99');                    // アスファルト
+  stroke(6,'#f7d11e',[22,30]);                      // センターライン
+  // スタート/フィニッシュ チェッカー
+  const a0=centerline[0], a1=centerline[3], ang=Math.atan2(a1.z-a0.z,a1.x-a0.x);
+  m.save(); m.translate(a0.x,a0.z); m.rotate(ang+Math.PI/2);
+  const cs=ROAD_HALF/4;
+  for(let r=0;r<2;r++)for(let i=-4;i<4;i++){ m.fillStyle=((i+r)%2===0)?'#fff':'#111'; m.fillRect(r*14-14, i*cs, 14, cs); }
+  m.restore();
+  // サンプリング用
+  const id=m.getImageData(0,0,mapW,mapH); map32=new Uint32Array(id.data.buffer);
+  // コイン＆木
+  coins=[]; trees=[];
+  for(let i=0;i<N;i+=9){ const p=centerline[i], q=centerline[(i+1)%N];
+    const nx=-(q.z-p.z), nz=(q.x-p.x), nl=Math.hypot(nx,nz)||1; const off=(((i/9)%3)-1)*ROAD_HALF*0.45;
+    coins.push({x:p.x+nx/nl*off, z:p.z+nz/nl*off, gone:false}); }
+  for(let i=0;i<N;i+=16){ const p=centerline[i], q=centerline[(i+1)%N];
+    const nx=-(q.z-p.z), nz=(q.x-p.x), nl=Math.hypot(nx,nz)||1, o=ROAD_HALF+55+Math.random()*70;
+    trees.push({x:p.x+nx/nl*o, z:p.z+nz/nl*o}); trees.push({x:p.x-nx/nl*o, z:p.z-nz/nl*o}); }
+}
+
+function sampleMap(x,y){ x|=0; y|=0; if(x<0||y<0||x>=mapW||y>=mapH) return GRASS; return map32[y*mapW+x]; }
+function isRoad(x,y){ const c=sampleMap(x,y); const r=c&0xff,g=(c>>8)&0xff,b=(c>>16)&0xff; return (Math.abs(r-g)<45&&Math.abs(g-b)<45&&b>95); }
+
+// ---- 描画 ----
+const HORIZ = ()=> Math.round(H*0.42);
+const FOCAL = ()=> W*0.5;
+const CAMH  = ROAD_HALF*0.62;
+
 function render(){
-  // 空＋遠景
-  const hy = H*0.42;
-  const sky = ctx.createLinearGradient(0,0,0,hy); sky.addColorStop(0,'#6fc1ff'); sky.addColorStop(1,'#dff2ff');
+  const hy=HORIZ();
+  // 空
+  const sky=ctx.createLinearGradient(0,0,0,hy); sky.addColorStop(0,'#5bb8ff'); sky.addColorStop(1,'#d4eeff');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,hy);
-  ctx.fillStyle='#fff1a8'; ctx.beginPath(); ctx.arc(W*0.82, hy*0.4, Math.min(W,H)*0.05,0,7); ctx.fill();
-  ctx.fillStyle='#7ec96f'; ctx.beginPath(); ctx.ellipse(W*0.3, hy, W*0.4, hy*0.5,0,Math.PI,2*Math.PI); ctx.fill();
-  ctx.fillStyle='#5fb457'; ctx.beginPath(); ctx.ellipse(W*0.75, hy, W*0.45, hy*0.4,0,Math.PI,2*Math.PI); ctx.fill();
-  ctx.fillStyle='#46b94d'; ctx.fillRect(0,hy,W,H-hy);
+  ctx.fillStyle='#fff1a8'; ctx.beginPath(); ctx.arc(W*0.8,hy*0.42,Math.max(5,H*0.06),0,7); ctx.fill();
+  // 遠くの丘
+  ctx.fillStyle='#3fa64a'; ctx.fillRect(0,hy-Math.round(H*0.05),W,Math.round(H*0.05));
+  if(!map32){ ctx.fillStyle='#46b94d'; ctx.fillRect(0,hy,W,H-hy); return; }
 
-  if(!segments.length) return; // コース未生成（タイトル）
-
-  const base = findSeg(position);
-  const basePct = (position % segLen)/segLen;
-  const playerSeg = findSeg(position+playerZ);
-  const playerPct = ((position+playerZ)%segLen)/segLen;
-  const playerY = ease(playerSeg.p1.world.y, playerSeg.p2.world.y, playerPct);
-  let maxy=H, x=0, dx=-(base.curve*basePct);
-
-  for(let n=0;n<drawDist;n++){
-    const seg = segments[(base.index+n)%segments.length];
-    seg.looped = seg.index < base.index;
-    seg.clip = maxy;
-    project(seg.p1, (playerX*roadW)-x,      playerY+camHeight, position-(seg.looped?trackLen:0));
-    project(seg.p2, (playerX*roadW)-x-dx,   playerY+camHeight, position-(seg.looped?trackLen:0));
-    x+=dx; dx+=seg.curve;
-    if(seg.p1.camera.z<=camDepth || seg.p2.screen.y>=seg.p1.screen.y || seg.p2.screen.y>=maxy) continue;
-    renderSegment(seg.p1.screen.x,seg.p1.screen.y,seg.p1.screen.w, seg.p2.screen.x,seg.p2.screen.y,seg.p2.screen.w, seg.color==='light');
-    maxy = seg.p1.screen.y;
-  }
-  // スプライト（奥→手前）
-  for(let n=drawDist-1;n>0;n--){
-    const seg = segments[(base.index+n)%segments.length];
-    for(const sp of seg.sprites){
-      if(sp.gone) continue;
-      const sc = seg.p1.screen.scale; if(!sc||seg.p1.camera.z<=camDepth) continue;
-      const sx = seg.p1.screen.x + sc*sp.offset*roadW*W/2;
-      const sy = seg.p1.screen.y;
-      if(sy > seg.clip+2) continue;
-      drawSprite(sp, sc, sx, sy);
+  // 地面（Mode-7）
+  const gH=H-hy;
+  if(!groundImg || groundImg.width!==W || groundImg.height!==gH) groundImg=ctx.createImageData(W,gH);
+  const data=new Uint32Array(groundImg.data.buffer);
+  const s=Math.sin(heading), c=Math.cos(heading), focal=FOCAL();
+  for(let row=0; row<gH; row++){
+    const y=row+1;
+    const dist=CAMH*focal/y;
+    const sxStep=dist/focal;
+    const rowOff=row*W;
+    let wx=camX + (-(W/2))*sxStep*c - dist*s;
+    let wz=camZ + (-(W/2))*sxStep*s + dist*c;
+    const ix=sxStep*c, iz=sxStep*s;
+    for(let col=0; col<W; col++){
+      data[rowOff+col]=sampleMap(wx,wz);
+      wx+=ix; wz+=iz;
     }
   }
-  // プレイヤー
-  const bounce = (speed/maxSpeed) * (Math.random()>0.5?1:-1) * H*0.004;
-  drawKart(W/2, H*0.86, (keys.left?-1:0)+(keys.right?1:0), bounce);
+  ctx.putImageData(groundImg,0,hy);
+
+  // スプライト（遠い順）
+  const objs=[];
+  const add=(o,type)=>{ const dx=o.x-camX, dz=o.z-camZ; const fz=-dx*s+dz*c; if(fz<12)return;
+    const rx=dx*c+dz*s; const yy=CAMH*focal/fz; const sy=hy+yy; if(sy>H+40)return;
+    objs.push({type,sx:W/2+rx*focal/fz, sy, sc:focal/fz, fz, o}); };
+  for(const t of trees) add(t,'tree');
+  for(const cn of coins) if(!cn.gone) add(cn,'coin');
+  objs.sort((a,b)=>b.fz-a.fz);
+  for(const ob of objs) drawObj(ob);
+
+  // カート
+  const bob=(speed/maxSpeed)*(Math.random()>0.5?1:-1)*H*0.006;
+  drawKart(W/2, H*0.82, (keys.right?1:0)-(keys.left?1:0), bob);
+}
+
+function drawObj(ob){
+  const sx=ob.sx, sy=ob.sy, sc=ob.sc;
+  if(ob.type==='coin'){ const r=Math.max(2, sc*ROAD_HALF*0.18);
+    ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(sx,sy,r,r*0.32,0,0,7); ctx.fill();
+    ctx.fillStyle='#e8a200'; ctx.beginPath(); ctx.arc(sx,sy-r,r,0,7); ctx.fill();
+    ctx.fillStyle='#ffd11e'; ctx.beginPath(); ctx.arc(sx,sy-r,r*0.8,0,7); ctx.fill();
+    ctx.fillStyle='#fff0a8'; ctx.beginPath(); ctx.arc(sx-r*0.25,sy-r*1.2,r*0.32,0,7); ctx.fill();
+  } else { const h=Math.max(6, sc*ROAD_HALF*1.0), w=h*0.6;
+    ctx.fillStyle='rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(sx,sy,w*0.5,w*0.16,0,0,7); ctx.fill();
+    ctx.fillStyle='#7a4a22'; ctx.fillRect(sx-w*0.1, sy-h*0.42, w*0.2, h*0.42);
+    ctx.fillStyle='#177a31'; ctx.beginPath(); ctx.arc(sx,sy-h*0.55,w*0.52,0,7); ctx.fill();
+    ctx.fillStyle='#2aa047'; ctx.beginPath(); ctx.arc(sx-w*0.14,sy-h*0.64,w*0.34,0,7); ctx.fill();
+  }
+}
+
+function drawKart(cx,cy,lean,bob){
+  const s=H*0.0019, bw=150*s, bh=72*s;
+  ctx.save(); ctx.translate(cx,cy+bob); ctx.rotate(lean*0.09);
+  ctx.fillStyle='rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(0,9*s,bw*0.6,14*s,0,0,7); ctx.fill();
+  ctx.fillStyle='#15171c'; ctx.fillRect(-bw*0.62,-bh*0.38,bw*0.24,bh*0.86); ctx.fillRect(bw*0.38,-bh*0.38,bw*0.24,bh*0.86);
+  ctx.fillStyle='#b3271f'; ctx.fillRect(-bw*0.5,-bh*0.74,bw,bh*0.24);     // スポイラー
+  ctx.fillStyle='#e23b3b'; ctx.fillRect(-bw*0.5,-bh*0.5,bw,bh);           // 車体
+  ctx.fillStyle='rgba(255,255,255,.25)'; ctx.fillRect(-bw*0.5,-bh*0.5,bw,bh*0.32);
+  ctx.fillStyle='#0e1014'; ctx.fillRect(-bw*0.5,bh*0.34,bw,bh*0.16);      // 下の影
+  ctx.fillStyle='#3478f6'; ctx.beginPath(); ctx.arc(0,-bh*0.7,24*s,0,7); ctx.fill();  // ヘルメット
+  ctx.fillStyle='#bfe9ff'; ctx.fillRect(-16*s,-bh*0.78,32*s,12*s);
+  ctx.restore();
 }
 
 function update(dt){
   if(state!=='play') return;
-  speed += accel*dt;
-  const playerSeg = findSeg(position+playerZ);
-  const spd = speed/maxSpeed;
-  const dxs = dt*2.4*spd;
-  if(keys.left) playerX -= dxs;
-  if(keys.right) playerX += dxs;
-  playerX -= dxs*spd*playerSeg.curve*centrifugal;
-  if((playerX<-1||playerX>1) && speed>maxSpeed*0.55){ speed += offDecel*dt; }
-  playerX = clamp(playerX,-2.4,2.4);
-  speed = clamp(speed,0,maxSpeed);
-  position = (position + speed*dt) % trackLen; if(position<0) position+=trackLen;
-
-  // 当たり判定（プレイヤーのセグメント）
-  for(const sp of playerSeg.sprites){
-    if(sp.gone) continue;
-    if(sp.type==='coin' && Math.abs(playerX - sp.offset) < 0.5){ sp.gone=true; coins++; coinSound(); document.getElementById('coins').textContent=coins; }
-    if(sp.type==='cone' && Math.abs(playerX - sp.offset) < 0.45){ sp.gone=true; speed=maxSpeed*0.2; hitSound(); }
-  }
-  // HUD
-  document.getElementById('spd').textContent = Math.round(spd*120);
+  speed=clamp(speed+accel*dt,0,maxSpeed);
+  const spd=speed/maxSpeed;
+  const steer=(keys.right?1:0)-(keys.left?1:0);
+  heading += steer*turnRate*dt*(0.35+0.65*spd);
+  const onRoad=isRoad(camX,camZ);
+  const mv=speed*(onRoad?1:offMul);
+  camX += Math.sin(heading)*mv*dt;
+  camZ += Math.cos(heading)*mv*dt;
+  if(!onRoad) speed=Math.min(speed,maxSpeed*0.5);
+  const R2=(ROAD_HALF*0.8)**2;
+  for(const cn of coins){ if(cn.gone)continue; const dx=cn.x-camX, dz=cn.z-camZ; if(dx*dx+dz*dz<R2){ cn.gone=true; coinsN++; coinSound(); document.getElementById('coins').textContent=coinsN; } }
+  document.getElementById('spd').textContent=Math.round(spd*120);
 }
 
-let acc=0;
 function loop(ts){
   const now=ts||0; let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05; if(!dt)dt=1/60;
-  try { update(dt); render(); } catch(e){ console.error(e); }
+  try { update(dt); render(); screen.imageSmoothingEnabled=false; screen.drawImage(buf,0,0,W,H,0,0,DISPW,DISPH); } catch(e){ console.error(e); }
   requestAnimationFrame(loop);
 }
 
@@ -338,16 +274,14 @@ let timer=null;
 function startTimer(){
   timeLeft=60; document.getElementById('time').textContent=timeLeft;
   clearInterval(timer);
-  timer=setInterval(()=>{
-    if(state!=='play')return;
-    timeLeft--; document.getElementById('time').textContent=Math.max(0,timeLeft);
-    if(timeLeft<=0){ clearInterval(timer); endGame(); }
-  },1000);
+  timer=setInterval(()=>{ if(state!=='play')return; timeLeft--; document.getElementById('time').textContent=Math.max(0,timeLeft);
+    if(timeLeft<=0){ clearInterval(timer); endGame(); } },1000);
 }
 function startGame(){
   if(actx&&actx.state==='suspended')actx.resume();
-  buildTrack();
-  position=0; speed=0; playerX=0; coins=0;
+  buildMap();
+  const p0=centerline[0], p1=centerline[1];
+  camX=p0.x; camZ=p0.z; heading=Math.atan2(p1.x-p0.x, p1.z-p0.z); speed=0; coinsN=0;
   document.getElementById('coins').textContent='0';
   document.getElementById('title').classList.add('hidden');
   document.getElementById('result').classList.add('hidden');
@@ -358,7 +292,7 @@ function startGame(){
 }
 function endGame(){
   state='result';
-  document.getElementById('finalScore').textContent=coins;
+  document.getElementById('finalScore').textContent=coinsN;
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('btnL').classList.add('hidden');
   document.getElementById('btnR').classList.add('hidden');
@@ -368,17 +302,16 @@ function endGame(){
 document.getElementById('startBtn').onclick = startGame;
 document.getElementById('againBtn').onclick = startGame;
 
-// ---- 入力（ボタン＋画面左右＋キーボード）----
+// ---- 入力 ----
 function bindHold(el, side){
   const on=(e)=>{ e.preventDefault(); keys[side]=true; el.classList.add('on'); };
-  const off=(e)=>{ keys[side]=false; el.classList.remove('on'); };
+  const off=()=>{ keys[side]=false; el.classList.remove('on'); };
   el.addEventListener('pointerdown',on); el.addEventListener('pointerup',off);
   el.addEventListener('pointerleave',off); el.addEventListener('pointercancel',off);
 }
 bindHold(document.getElementById('btnL'),'left');
 bindHold(document.getElementById('btnR'),'right');
-// 画面の左右半分でも操作
-canvas.addEventListener('pointerdown',(e)=>{ if(state!=='play')return; if(e.offsetX<W/2)keys.left=true; else keys.right=true; });
+canvas.addEventListener('pointerdown',(e)=>{ if(state!=='play')return; if(e.offsetX<DISPW/2)keys.left=true; else keys.right=true; });
 const clearTouch=()=>{ keys.left=false; keys.right=false; document.getElementById('btnL').classList.remove('on'); document.getElementById('btnR').classList.remove('on'); };
 canvas.addEventListener('pointerup',clearTouch);
 canvas.addEventListener('pointercancel',clearTouch);
@@ -386,9 +319,7 @@ window.addEventListener('keydown',(e)=>{ if(e.code==='ArrowLeft')keys.left=true;
 window.addEventListener('keyup',(e)=>{ if(e.code==='ArrowLeft')keys.left=false; if(e.code==='ArrowRight')keys.right=false; });
 
 requestAnimationFrame(loop);
-
-// ---- Service Worker ----
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=46'); }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=47'); }
 </script>
 </body>
 </html>
