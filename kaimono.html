@@ -166,7 +166,7 @@
 
         // --- Wooden Shelf Component ---
         const ShelfLayer = ({ children }) => (
-            <div className="relative w-full h-24 md:h-36 flex flex-col items-center justify-end group">
+            <div className="relative w-full h-20 md:h-24 flex flex-col items-center justify-end group">
                 {/* The Wooden Board */}
                 <div className="absolute inset-x-0 bottom-0 h-4 md:h-6 bg-[#8b4513] rounded shadow-lg z-0 overflow-hidden">
                     {/* Wood Texture Lines */}
@@ -435,22 +435,22 @@
                             </div>
 
                             {/* Shelves Layout: Stacking 3 tiers vertically */}
-                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex flex-col items-center justify-center p-2 md:p-4 no-scrollbar scroll-smooth">
-                                <div className="flex flex-col gap-2 md:gap-10 min-w-max px-12 md:px-24 pt-4 md:pt-8 pb-16 md:pb-8">
+                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex flex-col items-center justify-start p-2 md:p-4 no-scrollbar scroll-smooth">
+                                <div className="flex flex-col gap-1 md:gap-4 min-w-max px-12 md:px-24 pt-10 md:pt-12 pb-2 md:pb-2">
                                     {[0, 7, 14].map(startIdx => (
-                                        <div key={startIdx} className="w-[600px] md:w-[1000px]">
+                                        <div key={startIdx} className="w-[520px] md:w-[880px]">
                                             <ShelfLayer>
                                                 {shelfItems.slice(startIdx, startIdx + 7).map(item => {
                                                     const isCollected = foundItems.some(f => f.id === item.id);
                                                     return (
-                                                        <div key={item.uniqueId} className="w-20 h-20 md:w-32 md:h-28 flex flex-col items-center justify-end shrink-0 mx-1 md:mx-2">
+                                                        <div key={item.uniqueId} className="w-16 h-16 md:w-24 md:h-24 flex flex-col items-center justify-end shrink-0 mx-1 md:mx-2">
                                                             {!isCollected && (
                                                                 <div
                                                                     className="flex flex-col items-center cursor-grab active:cursor-grabbing transform transition-transform hover:scale-110"
                                                                     style={{ touchAction: 'none' }}
                                                                     onPointerDown={(e) => handlePointerDown(e, item)}
                                                                 >
-                                                                    <span className="text-4xl md:text-7xl drop-shadow-md">{item.icon}</span>
+                                                                    <span className="text-3xl md:text-6xl drop-shadow-md">{item.icon}</span>
                                                                     <span className="bg-white/90 px-1 py-0.5 rounded-full text-[8px] md:text-[10px] font-bold mt-1 shadow-sm border border-orange-100">{item.name}</span>
                                                                 </div>
                                                             )}
@@ -464,7 +464,7 @@
                             </div>
 
                             {/* Basket & Character Side-by-Side: Responsive Scale & Half-Body Clip */}
-                            <div ref={basketRef} className="absolute bottom-[-2%] md:bottom-[-4%] left-0 right-0 h-28 md:h-48 z-40 flex items-end justify-center pointer-events-none gap-4">
+                            <div ref={basketRef} className="absolute bottom-0 left-0 right-0 h-28 md:h-44 z-40 flex items-end justify-center pointer-events-none gap-4">
                                 <div className="w-full max-w-4xl flex items-end justify-center px-4">
                                     {/* Character */}
                                     <div className="shrink-0 animate-sway">
