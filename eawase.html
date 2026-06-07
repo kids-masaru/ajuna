@@ -275,19 +275,19 @@
               `}</style>
 
               {/* ホームに戻るボタン */}
-              <div className="w-full max-w-lg mb-3 flex">
+              <div className="w-full max-w-lg mb-2 flex">
                 <a href="index.html" className="gp-home-inline">🏠</a>
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-extrabold text-sky-700 mb-6 drop-shadow-sm text-center whitespace-nowrap">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-sky-700 mb-3 drop-shadow-sm text-center whitespace-nowrap">
                 おなじ え を つなごう！
               </h1>
 
               {/* ゲームボード */}
               <div
                 ref={containerRef}
-                className="relative w-full max-w-lg flex justify-between bg-white p-6 md:p-8 rounded-3xl shadow-xl border-4 border-sky-200 touch-none-area"
-                style={{ minHeight: '450px' }}
+                className="relative w-full max-w-lg flex justify-between bg-white p-4 md:p-6 rounded-3xl shadow-xl border-4 border-sky-200 touch-none-area"
+                style={{ minHeight: 'min(450px, 62vh)' }}
               >
                 <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
                   {fixedLines.map(line => (
@@ -309,7 +309,7 @@
                 </svg>
 
                 {/* 左側 */}
-                <div className="flex flex-col gap-5 relative z-20">
+                <div className="flex flex-col gap-3 relative z-20">
                   {leftItems.map((item) => {
                     const isMatched = matches.includes(item.id);
                     const isWrong = wrongPair?.left === item.id;
@@ -335,7 +335,7 @@
                 </div>
 
                 {/* 右側 */}
-                <div className="flex flex-col gap-5 relative z-20">
+                <div className="flex flex-col gap-3 relative z-20">
                   {rightItems.map((item) => {
                     const isMatched = matches.includes(item.id);
                     const isWrong = wrongPair?.right === item.id;
