@@ -356,7 +356,14 @@ let gameState = 'MENU';
 let gameMode = '1P';    
 let comLevel = 'EASY';  // EASY or HARD
 let selectedCourse = 'RECT';
-let PIX = 3, buf, bctx, sceneBuf, sceneDirty = true;
+let sceneBuf, sceneDirty = true, treePositions = [];
+// 斜め見下ろし投影（空0.30＝傾きの強さ／遠近1.5乗）
+function HY() { return Math.round(H * 0.30); }
+function project(wx, wy) {
+  const p = Math.pow(Math.min(Math.max(wy / H, 0), 1), 1.5);
+  const sc = 0.42 + 0.58 * p;
+  return { x: W / 2 + (wx - W / 2) * sc, y: HY() + p * (H - HY()), scale: sc };
+}
 
 function resize() {
   W = canvas.width = window.innerWidth;
@@ -366,15 +373,9 @@ function resize() {
   trackW = Math.min(W * 0.75, 500);
   trackH = Math.min(H * 0.55, 300);
   cornerR = Math.min(trackW, trackH) * 0.35;
-  // ドット絵用の低解像度バッファ（描いてから拡大して使う）
-  PIX = Math.max(2, Math.round(H / 420));
-  const bw = Math.ceil(W / PIX), bh = Math.ceil(H / PIX);
-  if (!buf) { buf = document.createElement('canvas'); bctx = buf.getContext('2d'); }
-  buf.width = bw; buf.height = bh;
+  // コース（地面）を実解像度で一度だけ描くオフスクリーン
   if (!sceneBuf) sceneBuf = document.createElement('canvas');
-  sceneBuf.width = bw; sceneBuf.height = bh;
-  ctx.imageSmoothingEnabled = false;
-  bctx.imageSmoothingEnabled = false;
+  sceneBuf.width = W; sceneBuf.height = H;
   sceneDirty = true;
 }
 resize();
@@ -501,63 +502,59 @@ function tracePath(c) {
   }
 }
 
-// 背景＋コース（静止画）を低解像度バッファに一度だけ描く
+// 背景＋コース（静止画）を実解像度で一度だけ描く（くっきり）
 function buildScene() {
   const s = sceneBuf.getContext('2d');
   s.setTransform(1, 0, 0, 1, 0, 0);
-  s.clearRect(0, 0, sceneBuf.width, sceneBuf.height);
-  s.imageSmoothingEnabled = false;
-  s.setTransform(1/PIX, 0, 0, 1/PIX, 0, 0); // 以降ワールド座標で描ける
+  s.imageSmoothingEnabled = true;
+  s.clearRect(0, 0, W, H);
 
-  // 芝生（2色のドットでドット絵テクスチャ）
+  // 芝生（ベース＋控えめなテクスチャ）
   s.fillStyle = '#5cb049'; s.fillRect(0, 0, W, H);
-  s.fillStyle = '#57a945';
-  const u = PIX * 3;
-  for (let yy = 0; yy < H; yy += u) {
-    const off = ((Math.round(yy / u)) % 2) * Math.round(u / 2);
-    for (let xx = off; xx < W; xx += u) s.fillRect(xx, yy, PIX, PIX);
-  }
+  s.fillStyle = 'rgba(255,255,255,0.05)';
+  for (let yy = 0; yy < H; yy += 10) s.fillRect(0, yy, W, 4);
+  s.fillStyle = 'rgba(0,70,10,0.05)';
+  for (let yy = 6; yy < H; yy += 10) s.fillRect(0, yy, W, 2);
 
   s.lineCap = 'round'; s.lineJoin = 'round';
-  // 縁石（赤白のしましま）
-  tracePath(s); s.lineWidth = 58; s.strokeStyle = '#f2f2f2'; s.stroke();
-  tracePath(s); s.lineWidth = 58; s.strokeStyle = '#e23b3b';
-  s.setLineDash([14, 14]); s.stroke(); s.setLineDash([]);
+  // 縁石（赤白）
+  tracePath(s); s.lineWidth = 62; s.strokeStyle = '#f2f2f2'; s.stroke();
+  tracePath(s); s.lineWidth = 62; s.strokeStyle = '#e23b3b'; s.setLineDash([18, 18]); s.stroke(); s.setLineDash([]);
   // アスファルト
-  tracePath(s); s.lineWidth = 46; s.strokeStyle = '#52565f'; s.stroke();
-  tracePath(s); s.lineWidth = 42; s.strokeStyle = '#5b606b'; s.stroke();
-  // センターライン（黄色の破線）
-  tracePath(s); s.lineWidth = 3; s.strokeStyle = '#f7d11e';
-  s.setLineDash([10, 16]); s.stroke(); s.setLineDash([]);
+  tracePath(s); s.lineWidth = 50; s.strokeStyle = '#4f535c'; s.stroke();
+  tracePath(s); s.lineWidth = 46; s.strokeStyle = '#595e69'; s.stroke();
+  // センターライン
+  tracePath(s); s.lineWidth = 4; s.strokeStyle = '#f7d11e'; s.setLineDash([14, 20]); s.stroke(); s.setLineDash([]);
 
   // スタート/フィニッシュのチェッカー
   const st = getTrackPoint(0);
   s.save(); s.translate(st.x, st.y); s.rotate(st.angle);
-  const cs = 6;
-  for (let row = 0; row < 2; row++) {
-    for (let i = -3; i < 4; i++) {
-      s.fillStyle = ((i + row) % 2 === 0) ? '#ffffff' : '#1a1a1a';
-      s.fillRect(row * cs - cs, i * cs, cs, cs);
-    }
+  const cs = 8;
+  for (let row = 0; row < 2; row++) for (let i = -3; i < 4; i++) {
+    s.fillStyle = ((i + row) % 2 === 0) ? '#ffffff' : '#1a1a1a';
+    s.fillRect(row * cs - cs, i * cs, cs, cs);
   }
   s.restore();
 
-  // 木（コースの外側）
-  const trees = [
-    [cx - trackW/2 - 36, cy - trackH/2 - 22], [cx + trackW/2 + 32, cy - trackH/2 - 16],
-    [cx + trackW/2 + 38, cy + trackH/2 + 24], [cx - trackW/2 - 32, cy + trackH/2 + 26],
-    [cx, cy - trackH/2 - 32], [cx, cy + trackH/2 + 32]
+  // 木の位置（描画は毎フレーム投影して立体的に行う）
+  treePositions = [
+    [cx - trackW/2 - 42, cy - trackH/2 - 24], [cx + trackW/2 + 38, cy - trackH/2 - 16],
+    [cx + trackW/2 + 44, cy + trackH/2 + 26], [cx - trackW/2 - 38, cy + trackH/2 + 28],
+    [cx - trackW * 0.22, cy - trackH/2 - 38], [cx + trackW * 0.22, cy + trackH/2 + 36]
   ];
-  for (const t of trees) drawTree(s, t[0], t[1]);
-  s.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-function drawTree(s, x, y) {
-  s.fillStyle = 'rgba(0,0,0,0.12)'; s.fillRect(x - 9, y + 6, 18, 5);   // 影
-  s.fillStyle = '#7a4a22'; s.fillRect(x - 3, y, 6, 12);                // 幹
-  s.fillStyle = '#1f7a34'; s.fillRect(x - 12, y - 16, 24, 18);         // 葉(縁)
-  s.fillStyle = '#2f9a45'; s.fillRect(x - 10, y - 14, 20, 14);         // 葉(本体)
-  s.fillStyle = '#49b85e'; s.fillRect(x - 8, y - 13, 8, 6);            // ハイライト
+// 木（投影して立体的に：立ち上がり＋影＋遠近スケール）
+function drawTree(wx, wy) {
+  const pr = project(wx, wy), k = pr.scale;
+  ctx.save(); ctx.translate(pr.x, pr.y);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath(); ctx.ellipse(0, 0, 13 * k, 4.5 * k, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#7a4a22'; ctx.fillRect(-3 * k, -16 * k, 6 * k, 16 * k);
+  ctx.fillStyle = '#1f7a34'; ctx.beginPath(); ctx.arc(0, -26 * k, 15 * k, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2f9a45'; ctx.beginPath(); ctx.arc(0, -27 * k, 12 * k, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#49b85e'; ctx.beginPath(); ctx.arc(-4 * k, -30 * k, 5.5 * k, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 function drawCar(car, isP1) {
@@ -576,43 +573,42 @@ function drawCar(car, isP1) {
     }
   }
 
-  const g = bctx;
-  g.save();
-  g.translate(cxPos, cyPos);
-  g.rotate(cAngle);
-
-  // 影
-  g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(-15, -7, 32, 16);
-  // タイヤ（前後左右）
-  g.fillStyle = '#15171c';
-  g.fillRect(-12, -11, 7, 4); g.fillRect(5, -11, 7, 4);
-  g.fillRect(-12, 7, 7, 4);   g.fillRect(5, 7, 7, 4);
-  // 車体の縁取り
-  g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(-16, -10, 33, 20);
-  // 車体
-  g.fillStyle = car.color; g.fillRect(-15, -9, 31, 18);
+  const pr = project(cxPos, cyPos), k = pr.scale * 1.15;
+  ctx.save();
+  ctx.translate(pr.x, pr.y);
+  // 影（地面）
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(0, 2 * k, 18 * k, 7 * k, 0, 0, Math.PI * 2); ctx.fill();
+  // 少し浮かせて立体感＋地面の傾きに合わせて縦を圧縮
+  ctx.translate(0, -3 * k);
+  ctx.scale(1, 0.8);
+  ctx.rotate(cAngle);
+  const s = k;
+  // タイヤ
+  ctx.fillStyle = '#15171c';
+  ctx.fillRect(-12*s,-11*s,7*s,4*s); ctx.fillRect(5*s,-11*s,7*s,4*s);
+  ctx.fillRect(-12*s,7*s,7*s,4*s);   ctx.fillRect(5*s,7*s,7*s,4*s);
+  // 縁取り＋車体
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-16*s,-10*s,33*s,20*s);
+  ctx.fillStyle = car.color; ctx.fillRect(-15*s,-9*s,31*s,18*s);
   // 上面ハイライト
-  g.fillStyle = 'rgba(255,255,255,0.22)'; g.fillRect(-13, -7, 26, 5);
+  ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(-13*s,-8*s,26*s,5*s);
   // フロントガラス
-  g.fillStyle = '#bfe9ff'; g.fillRect(2, -6, 7, 12);
-  g.fillStyle = '#7fc7ee'; g.fillRect(2, -6, 3, 12);
-  // ヘッドライト（前）／リアランプ（後）
-  g.fillStyle = '#fff7c2'; g.fillRect(15, -7, 2, 4); g.fillRect(15, 3, 2, 4);
-  g.fillStyle = '#c0392b'; g.fillRect(-16, -7, 2, 4); g.fillRect(-16, 3, 2, 4);
+  ctx.fillStyle = '#bfe9ff'; ctx.fillRect(2*s,-6*s,7*s,12*s);
+  ctx.fillStyle = '#7fc7ee'; ctx.fillRect(2*s,-6*s,3*s,12*s);
+  // ライト
+  ctx.fillStyle = '#fff7c2'; ctx.fillRect(15*s,-7*s,2*s,4*s); ctx.fillRect(15*s,3*s,2*s,4*s);
+  ctx.fillStyle = '#c0392b'; ctx.fillRect(-16*s,-7*s,2*s,4*s); ctx.fillRect(-16*s,3*s,2*s,4*s);
+  ctx.restore();
 
-  if (car.isCrashed) {
-    // ピクセル爆発
-    g.fillStyle = '#ffd000'; g.fillRect(-10, -22, 20, 13);
-    g.fillStyle = '#ff7a00'; g.fillRect(-7, -19, 14, 8);
-    g.fillStyle = '#ffffff'; g.fillRect(-2, -16, 4, 3);
-  } else if (car.isWarning) {
-    // ピクセルの「！」
-    g.fillStyle = '#1a1a1a'; g.fillRect(-4, -24, 8, 14);
-    g.fillStyle = '#ffd000'; g.fillRect(-3, -23, 6, 12);
-    g.fillStyle = '#1a1a1a'; g.fillRect(-1, -21, 2, 6); g.fillRect(-1, -13, 2, 2);
+  // 状態（クラッシュ/警告）は車の上に立てて表示
+  if (car.isCrashed || car.isWarning) {
+    ctx.save(); ctx.translate(pr.x, pr.y - 26 * k);
+    ctx.font = `${Math.round((car.isCrashed ? 24 : 20) * k)}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(car.isCrashed ? '💥' : '⚠️', 0, 0);
+    ctx.restore();
   }
-
-  g.restore();
 }
 
 function updateCar(car, isP1) {
@@ -809,33 +805,40 @@ function resetToMenu() {
 
 function gameLoop() {
   if (sceneDirty) { buildScene(); sceneDirty = false; }
+  const hy = HY();
 
-  // フレームバッファ：静止シーン＋車を低解像度で描く
-  bctx.setTransform(1, 0, 0, 1, 0, 0);
-  bctx.imageSmoothingEnabled = false;
-  bctx.drawImage(sceneBuf, 0, 0);
-  bctx.setTransform(1/PIX, 0, 0, 1/PIX, 0, 0);
+  // 空
+  const sky = ctx.createLinearGradient(0, 0, 0, hy + 10);
+  sky.addColorStop(0, '#6fc1ff'); sky.addColorStop(1, '#e3f4ff');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hy + 10);
+  // 地平線より下は芝生で敷き詰め（台形の外側のすき間を埋める）
+  ctx.fillStyle = '#5cb049'; ctx.fillRect(0, hy, W, H - hy);
+
+  // 地面：行ごとにパース（遠いほど細く・圧縮）＝実解像度でくっきり立体的に
+  ctx.imageSmoothingEnabled = true;
+  const step = 2;
+  for (let sy = hy; sy < H; sy += step) {
+    const p0 = (sy - hy) / (H - hy);
+    const p1 = (sy + step - hy) / (H - hy);
+    const wy0 = H * Math.pow(p0, 1 / 1.5);
+    const wy1 = Math.min(H, H * Math.pow(p1, 1 / 1.5));
+    const sc = 0.42 + 0.58 * p0;
+    const dw = W * sc, dx = (W - dw) / 2;
+    ctx.drawImage(sceneBuf, 0, wy0, W, Math.max(1, wy1 - wy0), dx, sy, dw, step);
+  }
+  // 地平線のハイライト
+  ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(0, hy - 1, W, 2);
+
+  // 木（奥→手前の順で重ねる）
+  for (const t of treePositions.slice().sort((a, b) => a[1] - b[1])) drawTree(t[0], t[1]);
 
   updateCar(p1, true);
   updateCar(p2, false);
-  if (p2.isCrashed) { drawCar(p1, true); drawCar(p2, false); }
+  // 手前(yが大きい)の車を後に描く
+  const y1 = p1.isCrashed ? p1.crashY : getCarPosInfo(p1, true).y;
+  const y2 = p2.isCrashed ? p2.crashY : getCarPosInfo(p2, false).y;
+  if (y1 <= y2) { drawCar(p1, true); drawCar(p2, false); }
   else { drawCar(p2, false); drawCar(p1, true); }
-  bctx.setTransform(1, 0, 0, 1, 0, 0);
-
-  // 画面へ描画：上に空、地面は縦に少し圧縮して“斜め見下ろし”の立体感を出す
-  ctx.imageSmoothingEnabled = false;
-  const horizon = Math.round(H * 0.24);
-  // 空
-  const sky = ctx.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#7ec8ff'); sky.addColorStop(1, '#dff2ff');
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon);
-  // 地面（縦圧縮）
-  ctx.drawImage(buf, 0, 0, buf.width, buf.height, 0, horizon, W, H - horizon);
-  // 地平線のハイライト＋奥を少し暗くして奥行き感
-  ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(0, horizon - 1, W, 2);
-  const depth = ctx.createLinearGradient(0, horizon, 0, horizon + (H - horizon) * 0.45);
-  depth.addColorStop(0, 'rgba(20,30,15,0.22)'); depth.addColorStop(1, 'rgba(20,30,15,0)');
-  ctx.fillStyle = depth; ctx.fillRect(0, horizon, W, (H - horizon) * 0.45);
 
   requestAnimationFrame(gameLoop);
 }
