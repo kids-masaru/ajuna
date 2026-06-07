@@ -356,7 +356,8 @@ function App() {
 
       {gameState === 'result' && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gp-cover text-white p-6">
-          <h2 className="text-4xl font-bold mb-2">営業終了！</h2>
+          <div className="gp-hero gp-float mb-6">🏆</div>
+          <h2 className="gp-title mb-2 text-white">営業終了！</h2>
           <p className="text-xl text-gray-300 mb-8">今日のスコア</p>
           <div className="text-6xl font-black text-[#f1c40f] mb-12 drop-shadow-lg">{score}</div>
           <div className="flex gap-4">

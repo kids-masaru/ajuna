@@ -265,7 +265,8 @@
                 {cleared&&(
                   <div className="absolute inset-0 bg-white/50 flex flex-col items-center justify-center z-10 backdrop-blur-[2px]">
                     <Confetti/>
-                    <h2 className="text-6xl font-black text-orange-500 mb-8 drop-shadow-lg animate-bounce" style={{textShadow:'2px 4px 0 #FFD93D'}}>やったね！</h2>
+                    <div className="gp-hero gp-float mb-6">🎉</div>
+                    <h2 className="gp-title mb-8" style={{color:'var(--gp-accent-d)'}}>やったね！</h2>
                     <button onClick={()=>setIdx(i=>(i+1)%order.length)} className="gp-btn gp-btn--lg z-20">つぎへ</button>
                   </div>
                 )}

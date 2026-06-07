@@ -483,8 +483,8 @@
                             {gameState === 'result' && (
                                 <div className="absolute inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                                     <div className="bg-white rounded-[2rem] p-6 shadow-2xl border-8 border-yellow-400 text-center animate-in zoom-in">
-                                        <div className="text-8xl mb-2 animate-bounce">💮</div>
-                                        <h2 className="text-3xl font-bold text-orange-500">じょうず！</h2>
+                                        <div className="gp-hero gp-float mb-2">💮</div>
+                                        <h2 className="gp-title" style={{ color: 'var(--gp-accent-d)' }}>じょうず！</h2>
                                         <div className="flex gap-4 mt-6 justify-center">
                                             <button onClick={() => startShopping(currentShop)} className="gp-btn gp-btn--sm pointer-events-auto">もういっかい</button>
                                             <button onClick={() => setGameState('select_shop')} className="gp-btn gp-btn--sm gp-btn--ghost pointer-events-auto">おみせへ</button>

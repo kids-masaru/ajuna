@@ -375,8 +375,9 @@
               {isWon && (
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm p-4">
                   <div className="bg-white rounded-3xl p-6 sm:p-8 w-11/12 max-w-lg text-center shadow-2xl flex flex-col items-center border-8 border-yellow-400">
-                    <h2 className="text-3xl sm:text-4xl font-black text-rose-500 mb-4 drop-shadow-sm whitespace-nowrap">
-                      🎉 ぜんぶせいかい！ 🎉
+                    <div className="gp-hero gp-float mb-4">🎉</div>
+                    <h2 className="gp-title mb-4 text-center" style={{ color: 'var(--gp-accent-d)' }}>
+                      ぜんぶせいかい！
                     </h2>
                     <p className="text-lg sm:text-xl font-bold text-gray-600 mb-8">すごい！よくできたね！👏</p>
                     <button onClick={initGame} className="gp-btn gp-btn--lg">つぎへ！</button>
