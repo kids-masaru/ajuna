@@ -190,10 +190,10 @@
               </div>
 
               {/* メインカード */}
-              <div className="flex-1 min-h-0 bg-white rounded-3xl shadow-xl flex flex-col px-4 pt-3 pb-4 gap-2">
+              <div className="flex-1 min-h-0 bg-white rounded-3xl shadow-xl flex flex-col justify-center px-4 pt-3 pb-4 gap-2">
 
                 {/* 絵文字エリア */}
-                <div className="flex-1 min-h-0 flex flex-wrap justify-center items-center content-center gap-1 bg-blue-100 rounded-2xl p-2 overflow-hidden">
+                <div className="flex-none h-[34vh] min-h-0 flex flex-wrap justify-center items-center content-center gap-1 bg-blue-100 rounded-2xl p-2 overflow-hidden">
                   {emojiArray.map(i => (
                     <span key={i} className="text-3xl sm:text-4xl animate-bounce"
                       style={{ animationDelay: `${i * 0.1}s` }}>
