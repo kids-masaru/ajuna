@@ -42,6 +42,21 @@
     backdrop-filter: blur(3px);
   }
 
+  /* 縦向きのときは「よこむきにしてね」を表示（横向き前提のゲーム） */
+  .rotate-notice { display: none; }
+  @media (orientation: portrait) {
+    .rotate-notice {
+      position: fixed; inset: 0; z-index: 99999;
+      background: #11141d; color: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; gap: 16px; padding: 24px;
+    }
+  }
+  .rotate-notice .ico { font-size: 84px; animation: rotnudge 1.6s ease-in-out infinite; }
+  @keyframes rotnudge { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(78deg); } }
+  .rotate-notice h2 { font-size: 28px; font-weight: 900; text-shadow: 0 3px 0 #e23b3b; }
+  .rotate-notice p { color: #ffd84d; font-weight: 800; }
+
   h1 {
     font-size: 30px;
     color: #fff;
@@ -237,6 +252,13 @@
 <audio id="bgm" src="carraceBGM.mp3" loop></audio>
 
 <canvas id="game"></canvas>
+
+<!-- 縦向きのときの案内（横向き前提） -->
+<div class="rotate-notice">
+  <div class="ico">📱</div>
+  <h2>よこむきにしてね</h2>
+  <p>スマホを よこにすると あそべるよ！</p>
+</div>
 
 <!-- メインメニュー -->
 <div id="menu-layer" class="overlay">
@@ -593,7 +615,7 @@ function drawCar(car, isP1) {
     }
   }
 
-  const pr = project(cxPos, cyPos), k = pr.scale * 1.15;
+  const pr = project(cxPos, cyPos), k = pr.scale * 1.25;
   // 画面上（投影後）の進行方向に車を向ける＝コースに沿って自然に走る
   let drawAngle = cAngle;
   if (!car.isCrashed) {
@@ -603,28 +625,35 @@ function drawCar(car, isP1) {
   }
   ctx.save();
   ctx.translate(pr.x, pr.y);
-  // 影（地面）
-  ctx.fillStyle = 'rgba(0,0,0,0.22)';
-  ctx.beginPath(); ctx.ellipse(0, 2 * k, 18 * k, 7 * k, 0, 0, Math.PI * 2); ctx.fill();
-  // 少し浮かせて立体感（ゆがみ防止のため縦つぶしはしない）
-  ctx.translate(0, -3 * k);
+  // 影（地面・車より少し大きめ＝浮いて見える＝高さ感）
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath(); ctx.ellipse(0, 5 * k, 19 * k, 7.5 * k, 0, 0, Math.PI * 2); ctx.fill();
+  // 車体を持ち上げて高さを出す
+  ctx.translate(0, -6 * k);
   ctx.rotate(drawAngle);
   const s = k;
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill(); };
   // タイヤ
   ctx.fillStyle = '#15171c';
-  ctx.fillRect(-12*s,-11*s,7*s,4*s); ctx.fillRect(5*s,-11*s,7*s,4*s);
-  ctx.fillRect(-12*s,7*s,7*s,4*s);   ctx.fillRect(5*s,7*s,7*s,4*s);
-  // 縁取り＋車体
-  ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-16*s,-10*s,33*s,20*s);
-  ctx.fillStyle = car.color; ctx.fillRect(-15*s,-9*s,31*s,18*s);
+  rr(-13*s,-12*s,8*s,5*s,2*s); rr(5*s,-12*s,8*s,5*s,2*s);
+  rr(-13*s,7*s,8*s,5*s,2*s);   rr(5*s,7*s,8*s,5*s,2*s);
+  // 車体の厚み（下に濃い面を重ねて立体的に）
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; rr(-16*s,-8*s,33*s,19*s,7*s);
+  // 車体
+  ctx.fillStyle = car.color; rr(-16*s,-9*s,32*s,18*s,7*s);
+  // 下側の陰
+  ctx.fillStyle = 'rgba(0,0,0,0.16)'; rr(-15*s,2*s,30*s,6*s,5*s);
   // 上面ハイライト
-  ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(-13*s,-8*s,26*s,5*s);
+  ctx.fillStyle = 'rgba(255,255,255,0.30)'; rr(-14*s,-8*s,28*s,6*s,4*s);
+  // ルーフ（一段高い面）
+  ctx.fillStyle = car.color; rr(-5*s,-7*s,15*s,14*s,4*s);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)'; rr(-5*s,-7*s,15*s,14*s,4*s);
   // フロントガラス
-  ctx.fillStyle = '#bfe9ff'; ctx.fillRect(2*s,-6*s,7*s,12*s);
-  ctx.fillStyle = '#7fc7ee'; ctx.fillRect(2*s,-6*s,3*s,12*s);
-  // ライト
-  ctx.fillStyle = '#fff7c2'; ctx.fillRect(15*s,-7*s,2*s,4*s); ctx.fillRect(15*s,3*s,2*s,4*s);
-  ctx.fillStyle = '#c0392b'; ctx.fillRect(-16*s,-7*s,2*s,4*s); ctx.fillRect(-16*s,3*s,2*s,4*s);
+  ctx.fillStyle = '#bfe9ff'; rr(6*s,-6*s,6*s,12*s,2*s);
+  ctx.fillStyle = '#9ad8f5'; rr(9*s,-6*s,3*s,12*s,2*s);
+  // ライト（前）／リアランプ（後）
+  ctx.fillStyle = '#fff7c2'; rr(14*s,-7*s,2.5*s,4*s,1*s); rr(14*s,3*s,2.5*s,4*s,1*s);
+  ctx.fillStyle = '#c0392b'; rr(-16.5*s,-7*s,2.5*s,4*s,1*s); rr(-16.5*s,3*s,2.5*s,4*s,1*s);
   ctx.restore();
 
   // 状態（クラッシュ/警告）は車の上に立てて表示
@@ -907,6 +936,16 @@ document.getElementById('btn-com-hard').onclick = () => {
 document.getElementById('btn-course-rect').onclick = () => { selectedCourse = 'RECT'; sceneDirty = true; startGame(); };
 document.getElementById('btn-course-oval').onclick = () => { selectedCourse = 'OVAL'; sceneDirty = true; startGame(); };
 document.getElementById('btn-course-heart').onclick = () => { selectedCourse = 'HEART'; sceneDirty = true; startGame(); };
+
+// できる端末では自動で横向きに固定（最初のタップ時・失敗してもCSS案内でOK）
+function tryLockLandscape() {
+  try {
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
+  } catch (e) {}
+}
+document.addEventListener('pointerdown', tryLockLandscape, { once: true });
 
 // --- 戻るボタンの操作 ---
 document.getElementById('btn-back-from-level').onclick = () => {
