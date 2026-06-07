@@ -214,15 +214,13 @@
                 {/* ボタンエリア */}
                 <div className="flex flex-col gap-2 flex-shrink-0">
                   {!result && (
-                    <button onClick={resetDrawing}
-                      className="w-full py-2 bg-gray-100 text-gray-600 text-sm font-bold rounded-xl active:bg-gray-300 active:scale-95 transition-all">
+                    <button onClick={resetDrawing} className="gp-btn gp-btn--sm gp-btn--ghost w-full">
                       なぞりなおす 🔄
                     </button>
                   )}
 
                   {!result ? (
-                    <button onClick={checkAnswer}
-                      className="w-full py-3 bg-green-500 text-white text-xl font-bold rounded-2xl shadow-md active:scale-95 transition-all">
+                    <button onClick={checkAnswer} className="gp-btn w-full">
                       こたえあわせ！
                     </button>
                   ) : (
@@ -231,13 +229,11 @@
                         {result === 'correct' ? '🎉 せいかい！ 🎉' : '😢 ちがうよ 😢'}
                       </div>
                       {result === 'correct' ? (
-                        <button onClick={generateProblem}
-                          className="w-full py-3 bg-yellow-400 text-yellow-900 text-xl font-bold rounded-2xl shadow-md active:scale-95 transition-all">
+                        <button onClick={generateProblem} className="gp-btn w-full">
                           つぎの もんだい！
                         </button>
                       ) : (
-                        <button onClick={() => { setResult(null); resetDrawing(); }}
-                          className="w-full py-3 bg-blue-400 text-white text-xl font-bold rounded-2xl shadow-md active:scale-95 transition-all">
+                        <button onClick={() => { setResult(null); resetDrawing(); }} className="gp-btn w-full">
                           もういっかい！
                         </button>
                       )}

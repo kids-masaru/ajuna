@@ -350,7 +350,7 @@ function App() {
           <a href="index.html" className="gp-home">🏠</a>
           <div className="text-8xl mb-6 animate-bounce">🍣</div>
           <h1 className="text-4xl font-black mb-4 text-center tracking-wider text-[#e74c3c]">オーダー回転寿司</h1>
-          <button onClick={startGame} className="mt-8 bg-[#e74c3c] hover:bg-[#c0392b] text-white text-2xl font-bold py-4 px-12 rounded-full shadow-[0_6px_0_#962d22] active:shadow-[0_0px_0_#962d22] active:translate-y-[6px] transition-all">スタート</button>
+          <button onClick={startGame} className="gp-btn gp-btn--lg mt-8">スタート</button>
         </div>
       )}
 
@@ -360,8 +360,8 @@ function App() {
           <p className="text-xl text-gray-300 mb-8">今日のスコア</p>
           <div className="text-6xl font-black text-[#f1c40f] mb-12 drop-shadow-lg">{score}</div>
           <div className="flex gap-4">
-            <button onClick={() => window.location.href = 'index.html'} className="bg-gray-500 text-white text-xl font-bold py-3 px-8 rounded-full shadow-[0_4px_0_#374151] active:translate-y-[4px] transition-all">🏠 もどる</button>
-            <button onClick={startGame} className="bg-[#3498db] text-white text-xl font-bold py-3 px-8 rounded-full shadow-[0_4px_0_#1f618d] active:translate-y-[4px] transition-all">もういちど</button>
+            <button onClick={() => window.location.href = 'index.html'} className="gp-btn gp-btn--ghost">🏠 もどる</button>
+            <button onClick={startGame} className="gp-btn">もういちど</button>
           </div>
         </div>
       )}

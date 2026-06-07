@@ -266,8 +266,7 @@
                   <div className="absolute inset-0 bg-white/50 flex flex-col items-center justify-center z-10 backdrop-blur-[2px]">
                     <Confetti/>
                     <h2 className="text-6xl font-black text-orange-500 mb-8 drop-shadow-lg animate-bounce" style={{textShadow:'2px 4px 0 #FFD93D'}}>やったね！</h2>
-                    <button onClick={()=>setIdx(i=>(i+1)%order.length)}
-                      className="bg-yellow-400 text-white text-3xl font-black py-4 px-12 rounded-full shadow-xl active:scale-95 border-b-8 border-yellow-600 z-20">つぎへ</button>
+                    <button onClick={()=>setIdx(i=>(i+1)%order.length)} className="gp-btn gp-btn--lg z-20">つぎへ</button>
                   </div>
                 )}
               </div>
