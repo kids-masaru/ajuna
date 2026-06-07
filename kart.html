@@ -186,7 +186,7 @@ function makeKarts(){
 
 // ---- 描画 ----
 const HORIZ=()=>Math.round(H*0.42), FOCAL=()=>W*0.5, CAMH=ROAD_HALF*0.62;
-function projGround(wx,wz,s,c){ const dx=wx-camX(),dz=wz-camZ(); const fz=-dx*s+dz*c; const rx=dx*c+dz*s;
+function projGround(wx,wz,s,c){ const dx=wx-camX(),dz=wz-camZ(); const fz=dx*s+dz*c; const rx=dx*c-dz*s;
   return { fz, sx:W/2+rx*FOCAL()/fz, sy:HORIZ()+CAMH*FOCAL()/fz, sc:FOCAL()/fz }; }
 function camX(){ return karts.length?karts[0].x:0; } function camZ(){ return karts.length?karts[0].z:0; }
 
@@ -204,7 +204,8 @@ function render(){
   const data=new Uint32Array(groundImg.data.buffer);
   const cx0=camX(), cz0=camZ();
   for(let row=0;row<gH;row++){ const y=row+1, dist=CAMH*focal/y, st=dist/focal, ro=row*W;
-    let wx=cx0+(-(W/2))*st*c-dist*s, wz=cz0+(-(W/2))*st*s+dist*c; const ix=st*c, iz=st*s;
+    const half=-(W/2)*st;
+    let wx=cx0+half*c+dist*s, wz=cz0-half*s+dist*c; const ix=st*c, iz=-st*s;
     for(let col=0;col<W;col++){ data[ro+col]=sampleMap(wx,wz); wx+=ix; wz+=iz; } }
   ctx.putImageData(groundImg,0,hy);
 
@@ -401,7 +402,7 @@ window.addEventListener('keydown',(e)=>{ if(e.code==='ArrowLeft')keys.left=true;
 window.addEventListener('keyup',(e)=>{ if(e.code==='ArrowLeft')keys.left=false; if(e.code==='ArrowRight')keys.right=false; });
 
 requestAnimationFrame(loop);
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=49'); }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=50'); }
 </script>
 </body>
 </html>
