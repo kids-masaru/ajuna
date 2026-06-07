@@ -348,7 +348,8 @@ let W, H, cx, cy, trackW, trackH, cornerR;
 let gameState = 'MENU'; 
 let gameMode = '1P';    
 let comLevel = 'EASY';  // EASY or HARD
-let selectedCourse = 'RECT'; 
+let selectedCourse = 'RECT';
+let PIX = 3, buf, bctx, sceneBuf, sceneDirty = true;
 
 function resize() {
   W = canvas.width = window.innerWidth;
@@ -358,6 +359,16 @@ function resize() {
   trackW = Math.min(W * 0.75, 500);
   trackH = Math.min(H * 0.55, 300);
   cornerR = Math.min(trackW, trackH) * 0.35;
+  // ドット絵用の低解像度バッファ（描いてから拡大して使う）
+  PIX = Math.max(2, Math.round(H / 240));
+  const bw = Math.ceil(W / PIX), bh = Math.ceil(H / PIX);
+  if (!buf) { buf = document.createElement('canvas'); bctx = buf.getContext('2d'); }
+  buf.width = bw; buf.height = bh;
+  if (!sceneBuf) sceneBuf = document.createElement('canvas');
+  sceneBuf.width = bw; sceneBuf.height = bh;
+  ctx.imageSmoothingEnabled = false;
+  bctx.imageSmoothingEnabled = false;
+  sceneDirty = true;
 }
 resize();
 window.addEventListener('resize', resize);
@@ -461,40 +472,85 @@ function getCarPosInfo(car, isP1) {
   return { x: cxPos, y: cyPos, angle: pt.angle, isCurve: pt.isCurve };
 }
 
-function drawTrack() {
+// コース形状のパスを任意のコンテキストに描く（ワールド座標）
+function tracePath(c) {
   const x = cx - trackW/2, y = cy - trackH/2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  const renderPath = () => {
-    if (selectedCourse === 'RECT') drawRoundedRectPath(x, y, trackW, trackH, cornerR);
-    else if (selectedCourse === 'OVAL') ctx.ellipse(cx, cy, trackW/2, trackH/2, 0, 0, Math.PI * 2);
-    else if (selectedCourse === 'HEART') {
-      for (let i = 0; i <= 200; i++) {
-        const pt = getTrackPoint(i / 200);
-        if (i === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      }
-      ctx.closePath();
+  c.beginPath();
+  if (selectedCourse === 'RECT') {
+    const r = cornerR, w = trackW, h = trackH;
+    c.moveTo(x + r, y); c.lineTo(x + w - r, y);
+    c.arcTo(x + w, y, x + w, y + r, r); c.lineTo(x + w, y + h - r);
+    c.arcTo(x + w, y + h, x + w - r, y + h, r); c.lineTo(x + r, y + h);
+    c.arcTo(x, y + h, x, y + h - r, r); c.lineTo(x, y + r);
+    c.arcTo(x, y, x + r, y, r); c.closePath();
+  } else if (selectedCourse === 'OVAL') {
+    c.ellipse(cx, cy, trackW/2, trackH/2, 0, 0, Math.PI * 2);
+  } else {
+    for (let i = 0; i <= 200; i++) {
+      const pt = getTrackPoint(i / 200);
+      if (i === 0) c.moveTo(pt.x, pt.y); else c.lineTo(pt.x, pt.y);
     }
-  };
-
-  ctx.beginPath(); ctx.lineWidth = 50; ctx.strokeStyle = '#fff'; renderPath(); ctx.stroke();
-  ctx.beginPath(); ctx.lineWidth = 44; ctx.strokeStyle = '#f0e6ff'; renderPath(); ctx.stroke();
-  ctx.beginPath(); ctx.lineWidth = 2; ctx.strokeStyle = '#dcd0ff';
-  ctx.setLineDash([12, 18]); renderPath(); ctx.stroke(); ctx.setLineDash([]);
-
-  const start = getTrackPoint(0);
-  ctx.save(); ctx.translate(start.x, start.y); ctx.rotate(start.angle);
-  ctx.fillStyle = '#ff7eb9'; ctx.fillRect(-2, -22, 4, 44); ctx.restore();
+    c.closePath();
+  }
 }
 
-function drawRoundedRectPath(x, y, w, h, r) {
-  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
-  ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, h + y - r);
-  ctx.arcTo(x + w, h + y, x + w - r, h + y, r); ctx.lineTo(x + r, h + y);
-  ctx.arcTo(x, h + y, x, h + y - r, r); ctx.lineTo(x, y + r);
-  ctx.arcTo(x, y, x + r, y, r);
+// 背景＋コース（静止画）を低解像度バッファに一度だけ描く
+function buildScene() {
+  const s = sceneBuf.getContext('2d');
+  s.setTransform(1, 0, 0, 1, 0, 0);
+  s.clearRect(0, 0, sceneBuf.width, sceneBuf.height);
+  s.imageSmoothingEnabled = false;
+  s.setTransform(1/PIX, 0, 0, 1/PIX, 0, 0); // 以降ワールド座標で描ける
+
+  // 芝生（2色のドットでドット絵テクスチャ）
+  s.fillStyle = '#5cb049'; s.fillRect(0, 0, W, H);
+  s.fillStyle = '#4f9e3e';
+  const u = PIX * 2;
+  for (let yy = 0; yy < H; yy += u) {
+    const off = ((Math.round(yy / u)) % 2) * PIX;
+    for (let xx = off; xx < W; xx += u) s.fillRect(xx, yy, PIX, PIX);
+  }
+
+  s.lineCap = 'round'; s.lineJoin = 'round';
+  // 縁石（赤白のしましま）
+  tracePath(s); s.lineWidth = 58; s.strokeStyle = '#f2f2f2'; s.stroke();
+  tracePath(s); s.lineWidth = 58; s.strokeStyle = '#e23b3b';
+  s.setLineDash([14, 14]); s.stroke(); s.setLineDash([]);
+  // アスファルト
+  tracePath(s); s.lineWidth = 46; s.strokeStyle = '#52565f'; s.stroke();
+  tracePath(s); s.lineWidth = 42; s.strokeStyle = '#5b606b'; s.stroke();
+  // センターライン（黄色の破線）
+  tracePath(s); s.lineWidth = 3; s.strokeStyle = '#f7d11e';
+  s.setLineDash([10, 16]); s.stroke(); s.setLineDash([]);
+
+  // スタート/フィニッシュのチェッカー
+  const st = getTrackPoint(0);
+  s.save(); s.translate(st.x, st.y); s.rotate(st.angle);
+  const cs = 6;
+  for (let row = 0; row < 2; row++) {
+    for (let i = -3; i < 4; i++) {
+      s.fillStyle = ((i + row) % 2 === 0) ? '#ffffff' : '#1a1a1a';
+      s.fillRect(row * cs - cs, i * cs, cs, cs);
+    }
+  }
+  s.restore();
+
+  // 木（コースの外側）
+  const trees = [
+    [cx - trackW/2 - 36, cy - trackH/2 - 22], [cx + trackW/2 + 32, cy - trackH/2 - 16],
+    [cx + trackW/2 + 38, cy + trackH/2 + 24], [cx - trackW/2 - 32, cy + trackH/2 + 26],
+    [cx, cy - trackH/2 - 32], [cx, cy + trackH/2 + 32]
+  ];
+  for (const t of trees) drawTree(s, t[0], t[1]);
+  s.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+function drawTree(s, x, y) {
+  s.fillStyle = 'rgba(0,0,0,0.12)'; s.fillRect(x - 9, y + 6, 18, 5);   // 影
+  s.fillStyle = '#7a4a22'; s.fillRect(x - 3, y, 6, 12);                // 幹
+  s.fillStyle = '#1f7a34'; s.fillRect(x - 12, y - 16, 24, 18);         // 葉(縁)
+  s.fillStyle = '#2f9a45'; s.fillRect(x - 10, y - 14, 20, 14);         // 葉(本体)
+  s.fillStyle = '#49b85e'; s.fillRect(x - 8, y - 13, 8, 6);            // ハイライト
 }
 
 function drawCar(car, isP1) {
@@ -513,29 +569,43 @@ function drawCar(car, isP1) {
     }
   }
 
-  ctx.save(); 
-  ctx.translate(cxPos, cyPos); 
-  ctx.rotate(cAngle); 
-  
-  if (!car.isCrashed) {
-    ctx.fillStyle = 'rgba(0,0,0,0.05)'; 
-    ctx.fillRect(-15, -6, 34, 20);
-  }
+  const g = bctx;
+  g.save();
+  g.translate(cxPos, cyPos);
+  g.rotate(cAngle);
 
-  ctx.fillStyle = car.color; 
-  ctx.fillRect(-16, -9, 32, 18);
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'; 
-  ctx.fillRect(4, -7, 8, 14);
+  // 影
+  g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(-15, -7, 32, 16);
+  // タイヤ（前後左右）
+  g.fillStyle = '#15171c';
+  g.fillRect(-12, -11, 7, 4); g.fillRect(5, -11, 7, 4);
+  g.fillRect(-12, 7, 7, 4);   g.fillRect(5, 7, 7, 4);
+  // 車体の縁取り
+  g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(-16, -10, 33, 20);
+  // 車体
+  g.fillStyle = car.color; g.fillRect(-15, -9, 31, 18);
+  // 上面ハイライト
+  g.fillStyle = 'rgba(255,255,255,0.22)'; g.fillRect(-13, -7, 26, 5);
+  // フロントガラス
+  g.fillStyle = '#bfe9ff'; g.fillRect(2, -6, 7, 12);
+  g.fillStyle = '#7fc7ee'; g.fillRect(2, -6, 3, 12);
+  // ヘッドライト（前）／リアランプ（後）
+  g.fillStyle = '#fff7c2'; g.fillRect(15, -7, 2, 4); g.fillRect(15, 3, 2, 4);
+  g.fillStyle = '#c0392b'; g.fillRect(-16, -7, 2, 4); g.fillRect(-16, 3, 2, 4);
 
   if (car.isCrashed) {
-    ctx.font = '24px sans-serif';
-    ctx.fillText('💥', -12, -15);
+    // ピクセル爆発
+    g.fillStyle = '#ffd000'; g.fillRect(-10, -22, 20, 13);
+    g.fillStyle = '#ff7a00'; g.fillRect(-7, -19, 14, 8);
+    g.fillStyle = '#ffffff'; g.fillRect(-2, -16, 4, 3);
   } else if (car.isWarning) {
-    ctx.font = '24px sans-serif';
-    ctx.fillText('⚠️', -12, -15);
+    // ピクセルの「！」
+    g.fillStyle = '#1a1a1a'; g.fillRect(-4, -24, 8, 14);
+    g.fillStyle = '#ffd000'; g.fillRect(-3, -23, 6, 12);
+    g.fillStyle = '#1a1a1a'; g.fillRect(-1, -21, 2, 6); g.fillRect(-1, -13, 2, 2);
   }
 
-  ctx.restore();
+  g.restore();
 }
 
 function updateCar(car, isP1) {
@@ -731,16 +801,25 @@ function resetToMenu() {
 }
 
 function gameLoop() {
-  ctx.fillStyle = '#f8f0ff';
-  ctx.fillRect(0, 0, W, H);
-  drawTrack();
-  
+  if (sceneDirty) { buildScene(); sceneDirty = false; }
+
+  // フレームバッファ：静止シーン＋車を低解像度で描く
+  bctx.setTransform(1, 0, 0, 1, 0, 0);
+  bctx.imageSmoothingEnabled = false;
+  bctx.drawImage(sceneBuf, 0, 0);
+  bctx.setTransform(1/PIX, 0, 0, 1/PIX, 0, 0);
+
   updateCar(p1, true);
   updateCar(p2, false);
-  
   if (p2.isCrashed) { drawCar(p1, true); drawCar(p2, false); }
   else { drawCar(p2, false); drawCar(p1, true); }
-  
+  bctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  // 低解像度バッファを画面いっぱいに拡大（ドット絵化）
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, W, H);
+  ctx.drawImage(buf, 0, 0, buf.width, buf.height, 0, 0, W, H);
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -771,9 +850,9 @@ document.getElementById('btn-com-hard').onclick = () => {
   document.getElementById('course-select').classList.remove('hidden');
 };
 
-document.getElementById('btn-course-rect').onclick = () => { selectedCourse = 'RECT'; startGame(); };
-document.getElementById('btn-course-oval').onclick = () => { selectedCourse = 'OVAL'; startGame(); };
-document.getElementById('btn-course-heart').onclick = () => { selectedCourse = 'HEART'; startGame(); };
+document.getElementById('btn-course-rect').onclick = () => { selectedCourse = 'RECT'; sceneDirty = true; startGame(); };
+document.getElementById('btn-course-oval').onclick = () => { selectedCourse = 'OVAL'; sceneDirty = true; startGame(); };
+document.getElementById('btn-course-heart').onclick = () => { selectedCourse = 'HEART'; sceneDirty = true; startGame(); };
 
 // --- 戻るボタンの操作 ---
 document.getElementById('btn-back-from-level').onclick = () => {
