@@ -128,8 +128,8 @@ function boostSound(){ beep(300,'sawtooth',0.3,0.18); }
 function spinSound(){ beep(160,'sawtooth',0.3,0.18); }
 
 // コース
-const mapW=1024, mapH=1024, GRASS=0xff4db946, ROAD_HALF=84;
-const maxSpeed=300, accel=200, turnRate=2.5, offMul=0.4;
+const mapW=1024, mapH=1024, GRASS=0xff4db946, ROAD_HALF=92;
+const maxSpeed=300, accel=200, turnRate=2.5, offMul=0.6;
 const NK=6, COLORS=['#e23b3b','#3478f6','#2aa047','#f1c40f','#9b59b6','#e67e22','#15b8c4','#ec4899'];
 let mapCanvas, map32, centerline=[], N=0, startHeading=0;
 let karts=[], coins=[], trees=[], boxes=[], bananas=[];
@@ -142,7 +142,7 @@ function buildMap(){
   const m=mapCanvas.getContext('2d');
   m.fillStyle='#46b94d'; m.fillRect(0,0,mapW,mapH);
   m.fillStyle='#3da642'; for(let y=0;y<mapH;y+=26){ const o=((y/26)%2)*26; for(let x=o;x<mapW;x+=52) m.fillRect(x,y,26,26); }
-  const cxm=mapW/2, cym=mapH/2, rx=mapW*0.33, ry=mapH*0.27; N=400; centerline=[];
+  const cxm=mapW/2, cym=mapH/2, rx=mapW*0.38, ry=mapH*0.32; N=480; centerline=[];
   for(let i=0;i<N;i++){ const a=i/N*Math.PI*2; centerline.push({x:cxm+Math.cos(a)*rx, z:cym+Math.sin(a)*ry}); }
   const stroke=(w,st,dash)=>{ m.lineWidth=w;m.lineJoin='round';m.lineCap='round';m.strokeStyle=st; m.setLineDash(dash||[]);
     m.beginPath(); for(let i=0;i<=N;i++){const p=centerline[i%N]; i?m.lineTo(p.x,p.z):m.moveTo(p.x,p.z);} m.closePath(); m.stroke(); m.setLineDash([]); };
@@ -180,7 +180,7 @@ function makeKarts(){
     const hd=Math.atan2(q.x-p.x, q.z-p.z);
     karts.push({ x:p.x+t.nx*lane, z:p.z+t.nz*lane, angle:hd, speed:0, lap:1, lastIdx:idx, prog:0,
       isPlayer:i===0, color:COLORS[i%COLORS.length], spin:0, boost:0, item:null, rank:1, finished:false,
-      aiSpeed:0.80+Math.random()*0.16, aiLane:(Math.random()*2-1)*ROAD_HALF*0.5 });
+      aiSpeed:0.72+Math.random()*0.13, aiLane:(Math.random()*2-1)*ROAD_HALF*0.5, aim:0 });
   }
 }
 
@@ -263,7 +263,7 @@ function drawObj(ob){ const sx=ob.sx, sy=ob.sy, sc=ob.sc, type=ob.type;
     ctx.fillStyle='rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(sx,sy,r,r*0.3,0,0,7); ctx.fill();
     ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.ellipse(sx,sy-r*0.6,r,r*0.55,0.5,0,7); ctx.fill();
     ctx.fillStyle='#caa200'; ctx.fillRect(sx-1, sy-r*1.2, 2, r*0.4);
-  } else if(type==='kart'){ const w=Math.max(4,sc*ROAD_HALF*0.36), h=w*0.8;
+  } else if(type==='kart'){ const w=Math.min(H*0.2, Math.max(5,sc*ROAD_HALF*0.5)), h=w*0.8;
     ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(sx,sy,w*0.6,h*0.22,0,0,7); ctx.fill();
     ctx.fillStyle='#15171c'; ctx.fillRect(sx-w*0.6,sy-h*0.8,w*0.24,h*0.7); ctx.fillRect(sx+w*0.36,sy-h*0.8,w*0.24,h*0.7);
     ctx.fillStyle=ob.o.color; ctx.fillRect(sx-w*0.5,sy-h,w,h);
@@ -314,7 +314,14 @@ function updateKart(k,dt){
   if(k.spin>0){ k.spin-=dt; k.speed*=0.92; }
   // ハンドル
   const spd=k.speed/maxSpeed;
-  if(k.isPlayer){ const steer=(keys.right?1:0)-(keys.left?1:0); if(k.spin<=0) k.angle += steer*turnRate*dt*(0.35+0.65*spd); }
+  if(k.isPlayer){ // スマートステアリング：コースに沿って自動前進、左右はコース内で寄せる
+    const steer=(keys.right?1:0)-(keys.left?1:0);
+    if(steer!==0) k.aim=clamp(k.aim+steer*dt*1.8,-1,1); else k.aim*=(1-Math.min(1,dt*2.2));
+    const ai=(nearestIdx(k)+10)%N, ap=centerline[ai], t=perp(ai);
+    const tx=ap.x+t.nx*k.aim*ROAD_HALF*0.85, tz=ap.z+t.nz*k.aim*ROAD_HALF*0.85;
+    const des=Math.atan2(tx-k.x,tz-k.z), d=Math.atan2(Math.sin(des-k.angle),Math.cos(des-k.angle));
+    if(k.spin<=0) k.angle += clamp(d,-turnRate*1.6*dt, turnRate*1.6*dt);
+  }
   else { // AI：先のコース中心をまっすぐ狙う
     const idx=nearestIdx(k);
     const aim=centerline[(idx+16)%N];
@@ -328,7 +335,7 @@ function updateKart(k,dt){
   if(k.boost>0) k.boost-=dt;
   const onRoad=isRoad(k.x,k.z); const mv=k.speed*(onRoad?1:offMul);
   k.x+=Math.sin(k.angle)*mv*dt; k.z+=Math.cos(k.angle)*mv*dt;
-  if(!onRoad) k.speed=Math.min(k.speed,maxSpeed*0.5);
+  if(!onRoad) k.speed=Math.min(k.speed,maxSpeed*0.7);
   // 周回
   const idx=nearestIdx(k);
   if(k.lastIdx>N*0.7 && idx<N*0.3) k.lap++;
@@ -402,7 +409,7 @@ window.addEventListener('keydown',(e)=>{ if(e.code==='ArrowLeft')keys.left=true;
 window.addEventListener('keyup',(e)=>{ if(e.code==='ArrowLeft')keys.left=false; if(e.code==='ArrowRight')keys.right=false; });
 
 requestAnimationFrame(loop);
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=50'); }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=51'); }
 </script>
 </body>
 </html>
