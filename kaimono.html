@@ -384,7 +384,9 @@
 
                     {/* Pre-Start Screen with Orientation Lock Trigger */}
                     {gameState === 'pre_start' && (
-                        <div className="absolute inset-0 z-[200] bg-orange-50 flex items-center justify-center">
+                        <div className="absolute inset-0 z-[200] gp-bg flex flex-col items-center justify-center gap-5">
+                            <div className="gp-hero gp-float">🛒</div>
+                            <h1 className="gp-title" style={{ color: 'var(--gp-accent-d)' }}>おかいものごっこ</h1>
                             <button onClick={startGame} className="gp-btn gp-btn--lg animate-bounce-slow">
                                 はじめる！ ▶
                             </button>

@@ -348,8 +348,8 @@ function App() {
       {gameState === 'title' && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gp-cover text-white p-6">
           <a href="index.html" className="gp-home">🏠</a>
-          <div className="text-8xl mb-6 animate-bounce">🍣</div>
-          <h1 className="text-4xl font-black mb-4 text-center tracking-wider text-[#e74c3c]">オーダー回転寿司</h1>
+          <div className="gp-hero gp-float mb-6">🍣</div>
+          <h1 className="gp-title mb-4 text-center text-white">オーダー回転寿司</h1>
           <button onClick={startGame} className="gp-btn gp-btn--lg mt-8">スタート</button>
         </div>
       )}

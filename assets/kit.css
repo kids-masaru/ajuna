@@ -234,6 +234,29 @@
   border: 6px solid color-mix(in srgb, var(--gp-accent) 40%, #ffffff);
 }
 
+/* ---- タイトルの主役バッジ（絵を“デザインされた”見た目に）------------ */
+.gp-hero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(116px, 38vw, 176px);
+  height: clamp(116px, 38vw, 176px);
+  border-radius: 50%;
+  font-size: clamp(60px, 21vw, 98px);
+  line-height: 1;
+  background:
+    radial-gradient(circle at 36% 30%,
+      #ffffff 0%,
+      color-mix(in srgb, var(--gp-accent) 24%, #ffffff) 62%,
+      color-mix(in srgb, var(--gp-accent) 48%, #ffffff) 100%);
+  border: 6px solid #ffffff;
+  box-shadow:
+    var(--gp-shadow-lg),
+    inset 0 -10px 20px color-mix(in srgb, var(--gp-accent) 28%, transparent),
+    inset 0 8px 16px rgba(255, 255, 255, 0.7);
+  -webkit-text-fill-color: initial;
+}
+
 /* ---- 共通アニメ（演出の気持ちよさ）----------------------------------- */
 @keyframes gp-pop {
   0%   { transform: scale(0.4); opacity: 0; }
