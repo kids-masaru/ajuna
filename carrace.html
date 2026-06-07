@@ -56,6 +56,21 @@
   @keyframes rotnudge { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(78deg); } }
   .rotate-notice h2 { font-size: 28px; font-weight: 900; text-shadow: 0 3px 0 #e23b3b; }
   .rotate-notice p { color: #ffd84d; font-weight: 800; }
+  .rotate-go {
+    margin-top: 18px; font-family: inherit; font-weight: 800; font-size: 18px; color: #fff;
+    background: #e23b3b; border: none; border-radius: 14px; padding: 12px 24px;
+    box-shadow: 0 5px 0 #9e2020; cursor: pointer;
+  }
+  .rotate-go:active { transform: translateY(5px); box-shadow: 0 0 0 #9e2020; }
+
+  /* ゲーム全体のラッパー（ボタンで横向きに強制回転できる） */
+  #stage { position: absolute; inset: 0; }
+  #stage.force-landscape {
+    width: 100vh; height: 100vw;
+    transform: rotate(90deg); transform-origin: top left;
+    left: 100%; top: 0;
+  }
+  body.forced .rotate-notice { display: none !important; }
 
   h1 {
     font-size: 30px;
@@ -245,6 +260,16 @@
 </head>
 <body class="gp gp-fuchsia">
 
+<!-- 縦向きのときの案内（横向き前提・自動回転オフの端末はボタンで横に） -->
+<div class="rotate-notice">
+  <div class="ico">📱</div>
+  <h2>よこむきにしてね</h2>
+  <p>スマホを よこにすると あそべるよ！</p>
+  <button class="rotate-go" onclick="forceLandscape()">よこむきにする 🔄</button>
+</div>
+
+<div id="stage">
+
 <!-- ホームボタン -->
 <a href="index.html" class="gp-home">🏠</a>
 
@@ -252,13 +277,6 @@
 <audio id="bgm" src="carraceBGM.mp3" loop></audio>
 
 <canvas id="game"></canvas>
-
-<!-- 縦向きのときの案内（横向き前提） -->
-<div class="rotate-notice">
-  <div class="ico">📱</div>
-  <h2>よこむきにしてね</h2>
-  <p>スマホを よこにすると あそべるよ！</p>
-</div>
 
 <!-- メインメニュー -->
 <div id="menu-layer" class="overlay">
@@ -307,6 +325,8 @@
 </div>
 
 <div id="instruction" class="hidden">長押しで加速！<br>ブルッときたら2秒以内に離せばセーフ⚠️</div>
+
+</div><!-- /#stage -->
 
 <script>
 const canvas = document.getElementById('game');
@@ -397,8 +417,10 @@ function drawHill(hx, baseY, w, h) {
 }
 
 function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
+  const stageEl = document.getElementById('stage');
+  const forced = stageEl && stageEl.classList.contains('force-landscape');
+  W = canvas.width = forced ? window.innerHeight : window.innerWidth;
+  H = canvas.height = forced ? window.innerWidth : window.innerHeight;
   cx = W / 2;
   cy = H / 2;
   trackW = Math.min(W * 0.86, 600);
@@ -947,6 +969,13 @@ function tryLockLandscape() {
 }
 document.addEventListener('pointerdown', tryLockLandscape, { once: true });
 
+// ボタンで強制的に横向き（自動回転オフの端末向け・画面ごと回転）
+function forceLandscape() {
+  document.body.classList.add('forced');
+  document.getElementById('stage').classList.add('force-landscape');
+  resize();
+}
+
 // --- 戻るボタンの操作 ---
 document.getElementById('btn-back-from-level').onclick = () => {
   document.getElementById('com-level-select').classList.add('hidden');
@@ -1002,7 +1031,7 @@ function updatePressingStates() {
 }
 
 canvas.addEventListener('pointerdown', (e) => {
-  activePointers.set(e.pointerId, e.clientX);
+  activePointers.set(e.pointerId, e.offsetX);
   updatePressingStates();
 });
 
@@ -1014,7 +1043,7 @@ window.addEventListener('pointerup', endPtr);
 window.addEventListener('pointercancel', endPtr);
 canvas.addEventListener('pointermove', (e) => {
   if (activePointers.has(e.pointerId)) {
-    activePointers.set(e.pointerId, e.clientX);
+    activePointers.set(e.pointerId, e.offsetX);
     updatePressingStates();
   }
 });
