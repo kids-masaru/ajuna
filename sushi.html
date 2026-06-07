@@ -346,7 +346,7 @@ function App() {
       `}</style>
 
       {gameState === 'title' && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#2c3e50] text-white p-6">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gp-cover text-white p-6">
           <a href="index.html" className="gp-home">🏠</a>
           <div className="text-8xl mb-6 animate-bounce">🍣</div>
           <h1 className="text-4xl font-black mb-4 text-center tracking-wider text-[#e74c3c]">オーダー回転寿司</h1>
@@ -355,7 +355,7 @@ function App() {
       )}
 
       {gameState === 'result' && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#2c3e50] text-white p-6">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gp-cover text-white p-6">
           <h2 className="text-4xl font-bold mb-2">営業終了！</h2>
           <p className="text-xl text-gray-300 mb-8">今日のスコア</p>
           <div className="text-6xl font-black text-[#f1c40f] mb-12 drop-shadow-lg">{score}</div>

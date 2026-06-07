@@ -195,6 +195,45 @@
   color: var(--gp-accent-d);
 }
 
+/* ---- 上質な背景（ベタ塗り→やわらかいグラデ）------------------------- */
+/* 明るいゲーム用：白ベースにテーマ色のふんわりした光 */
+.gp-bg {
+  background-color: #fffdfe;
+  background-image:
+    radial-gradient(125% 85% at 50% -15%,
+      color-mix(in srgb, var(--gp-accent) 26%, #ffffff) 0%, transparent 60%),
+    radial-gradient(95% 60% at 105% 108%,
+      color-mix(in srgb, var(--gp-accent) 16%, #ffffff) 0%, transparent 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+/* 暗いゲーム用：深い藍にテーマ色のグロー */
+.gp-bg-dark {
+  background-color: #0c1020;
+  background-image:
+    radial-gradient(120% 90% at 50% -10%,
+      color-mix(in srgb, var(--gp-accent) 45%, #0c1020) 0%, transparent 62%),
+    radial-gradient(90% 70% at 100% 110%,
+      color-mix(in srgb, var(--gp-accent) 30%, #0c1020) 0%, transparent 60%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+/* タイトル/結果のフルスクリーン背景（テーマ色グラデ＋上品な暗がり） */
+.gp-cover {
+  background:
+    radial-gradient(120% 90% at 50% 0%,
+      color-mix(in srgb, var(--gp-accent) 55%, #11131f) 0%, transparent 60%),
+    linear-gradient(180deg, #1b1e2c 0%, #11131f 100%);
+}
+/* コンテンツをまとめる白カード（結果モーダル等） */
+.gp-modal {
+  background: #ffffff;
+  border-radius: var(--gp-r-lg);
+  box-shadow: var(--gp-shadow-lg);
+  padding: 28px 26px;
+  border: 6px solid color-mix(in srgb, var(--gp-accent) 40%, #ffffff);
+}
+
 /* ---- 共通アニメ（演出の気持ちよさ）----------------------------------- */
 @keyframes gp-pop {
   0%   { transform: scale(0.4); opacity: 0; }

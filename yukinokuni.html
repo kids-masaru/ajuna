@@ -82,7 +82,7 @@
         <a href="index.html" class="gp-home">🏠</a>
         <canvas id="gameCanvas"></canvas>
 
-        <div id="startScreen" class="absolute inset-0 flex flex-col justify-center items-center bg-slate-900/80 z-20 px-4 text-center">
+        <div id="startScreen" class="gp-cover absolute inset-0 flex flex-col justify-center items-center z-20 px-4 text-center">
             <h1 class="text-5xl md:text-7xl font-bold mb-4 title-text">ICE BEAM SHOOTER</h1>
             <p class="mb-12 text-gray-200 text-sm md:text-lg drop-shadow-md leading-relaxed">
                 画面をタッチして指を動かすと移動<br>
@@ -93,7 +93,7 @@
             <button id="startBtn" class="gp-btn gp-btn--lg">スタート</button>
         </div>
 
-        <div id="gameOverScreen" class="hidden absolute inset-0 flex flex-col justify-center items-center bg-black/80 z-20">
+        <div id="gameOverScreen" class="gp-cover hidden absolute inset-0 flex flex-col justify-center items-center z-20">
             <h1 id="resultTitle" class="text-6xl md:text-8xl font-bold mb-4 text-red-500">GAME OVER</h1>
             <p class="text-4xl mb-8 text-white">SCORE: <span id="finalScore" class="text-yellow-400">0</span></p>
             <button id="restartBtn" class="gp-btn">もう一度プレイ</button>
