@@ -152,6 +152,31 @@
   color: #fff;
 }
 
+/* ホームボタン（インライン版：ヘッダーの列の中に置く・他UIと重ならない） */
+.gp-home-inline {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--gp-accent-soft);
+  border-radius: 50%;
+  box-shadow: var(--gp-shadow-sm);
+  transition: transform .1s ease;
+}
+.gp-home-inline:active { transform: scale(0.9); }
+.gp-dark .gp-home-inline {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
 /* ---- フルスクリーンの画面（タイトル/結果）---------------------------- */
 .gp-screen {
   position: absolute;

@@ -686,20 +686,20 @@
         } else {
             // スコア
             ctx.fillStyle = 'white'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'left';
-            ctx.fillText(`SCORE: ${score}`, 20, 30);
+            ctx.fillText(`SCORE: ${score}`, 76, 30);
             
             // パワーレベル
             let pText = "POWER: 1";
             if (powerLevel === 2) pText = "POWER: 2 (TWIN)";
             if (powerLevel === 3) pText = "POWER: MAX (3-WAY)";
             ctx.fillStyle = '#facc15'; ctx.font = 'bold 16px sans-serif';
-            ctx.fillText(pText, 20, 55);
+            ctx.fillText(pText, 76, 55);
 
             // ★HP表示 (赤と緑のゲージでわかりやすく)
-            ctx.fillStyle = 'white'; ctx.fillText('HP:', 20, 80);
+            ctx.fillStyle = 'white'; ctx.fillText('HP:', 76, 80);
             for(let i=0; i<player.maxHp; i++) {
                 ctx.fillStyle = i < player.hp ? '#22c55e' : '#ef4444'; // 残りHPは緑、減った分は赤
-                ctx.fillRect(55 + i * 25, 65, 20, 15);
+                ctx.fillRect(111 + i * 25, 65, 20, 15);
             }
 
             frameCount++; animationId = requestAnimationFrame(gameLoop);
