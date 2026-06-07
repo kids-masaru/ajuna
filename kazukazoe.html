@@ -127,6 +127,7 @@
           const [drawCounts, setDrawCounts] = useState([0, 0]);
           const [clearTrigger, setClearTrigger] = useState(0);
           const [result, setResult] = useState(null); // null | 'correct' | 'incorrect'
+          const [hint, setHint] = useState('');
 
           const generateProblem = () => {
             const count = Math.floor(Math.random() * 10) + 1;
@@ -151,7 +152,8 @@
 
           const checkAnswer = () => {
             if (drawCounts[0] === 0 && drawCounts[1] === 0) {
-              alert("どちらかの すうじを なぞってね！");
+              setHint("どちらかの すうじを なぞってね！");
+              setTimeout(() => setHint(''), 1800);
               return;
             }
             const minCount = Math.min(drawCounts[0], drawCounts[1]);
@@ -201,8 +203,8 @@
                 </div>
 
                 {/* 説明テキスト */}
-                <p className="text-sm font-bold text-gray-600 text-center flex-shrink-0">
-                  せいかいの すうじを なぞってね！
+                <p className={`text-sm font-bold text-center flex-shrink-0 transition-colors ${hint ? 'text-rose-500' : 'text-gray-600'}`}>
+                  {hint || 'せいかいの すうじを なぞってね！'}
                 </p>
 
                 {/* なぞり書きエリア */}
