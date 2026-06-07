@@ -512,13 +512,14 @@ function getTrackPoint(p) {
     isCurve = Math.abs(Math.cos(aR)) > 0.5;
   } else if (selectedCourse === 'HEART') {
     const t = -p * Math.PI * 2 + Math.PI / 2;
-    const scale = Math.min(trackW / 32, trackH / 29) * 0.9;
-    x = cx + scale * (16 * Math.pow(Math.sin(t), 3));
-    y = cy - scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) - scale * 2.5;
+    const sxh = (trackW / 32) * 0.98;   // 横は広く（なだらかに）
+    const syh = (trackH / 29) * 0.95;   // 縦は画面に収める
+    x = cx + sxh * (16 * Math.pow(Math.sin(t), 3));
+    y = cy - syh * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) - syh * 2.5;
     const nextP = p + 0.001;
     const nt = -nextP * Math.PI * 2 + Math.PI / 2;
-    const nx = cx + scale * (16 * Math.pow(Math.sin(nt), 3));
-    const ny = cy - scale * (13 * Math.cos(nt) - 5 * Math.cos(2*nt) - 2 * Math.cos(3*nt) - Math.cos(4*nt)) - scale * 2.5;
+    const nx = cx + sxh * (16 * Math.pow(Math.sin(nt), 3));
+    const ny = cy - syh * (13 * Math.cos(nt) - 5 * Math.cos(2*nt) - 2 * Math.cos(3*nt) - Math.cos(4*nt)) - syh * 2.5;
     angle = Math.atan2(ny - y, nx - x);
     const inR = (v, min, max) => v > min && v < max;
     isCurve = inR(p, 0.02, 0.1) || inR(p, 0.28, 0.4) || inR(p, 0.47, 0.53) || inR(p, 0.6, 0.72) || inR(p, 0.9, 0.98);
