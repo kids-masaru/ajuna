@@ -38,24 +38,28 @@
   }
 
   #menu-layer {
-    background: rgba(248, 240, 255, 0.9);
-    backdrop-filter: blur(10px);
+    background: rgba(16, 20, 30, 0.74);
+    backdrop-filter: blur(3px);
   }
 
   h1 {
-    font-size: 32px;
-    color: #8e44ad;
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 0px #fff;
+    font-size: 30px;
+    color: #fff;
+    margin-bottom: 22px;
+    text-shadow: 0 3px 0 #e23b3b, 0 5px 0 rgba(0,0,0,0.3);
     text-align: center;
+    letter-spacing: 1px;
   }
-  
+
   .subtitle {
     font-size: 14px;
-    color: #ff7eb9;
-    margin-bottom: 30px;
-    font-weight: 700;
+    color: #ffd84d;
+    margin-bottom: 28px;
+    font-weight: 800;
+    text-align: center;
   }
+
+  #version-label { color: rgba(255,255,255,0.45); font-size: 11px; margin-top: 16px; }
 
   .btn-group {
     display: flex;
@@ -66,38 +70,41 @@
 
   .menu-btn {
     width: 260px;
-    padding: 16px;
+    padding: 14px 16px;
     border: none;
-    border-radius: 20px;
+    border-radius: 14px;
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 800;
+    color: #fff;
     cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
+    font-family: inherit;
+    transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
     pointer-events: auto;
-    box-shadow: 0 6px 15px rgba(142, 68, 173, 0.15);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.35);
   }
+  .menu-btn:hover { filter: brightness(1.06); }
+  .menu-btn:active { transform: translateY(5px); box-shadow: 0 0 0 rgba(0,0,0,0.35); }
 
-  #btn-1p { background: #ff7eb9; color: white; }
-  #btn-2p { background: #54a0ff; color: white; }
-  #btn-com-easy { background: #a29bfe; color: white; }
-  #btn-com-hard { background: #d63031; color: white; }
-  .btn-course { background: #fff; color: #8e44ad; border: 2px solid #e0c3fc; }
-  .back-btn { background: #dcd0ff; color: #5a2e70; margin-top: 10px; }
-  .menu-btn:active { transform: scale(0.95); }
+  #btn-1p { background: #ff5f9e; }
+  #btn-2p { background: #3d9bff; }
+  #btn-com-easy { background: #38b46b; }
+  #btn-com-hard { background: #e74c3c; }
+  .btn-course { background: #f1c40f; color: #4a3500; }
+  .back-btn { background: #5b6270; margin-top: 8px; }
 
   #countdown-text {
     font-size: 120px;
     font-weight: 900;
-    color: #ff7eb9;
-    text-shadow: 4px 4px 0px #fff;
+    color: #fff;
+    text-shadow: 0 6px 0 #e23b3b, 0 9px 0 rgba(0,0,0,0.3);
     display: none;
   }
 
   #message {
     font-size: 64px;
     font-weight: 900;
-    color: #ff7eb9;
-    text-shadow: 3px 3px 0px #fff;
+    color: #fff;
+    text-shadow: 0 4px 0 #e23b3b, 0 6px 0 rgba(0,0,0,0.3);
     opacity: 0;
     transition: opacity 0.3s, transform 0.3s;
     pointer-events: none;
@@ -117,12 +124,12 @@
   }
 
   .lap-box {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(5px);
-    border: 2px solid #e0c3fc;
-    border-radius: 15px;
+    background: rgba(16, 20, 30, 0.72);
+    backdrop-filter: blur(4px);
+    border: 3px solid #e0c3fc;
+    border-radius: 12px;
     padding: 6px 14px;
-    color: #8e44ad;
+    color: #fff;
     min-width: 80px;
     text-align: center;
     transition: opacity 0.2s;
@@ -142,14 +149,14 @@
   #instruction {
     position: fixed;
     bottom: 30px;
-    color: #8e44ad;
+    color: #fff;
     font-size: 14px;
-    font-weight: 700;
-    background: rgba(255, 255, 255, 0.9);
+    font-weight: 800;
+    background: rgba(16, 20, 30, 0.8);
     padding: 10px 20px;
-    border-radius: 20px;
+    border-radius: 14px;
     pointer-events: none;
-    box-shadow: 0 4px 10px rgba(142, 68, 173, 0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
     text-align: center;
     line-height: 1.4;
   }
@@ -360,7 +367,7 @@ function resize() {
   trackH = Math.min(H * 0.55, 300);
   cornerR = Math.min(trackW, trackH) * 0.35;
   // ドット絵用の低解像度バッファ（描いてから拡大して使う）
-  PIX = Math.max(2, Math.round(H / 240));
+  PIX = Math.max(2, Math.round(H / 420));
   const bw = Math.ceil(W / PIX), bh = Math.ceil(H / PIX);
   if (!buf) { buf = document.createElement('canvas'); bctx = buf.getContext('2d'); }
   buf.width = bw; buf.height = bh;
@@ -504,10 +511,10 @@ function buildScene() {
 
   // 芝生（2色のドットでドット絵テクスチャ）
   s.fillStyle = '#5cb049'; s.fillRect(0, 0, W, H);
-  s.fillStyle = '#4f9e3e';
-  const u = PIX * 2;
+  s.fillStyle = '#57a945';
+  const u = PIX * 3;
   for (let yy = 0; yy < H; yy += u) {
-    const off = ((Math.round(yy / u)) % 2) * PIX;
+    const off = ((Math.round(yy / u)) % 2) * Math.round(u / 2);
     for (let xx = off; xx < W; xx += u) s.fillRect(xx, yy, PIX, PIX);
   }
 
