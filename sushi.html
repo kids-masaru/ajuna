@@ -73,23 +73,23 @@ function generatePreviewItems(req) {
       const base = (hasGunkan && i === 0) ? 'gunkan' : 'shari';
       items.push({ id: `pv${id++}`, baseId: base, type: 'css', x: 120, y: cy + 10, rotation: 0, zIndex: z++ });
       if (hasWasabi) items.push({ id: `pv${id++}`, baseId: 'wasabi', type: 'css', x: 108, y: cy + 5, rotation: 0, zIndex: z++ });
-      if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: 120, y: cy, rotation: 90, zIndex: z++ });
       const n = neta[i] || neta[0];
       if (n) {
         const ing = INGREDIENTS.find(x => x.id === n[0]);
         items.push({ id: `pv${id++}`, baseId: n[0], type: ing?.type || 'css', emoji: ing?.emoji, x: 120, y: cy - 5, rotation: 0, zIndex: z++ });
       }
+      if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: 120, y: cy + 2, rotation: 0, zIndex: z++ });
     }
   } else {
     let z = 1;
     const base = hasGunkan ? 'gunkan' : 'shari';
     items.push({ id: `pv${id++}`, baseId: base, type: 'css', x: 120, y: 130, rotation: 0, zIndex: z++ });
     if (hasWasabi) items.push({ id: `pv${id++}`, baseId: 'wasabi', type: 'css', x: 100, y: 123, rotation: 0, zIndex: z++ });
-    if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: 120, y: 120, rotation: 90, zIndex: z++ });
     if (neta[0]) {
       const ing = INGREDIENTS.find(x => x.id === neta[0][0]);
       items.push({ id: `pv${id++}`, baseId: neta[0][0], type: ing?.type || 'css', emoji: ing?.emoji, x: 120, y: hasGunkan ? 100 : 110, rotation: 0, zIndex: z++ });
     }
+    if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: 120, y: 120, rotation: 0, zIndex: z++ });
   }
   return items;
 }
