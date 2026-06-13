@@ -14,6 +14,8 @@
   @media (orientation: portrait) {
     .rotate-notice { position:fixed; inset:0; z-index:99999; background:#11141d; color:#fff;
       display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:24px; }
+    .rotate-notice.in-game { display:flex; }
+    .rotate-notice.in-title { display:none; }
   }
   .rotate-notice .ico { font-size:84px; animation:rotnudge 1.6s ease-in-out infinite; }
   @keyframes rotnudge { 0%,100%{transform:rotate(-12deg);} 50%{transform:rotate(78deg);} }
@@ -61,7 +63,7 @@
 
   .screen { position:absolute; inset:0; z-index:50; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:12px; text-align:center; padding:20px; }
-  .cover { background:radial-gradient(120% 90% at 50% 0%, rgba(226,59,59,.35) 0%, transparent 60%), linear-gradient(180deg,#1b1e2c,#11131f); }
+  .cover { background:radial-gradient(120% 90% at 50% 0%, rgba(226,59,59,.35) 0%, transparent 60%), linear-gradient(180deg,#1b1e2c,#11131f); z-index:60; }
   .hidden { display:none !important; }
 
   #cd { position:absolute; inset:0; z-index:45; display:flex; align-items:center; justify-content:center;
@@ -74,7 +76,7 @@
 </head>
 <body class="gp gp-fuchsia gp-dark">
 
-<div class="rotate-notice">
+<div class="rotate-notice in-title">
   <div class="ico">📱</div>
   <h2>よこむきにしてね</h2>
   <p>スマホを よこにすると あそべるよ！</p>
@@ -1186,6 +1188,10 @@ function startGame() {
   buildObjects();
   makeKarts();
   raceClock = 0;
+
+  const rn = document.querySelector('.rotate-notice');
+  rn.classList.remove('in-title');
+  rn.classList.add('in-game');
 
   document.getElementById('titleScreen').classList.add('hidden');
   document.getElementById('resultScreen').classList.add('hidden');
