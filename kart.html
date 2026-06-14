@@ -154,6 +154,19 @@ const G={
 /* ---- CPU OPPONENTS ---- */
 const CPU_COLORS=['#3399ff','#ff9933','#cc33ff'];
 let cpus=[];
+const cpuTintCache={};
+function makeTintedKart(color, size){
+  const key=color+'_'+size;
+  if(cpuTintCache[key]) return cpuTintCache[key];
+  const w=size, h=Math.round(size*(kartImg.height/kartImg.width));
+  const oc=document.createElement('canvas'); oc.width=w; oc.height=h;
+  const ox=oc.getContext('2d');
+  ox.drawImage(kartImg, 0, 0, w, h);
+  ox.globalCompositeOperation='source-atop';
+  ox.fillStyle=color; ox.globalAlpha=0.5; ox.fillRect(0,0,w,h);
+  cpuTintCache[key]=oc;
+  return oc;
+}
 function initCPUs(){
   cpus=[];
   for(let i=0;i<3;i++){
@@ -480,7 +493,7 @@ function drawArch(center,roadHalf,p){
   if(p<0.04)return;
   const y=Math.floor(HORIZON+(H-HORIZON)*p);
   const postW=Math.max(2,9*p), postH=Math.max(10,72*p);
-  const l=center-roadHalf-postW*0.4, r=center+roadHalf-postW*0.6, topY=y-postH;
+  const l=center-roadHalf*1.15-postW*0.4, r=center+roadHalf*1.15-postW*0.6, topY=y-postH;
   for(const px of [l,r]){
     for(let yy=topY; yy<y; yy++){
       ctx.fillStyle=(Math.floor((yy-topY)/Math.max(2,postH/6))%2===0)?'#e23b3b':'#f5f5f5';
@@ -624,19 +637,23 @@ function drawCPUs(){
     const cx2=center + c.offset/(dist*1.1);
     let sc=Math.max(6,36/dist);
     if(c.shrinkT>0) sc*=0.55;
-    /* Draw as a simple kart shape */
+    /* Shadow */
     ctx.fillStyle='rgba(0,0,0,.2)';
     ctx.beginPath(); ctx.ellipse(cx2,py,sc*0.5,sc*0.15,0,0,Math.PI*2); ctx.fill();
-    /* Body */
-    ctx.fillStyle=c.color;
-    if(c.spinT>0 && Math.floor(c.spinT*10)%2) ctx.fillStyle='#fff';
-    ctx.fillRect(cx2-sc*0.3, py-sc*0.7, sc*0.6, sc*0.5);
-    /* Head */
-    ctx.fillStyle='#ffe0b2';
-    ctx.beginPath(); ctx.arc(cx2, py-sc*0.8, sc*0.2, 0, Math.PI*2); ctx.fill();
-    /* Helmet */
-    ctx.fillStyle=c.color;
-    ctx.beginPath(); ctx.arc(cx2, py-sc*0.85, sc*0.18, Math.PI, 0); ctx.fill();
+    /* Draw CPU using kartImg with color tint */
+    if(kartReady && sc > 8){
+      const w=Math.round(sc*1.2), h=Math.round(w*(kartImg.height/kartImg.width));
+      const tinted=makeTintedKart(c.color, w);
+      ctx.save();
+      ctx.translate(cx2, py-sc*0.6);
+      if(c.spinT>0) ctx.rotate(Math.sin(c.spinT*12)*0.3);
+      ctx.drawImage(tinted, -w/2, 0);
+      ctx.restore();
+    } else {
+      /* Tiny fallback */
+      ctx.fillStyle=c.color;
+      ctx.fillRect(cx2-sc*0.3, py-sc*0.7, sc*0.6, sc*0.5);
+    }
   }
 }
 
