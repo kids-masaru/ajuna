@@ -153,6 +153,8 @@ function tryLock() {
 }
 document.addEventListener('pointerdown', tryLock, { once: true });
 
+let groundImg = null;
+
 let W, H, DISPW, DISPH, PIX;
 function resize() {
   const forced = document.getElementById('stage').classList.contains('force-landscape');
@@ -264,7 +266,6 @@ const STAR_DUR = 6.0;
 const GRASS_COLOR = 0xff4db946;
 let mapCanvas, map32;
 let centerline = [], N = 0;
-let groundImg = null;
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
