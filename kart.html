@@ -7,12 +7,16 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; touch-action:none; }
   html,body { width:100%; height:100%; overflow:hidden; background:#0a0a14; font-family:"Courier New",monospace; }
-  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
-  canvas { image-rendering:pixelated; image-rendering:crisp-edges; background:#5c94fc; max-width:100%; max-height:100%; }
+  #wrap { position:fixed; inset:0; }
+  canvas { image-rendering:pixelated; image-rendering:crisp-edges; background:#5c94fc; width:100%; height:100%; display:block; }
 
-  .pad { position:fixed; bottom:0; top:0; z-index:10; }
-  #padL { left:0; width:55%; }
-  #padR { right:0; width:45%; }
+  .steer-btn { position:fixed; bottom:max(16px,env(safe-area-inset-bottom)); width:88px; height:88px; z-index:12;
+    border-radius:50%; background:rgba(255,255,255,.18); border:3px solid rgba(255,255,255,.5);
+    color:#fff; font-size:36px; display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+  #btnL { left:16px; }
+  #btnR { right:120px; }
+  .steer-btn.on { background:rgba(255,255,255,.45); transform:scale(.93); }
 
   .hint { position:fixed; bottom:10px; font-size:11px; color:#fff; letter-spacing:1px; pointer-events:none; z-index:11; text-shadow:1px 1px 0 #000; opacity:.6; }
   #hintL { left:18px; }
@@ -67,16 +71,15 @@
 <a id="homeBtn" href="index.html">🏠</a>
 <div id="wrap"><canvas id="game" width="320" height="180"></canvas></div>
 
-<div class="pad" id="padL"></div>
-<div class="pad" id="padR"></div>
-<div class="hint" id="hintL">◀ 押して走る・傾けて曲がる ▶</div>
+<div id="btnL" class="steer-btn hidden">◀</div>
+<div id="btnR" class="steer-btn hidden">▶</div>
 <div id="itemBtn"><img id="itemImg"><span class="dash">―</span><span class="lbl">ITEM</span></div>
 <div id="count"></div>
 
 <div id="msg">
   <h1>PIXEL MOTO RACING</h1>
   <h2>ドットカート</h2>
-  <p>左側=押して走る／傾けてハンドル<br>右下=アイテムボタン（きのこでダッシュ）<br>3周してゴールゲートをくぐれ！</p>
+  <p>◀▶ ボタンでハンドル（アクセルは自動）<br>右下=アイテムボタン（きのこでダッシュ）<br>3周してゴールゲートをくぐれ！</p>
   <button id="startBtn">スタート</button>
 </div>
 
@@ -92,7 +95,17 @@ const mushImg=new Image(); mushImg.src="data:image/png;base64,iVBORw0KGgoAAAANSU
 document.getElementById('itemImg').src=mushImg.src;
 
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
-const W=320, H=180, HORIZON=72;
+let W=320, H=180, HORIZON=72;
+function resizeCanvas(){
+  const ww=window.innerWidth, wh=window.innerHeight;
+  const scale=Math.min(ww/320, wh/180);
+  W=Math.round(ww/scale); H=Math.round(wh/scale);
+  HORIZON=Math.round(H*0.4);
+  cv.width=W; cv.height=H;
+  ctx.imageSmoothingEnabled=false;
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 const TRACK_W=440;
 
 const itemBtnEl=document.getElementById('itemBtn');
@@ -108,17 +121,18 @@ function placeItems(){
   for(let i=0;i<8;i++) G.items.push({a:(i/8)*Math.PI*2+0.4, taken:false, respawn:0});
 }
 
-const input={accel:false,steerX:0};
-function bindPad(el,isLeft){
-  const move=px=>{const r=el.getBoundingClientRect(); input.steerX=((px-r.left)/r.width-0.5)*2;};
-  el.addEventListener('touchstart',e=>{e.preventDefault(); if(isLeft){input.accel=true;move(e.touches[0].clientX);}else useItem();},{passive:false});
-  el.addEventListener('touchmove',e=>{e.preventDefault(); if(isLeft)move(e.touches[0].clientX);},{passive:false});
-  el.addEventListener('touchend',e=>{e.preventDefault(); if(isLeft){input.accel=false;input.steerX=0;}},{passive:false});
+const input={left:false,right:false};
+function bindBtn(el,dir){
+  const on=e=>{e.preventDefault();input[dir]=true;el.classList.add('on');};
+  const off=()=>{input[dir]=false;el.classList.remove('on');};
+  el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);
+  el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off);
 }
-bindPad(document.getElementById('padL'),true);
-bindPad(document.getElementById('padR'),false);
-document.getElementById('padR').addEventListener('touchstart',()=>itemBtnEl.classList.add('press'));
-document.getElementById('padR').addEventListener('touchend',()=>itemBtnEl.classList.remove('press'));
+bindBtn(document.getElementById('btnL'),'left');
+bindBtn(document.getElementById('btnR'),'right');
+itemBtnEl.style.pointerEvents='auto';
+itemBtnEl.addEventListener('pointerdown',e=>{e.preventDefault();useItem();itemBtnEl.classList.add('press');});
+itemBtnEl.addEventListener('pointerup',()=>itemBtnEl.classList.remove('press'));
 
 const keys={};
 addEventListener('keydown',e=>{keys[e.key]=true; if(e.key===' ')useItem();});
@@ -130,6 +144,8 @@ function updateItemUI(){ if(G.item){itemBtnEl.classList.add('ready');}else{itemB
 document.getElementById('startBtn').addEventListener('click',beginCountdown);
 function beginCountdown(){
   document.getElementById('msg').classList.add('hidden');
+  document.getElementById('btnL').classList.remove('hidden');
+  document.getElementById('btnR').classList.remove('hidden');
   Object.assign(G,{state:'countdown',speed:0,steer:0,angle:0,trackA:-Math.PI/2,offset:0,lap:0,item:null,boostT:0,time:0,countVal:3});
   G.lineBase=G.trackA+0.12; G.nextLine=G.trackA+Math.PI*2;
   placeItems(); updateItemUI(); runCount();
@@ -145,11 +161,11 @@ function flashCount(){
 
 function update(dt){
   if(G.state!=='play')return;
-  const accelOn=input.accel||keys['ArrowUp'];
-  let tSteer=input.steerX;
-  if(keys['ArrowLeft'])tSteer=-1; else if(keys['ArrowRight'])tSteer=1;
-  G.steer+=(tSteer-G.steer)*0.15;
-  if(accelOn)G.speed+=0.08; else G.speed-=0.06;
+  let tSteer=0;
+  if(input.left||keys['ArrowLeft'])tSteer=-1;
+  if(input.right||keys['ArrowRight'])tSteer+=1;
+  G.steer+=(tSteer-G.steer)*0.18;
+  G.speed+=0.08;
   let max=G.maxSpeed;
   if(G.boostT>0){G.boostT-=dt; max=G.maxSpeed*1.7; if(accelOn)G.speed+=0.15;}
   G.speed=Math.max(0,Math.min(max,G.speed));
@@ -167,7 +183,8 @@ function update(dt){
 }
 
 function winGame(){
-  G.state='win'; const m=document.getElementById('msg'); m.classList.remove('hidden');
+  G.state='win'; document.getElementById('btnL').classList.add('hidden'); document.getElementById('btnR').classList.add('hidden');
+  const m=document.getElementById('msg'); m.classList.remove('hidden');
   m.innerHTML=`<h1>GOAL!</h1><div class="big">★ FINISH ★</div><p>TIME ${G.time.toFixed(2)}秒</p><button id="startBtn">もう一回</button>`;
   document.getElementById('startBtn').addEventListener('click',beginCountdown);
   itemBtnEl.classList.remove('ready');
@@ -256,7 +273,7 @@ function drawItemsOnTrack(){
     let da=((it.a-G.trackA)%(Math.PI*2)); if(da<0)da+=Math.PI*2;
     if(da<0.02||da>1.0)continue;
     const p=1-(da/1.0), dist=(1-p)*8+0.5, py=HORIZON+(H-HORIZON)*p;
-    const center=W/2-G.offset/(dist*1.1), sc=Math.max(6,30/dist);
+    const center=W/2-G.offset/(dist*1.1), sc=Math.max(10,50/dist);
     if(mushReady){ ctx.drawImage(mushImg, center-sc/2, py-sc, sc, sc); }
   }
 }
@@ -264,7 +281,7 @@ function drawKart(){
   const x=W/2+G.steer*6, y=H-54+Math.sin(G.bob*0.3)*1.5;
   ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(W/2,H-16,36,7,0,0,Math.PI*2); ctx.fill();
   if(G.boostT>0){ ctx.fillStyle=(Math.floor(G.bob)%2)?'#ffae00':'#ff3b00'; ctx.fillRect(W/2-14,y+44,28,8); }
-  if(kartReady){ const w=64,h=64*(kartImg.height/kartImg.width);
+  if(kartReady){ const w=Math.round(W*0.22),h=w*(kartImg.height/kartImg.width);
     ctx.save(); ctx.translate(x,y); ctx.rotate(G.steer*0.06); ctx.drawImage(kartImg,-w/2,0,w,h); ctx.restore(); }
 }
 function drawMiniMap(){
