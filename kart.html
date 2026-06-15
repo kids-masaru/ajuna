@@ -39,7 +39,7 @@
     display:flex; align-items:center; justify-content:center; font-size:18px;
     text-decoration:none; box-shadow:2px 2px 0 #000; }
 
-  #itemBtn { position:absolute; right:16px; bottom:16px; width:80px; height:80px; z-index:12;
+  #itemBtn { position:absolute; right:106px; bottom:106px; width:80px; height:80px; z-index:12;
     border:4px solid #fff; border-radius:16px; background:rgba(0,0,0,.45);
     display:none; flex-direction:column; align-items:center; justify-content:center;
     color:#fff; box-shadow:3px 3px 0 #000; font-size:36px; }
@@ -110,7 +110,7 @@ const kartImg=new Image(); kartImg.src="data:image/png;base64,iVBORw0KGgoAAAANSU
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 let W=320, H=180, HORIZON=72;
 const TRACK_W=440;
-const FULL_LAP=Math.PI*2;
+const FULL_LAP=Math.PI*6;
 
 function resizeCanvas(){
   const stage=document.getElementById('stage');
@@ -194,7 +194,7 @@ function initCPUs(){
 /* ---- ITEM BOXES (rainbow ? boxes) ---- */
 function placeItemBoxes(){
   G.itemBoxes=[];
-  const N=18;
+  const N=30;
   for(let i=0;i<N;i++){
     G.itemBoxes.push({
       a:(i/N)*FULL_LAP + 0.3,
@@ -462,12 +462,12 @@ function drawSky(){
   sky.addColorStop(0,'#3b7dd8'); sky.addColorStop(1,'#bfe0ff');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,HORIZON);
   ctx.fillStyle='#fff';
-  const cx=(-G.trackA*40)%380;
+  const cx=(-G.trackA*120)%380;
   for(let i=0;i<5;i++){ let x=((i*90+cx)%380+380)%380-40; const y=14+i%2*12;
     ctx.fillRect(x,y,22,6); ctx.fillRect(x+6,y-4,14,6); ctx.fillRect(x-4,y+4,30,4); }
-  const mx=(-G.trackA*30)%320;
+  const mx=(-G.trackA*90)%320;
   ctx.fillStyle='#6b7a8c'; for(let i=-1;i<7;i++){const x=((i*70+mx)%380+380)%380-40; mountain(x,HORIZON,46,28);}
-  ctx.fillStyle='#566678'; for(let i=-1;i<8;i++){const x=((i*54+mx*1.3)%380+380)%380-40; mountain(x,HORIZON,34,20);}
+  ctx.fillStyle='#566678'; for(let i=-1;i<8;i++){const x=((i*54+mx*1.5)%380+380)%380-40; mountain(x,HORIZON,34,20);}
 }
 function mountain(x,base,w,h){
   ctx.beginPath(); ctx.moveTo(x,base); ctx.lineTo(x+w/2,base-h); ctx.lineTo(x+w,base); ctx.fill();
@@ -491,7 +491,7 @@ function drawStartLine(){
   for(let n=-1;n<=1;n++){
     const lineA=G.lineBase+n*FULL_LAP; let d=lineA-G.trackA;
     if(d<-0.05||d>0.9)continue;
-    const p=1-(Math.max(0,d)/0.9), dist=(1-p)*8+0.5, y=Math.floor(HORIZON+(H-HORIZON)*p);
+    const p=1-(Math.max(0,d)/0.9), dist=(1-p)*4+0.8, y=Math.floor(HORIZON+(H-HORIZON)*p);
     const roadHalf=TRACK_W/(dist*1.1), center=W/2-G.offset/(dist*1.1);
     const l=center-roadHalf, r=center+roadHalf, thick=Math.max(2,9*p), sq=Math.max(3,13*p);
     for(let row=0;row<thick;row++){const yy=y+row; if(yy<HORIZON||yy>=H)continue;
@@ -503,7 +503,7 @@ function drawArch(center,roadHalf,p){
   if(p<0.04)return;
   const y=Math.floor(HORIZON+(H-HORIZON)*p);
   const postW=Math.max(2,9*p), postH=Math.max(10,72*p);
-  const l=center-roadHalf*1.15-postW*0.4, r=center+roadHalf*1.15-postW*0.6, topY=y-postH;
+  const l=center-roadHalf*1.3-postW*0.4, r=center+roadHalf*1.3-postW*0.6, topY=y-postH;
   for(const px of [l,r]){
     for(let yy=topY; yy<y; yy++){
       ctx.fillStyle=(Math.floor((yy-topY)/Math.max(2,postH/6))%2===0)?'#e23b3b':'#f5f5f5';
@@ -511,8 +511,8 @@ function drawArch(center,roadHalf,p){
     }
   }
   const barH=Math.max(4,16*p);
-  ctx.fillStyle='#1f3fae'; ctx.fillRect(l,topY-barH,(r-l)+postW,barH);
-  ctx.fillStyle='#3b62e0'; ctx.fillRect(l,topY-barH,(r-l)+postW,Math.max(1,barH*0.4));
+  ctx.fillStyle='#1f3fae'; ctx.fillRect(l,topY-barH,(r-l)+postW*2,barH);
+  ctx.fillStyle='#3b62e0'; ctx.fillRect(l,topY-barH,(r-l)+postW*2,Math.max(1,barH*0.4));
   if(p>0.4){
     ctx.fillStyle='#fff'; ctx.font='bold '+Math.floor(barH*0.8)+'px monospace'; ctx.textAlign='center';
     const label=(G.lap>=G.totalLaps-1)?'FINISH':'START';
@@ -522,12 +522,12 @@ function drawArch(center,roadHalf,p){
 
 /* ---- SCENERY (more trees) ---- */
 function drawScenery(){
-  for(let i=0;i<24;i++){
-    const baseA=(i/24)*FULL_LAP;
+  for(let i=0;i<40;i++){
+    const baseA=(i/40)*FULL_LAP;
     let da=((baseA-G.trackA%(FULL_LAP))%(FULL_LAP));
     if(da<0)da+=FULL_LAP;
-    if(da>1.1)continue;
-    const p=1-(da/1.1), dist=(1-p)*8+0.5, py=HORIZON+(H-HORIZON)*p, sc=46/dist;
+    if(da>1.5)continue;
+    const p=1-(da/1.5), dist=(1-p)*4+0.8, py=HORIZON+(H-HORIZON)*p, sc=46/dist;
     const roadHalf=TRACK_W/(dist*1.1), center=W/2-G.offset/(dist*1.1);
     const side=(i%2===0)?-1:1;
     const extraOff=(i%3)*sc*0.3;
@@ -570,8 +570,8 @@ function drawItemBoxesOnTrack(){
     const pA=G.trackA%(FULL_LAP);
     let da=boxA-pA;
     if(da<0) da+=FULL_LAP;
-    if(da<0.005||da>1.0)continue;
-    const p=1-(da/1.0), dist=(1-p)*8+0.5;
+    if(da<0.005||da>1.5)continue;
+    const p=1-(da/1.5), dist=(1-p)*4+0.8;
     const py=HORIZON+(H-HORIZON)*p;
     const center=W/2-G.offset/(dist*1.1);
     const boxX=center + box.laneOffset/(dist*1.1);
@@ -589,8 +589,8 @@ function drawBananasOnTrack(){
     let da=bA-pA;
     if(da<-Math.PI) da+=FULL_LAP;
     if(da>Math.PI) da-=FULL_LAP;
-    if(da<0.005||da>1.0)continue;
-    const p=1-(da/1.0), dist=(1-p)*8+0.5;
+    if(da<0.005||da>1.5)continue;
+    const p=1-(da/1.5), dist=(1-p)*4+0.8;
     const py=HORIZON+(H-HORIZON)*p;
     const center=W/2-G.offset/(dist*1.1);
     const bx=center + b.offset/(dist*1.1);
@@ -615,8 +615,8 @@ function drawShellsOnTrack(){
     let da=sA-pA;
     if(da<-Math.PI) da+=FULL_LAP;
     if(da>Math.PI) da-=FULL_LAP;
-    if(da<0.005||da>1.0)continue;
-    const p=1-(da/1.0), dist=(1-p)*8+0.5;
+    if(da<0.005||da>1.5)continue;
+    const p=1-(da/1.5), dist=(1-p)*4+0.8;
     const py=HORIZON+(H-HORIZON)*p;
     const center=W/2-G.offset/(dist*1.1);
     const sx=center + s.offset/(dist*1.1);
@@ -640,8 +640,8 @@ function drawCPUs(){
     let da=cA-pA;
     if(da<-Math.PI) da+=FULL_LAP;
     if(da>Math.PI) da-=FULL_LAP;
-    if(da<-0.05||da>1.0)continue;
-    const p=1-(Math.max(0,da)/1.0), dist=(1-p)*8+0.5;
+    if(da<-0.05||da>1.5)continue;
+    const p=1-(Math.max(0,da)/1.5), dist=(1-p)*4+0.8;
     const py=HORIZON+(H-HORIZON)*p;
     const center=W/2-G.offset/(dist*1.1);
     const cx2=center + c.offset/(dist*1.1);
