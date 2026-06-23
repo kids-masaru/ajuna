@@ -120,6 +120,7 @@ kartImg.onload = () => kartReady = true;
 /* ---- Canvas setup ---- */
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 let W = 320, H = 180, HORIZON;
+let outputImageData;
 
 function resizeCanvas(){
   const stage = document.getElementById('stage');
@@ -134,7 +135,6 @@ function resizeCanvas(){
   ctx.imageSmoothingEnabled = false;
   outputImageData = ctx.createImageData(W, H);
 }
-let outputImageData;
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
