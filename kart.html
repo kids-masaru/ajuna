@@ -99,747 +99,1271 @@
 </div>
 
 <script>
+"use strict";
+
+/* ================================================================
+   MODE 7 KART RACER
+   ================================================================ */
+
 function forceLandscape(){
   document.body.classList.add('forced');
   document.getElementById('stage').classList.add('force-landscape');
   resizeCanvas();
 }
 
-const kartImg=new Image(); kartImg.src="data:image/png;base64,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"; let kartReady=false; kartImg.onload=()=>kartReady=true;
+/* ---- Kart sprite (base64) ---- */
+const kartImg = new Image();
+kartImg.src = "data:image/png;base64,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";
+let kartReady = false;
+kartImg.onload = () => kartReady = true;
 
-const cv=document.getElementById('game'), ctx=cv.getContext('2d');
-let W=320, H=180, HORIZON=72;
-const TRACK_W=440;
-const FULL_LAP=Math.PI*6;
-
-/* ---- TRACK CURVES ---- */
-const TRACK_CURVES=[];
-function buildTrackCurves(){
-  TRACK_CURVES.length=0;
-  const segments=200;
-  for(let i=0;i<segments;i++){
-    const t=i/segments;
-    let curve=0;
-    if(t<0.08) curve=0;
-    else if(t<0.15) curve=0.6;
-    else if(t<0.20) curve=0;
-    else if(t<0.30) curve=-1.2;
-    else if(t<0.38) curve=0.8;
-    else if(t<0.46) curve=-0.8;
-    else if(t<0.58) curve=0.5;
-    else if(t<0.65) curve=0;
-    else if(t<0.72) curve=1.0;
-    else if(t<0.82) curve=-0.4;
-    else curve=0;
-    TRACK_CURVES.push(curve);
-  }
-}
-function getCurveAt(trackAngle){
-  const t=((trackAngle%FULL_LAP)+FULL_LAP)%FULL_LAP/FULL_LAP;
-  const idx=Math.floor(t*TRACK_CURVES.length)%TRACK_CURVES.length;
-  return TRACK_CURVES[idx]||0;
-}
+/* ---- Canvas setup ---- */
+const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+let W = 320, H = 180, HORIZON;
 
 function resizeCanvas(){
-  const stage=document.getElementById('stage');
-  const forced=stage.classList.contains('force-landscape');
-  const ww=forced?window.innerHeight:window.innerWidth;
-  const wh=forced?window.innerWidth:window.innerHeight;
-  const scale=Math.min(ww/320, wh/180);
-  W=Math.round(ww/scale); H=Math.round(wh/scale);
-  HORIZON=Math.round(H*0.4);
-  cv.width=W; cv.height=H;
-  ctx.imageSmoothingEnabled=false;
+  const stage = document.getElementById('stage');
+  const forced = stage.classList.contains('force-landscape');
+  const ww = forced ? window.innerHeight : window.innerWidth;
+  const wh = forced ? window.innerWidth : window.innerHeight;
+  const scale = Math.min(ww/320, wh/180);
+  W = Math.round(ww/scale);
+  H = Math.round(wh/scale);
+  HORIZON = Math.round(H * 0.4);
+  cv.width = W; cv.height = H;
+  ctx.imageSmoothingEnabled = false;
+  outputImageData = ctx.createImageData(W, H);
 }
+let outputImageData;
 resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
+window.addEventListener('resize', resizeCanvas);
 
-const itemBtnEl=document.getElementById('itemBtn');
-const itemIconEl=itemBtnEl.querySelector('.item-icon');
-const countEl=document.getElementById('count');
-const flashEl=document.getElementById('flashOverlay');
+/* ================================================================
+   TRACK MAP GENERATION (1024x1024 offscreen canvas)
+   ================================================================ */
+const MAP_SIZE = 1024;
+const trackCanvas = document.createElement('canvas');
+trackCanvas.width = MAP_SIZE; trackCanvas.height = MAP_SIZE;
+const trackCtx = trackCanvas.getContext('2d');
+let trackMapData; // Uint32Array of track pixels
+let trackCenterline = []; // [{x, y}] control points
+let trackWaypoints = []; // smoothed waypoints for CPU AI
 
-/* ---- ITEM DEFINITIONS ---- */
-const ITEMS=[
+const ROAD_WIDTH = 52; // half-width in map pixels
+const ROAD_COLOR     = 0xFF767676; // #767676 ABGR
+const GRASS_COLOR_A  = 0xFF88AA33; // #3aa88 ABGR
+const GRASS_COLOR_B  = 0xFF779922;
+const RUMBLE_RED     = 0xFF3333DD; // #DD3333
+const RUMBLE_WHITE   = 0xFFEEEEEE;
+const LINE_WHITE     = 0xFFFFFFFF;
+const CHECKER_BLACK  = 0xFF222222;
+const CHECKER_WHITE  = 0xFFEEEEEE;
+
+function buildTrackCenterline() {
+  /* Define control points for an interesting circuit.
+     The track has: long straight, wide right, tight chicane,
+     back straight, hairpin left, S-curves, final right curve. */
+  const pts = [
+    // Start/finish straight (bottom area, going right)
+    {x: 250, y: 700},
+    {x: 320, y: 700},
+    {x: 400, y: 700},
+    {x: 480, y: 700},
+    {x: 560, y: 698},
+    {x: 640, y: 694},
+    // Wide sweeping right turn
+    {x: 710, y: 680},
+    {x: 760, y: 650},
+    {x: 800, y: 600},
+    {x: 820, y: 540},
+    {x: 825, y: 480},
+    {x: 815, y: 420},
+    // Tight chicane (left-right-left)
+    {x: 790, y: 370},
+    {x: 750, y: 340},
+    {x: 710, y: 320},
+    {x: 730, y: 280},
+    {x: 760, y: 250},
+    {x: 740, y: 210},
+    {x: 700, y: 190},
+    // Back straight (going left)
+    {x: 640, y: 180},
+    {x: 570, y: 175},
+    {x: 500, y: 172},
+    {x: 430, y: 174},
+    {x: 360, y: 178},
+    // Hairpin left turn
+    {x: 300, y: 190},
+    {x: 250, y: 215},
+    {x: 215, y: 260},
+    {x: 200, y: 320},
+    {x: 210, y: 380},
+    // S-curve section
+    {x: 240, y: 430},
+    {x: 280, y: 470},
+    {x: 300, y: 510},
+    {x: 280, y: 550},
+    {x: 240, y: 580},
+    {x: 220, y: 620},
+    // Final right curve leading back to start
+    {x: 210, y: 650},
+    {x: 215, y: 675},
+    {x: 230, y: 695},
+  ];
+  return pts;
+}
+
+function catmullRom(p0, p1, p2, p3, t) {
+  const t2 = t*t, t3 = t2*t;
+  return {
+    x: 0.5 * ((2*p1.x) + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+    y: 0.5 * ((2*p1.y) + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+  };
+}
+
+function smoothTrack(controlPts, stepsPerSegment) {
+  const n = controlPts.length;
+  const result = [];
+  for (let i = 0; i < n; i++) {
+    const p0 = controlPts[(i-1+n) % n];
+    const p1 = controlPts[i];
+    const p2 = controlPts[(i+1) % n];
+    const p3 = controlPts[(i+2) % n];
+    for (let s = 0; s < stepsPerSegment; s++) {
+      result.push(catmullRom(p0, p1, p2, p3, s / stepsPerSegment));
+    }
+  }
+  return result;
+}
+
+/* Start line position (index into trackWaypoints) */
+let startLineIdx = 0;
+
+function buildTrackMap() {
+  const controlPts = buildTrackCenterline();
+  trackCenterline = controlPts;
+  trackWaypoints = smoothTrack(controlPts, 20);
+  startLineIdx = 0; // first waypoint is start area
+
+  /* Fill background with grass */
+  trackCtx.fillStyle = '#3a8';
+  trackCtx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+
+  /* Draw grass checkerboard pattern */
+  for (let gy = 0; gy < MAP_SIZE; gy += 32) {
+    for (let gx = 0; gx < MAP_SIZE; gx += 32) {
+      if (((gx/32) + (gy/32)) % 2 === 0) {
+        trackCtx.fillStyle = '#2a7';
+        trackCtx.fillRect(gx, gy, 32, 32);
+      }
+    }
+  }
+
+  /* Draw rumble strips (wider than road) */
+  trackCtx.lineWidth = ROAD_WIDTH * 2 + 14;
+  trackCtx.lineCap = 'round';
+  trackCtx.lineJoin = 'round';
+  trackCtx.strokeStyle = '#d33';
+  trackCtx.setLineDash([12, 12]);
+  drawTrackPath(trackCtx);
+  trackCtx.stroke();
+
+  /* Draw white part of rumble strip */
+  trackCtx.strokeStyle = '#eee';
+  trackCtx.lineDashOffset = 12;
+  drawTrackPath(trackCtx);
+  trackCtx.stroke();
+  trackCtx.setLineDash([]);
+  trackCtx.lineDashOffset = 0;
+
+  /* Draw road surface */
+  trackCtx.lineWidth = ROAD_WIDTH * 2;
+  trackCtx.strokeStyle = '#555';
+  drawTrackPath(trackCtx);
+  trackCtx.stroke();
+
+  /* Draw road edge lines (thin white) */
+  trackCtx.lineWidth = ROAD_WIDTH * 2 - 4;
+  trackCtx.strokeStyle = '#666';
+  drawTrackPath(trackCtx);
+  trackCtx.stroke();
+
+  /* Draw center dashed line */
+  trackCtx.lineWidth = 2;
+  trackCtx.strokeStyle = '#fff';
+  trackCtx.setLineDash([10, 14]);
+  drawTrackPath(trackCtx);
+  trackCtx.stroke();
+  trackCtx.setLineDash([]);
+
+  /* Draw start/finish checkerboard */
+  drawStartFinishLine();
+
+  /* Cache pixel data */
+  const imgData = trackCtx.getImageData(0, 0, MAP_SIZE, MAP_SIZE);
+  trackMapData = new Uint32Array(imgData.data.buffer);
+}
+
+function drawTrackPath(c) {
+  c.beginPath();
+  c.moveTo(trackWaypoints[0].x, trackWaypoints[0].y);
+  for (let i = 1; i < trackWaypoints.length; i++) {
+    c.lineTo(trackWaypoints[i].x, trackWaypoints[i].y);
+  }
+  c.closePath();
+}
+
+function drawStartFinishLine() {
+  /* Draw checkerboard across the road at the start position */
+  const idx = startLineIdx;
+  const wp = trackWaypoints;
+  const n = wp.length;
+  const p = wp[idx];
+  const pNext = wp[(idx + 1) % n];
+  /* Direction tangent */
+  const dx = pNext.x - p.x;
+  const dy = pNext.y - p.y;
+  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+  /* Normal (perpendicular) */
+  const nx = -dy / len;
+  const ny = dx / len;
+
+  const checkerSize = 8;
+  const rows = 4;
+  const cols = Math.floor(ROAD_WIDTH * 2 / checkerSize);
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const along = (r - rows/2) * checkerSize;
+      const across = (c - cols/2) * checkerSize;
+      const cx = p.x + (dx/len) * along + nx * across;
+      const cy = p.y + (dy/len) * along + ny * across;
+      trackCtx.fillStyle = ((r + c) % 2 === 0) ? '#111' : '#fff';
+      trackCtx.fillRect(cx - checkerSize/2, cy - checkerSize/2, checkerSize, checkerSize);
+    }
+  }
+}
+
+/* Check if a position is on the road (by color) */
+function isOnRoad(wx, wy) {
+  const mx = Math.floor(wx) & (MAP_SIZE - 1);
+  const my = Math.floor(wy) & (MAP_SIZE - 1);
+  const pixel = trackMapData[my * MAP_SIZE + mx];
+  /* Road colors are grays: #555 = 0xFF555555, #666 = 0xFF666666 */
+  const r = (pixel >> 0) & 0xFF;
+  const g = (pixel >> 8) & 0xFF;
+  const b = (pixel >> 16) & 0xFF;
+  /* Road pixels: gray tones where r=g=b and value > 0x40 and < 0xA0 */
+  /* Also include checkerboard (very dark or white) and white lines */
+  const isGray = Math.abs(r - g) < 20 && Math.abs(g - b) < 20;
+  const isRoad = isGray && r > 0x30;
+  /* Also check for rumble strip (red/white) - treat as partial road */
+  const isRumble = (r > 0xBB && g < 0x50 && b < 0x50); // red
+  return isRoad || isRumble;
+}
+
+/* ================================================================
+   MODE 7 RENDERER
+   ================================================================ */
+const CAMERA_HEIGHT = 80;
+const FOCAL_LENGTH = 160;
+const FOG_START = 400;
+const FOG_END = 900;
+
+/* Sky gradient colors */
+const SKY_TOP_R = 0x3b, SKY_TOP_G = 0x7d, SKY_TOP_B = 0xd8;
+const SKY_BOT_R = 0xbf, SKY_BOT_G = 0xe0, SKY_BOT_B = 0xff;
+
+function renderSky() {
+  const outBuf = outputImageData.data;
+  for (let y = 0; y < HORIZON; y++) {
+    const t = y / (HORIZON || 1);
+    const r = SKY_TOP_R + (SKY_BOT_R - SKY_TOP_R) * t;
+    const g = SKY_TOP_G + (SKY_BOT_G - SKY_TOP_G) * t;
+    const b = SKY_TOP_B + (SKY_BOT_B - SKY_TOP_B) * t;
+    const ri = r | 0, gi = g | 0, bi = b | 0;
+    for (let x = 0; x < W; x++) {
+      const idx = (y * W + x) * 4;
+      outBuf[idx] = ri;
+      outBuf[idx+1] = gi;
+      outBuf[idx+2] = bi;
+      outBuf[idx+3] = 255;
+    }
+  }
+
+  /* Draw simple mountain silhouettes on the sky */
+  const mountainScroll = (-player.angle * 60) % W;
+  const mountains = [
+    { period: 70, amp: 28, yOff: HORIZON, color_r: 0x6b, color_g: 0x7a, color_b: 0x8c },
+    { period: 54, amp: 20, yOff: HORIZON, color_r: 0x56, color_g: 0x66, color_b: 0x78 },
+  ];
+  for (const m of mountains) {
+    for (let x = 0; x < W; x++) {
+      const wx = (x + mountainScroll + 10000) % m.period;
+      const peak = m.yOff - m.amp * Math.max(0, 1 - Math.abs(wx - m.period/2) / (m.period/2));
+      for (let y = Math.floor(peak); y < m.yOff && y >= 0; y++) {
+        if (y < HORIZON) {
+          const idx = (y * W + x) * 4;
+          outBuf[idx] = m.color_r;
+          outBuf[idx+1] = m.color_g;
+          outBuf[idx+2] = m.color_b;
+          outBuf[idx+3] = 255;
+        }
+      }
+    }
+  }
+
+  /* Simple clouds */
+  const cloudScroll = (-player.angle * 30 + 10000) % W;
+  for (let i = 0; i < 5; i++) {
+    const cx = ((i * 90 + cloudScroll) % (W + 80)) - 40;
+    const cy = 10 + (i % 3) * 12;
+    for (let dy = -4; dy <= 4; dy++) {
+      const hw = 12 - Math.abs(dy) * 2;
+      for (let dx = -hw; dx <= hw; dx++) {
+        const px = Math.floor(cx + dx);
+        const py = cy + dy;
+        if (px >= 0 && px < W && py >= 0 && py < HORIZON) {
+          const idx = (py * W + px) * 4;
+          outBuf[idx] = 255;
+          outBuf[idx+1] = 255;
+          outBuf[idx+2] = 255;
+          outBuf[idx+3] = 200;
+        }
+      }
+    }
+  }
+}
+
+function renderMode7() {
+  if (!trackMapData) return;
+  const outData = new Uint32Array(outputImageData.data.buffer);
+  const mapData = trackMapData;
+
+  const cosA = Math.cos(player.angle);
+  const sinA = Math.sin(player.angle);
+
+  /* Fog color (sky bottom) in ABGR */
+  const fogColor_R = SKY_BOT_R;
+  const fogColor_G = SKY_BOT_G;
+  const fogColor_B = SKY_BOT_B;
+
+  for (let screenY = HORIZON; screenY < H; screenY++) {
+    const rowDist = CAMERA_HEIGHT * FOCAL_LENGTH / (screenY - HORIZON + 1);
+
+    /* Fog factor */
+    let fog = 0;
+    if (rowDist > FOG_START) {
+      fog = Math.min(1, (rowDist - FOG_START) / (FOG_END - FOG_START));
+    }
+    const fogR = fog * fogColor_R;
+    const fogG = fog * fogColor_G;
+    const fogB = fog * fogColor_B;
+    const invFog = 1 - fog;
+
+    for (let screenX = 0; screenX < W; screenX++) {
+      const dx = (screenX - W * 0.5) * rowDist / FOCAL_LENGTH;
+      const dz = rowDist;
+
+      const worldX = player.x + dx * cosA - dz * sinA;
+      const worldZ = player.y + dx * sinA + dz * cosA;
+
+      const mapX = Math.floor(worldX) & (MAP_SIZE - 1);
+      const mapY = Math.floor(worldZ) & (MAP_SIZE - 1);
+
+      let pixel = mapData[mapY * MAP_SIZE + mapX];
+
+      if (fog > 0) {
+        const pr = (pixel >> 0) & 0xFF;
+        const pg = (pixel >> 8) & 0xFF;
+        const pb = (pixel >> 16) & 0xFF;
+        const nr = (pr * invFog + fogR) | 0;
+        const ng = (pg * invFog + fogG) | 0;
+        const nb = (pb * invFog + fogB) | 0;
+        pixel = 0xFF000000 | (nb << 16) | (ng << 8) | nr;
+      }
+
+      outData[screenY * W + screenX] = pixel;
+    }
+  }
+}
+
+/* ================================================================
+   SPRITE PROJECTION (project world objects onto screen)
+   ================================================================ */
+function worldToScreen(objX, objY) {
+  /* Object position relative to player */
+  const dx = objX - player.x;
+  const dy = objY - player.y;
+
+  /* Rotate into camera space */
+  const cosA = Math.cos(player.angle);
+  const sinA = Math.sin(player.angle);
+  const cameraX = dx * cosA + dy * sinA;
+  const cameraZ = -dx * sinA + dy * cosA;
+
+  if (cameraZ <= 1) return null; // behind camera
+
+  const screenX = (W * 0.5) + (cameraX * FOCAL_LENGTH / cameraZ);
+  const screenY = HORIZON + (CAMERA_HEIGHT * FOCAL_LENGTH / cameraZ);
+
+  return { sx: screenX, sy: screenY, dist: cameraZ };
+}
+
+/* ================================================================
+   PLAYER & GAME STATE
+   ================================================================ */
+const player = {
+  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 3.0,
+  steer: 0, lap: 0, totalLaps: 3,
+  item: null, boostT: 0, starT: 0, spinT: 0,
+  waypointIdx: 0, // current target waypoint
+  lastCrossIdx: -1, // last waypoint crossed for lap detection
+  time: 0, startT: 0,
+  lightningT: 0, flashT: 0,
+  checkpointHalf: false
+};
+
+const ITEMS = [
   {name:'mushroom', emoji:'\u{1F344}', weight:35},
   {name:'banana',   emoji:'\u{1F34C}', weight:25},
   {name:'shell',    emoji:'\u{1F422}', weight:20},
   {name:'star',     emoji:'⭐',    weight:10},
   {name:'lightning', emoji:'⚡',   weight:10}
 ];
-const TOTAL_WEIGHT=ITEMS.reduce((s,i)=>s+i.weight,0);
-function randomItem(){
-  let r=Math.random()*TOTAL_WEIGHT, cum=0;
-  for(const it of ITEMS){cum+=it.weight; if(r<cum) return it.name;}
+const TOTAL_WEIGHT = ITEMS.reduce((s,i) => s+i.weight, 0);
+function randomItem() {
+  let r = Math.random()*TOTAL_WEIGHT, cum = 0;
+  for (const it of ITEMS) { cum += it.weight; if (r < cum) return it.name; }
   return ITEMS[0].name;
 }
-function itemEmoji(name){ const f=ITEMS.find(i=>i.name===name); return f?f.emoji:'?'; }
+function itemEmoji(name) { const f = ITEMS.find(i=>i.name===name); return f ? f.emoji : '?'; }
 
-/* ---- GAME STATE ---- */
-const G={
-  state:'title', speed:0, maxSpeed:3.6, steer:0, angle:0,
-  trackA:-Math.PI/2, offset:0, lap:0, totalLaps:3,
-  item:null, boostT:0, starT:0, spinT:0,
-  bob:0, itemBoxes:[], bananas:[], shells:[], time:0, startT:0,
-  countVal:0, lineBase:0, nextLine:0,
-  lightningT:0, flashT:0
-};
+/* Game state */
+let gameState = 'title';
+let countVal = 0;
+let gameTime = 0;
+let bananas = []; // {x, y, active}
+let shells = [];  // {x, y, dx, dy, active, ttl}
+let itemBoxPositions = []; // {x, y, taken, respawnT}
 
-/* ---- CPU OPPONENTS ---- */
-const CPU_COLORS=['#3399ff','#ff9933','#cc33ff'];
-let cpus=[];
-const cpuTintCache={};
-function makeTintedKart(color, size){
-  const key=color+'_'+size;
-  if(cpuTintCache[key]) return cpuTintCache[key];
-  const w=size, h=Math.round(size*(kartImg.height/kartImg.width));
-  const oc=document.createElement('canvas'); oc.width=w; oc.height=h;
-  const ox=oc.getContext('2d');
+/* CPU opponents */
+const CPU_COLORS = ['#3399ff','#ff9933','#cc33ff'];
+let cpus = [];
+const cpuTintCache = {};
+
+function makeTintedKart(color, size) {
+  const key = color + '_' + size;
+  if (cpuTintCache[key]) return cpuTintCache[key];
+  const w = size, h = Math.round(size * (kartImg.height / kartImg.width));
+  const oc = document.createElement('canvas');
+  oc.width = w; oc.height = h;
+  const ox = oc.getContext('2d');
   ox.drawImage(kartImg, 0, 0, w, h);
-  ox.globalCompositeOperation='source-atop';
-  ox.fillStyle=color; ox.globalAlpha=0.5; ox.fillRect(0,0,w,h);
-  cpuTintCache[key]=oc;
+  ox.globalCompositeOperation = 'source-atop';
+  ox.fillStyle = color; ox.globalAlpha = 0.5; ox.fillRect(0,0,w,h);
+  cpuTintCache[key] = oc;
   return oc;
 }
-function initCPUs(){
-  cpus=[];
-  for(let i=0;i<3;i++){
+
+function initPlayer() {
+  /* Place player at start line, facing along the track */
+  const wp = trackWaypoints;
+  const startIdx = startLineIdx;
+  const p0 = wp[startIdx];
+  const p1 = wp[(startIdx + 5) % wp.length];
+  player.x = p0.x;
+  player.y = p0.y;
+  player.angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+  player.speed = 0;
+  player.steer = 0;
+  player.lap = 0;
+  player.item = null;
+  player.boostT = 0;
+  player.starT = 0;
+  player.spinT = 0;
+  player.waypointIdx = 10;
+  player.lastCrossIdx = -1;
+  player.lightningT = 0;
+  player.flashT = 0;
+  player.checkpointHalf = false;
+}
+
+function initCPUs() {
+  cpus = [];
+  const wp = trackWaypoints;
+  const n = wp.length;
+  for (let i = 0; i < 3; i++) {
+    const offset = 15 + i * 10;
+    const idx = (startLineIdx - offset + n) % n;
+    const p = wp[idx];
+    const pn = wp[(idx + 5) % n];
     cpus.push({
-      trackA: -Math.PI/2 - 0.08*(i+1),
-      offset: -80 + i*80,
-      speed: 3.2 + Math.random()*0.5,
-      baseSpeed: 3.2 + Math.random()*0.5,
+      x: p.x + (i - 1) * 15,
+      y: p.y + (i - 1) * 8,
+      angle: Math.atan2(pn.y - p.y, pn.x - p.x),
+      speed: 0,
+      baseSpeed: 2.5 + Math.random() * 0.6,
       color: CPU_COLORS[i],
+      waypointIdx: (idx + 20) % n,
+      lap: 0,
       spinT: 0,
       shrinkT: 0,
-      lap: 0,
-      nextLine: -Math.PI/2 + FULL_LAP + 0.12,
-      lineBase: -Math.PI/2 + 0.12
+      lapProgress: 0, // fractional progress through lap
+      checkpointHalf: false
     });
   }
 }
 
-/* ---- ITEM BOXES (stationary ? boxes at fixed track positions) ---- */
-function placeItemBoxes(){
-  G.itemBoxes=[];
-  const NUM_POSITIONS=8;
-  const spacing=FULL_LAP/NUM_POSITIONS;
-  const lanes=[-150,-50,50,150]; /* 4 boxes across road width */
-  for(let i=0;i<NUM_POSITIONS;i++){
-    const baseAngle=spacing*i + 0.5; /* offset from start line */
-    for(let j=0;j<lanes.length;j++){
-      G.itemBoxes.push({
-        a: baseAngle,
-        laneOffset: lanes[j],
-        taken:false, respawn:0
+function placeItemBoxes() {
+  itemBoxPositions = [];
+  const wp = trackWaypoints;
+  const n = wp.length;
+  const numSets = 6;
+  const spacing = Math.floor(n / numSets);
+  const laneOffsets = [-25, -8, 8, 25];
+
+  for (let s = 0; s < numSets; s++) {
+    const baseIdx = (Math.floor(spacing * (s + 0.5)) + startLineIdx) % n;
+    const p = wp[baseIdx];
+    const pn = wp[(baseIdx + 3) % n];
+    const dx = pn.x - p.x, dy = pn.y - p.y;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const nx = -dy/len, ny = dx/len;
+
+    for (const off of laneOffsets) {
+      itemBoxPositions.push({
+        x: p.x + nx * off,
+        y: p.y + ny * off,
+        taken: false,
+        respawnT: 0
       });
     }
   }
 }
 
-/* ---- INPUT ---- */
-const input={left:false,right:false,gas:false};
-function bindBtn(el,dir){
-  const on=e=>{e.preventDefault();input[dir]=true;el.classList.add('on');};
-  const off=()=>{input[dir]=false;el.classList.remove('on');};
-  el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);
-  el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off);
+/* ================================================================
+   INPUT
+   ================================================================ */
+const input = {left:false, right:false, gas:false};
+function bindBtn(el, dir) {
+  const on = e => { e.preventDefault(); input[dir] = true; el.classList.add('on'); };
+  const off = () => { input[dir] = false; el.classList.remove('on'); };
+  el.addEventListener('pointerdown', on);
+  el.addEventListener('pointerup', off);
+  el.addEventListener('pointerleave', off);
+  el.addEventListener('pointercancel', off);
 }
-bindBtn(document.getElementById('btnL'),'left');
-bindBtn(document.getElementById('btnR'),'right');
-bindBtn(document.getElementById('btnGas'),'gas');
-itemBtnEl.addEventListener('pointerdown',e=>{e.preventDefault();useItem();});
+bindBtn(document.getElementById('btnL'), 'left');
+bindBtn(document.getElementById('btnR'), 'right');
+bindBtn(document.getElementById('btnGas'), 'gas');
 
-const keys={};
-addEventListener('keydown',e=>{keys[e.key]=true; if(e.key===' ')useItem();});
-addEventListener('keyup',e=>{keys[e.key]=false;});
+const itemBtnEl = document.getElementById('itemBtn');
+const itemIconEl = itemBtnEl.querySelector('.item-icon');
+const countEl = document.getElementById('count');
+const flashEl = document.getElementById('flashOverlay');
 
-/* ---- ITEM USE ---- */
-function useItem(){
-  if(G.state!=='play'||!G.item)return;
-  const it=G.item;
-  G.item=null;
+itemBtnEl.addEventListener('pointerdown', e => { e.preventDefault(); useItem(); });
+
+const keys = {};
+addEventListener('keydown', e => { keys[e.key] = true; if (e.key === ' ') useItem(); });
+addEventListener('keyup', e => { keys[e.key] = false; });
+
+/* ================================================================
+   ITEM USE
+   ================================================================ */
+function useItem() {
+  if (gameState !== 'play' || !player.item) return;
+  const it = player.item;
+  player.item = null;
   updateItemUI();
-  switch(it){
+  switch (it) {
     case 'mushroom':
-      G.boostT=1.5;
+      player.boostT = 1.5;
       break;
     case 'star':
-      G.starT=8.0;
-      G.boostT=8.0;
+      player.starT = 8.0;
+      player.boostT = 8.0;
       break;
     case 'banana':
-      G.bananas.push({a:G.trackA-0.04, offset:G.offset, active:true});
+      bananas.push({
+        x: player.x - Math.cos(player.angle) * 30,
+        y: player.y - Math.sin(player.angle) * 30,
+        active: true
+      });
       break;
-    case 'shell':
-      G.shells.push({a:G.trackA+0.02, offset:G.offset, speed:0.025, active:true, ttl:6});
+    case 'shell': {
+      const spd = 5;
+      shells.push({
+        x: player.x + Math.cos(player.angle) * 20,
+        y: player.y + Math.sin(player.angle) * 20,
+        dx: Math.cos(player.angle) * spd,
+        dy: Math.sin(player.angle) * spd,
+        active: true, ttl: 4
+      });
       break;
+    }
     case 'lightning':
-      G.lightningT=5.0;
-      G.flashT=0.3;
-      for(const c of cpus){c.shrinkT=5.0; c.speed=c.baseSpeed*0.5;}
+      player.lightningT = 5.0;
+      player.flashT = 0.3;
+      for (const c of cpus) { c.shrinkT = 5.0; c.speed *= 0.4; }
       break;
   }
 }
 
-function updateItemUI(){
-  if(G.item){
+function updateItemUI() {
+  if (player.item) {
     itemBtnEl.classList.add('ready');
-    itemIconEl.textContent=itemEmoji(G.item);
+    itemIconEl.textContent = itemEmoji(player.item);
   } else {
     itemBtnEl.classList.remove('ready');
-    itemIconEl.textContent='';
+    itemIconEl.textContent = '';
   }
 }
 
-/* ---- SPIN OUT ---- */
-function spinOutPlayer(){
-  if(G.starT>0) return;
-  if(G.spinT>0) return;
-  G.spinT=1.5;
-  G.speed*=0.2;
+/* ================================================================
+   SPIN OUT
+   ================================================================ */
+function spinOutPlayer() {
+  if (player.starT > 0 || player.spinT > 0) return;
+  player.spinT = 1.5;
+  player.speed *= 0.2;
 }
-function spinOutCPU(c){
-  if(c.spinT>0) return;
-  c.spinT=1.5;
-  c.speed*=0.2;
-}
-
-/* ---- COUNTDOWN & START ---- */
-document.getElementById('startBtn').addEventListener('click',beginCountdown);
-function beginCountdown(){
-  document.getElementById('msg').classList.add('hidden');
-  document.getElementById('btnL').style.display='flex';
-  document.getElementById('btnGas').style.display='flex';
-  document.getElementById('btnR').style.display='flex';
-  itemBtnEl.style.display='flex';
-  Object.assign(G,{state:'countdown',speed:0,steer:0,angle:0,trackA:-Math.PI/2,
-    offset:0,lap:0,item:null,boostT:0,starT:0,spinT:0,time:0,countVal:3,
-    lightningT:0,flashT:0});
-  G.bananas=[]; G.shells=[];
-  G.lineBase=G.trackA+0.12; G.nextLine=G.trackA+FULL_LAP;
-  buildTrackCurves(); placeItemBoxes(); initCPUs(); updateItemUI(); runCount();
-}
-function runCount(){
-  if(G.countVal>0){ countEl.textContent=G.countVal; countEl.style.color='#fff'; flashCount(); G.countVal--; setTimeout(runCount,1000); }
-  else { countEl.textContent='GO!'; countEl.style.color='#7CFC00'; flashCount(); G.state='play'; G.startT=performance.now(); setTimeout(()=>countEl.style.opacity=0,800); }
-}
-function flashCount(){
-  countEl.style.transition='none'; countEl.style.opacity=1; countEl.style.transform='translate(-50%,-50%) scale(1.4)';
-  requestAnimationFrame(()=>{countEl.style.transition='all .8s'; countEl.style.transform='translate(-50%,-50%) scale(1)';});
+function spinOutCPU(c) {
+  if (c.spinT > 0) return;
+  c.spinT = 1.5;
+  c.speed *= 0.2;
 }
 
-/* ---- POSITION RANKING ---- */
-function getPlayerProgress(){ return G.lap*FULL_LAP + ((G.trackA - G.lineBase + FULL_LAP*10)%(FULL_LAP)); }
-function getCPUProgress(c){ return c.lap*FULL_LAP + ((c.trackA - c.lineBase + FULL_LAP*10)%(FULL_LAP)); }
-function getPosition(){
-  const pp=getPlayerProgress();
-  let pos=1;
-  for(const c of cpus){ if(getCPUProgress(c)>pp) pos++; }
+/* ================================================================
+   LAP COUNTING
+   Using waypoint-based progress tracking.
+   The track has N waypoints in a loop. We track what fraction
+   of the loop has been traversed.
+   ================================================================ */
+function nearestWaypointIdx(x, y) {
+  let best = 0, bestD = Infinity;
+  const wp = trackWaypoints;
+  /* Only check every 5th to save time */
+  for (let i = 0; i < wp.length; i += 5) {
+    const dx = wp[i].x - x, dy = wp[i].y - y;
+    const d = dx*dx + dy*dy;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  /* Refine around best */
+  const start = (best - 5 + wp.length) % wp.length;
+  for (let j = 0; j < 11; j++) {
+    const i = (start + j) % wp.length;
+    const dx = wp[i].x - x, dy = wp[i].y - y;
+    const d = dx*dx + dy*dy;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+/* Cross start line detection */
+const LAP_ZONE_RADIUS = 50;
+function checkLapCrossing(entity) {
+  const wp = trackWaypoints;
+  const n = wp.length;
+  const curIdx = nearestWaypointIdx(entity.x, entity.y);
+  const halfN = Math.floor(n / 2);
+
+  /* Must have passed the halfway point */
+  if (curIdx > halfN * 0.4 && curIdx < halfN * 1.6) {
+    entity.checkpointHalf = true;
+  }
+
+  /* Near start line and has passed checkpoint */
+  if (entity.checkpointHalf && curIdx < n * 0.05) {
+    const sp = wp[startLineIdx];
+    const dx = entity.x - sp.x;
+    const dy = entity.y - sp.y;
+    if (dx*dx + dy*dy < LAP_ZONE_RADIUS * LAP_ZONE_RADIUS) {
+      entity.lap++;
+      entity.checkpointHalf = false;
+      return true;
+    }
+  }
+  return false;
+}
+
+function getProgress(entity) {
+  const n = trackWaypoints.length;
+  const idx = nearestWaypointIdx(entity.x, entity.y);
+  return entity.lap + idx / n;
+}
+
+function getPosition() {
+  const pp = getProgress(player);
+  let pos = 1;
+  for (const c of cpus) { if (getProgress(c) > pp) pos++; }
   return pos;
 }
 
-/* ---- NORMALISE ANGLE DIFF ---- */
-function angleDiff(a,b){
-  let d=(a-b)%(FULL_LAP);
-  if(d>Math.PI) d-=FULL_LAP;
-  if(d<-Math.PI) d+=FULL_LAP;
-  return d;
-}
-
-/* ---- UPDATE ---- */
-function update(dt){
-  if(G.state!=='play')return;
+/* ================================================================
+   UPDATE
+   ================================================================ */
+function update(dt) {
+  if (gameState !== 'play') return;
 
   /* Timers */
-  if(G.boostT>0) G.boostT-=dt;
-  if(G.starT>0) G.starT-=dt;
-  if(G.spinT>0) G.spinT-=dt;
-  if(G.lightningT>0) G.lightningT-=dt;
-  if(G.flashT>0) G.flashT-=dt;
+  if (player.boostT > 0) player.boostT -= dt;
+  if (player.starT > 0) player.starT -= dt;
+  if (player.spinT > 0) player.spinT -= dt;
+  if (player.lightningT > 0) player.lightningT -= dt;
+  if (player.flashT > 0) player.flashT -= dt;
 
-  /* Steer */
-  let tSteer=0;
-  if(G.spinT<=0){
-    if(input.left||keys['ArrowLeft'])tSteer=-1;
-    if(input.right||keys['ArrowRight'])tSteer+=1;
+  /* Steering */
+  let tSteer = 0;
+  if (player.spinT <= 0) {
+    if (input.left || keys['ArrowLeft']) tSteer = -1;
+    if (input.right || keys['ArrowRight']) tSteer += 1;
   } else {
-    tSteer=Math.sin(G.spinT*12)*1.5;
+    tSteer = Math.sin(player.spinT * 12) * 1.5;
   }
-  G.steer+=(tSteer-G.steer)*0.18;
+  player.steer += (tSteer - player.steer) * 0.15;
 
   /* Speed */
-  const gasOn=input.gas||keys['ArrowUp'];
-  if(gasOn) G.speed+=0.08; else G.speed-=0.04;
-  let max=G.maxSpeed;
-  if(G.boostT>0){max=G.maxSpeed*1.7; if(gasOn)G.speed+=0.15;}
-  G.speed=Math.max(0,Math.min(max,G.speed));
+  const gasOn = input.gas || keys['ArrowUp'];
+  const onRoad = isOnRoad(player.x, player.y);
+  let maxSpeed = player.maxSpeed;
+  if (!onRoad) maxSpeed *= 0.45;
+  if (player.boostT > 0) { maxSpeed = player.maxSpeed * 1.8; }
 
-  /* Movement - slower track progression for longer track feel */
-  G.angle+=G.steer*G.speed*0.025;
-  G.trackA+=G.speed*0.002;
-  G.offset+=G.steer*G.speed*4;
-  G.offset+=getCurveAt(G.trackA)*G.speed*1.5;
-  if(Math.abs(G.offset)>TRACK_W){G.offset=Math.sign(G.offset)*TRACK_W; G.speed*=0.92;}
+  if (gasOn) {
+    player.speed += (onRoad ? 0.06 : 0.03);
+  } else {
+    player.speed -= 0.03;
+  }
+  player.speed = Math.max(0, Math.min(maxSpeed, player.speed));
 
-  /* Lap counting */
-  if(G.trackA>=G.nextLine){
-    G.nextLine+=FULL_LAP;
-    G.lap++;
-    if(G.lap>=G.totalLaps) return winGame();
+  /* Turning: steering rate inversely related to speed (faster = wider turns) */
+  const turnRate = 0.03 * (1.0 + 0.5 / (1 + player.speed * 0.5));
+  player.angle += player.steer * player.speed * turnRate;
+
+  /* Move forward */
+  player.x += Math.cos(player.angle) * player.speed;
+  player.y += Math.sin(player.angle) * player.speed;
+
+  /* Lap crossing */
+  if (checkLapCrossing(player)) {
+    if (player.lap >= player.totalLaps) return winGame();
   }
 
-  /* Item box collision (fixed positions, compare with modulo) */
-  for(const box of G.itemBoxes){
-    if(box.taken){box.respawn-=dt; if(box.respawn<=0)box.taken=false; continue;}
-    const playerLapA=G.trackA%(FULL_LAP);
-    let da=box.a - playerLapA;
-    if(da<-FULL_LAP/2) da+=FULL_LAP;
-    if(da>FULL_LAP/2) da-=FULL_LAP;
-    if(Math.abs(da)<0.015 && Math.abs(G.offset - box.laneOffset)<120){
-      box.taken=true; box.respawn=3;
-      if(!G.item){G.item=randomItem(); updateItemUI();}
+  /* Item box collision */
+  for (const box of itemBoxPositions) {
+    if (box.taken) { box.respawnT -= dt; if (box.respawnT <= 0) box.taken = false; continue; }
+    const dx = player.x - box.x, dy = player.y - box.y;
+    if (dx*dx + dy*dy < 20*20) {
+      box.taken = true; box.respawnT = 5;
+      if (!player.item) { player.item = randomItem(); updateItemUI(); }
     }
   }
 
   /* Banana collision (player) */
-  for(let i=G.bananas.length-1;i>=0;i--){
-    const b=G.bananas[i];
-    if(!b.active)continue;
-    let da=angleDiff(b.a%(FULL_LAP), G.trackA%(FULL_LAP));
-    if(Math.abs(da)<0.012 && Math.abs(G.offset-b.offset)<80){
-      spinOutPlayer(); b.active=false;
+  for (const b of bananas) {
+    if (!b.active) continue;
+    const dx = player.x - b.x, dy = player.y - b.y;
+    if (dx*dx + dy*dy < 15*15) {
+      spinOutPlayer(); b.active = false;
     }
   }
 
   /* Shell movement & collision */
-  for(let i=G.shells.length-1;i>=0;i--){
-    const s=G.shells[i];
-    if(!s.active){continue;}
-    s.a+=s.speed;
-    s.ttl-=dt;
-    if(s.ttl<=0){s.active=false; continue;}
+  for (const s of shells) {
+    if (!s.active) continue;
+    s.x += s.dx;
+    s.y += s.dy;
+    s.ttl -= dt;
+    if (s.ttl <= 0 || !isOnRoad(s.x, s.y)) { s.active = false; continue; }
     /* Shell hits CPU */
-    for(const c of cpus){
-      let da=angleDiff(s.a%(FULL_LAP), c.trackA%(FULL_LAP));
-      if(Math.abs(da)<0.015 && Math.abs(s.offset-c.offset)<100){
-        spinOutCPU(c); s.active=false; break;
+    for (const c of cpus) {
+      const dx = s.x - c.x, dy = s.y - c.y;
+      if (dx*dx + dy*dy < 20*20) {
+        spinOutCPU(c); s.active = false; break;
       }
     }
   }
 
   /* Star collision with CPUs */
-  if(G.starT>0){
-    for(const c of cpus){
-      let da=angleDiff(G.trackA%(FULL_LAP), c.trackA%(FULL_LAP));
-      if(Math.abs(da)<0.02 && Math.abs(G.offset-c.offset)<100){
-        spinOutCPU(c);
-      }
+  if (player.starT > 0) {
+    for (const c of cpus) {
+      const dx = player.x - c.x, dy = player.y - c.y;
+      if (dx*dx + dy*dy < 30*30) { spinOutCPU(c); }
     }
   }
 
   /* CPU update */
-  for(const c of cpus){
-    if(c.spinT>0) c.spinT-=dt;
-    if(c.shrinkT>0){
-      c.shrinkT-=dt;
-      if(c.shrinkT<=0) c.speed=c.baseSpeed;
-    }
-    /* Simple AI: vary speed, slight wobble */
-    if(c.spinT<=0){
-      c.speed+=(c.baseSpeed*(c.shrinkT>0?0.5:1)-c.speed)*0.05;
-      c.speed+=Math.sin(performance.now()*0.001+cpus.indexOf(c)*2)*0.02;
-    }
-    c.trackA+=c.speed*0.002;
-    c.offset+=getCurveAt(c.trackA)*c.speed*1.5;
-    c.offset+=Math.sin(c.trackA*3+cpus.indexOf(c))*0.8;
-    c.offset=Math.max(-TRACK_W*0.8, Math.min(TRACK_W*0.8, c.offset));
+  const wp = trackWaypoints;
+  const nWp = wp.length;
+  for (const c of cpus) {
+    if (c.spinT > 0) c.spinT -= dt;
+    if (c.shrinkT > 0) { c.shrinkT -= dt; if (c.shrinkT <= 0) c.speed = c.baseSpeed; }
 
-    /* CPU lap */
-    if(c.trackA>=c.nextLine){
-      c.nextLine+=FULL_LAP;
-      c.lap++;
+    /* AI: steer toward next waypoint */
+    const target = wp[c.waypointIdx];
+    const dx = target.x - c.x, dy = target.y - c.y;
+    const distToWp = Math.sqrt(dx*dx + dy*dy);
+
+    if (distToWp < 25) {
+      c.waypointIdx = (c.waypointIdx + 5) % nWp;
     }
+
+    const desiredAngle = Math.atan2(dy, dx);
+    let angleDiff = desiredAngle - c.angle;
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    if (c.spinT <= 0) {
+      c.angle += angleDiff * 0.08;
+      const targetSpeed = c.baseSpeed * (c.shrinkT > 0 ? 0.5 : 1);
+      c.speed += (targetSpeed - c.speed) * 0.05;
+      /* Add wobble */
+      c.speed += Math.sin(performance.now() * 0.001 + cpus.indexOf(c) * 2) * 0.01;
+    } else {
+      c.angle += Math.sin(c.spinT * 12) * 0.2;
+    }
+
+    c.x += Math.cos(c.angle) * c.speed;
+    c.y += Math.sin(c.angle) * c.speed;
+
+    /* CPU lap crossing */
+    checkLapCrossing(c);
 
     /* CPU banana collision */
-    for(let i=G.bananas.length-1;i>=0;i--){
-      const b=G.bananas[i];
-      if(!b.active)continue;
-      let da=angleDiff(b.a%(FULL_LAP), c.trackA%(FULL_LAP));
-      if(Math.abs(da)<0.012 && Math.abs(c.offset-b.offset)<80){
-        spinOutCPU(c); b.active=false;
-      }
+    for (const b of bananas) {
+      if (!b.active) continue;
+      const bx = c.x - b.x, by = c.y - b.y;
+      if (bx*bx + by*by < 15*15) { spinOutCPU(c); b.active = false; }
     }
   }
 
-  /* Clean up expired items */
-  G.bananas=G.bananas.filter(b=>b.active);
-  G.shells=G.shells.filter(s=>s.active);
-
-  /* CPU collision - bump each other */
-  for(const c of cpus){
-    let da=Math.abs(c.trackA - G.trackA);
-    if(da > FULL_LAP/2) da = FULL_LAP - da;
-    const dOff=Math.abs(c.offset - G.offset);
-    if(da < 0.04 && dOff < 120 && G.spinT <= 0 && c.spinT <= 0){
-      if(G.starT > 0){
-        c.spinT=1.5; c.speed*=0.3;
+  /* Player-CPU collision */
+  for (const c of cpus) {
+    const dx = c.x - player.x, dy = c.y - player.y;
+    const d = dx*dx + dy*dy;
+    if (d < 25*25 && player.spinT <= 0 && c.spinT <= 0) {
+      if (player.starT > 0) {
+        spinOutCPU(c);
       } else {
-        G.speed *= 0.7; c.speed *= 0.7;
-        if(G.offset < c.offset) { G.offset -= 30; c.offset += 30; }
-        else { G.offset += 30; c.offset -= 30; }
+        player.speed *= 0.7; c.speed *= 0.7;
+        const pushDist = 10;
+        const len = Math.sqrt(d) || 1;
+        player.x -= (dx/len) * pushDist;
+        player.y -= (dy/len) * pushDist;
+        c.x += (dx/len) * pushDist;
+        c.y += (dy/len) * pushDist;
       }
     }
   }
 
-  G.bob+=G.speed*0.3;
-  G.time=(performance.now()-G.startT)/1000;
+  /* Clean up */
+  bananas = bananas.filter(b => b.active);
+  shells = shells.filter(s => s.active);
+
+  gameTime = (performance.now() - player.startT) / 1000;
 }
 
-function winGame(){
-  G.state='win';
-  const pos=getPosition();
-  document.getElementById('btnL').style.display='none';
-  document.getElementById('btnGas').style.display='none';
-  document.getElementById('btnR').style.display='none';
-  itemBtnEl.style.display='none';
-  const m=document.getElementById('msg'); m.classList.remove('hidden');
-  const posStr=['1st','2nd','3rd','4th'][pos-1];
-  m.innerHTML=`<h1>GOAL!</h1><div class="big">${posStr} PLACE</div><p>TIME ${G.time.toFixed(2)}秒</p><button id="startBtn">もう一回</button>`;
-  document.getElementById('startBtn').addEventListener('click',beginCountdown);
+/* ================================================================
+   COUNTDOWN & START
+   ================================================================ */
+document.getElementById('startBtn').addEventListener('click', beginCountdown);
+
+function beginCountdown() {
+  document.getElementById('msg').classList.add('hidden');
+  document.getElementById('btnL').style.display = 'flex';
+  document.getElementById('btnGas').style.display = 'flex';
+  document.getElementById('btnR').style.display = 'flex';
+  itemBtnEl.style.display = 'flex';
+
+  buildTrackMap();
+  initPlayer();
+  initCPUs();
+  placeItemBoxes();
+  bananas = []; shells = [];
+  updateItemUI();
+
+  gameState = 'countdown';
+  countVal = 3;
+  gameTime = 0;
+  runCount();
+}
+
+function runCount() {
+  if (countVal > 0) {
+    countEl.textContent = countVal;
+    countEl.style.color = '#fff';
+    flashCount();
+    countVal--;
+    setTimeout(runCount, 1000);
+  } else {
+    countEl.textContent = 'GO!';
+    countEl.style.color = '#7CFC00';
+    flashCount();
+    gameState = 'play';
+    player.startT = performance.now();
+    setTimeout(() => countEl.style.opacity = 0, 800);
+  }
+}
+function flashCount() {
+  countEl.style.transition = 'none';
+  countEl.style.opacity = 1;
+  countEl.style.transform = 'translate(-50%,-50%) scale(1.4)';
+  requestAnimationFrame(() => {
+    countEl.style.transition = 'all .8s';
+    countEl.style.transform = 'translate(-50%,-50%) scale(1)';
+  });
+}
+
+function winGame() {
+  gameState = 'win';
+  const pos = getPosition();
+  document.getElementById('btnL').style.display = 'none';
+  document.getElementById('btnGas').style.display = 'none';
+  document.getElementById('btnR').style.display = 'none';
+  itemBtnEl.style.display = 'none';
+  const m = document.getElementById('msg');
+  m.classList.remove('hidden');
+  const posStr = ['1st','2nd','3rd','4th'][pos - 1];
+  m.innerHTML = `<h1>GOAL!</h1><div class="big">${posStr} PLACE</div><p>TIME ${gameTime.toFixed(2)}秒</p><button id="startBtn">もう一回</button>`;
+  document.getElementById('startBtn').addEventListener('click', beginCountdown);
   itemBtnEl.classList.remove('ready');
 }
 
-/* ---- DRAWING ---- */
-function drawSky(){
-  const sky=ctx.createLinearGradient(0,0,0,HORIZON);
-  sky.addColorStop(0,'#3b7dd8'); sky.addColorStop(1,'#bfe0ff');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,HORIZON);
-  ctx.fillStyle='#fff';
-  const cx=(-G.trackA*120)%380;
-  for(let i=0;i<5;i++){ let x=((i*90+cx)%380+380)%380-40; const y=14+i%2*12;
-    ctx.fillRect(x,y,22,6); ctx.fillRect(x+6,y-4,14,6); ctx.fillRect(x-4,y+4,30,4); }
-  const mx=(-G.trackA*90)%320;
-  ctx.fillStyle='#6b7a8c'; for(let i=-1;i<7;i++){const x=((i*70+mx)%380+380)%380-40; mountain(x,HORIZON,46,28);}
-  ctx.fillStyle='#566678'; for(let i=-1;i<8;i++){const x=((i*54+mx*1.5)%380+380)%380-40; mountain(x,HORIZON,34,20);}
-}
-function mountain(x,base,w,h){
-  ctx.beginPath(); ctx.moveTo(x,base); ctx.lineTo(x+w/2,base-h); ctx.lineTo(x+w,base); ctx.fill();
-  const s=ctx.fillStyle; ctx.fillStyle='#dfe8f0';
-  ctx.beginPath(); ctx.moveTo(x+w/2-5,base-h+7); ctx.lineTo(x+w/2,base-h); ctx.lineTo(x+w/2+5,base-h+7); ctx.fill();
-  ctx.fillStyle=s;
-}
-function drawGround(){
-  for(let y=HORIZON;y<H;y++){
-    const p=(y-HORIZON)/(H-HORIZON), dist=1/(p+0.05), worldZ=G.trackA*200+dist*40;
-    const curveOffset=getCurveAt(G.trackA+dist*0.01)*dist*dist*0.8;
-    const roadHalf=TRACK_W/(dist*1.1), center=W/2-G.offset/(dist*1.1)-G.steer*dist*1.5+curveOffset;
-    ctx.fillStyle=(Math.floor(worldZ*0.25)%2===0)?'#3f9e3f':'#379037'; ctx.fillRect(0,y,W,1);
-    const l=center-roadHalf, r=center+roadHalf;
-    ctx.fillStyle=(Math.floor(worldZ*0.5)%2===0)?'#d83b3b':'#f2f2f2'; ctx.fillRect(l-6,y,Math.max(0,r-l+12),1);
-    ctx.fillStyle=(Math.floor(worldZ*0.25)%2===0)?'#6f6f76':'#686870'; ctx.fillRect(l,y,Math.max(0,r-l),1);
-    if(Math.floor(worldZ*0.5)%2===0){ctx.fillStyle='#f4f4f4'; ctx.fillRect(center-1,y,2,1);}
-  }
-  drawStartLine();
-}
-function drawStartLine(){
-  for(let n=-1;n<=1;n++){
-    const lineA=G.lineBase+n*FULL_LAP; let d=lineA-G.trackA;
-    if(d<-0.05||d>0.9)continue;
-    const p=1-(Math.max(0,d)/0.9), dist=(1-p)*3+1.0, y=Math.floor(HORIZON+(H-HORIZON)*p);
-    const roadHalf=TRACK_W/(dist*1.1), center=W/2-G.offset/(dist*1.1);
-    const l=center-roadHalf, r=center+roadHalf, thick=Math.max(2,9*p), sq=Math.max(3,13*p);
-    for(let row=0;row<thick;row++){const yy=y+row; if(yy<HORIZON||yy>=H)continue;
-      for(let xx=l;xx<r;xx+=sq){const c=((Math.floor((xx-l)/sq)+(row<thick/2?0:1))%2===0)?'#111':'#fff'; ctx.fillStyle=c; ctx.fillRect(xx,yy,sq,1);}}
-    drawArch(center,roadHalf,p);
-  }
-}
-function drawArch(center,roadHalf,p){
-  if(p<0.04)return;
-  const y=Math.floor(HORIZON+(H-HORIZON)*p);
-  const postW=Math.max(2,9*p), postH=Math.max(10,72*p);
-  const l=center-roadHalf*1.3-postW*0.4, r=center+roadHalf*1.3-postW*0.6, topY=y-postH;
-  for(const px of [l,r]){
-    for(let yy=topY; yy<y; yy++){
-      ctx.fillStyle=(Math.floor((yy-topY)/Math.max(2,postH/6))%2===0)?'#e23b3b':'#f5f5f5';
-      ctx.fillRect(px,yy,postW,1);
+/* ================================================================
+   DRAWING - SPRITES ON TOP OF MODE 7
+   ================================================================ */
+
+function drawSprites() {
+  /* Collect all sprites to draw */
+  const sprites = [];
+
+  /* CPU karts */
+  for (const c of cpus) {
+    const proj = worldToScreen(c.x, c.y);
+    if (proj) {
+      sprites.push({ type: 'cpu', proj, data: c });
     }
   }
-  const barH=Math.max(4,16*p);
-  ctx.fillStyle='#1f3fae'; ctx.fillRect(l,topY-barH,(r-l)+postW*2,barH);
-  ctx.fillStyle='#3b62e0'; ctx.fillRect(l,topY-barH,(r-l)+postW*2,Math.max(1,barH*0.4));
-  if(p>0.4){
-    ctx.fillStyle='#fff'; ctx.font='bold '+Math.floor(barH*0.8)+'px monospace'; ctx.textAlign='center';
-    const label=(G.lap>=G.totalLaps-1)?'FINISH':'START';
-    ctx.fillText(label, center, topY-barH*0.18);
-  }
-}
 
-/* ---- SCENERY (more trees) ---- */
-function drawScenery(){
-  for(let i=0;i<40;i++){
-    const baseA=(i/40)*FULL_LAP;
-    let da=((baseA-G.trackA%(FULL_LAP))%(FULL_LAP));
-    if(da<0)da+=FULL_LAP;
-    if(da>1.5)continue;
-    const p=1-(da/1.5), dist=(1-p)*3+1.0, py=HORIZON+(H-HORIZON)*p, sc=46/dist;
-    const roadHalf=TRACK_W/(dist*1.1), center=W/2-G.offset/(dist*1.1);
-    const side=(i%2===0)?-1:1;
-    const extraOff=(i%3)*sc*0.3;
-    tree(center+side*(roadHalf+sc*0.6+extraOff),py,sc);
+  /* Item boxes */
+  for (const box of itemBoxPositions) {
+    if (box.taken) continue;
+    const proj = worldToScreen(box.x, box.y);
+    if (proj) {
+      sprites.push({ type: 'itembox', proj, data: box });
+    }
   }
-}
-function tree(x,y,s){
-  if(s<4)return;
-  ctx.fillStyle='#5a3a1a'; ctx.fillRect(x-s*0.08,y-s*0.25,s*0.16,s*0.25);
-  ctx.fillStyle='#1f6b2f'; ctx.beginPath(); ctx.moveTo(x,y-s); ctx.lineTo(x-s*0.32,y-s*0.3); ctx.lineTo(x+s*0.32,y-s*0.3); ctx.fill();
-  ctx.fillStyle='#288a3a'; ctx.beginPath(); ctx.moveTo(x,y-s*0.7); ctx.lineTo(x-s*0.26,y-s*0.2); ctx.lineTo(x+s*0.26,y-s*0.2); ctx.fill();
-}
 
-/* ---- DRAW ITEM BOXES ON TRACK ---- */
-function drawItemBox(cx,cy,sc,p){
-  const t=performance.now()*0.003;
-  const colors=['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff'];
-  const ci=Math.floor(t)%colors.length;
-  /* Draw flat on road surface - width stays constant, height shrinks with perspective */
-  const s=sc*0.45;
-  const h=Math.max(2, s*p*0.6); /* flatten with perspective */
-  /* Box body - sits ON the road */
-  ctx.fillStyle=colors[ci];
-  ctx.fillRect(cx-s/2, cy-h, s, h);
-  /* Border */
-  ctx.strokeStyle='#fff';
-  ctx.lineWidth=Math.max(1,s*0.12);
-  ctx.strokeRect(cx-s/2, cy-h, s, h);
-  /* Question mark */
-  if(h>4){
-    ctx.fillStyle='#fff';
-    ctx.font='bold '+Math.floor(h*0.8)+'px monospace';
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillText('?', cx, cy-h/2);
-    ctx.textBaseline='alphabetic';
+  /* Bananas */
+  for (const b of bananas) {
+    if (!b.active) continue;
+    const proj = worldToScreen(b.x, b.y);
+    if (proj) {
+      sprites.push({ type: 'banana', proj, data: b });
+    }
   }
-}
 
-function drawItemBoxesOnTrack(){
-  const VIS=2.0;
-  for(const box of G.itemBoxes){
-    if(box.taken)continue;
-    /* Fixed position: compare using modulo so boxes repeat each lap */
-    const boxA=box.a;
-    const playerLapA=G.trackA%(FULL_LAP);
-    let da=boxA - playerLapA;
-    /* Wrap around track */
-    if(da<-FULL_LAP/2) da+=FULL_LAP;
-    if(da>FULL_LAP/2) da-=FULL_LAP;
-    if(da<0.005||da>VIS)continue;
-    const p=1-(da/VIS), dist=(1-p)*3+1.0;
-    const py=HORIZON+(H-HORIZON)*p;
-    const center=W/2-G.offset/(dist*1.1);
-    const boxX=center + box.laneOffset/(dist*1.1);
-    const sc=Math.max(16,80/dist);
-    drawItemBox(boxX, py, sc, p);
+  /* Shells */
+  for (const s of shells) {
+    if (!s.active) continue;
+    const proj = worldToScreen(s.x, s.y);
+    if (proj) {
+      sprites.push({ type: 'shell', proj, data: s });
+    }
   }
-}
 
-/* ---- DRAW BANANAS ON TRACK ---- */
-function drawBananasOnTrack(){
-  for(const b of G.bananas){
-    if(!b.active)continue;
-    const bA=b.a%(FULL_LAP);
-    const pA=G.trackA%(FULL_LAP);
-    let da=bA-pA;
-    if(da<-Math.PI) da+=FULL_LAP;
-    if(da>Math.PI) da-=FULL_LAP;
-    if(da<0.005||da>1.5)continue;
-    const p=1-(da/1.5), dist=(1-p)*3+1.0;
-    const py=HORIZON+(H-HORIZON)*p;
-    const center=W/2-G.offset/(dist*1.1);
-    const bx=center + b.offset/(dist*1.1);
-    const sc=Math.max(8,40/dist);
-    /* Draw banana: yellow curved shape */
-    ctx.fillStyle='#ffd700';
-    ctx.beginPath();
-    ctx.arc(bx, py-sc*0.3, sc*0.4, Math.PI*0.2, Math.PI*1.2);
-    ctx.lineWidth=Math.max(1,sc*0.2);
-    ctx.strokeStyle='#b8860b';
-    ctx.stroke();
-    ctx.fill();
-  }
-}
+  /* Sort far to near */
+  sprites.sort((a, b) => b.proj.dist - a.proj.dist);
 
-/* ---- DRAW SHELLS ON TRACK ---- */
-function drawShellsOnTrack(){
-  for(const s of G.shells){
-    if(!s.active)continue;
-    const sA=s.a%(FULL_LAP);
-    const pA=G.trackA%(FULL_LAP);
-    let da=sA-pA;
-    if(da<-Math.PI) da+=FULL_LAP;
-    if(da>Math.PI) da-=FULL_LAP;
-    if(da<0.005||da>1.5)continue;
-    const p=1-(da/1.5), dist=(1-p)*3+1.0;
-    const py=HORIZON+(H-HORIZON)*p;
-    const center=W/2-G.offset/(dist*1.1);
-    const sx=center + s.offset/(dist*1.1);
-    const sc=Math.max(8,44/dist);
-    /* Draw shell: green circle */
-    ctx.fillStyle='#22cc44';
-    ctx.beginPath();
-    ctx.arc(sx, py-sc*0.3, sc*0.35, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle='#116622';
-    ctx.lineWidth=Math.max(1,sc*0.1);
-    ctx.stroke();
-  }
-}
+  /* Draw each sprite */
+  for (const sp of sprites) {
+    const { sx, sy, dist } = sp.proj;
+    const scale = FOCAL_LENGTH / dist;
 
-/* ---- DRAW CPU OPPONENTS ---- */
-function drawCPUs(){
-  const VIS_RANGE=2.5;
-  for(const c of cpus){
-    /* Use raw trackA difference so it works across lap boundaries */
-    let da=c.trackA - G.trackA;
-    /* Clamp: show CPUs that are behind (da<0) up to -0.3, and ahead up to VIS_RANGE */
-    if(da<-0.3||da>VIS_RANGE)continue;
-    const clamped=Math.max(0,da);
-    const p=1-(clamped/VIS_RANGE), dist=(1-p)*3+1.0;
-    const py=HORIZON+(H-HORIZON)*p;
-    const center=W/2-G.offset/(dist*1.1);
-    const cx2=center + c.offset/(dist*1.1);
-    let sc=Math.max(12,72/dist);
-    if(c.shrinkT>0) sc*=0.55;
-    /* Behind player: draw large (close) */
-    if(da<0){ sc=Math.max(sc, 50); }
-    /* Shadow */
-    ctx.fillStyle='rgba(0,0,0,.2)';
-    ctx.beginPath(); ctx.ellipse(cx2,py,sc*0.5,sc*0.15,0,0,Math.PI*2); ctx.fill();
-    /* Draw CPU using kartImg with color tint */
-    if(kartReady && sc > 8){
-      const w=Math.round(sc*1.2), h=Math.round(w*(kartImg.height/kartImg.width));
-      const tinted=makeTintedKart(c.color, w);
-      ctx.save();
-      ctx.translate(cx2, py-sc*0.6);
-      if(c.spinT>0) ctx.rotate(Math.sin(c.spinT*12)*0.3);
-      ctx.drawImage(tinted, -w/2, 0);
-      ctx.restore();
-    } else {
-      /* Tiny fallback */
-      ctx.fillStyle=c.color;
-      ctx.fillRect(cx2-sc*0.3, py-sc*0.7, sc*0.6, sc*0.5);
+    switch (sp.type) {
+      case 'cpu': {
+        const c = sp.data;
+        let sc = Math.max(6, 40 * scale);
+        if (c.shrinkT > 0) sc *= 0.55;
+
+        /* Shadow */
+        ctx.fillStyle = 'rgba(0,0,0,.2)';
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, sc * 0.5, sc * 0.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (kartReady && sc > 8) {
+          const w = Math.round(sc * 1.2);
+          const h = Math.round(w * (kartImg.height / kartImg.width));
+          const tinted = makeTintedKart(c.color, w);
+          ctx.save();
+          ctx.translate(sx, sy - sc * 0.5);
+          if (c.spinT > 0) ctx.rotate(Math.sin(c.spinT * 12) * 0.3);
+          ctx.drawImage(tinted, -w/2, -h/2);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = c.color;
+          ctx.fillRect(sx - sc*0.3, sy - sc*0.7, sc*0.6, sc*0.5);
+        }
+        break;
+      }
+      case 'itembox': {
+        const sc = Math.max(4, 20 * scale);
+        const t = performance.now() * 0.003;
+        const colors = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff'];
+        const ci = Math.floor(t) % colors.length;
+        const h = Math.max(2, sc * 0.8);
+        ctx.fillStyle = colors[ci];
+        ctx.fillRect(sx - sc/2, sy - h, sc, h);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = Math.max(1, sc * 0.1);
+        ctx.strokeRect(sx - sc/2, sy - h, sc, h);
+        if (h > 4) {
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold ' + Math.floor(h * 0.8) + 'px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('?', sx, sy - h/2);
+          ctx.textBaseline = 'alphabetic';
+        }
+        break;
+      }
+      case 'banana': {
+        const sc = Math.max(3, 12 * scale);
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(sx, sy - sc * 0.3, sc * 0.5, Math.PI * 0.2, Math.PI * 1.2);
+        ctx.fill();
+        ctx.lineWidth = Math.max(1, sc * 0.15);
+        ctx.strokeStyle = '#b8860b';
+        ctx.stroke();
+        break;
+      }
+      case 'shell': {
+        const sc = Math.max(3, 12 * scale);
+        ctx.fillStyle = '#22cc44';
+        ctx.beginPath();
+        ctx.arc(sx, sy - sc * 0.3, sc * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#116622';
+        ctx.lineWidth = Math.max(1, sc * 0.1);
+        ctx.stroke();
+        break;
+      }
     }
   }
 }
 
-/* ---- DRAW PLAYER KART ---- */
-function drawKart(){
-  const x=W/2+G.steer*8;
-  const wobble=(G.spinT>0)?Math.sin(G.spinT*12)*8:0;
-  const y=H-Math.round(H*0.38)+Math.sin(G.bob*0.3)*1.5;
-  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath();
-  ctx.ellipse(W/2+wobble,H-Math.round(H*0.17),Math.round(W*0.11),Math.round(H*0.04),0,0,Math.PI*2); ctx.fill();
+/* ================================================================
+   DRAW PLAYER KART (always at screen center-bottom)
+   ================================================================ */
+function drawPlayerKart() {
+  const centerX = W/2 + player.steer * 8;
+  const wobble = (player.spinT > 0) ? Math.sin(player.spinT * 12) * 8 : 0;
+  const kartY = H - Math.round(H * 0.33);
+
+  /* Shadow */
+  ctx.fillStyle = 'rgba(0,0,0,.28)';
+  ctx.beginPath();
+  ctx.ellipse(W/2 + wobble, H - Math.round(H * 0.17), Math.round(W * 0.11), Math.round(H * 0.04), 0, 0, Math.PI * 2);
+  ctx.fill();
+
   /* Boost flame */
-  if(G.boostT>0){
-    ctx.fillStyle=(Math.floor(G.bob)%2)?'#ffae00':'#ff3b00';
-    ctx.fillRect(W/2+wobble-Math.round(W*0.04),y+Math.round(H*0.22),Math.round(W*0.08),Math.round(H*0.05));
+  if (player.boostT > 0) {
+    ctx.fillStyle = (Math.floor(performance.now() * 0.01) % 2) ? '#ffae00' : '#ff3b00';
+    ctx.fillRect(W/2 + wobble - Math.round(W * 0.04), kartY + Math.round(H * 0.18), Math.round(W * 0.08), Math.round(H * 0.05));
   }
+
   /* Star rainbow flash */
-  if(G.starT>0){
-    const rc=['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#ff00ff'];
-    const ci=Math.floor(performance.now()*0.01)%rc.length;
-    ctx.globalAlpha=0.4;
-    ctx.fillStyle=rc[ci];
-    const w2=Math.round(W*0.22), h2=Math.round(w2*0.8);
-    ctx.fillRect(x+wobble-w2/2, y-4, w2, h2);
-    ctx.globalAlpha=1.0;
+  if (player.starT > 0) {
+    const rc = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#ff00ff'];
+    const ci = Math.floor(performance.now() * 0.01) % rc.length;
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = rc[ci];
+    const w2 = Math.round(W * 0.22), h2 = Math.round(w2 * 0.8);
+    ctx.fillRect(centerX + wobble - w2/2, kartY - 4, w2, h2);
+    ctx.globalAlpha = 1.0;
   }
-  if(kartReady){
-    const w=Math.round(W*0.2),h=Math.round(w*(kartImg.height/kartImg.width));
-    ctx.save(); ctx.translate(x+wobble,y);
-    if(G.spinT>0) ctx.rotate(Math.sin(G.spinT*12)*0.3);
-    else ctx.rotate(G.steer*0.06);
-    ctx.drawImage(kartImg,-w/2,0,w,h); ctx.restore();
+
+  if (kartReady) {
+    const w = Math.round(W * 0.2);
+    const h = Math.round(w * (kartImg.height / kartImg.width));
+    ctx.save();
+    ctx.translate(centerX + wobble, kartY);
+    if (player.spinT > 0) ctx.rotate(Math.sin(player.spinT * 12) * 0.3);
+    else ctx.rotate(player.steer * 0.06);
+    ctx.drawImage(kartImg, -w/2, 0, w, h);
+    ctx.restore();
   }
 }
 
-/* ---- MINIMAP ---- */
-function drawMiniMap(){
-  const mw=Math.round(W*0.18), mh=mw, ox=W-mw-6, oy=6, cx2=ox+mw/2, cy2=oy+mh/2, R=mw/2-9;
-  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(ox,oy,mw,mh);
-  ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.strokeRect(ox+.5,oy+.5,mw-1,mh-1);
-  ctx.strokeStyle='#888'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(cx2,cy2,R,0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle='#444'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(cx2,cy2,R,0,Math.PI*2); ctx.stroke();
-  /* Start marker */
-  const sa=G.lineBase, sx=cx2+Math.cos(sa)*R, sy=cy2+Math.sin(sa)*R;
-  ctx.fillStyle='#fff'; ctx.fillRect(sx-2,sy-2,4,4);
+/* ================================================================
+   MINIMAP (draws actual track shape from waypoints)
+   ================================================================ */
+function drawMiniMap() {
+  const mw = Math.round(W * 0.2);
+  const mh = mw;
+  const ox = W - mw - 6;
+  const oy = 6;
+
+  ctx.fillStyle = 'rgba(0,0,0,.55)';
+  ctx.fillRect(ox, oy, mw, mh);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(ox + 0.5, oy + 0.5, mw - 1, mh - 1);
+
+  /* Scale track to fit minimap */
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of trackWaypoints) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const scaleM = (mw - 12) / Math.max(rangeX, rangeY);
+  const offX = ox + (mw - rangeX * scaleM) / 2;
+  const offY = oy + (mh - rangeY * scaleM) / 2;
+
+  function miniX(wx) { return offX + (wx - minX) * scaleM; }
+  function miniY(wy) { return offY + (wy - minY) * scaleM; }
+
+  /* Draw track path */
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(miniX(trackWaypoints[0].x), miniY(trackWaypoints[0].y));
+  for (let i = 1; i < trackWaypoints.length; i += 3) {
+    ctx.lineTo(miniX(trackWaypoints[i].x), miniY(trackWaypoints[i].y));
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  /* Start line marker */
+  const sp = trackWaypoints[startLineIdx];
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(miniX(sp.x) - 2, miniY(sp.y) - 2, 4, 4);
+
   /* Player dot */
-  const pa=G.trackA%(FULL_LAP), px=cx2+Math.cos(pa)*R, py=cy2+Math.sin(pa)*R;
-  ctx.fillStyle='#ff3b3b'; ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle = '#ff3b3b';
+  ctx.beginPath();
+  ctx.arc(miniX(player.x), miniY(player.y), 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
   /* CPU dots */
-  for(const c of cpus){
-    const ca=c.trackA%(FULL_LAP), ccx=cx2+Math.cos(ca)*R, ccy=cy2+Math.sin(ca)*R;
-    ctx.fillStyle=c.color; ctx.beginPath(); ctx.arc(ccx,ccy,2.5,0,Math.PI*2); ctx.fill();
+  for (const c of cpus) {
+    ctx.fillStyle = c.color;
+    ctx.beginPath();
+    ctx.arc(miniX(c.x), miniY(c.y), 2.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
-/* ---- HUD ---- */
-function drawHUD(){
-  ctx.textAlign='left';
-  const fs=Math.max(10,Math.round(H*0.07));
-  ctx.font='bold '+fs+'px monospace';
+/* ================================================================
+   HUD
+   ================================================================ */
+function drawHUD() {
+  ctx.textAlign = 'left';
+  const fs = Math.max(10, Math.round(H * 0.07));
+  ctx.font = 'bold ' + fs + 'px monospace';
+
   /* Lap */
-  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(4,4,Math.round(W*0.22),fs+6);
-  ctx.fillStyle='#fff'; ctx.fillText('LAP '+Math.min(G.lap+1,G.totalLaps)+'/'+G.totalLaps,8,fs+2);
+  ctx.fillStyle = 'rgba(0,0,0,.6)';
+  ctx.fillRect(4, 4, Math.round(W * 0.25), fs + 6);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('LAP ' + Math.min(player.lap + 1, player.totalLaps) + '/' + player.totalLaps, 8, fs + 2);
+
   /* Speed */
-  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(4,fs+12,Math.round(W*0.22),fs+6);
-  ctx.fillStyle='#7CFC00'; ctx.fillText('SPD '+Math.round(G.speed*60),8,fs*2+10);
+  ctx.fillStyle = 'rgba(0,0,0,.6)';
+  ctx.fillRect(4, fs + 12, Math.round(W * 0.25), fs + 6);
+  ctx.fillStyle = '#7CFC00';
+  const speedDisplay = Math.round(player.speed * 60);
+  ctx.fillText('SPD ' + speedDisplay, 8, fs * 2 + 10);
+
   /* Position */
-  if(G.state==='play'){
-    const pos=getPosition();
-    const posStr=['1st','2nd','3rd','4th'][pos-1];
-    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(4,fs*2+20,Math.round(W*0.15),fs+6);
-    ctx.fillStyle=(pos===1)?'#ffd93b':'#fff';
-    ctx.fillText(posStr,8,fs*3+18);
+  if (gameState === 'play') {
+    const pos = getPosition();
+    const posStr = ['1st','2nd','3rd','4th'][pos - 1];
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.fillRect(4, fs * 2 + 20, Math.round(W * 0.15), fs + 6);
+    ctx.fillStyle = (pos === 1) ? '#ffd93b' : '#fff';
+    ctx.fillText(posStr, 8, fs * 3 + 18);
   }
+
   /* Time */
-  ctx.fillStyle='#fff'; ctx.fillText(G.time?G.time.toFixed(1):'0.0',8,H-8);
-}
+  ctx.fillStyle = '#fff';
+  ctx.fillText(gameTime ? gameTime.toFixed(1) : '0.0', 8, H - 8);
 
-/* ---- LIGHTNING FLASH ---- */
-function drawFlash(){
-  if(G.flashT>0){
-    flashEl.style.opacity=Math.min(1,G.flashT*3);
-  } else {
-    flashEl.style.opacity=0;
+  /* Off-road indicator */
+  if (gameState === 'play' && !isOnRoad(player.x, player.y)) {
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.fillRect(W/2 - 40, HORIZON + 10, 80, fs + 4);
+    ctx.fillStyle = '#ff4444';
+    ctx.textAlign = 'center';
+    ctx.fillText('OFF ROAD', W/2, HORIZON + 8 + fs);
+    ctx.textAlign = 'left';
   }
 }
 
-/* ---- RENDER ---- */
-function render(){
-  drawSky();
-  drawGround();
-  drawScenery();
-  drawItemBoxesOnTrack();
-  drawBananasOnTrack();
-  drawShellsOnTrack();
-  drawCPUs();
-  drawKart();
+/* ================================================================
+   FLASH OVERLAY
+   ================================================================ */
+function drawFlash() {
+  if (player.flashT > 0) {
+    flashEl.style.opacity = Math.min(1, player.flashT * 3);
+  } else {
+    flashEl.style.opacity = 0;
+  }
+}
+
+/* ================================================================
+   MAIN RENDER
+   ================================================================ */
+function render() {
+  /* Clear output buffer */
+  const buf32 = new Uint32Array(outputImageData.data.buffer);
+  buf32.fill(0xFF000000);
+
+  /* 1. Sky (rendered into imageData buffer) */
+  renderSky();
+
+  /* 2. Mode 7 ground */
+  renderMode7();
+
+  /* 3. Put imageData to canvas */
+  ctx.putImageData(outputImageData, 0, 0);
+
+  /* 4. Draw sprites on top (using canvas API for easier drawing) */
+  drawSprites();
+
+  /* 5. Player kart */
+  drawPlayerKart();
+
+  /* 6. UI elements */
   drawMiniMap();
   drawHUD();
   drawFlash();
 }
 
-let last=performance.now();
-function loop(now){
-  const dt=Math.min(0.05,(now-last)/1000);
-  last=now;
+/* ================================================================
+   GAME LOOP
+   ================================================================ */
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
   update(dt);
   render();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
 </script>
 </body>
 </html>
