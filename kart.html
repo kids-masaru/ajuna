@@ -99,6 +99,7 @@
 </div>
 
 <script>
+try {
 "use strict";
 
 /* ================================================================
@@ -1368,10 +1369,16 @@ function loop(now) {
   }
   requestAnimationFrame(loop);
 }
-try { requestAnimationFrame(loop); } catch(e) {
-  document.getElementById('game').getContext('2d').fillStyle='#f00';
-  document.getElementById('game').getContext('2d').font='16px monospace';
-  document.getElementById('game').getContext('2d').fillText('INIT ERR: '+e.message, 10, 30);
+requestAnimationFrame(loop);
+
+} catch(e) {
+  var c2 = document.getElementById('game');
+  c2.width = 320; c2.height = 180;
+  var x2 = c2.getContext('2d');
+  x2.fillStyle='#f00'; x2.font='12px monospace'; x2.textAlign='left';
+  x2.fillText('SCRIPT ERROR:', 10, 20);
+  x2.fillText(e.message, 10, 36);
+  if(e.stack) { var stk = e.stack.split('\n'); for(var si=0;si<Math.min(4,stk.length);si++) x2.fillText(stk[si].substring(0,50), 10, 52+si*14); }
 }
 
 </script>
