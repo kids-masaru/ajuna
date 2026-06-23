@@ -1340,6 +1340,10 @@ function render() {
   /* 3. Put imageData to canvas */
   ctx.putImageData(outputImageData, 0, 0);
 
+  /* DEBUG: show state info */
+  ctx.fillStyle='#0f0'; ctx.font='10px monospace'; ctx.textAlign='left';
+  ctx.fillText('TM:'+(trackMapData?trackMapData.length:'NULL')+' ST:'+gameState+' W:'+W+' H:'+H+' HZ:'+HORIZON, 4, H-4);
+
   /* 4. Draw sprites on top (using canvas API for easier drawing) */
   drawSprites();
 
