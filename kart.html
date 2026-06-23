@@ -112,6 +112,34 @@ let W=320, H=180, HORIZON=72;
 const TRACK_W=440;
 const FULL_LAP=Math.PI*6;
 
+/* ---- TRACK CURVES ---- */
+const TRACK_CURVES=[];
+function buildTrackCurves(){
+  TRACK_CURVES.length=0;
+  const segments=200;
+  for(let i=0;i<segments;i++){
+    const t=i/segments;
+    let curve=0;
+    if(t<0.08) curve=0;
+    else if(t<0.15) curve=0.6;
+    else if(t<0.20) curve=0;
+    else if(t<0.30) curve=-1.2;
+    else if(t<0.38) curve=0.8;
+    else if(t<0.46) curve=-0.8;
+    else if(t<0.58) curve=0.5;
+    else if(t<0.65) curve=0;
+    else if(t<0.72) curve=1.0;
+    else if(t<0.82) curve=-0.4;
+    else curve=0;
+    TRACK_CURVES.push(curve);
+  }
+}
+function getCurveAt(trackAngle){
+  const t=((trackAngle%FULL_LAP)+FULL_LAP)%FULL_LAP/FULL_LAP;
+  const idx=Math.floor(t*TRACK_CURVES.length)%TRACK_CURVES.length;
+  return TRACK_CURVES[idx]||0;
+}
+
 function resizeCanvas(){
   const stage=document.getElementById('stage');
   const forced=stage.classList.contains('force-landscape');
@@ -179,8 +207,8 @@ function initCPUs(){
     cpus.push({
       trackA: -Math.PI/2 - 0.08*(i+1),
       offset: -80 + i*80,
-      speed: 2.6 + Math.random()*0.6,
-      baseSpeed: 2.6 + Math.random()*0.6,
+      speed: 3.2 + Math.random()*0.5,
+      baseSpeed: 3.2 + Math.random()*0.5,
       color: CPU_COLORS[i],
       spinT: 0,
       shrinkT: 0,
@@ -290,7 +318,7 @@ function beginCountdown(){
     lightningT:0,flashT:0});
   G.bananas=[]; G.shells=[];
   G.lineBase=G.trackA+0.12; G.nextLine=G.trackA+FULL_LAP;
-  placeItemBoxes(); initCPUs(); updateItemUI(); runCount();
+  buildTrackCurves(); placeItemBoxes(); initCPUs(); updateItemUI(); runCount();
 }
 function runCount(){
   if(G.countVal>0){ countEl.textContent=G.countVal; countEl.style.color='#fff'; flashCount(); G.countVal--; setTimeout(runCount,1000); }
@@ -351,6 +379,7 @@ function update(dt){
   G.angle+=G.steer*G.speed*0.025;
   G.trackA+=G.speed*0.002;
   G.offset+=G.steer*G.speed*4;
+  G.offset+=getCurveAt(G.trackA)*G.speed*1.5;
   if(Math.abs(G.offset)>TRACK_W){G.offset=Math.sign(G.offset)*TRACK_W; G.speed*=0.92;}
 
   /* Lap counting */
@@ -422,6 +451,7 @@ function update(dt){
       c.speed+=Math.sin(performance.now()*0.001+cpus.indexOf(c)*2)*0.02;
     }
     c.trackA+=c.speed*0.002;
+    c.offset+=getCurveAt(c.trackA)*c.speed*1.5;
     c.offset+=Math.sin(c.trackA*3+cpus.indexOf(c))*0.8;
     c.offset=Math.max(-TRACK_W*0.8, Math.min(TRACK_W*0.8, c.offset));
 
@@ -502,7 +532,8 @@ function mountain(x,base,w,h){
 function drawGround(){
   for(let y=HORIZON;y<H;y++){
     const p=(y-HORIZON)/(H-HORIZON), dist=1/(p+0.05), worldZ=G.trackA*200+dist*40;
-    const roadHalf=TRACK_W/(dist*1.1), center=W/2-G.offset/(dist*1.1)-G.steer*dist*1.5;
+    const curveOffset=getCurveAt(G.trackA+dist*0.01)*dist*dist*0.8;
+    const roadHalf=TRACK_W/(dist*1.1), center=W/2-G.offset/(dist*1.1)-G.steer*dist*1.5+curveOffset;
     ctx.fillStyle=(Math.floor(worldZ*0.25)%2===0)?'#3f9e3f':'#379037'; ctx.fillRect(0,y,W,1);
     const l=center-roadHalf, r=center+roadHalf;
     ctx.fillStyle=(Math.floor(worldZ*0.5)%2===0)?'#d83b3b':'#f2f2f2'; ctx.fillRect(l-6,y,Math.max(0,r-l+12),1);
