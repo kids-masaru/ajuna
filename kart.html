@@ -1358,11 +1358,21 @@ let lastTime = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - lastTime) / 1000);
   lastTime = now;
-  update(dt);
-  render();
+  try {
+    update(dt);
+    render();
+  } catch(e) {
+    ctx.fillStyle='#f00'; ctx.font='14px monospace'; ctx.textAlign='left';
+    ctx.fillText('ERR: '+e.message, 10, 30);
+    ctx.fillText(e.stack?e.stack.split('\n')[1]:'', 10, 50);
+  }
   requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);
+try { requestAnimationFrame(loop); } catch(e) {
+  document.getElementById('game').getContext('2d').fillStyle='#f00';
+  document.getElementById('game').getContext('2d').font='16px monospace';
+  document.getElementById('game').getContext('2d').fillText('INIT ERR: '+e.message, 10, 30);
+}
 
 </script>
 </body>
