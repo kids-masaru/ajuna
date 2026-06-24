@@ -282,7 +282,7 @@ function buildTrackMap() {
   const controlPts = buildTrackCenterline();
   trackCenterline = controlPts;
   trackWaypoints = smoothTrack(controlPts, 20);
-  startLineIdx = 0; // first waypoint is start area
+  startLineIdx = 40; // middle of the starting straight
 
   /* Fill background with grass */
   trackCtx.fillStyle = '#3a8';
@@ -1193,14 +1193,24 @@ function drawSprites() {
         break;
       }
       case 'shell': {
-        const sc = Math.max(3, 12 * scale);
-        ctx.fillStyle = '#22cc44';
-        ctx.beginPath();
-        ctx.arc(sx, sy - sc * 0.3, sc * 0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#116622';
-        ctx.lineWidth = Math.max(1, sc * 0.1);
+        const sc = Math.max(4, 14 * scale);
+        const r = sc * 0.45;
+        /* Shell body (green oval) */
+        ctx.fillStyle = '#22aa44';
+        ctx.beginPath(); ctx.ellipse(sx, sy - r, r, r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+        /* Dark outline */
+        ctx.strokeStyle = '#0e5522'; ctx.lineWidth = Math.max(1, sc * 0.08); ctx.stroke();
+        /* Hexagon pattern on shell */
+        ctx.strokeStyle = '#116633'; ctx.lineWidth = Math.max(1, sc * 0.06);
+        ctx.beginPath(); ctx.moveTo(sx - r*0.3, sy - r); ctx.lineTo(sx + r*0.3, sy - r);
+        ctx.moveTo(sx - r*0.5, sy - r*0.65); ctx.lineTo(sx + r*0.5, sy - r*0.65);
+        ctx.moveTo(sx - r*0.5, sy - r*1.35); ctx.lineTo(sx + r*0.5, sy - r*1.35);
+        ctx.moveTo(sx - r*0.15, sy - r*0.5); ctx.lineTo(sx - r*0.15, sy - r*1.5);
+        ctx.moveTo(sx + r*0.15, sy - r*0.5); ctx.lineTo(sx + r*0.15, sy - r*1.5);
         ctx.stroke();
+        /* Highlight */
+        ctx.fillStyle = 'rgba(255,255,255,.25)';
+        ctx.beginPath(); ctx.ellipse(sx - r*0.2, sy - r*1.2, r*0.2, r*0.15, -0.3, 0, Math.PI*2); ctx.fill();
         break;
       }
     }
