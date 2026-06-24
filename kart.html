@@ -1342,7 +1342,8 @@ function render() {
 
   /* DEBUG: show state info */
   ctx.fillStyle='#0f0'; ctx.font='10px monospace'; ctx.textAlign='left';
-  ctx.fillText('TM:'+(trackMapData?trackMapData.length:'NULL')+' ST:'+gameState+' W:'+W+' H:'+H+' HZ:'+HORIZON, 4, H-4);
+  ctx.fillText('PX:'+Math.round(player.x)+' PY:'+Math.round(player.y)+' A:'+player.angle.toFixed(2)+' SPD:'+player.speed.toFixed(1)+' ROAD:'+isOnRoad(player.x,player.y), 4, H-14);
+  ctx.fillText('WP0:'+Math.round(trackWaypoints[0]?.x||0)+','+Math.round(trackWaypoints[0]?.y||0)+' WPn:'+trackWaypoints.length+' TM:'+(trackMapData?trackMapData.length:'NULL'), 4, H-4);
 
   /* 4. Draw sprites on top (using canvas API for easier drawing) */
   drawSprites();
