@@ -118,6 +118,31 @@ kartImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXH
 let kartReady = false;
 kartImg.onload = () => kartReady = true;
 
+/* ---- Sprite sheet (6 chars x 4 directions) ---- */
+const spriteSheet = new Image();
+spriteSheet.src = 'kart_sprites.png';
+let spriteReady = false;
+spriteSheet.onload = () => spriteReady = true;
+const SS_COLS = 4, SS_ROWS = 6;
+const CHAR_PLAYER = 0; /* Cat = player */
+const CHAR_CPU = [1, 3, 5]; /* Dog, Fox, Tiger = CPUs */
+function getSpriteDir(viewAngle, objAngle) {
+  let d = objAngle - viewAngle;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  const a = Math.abs(d);
+  if (a < Math.PI * 0.25) return 1; /* back */
+  if (a > Math.PI * 0.75) return 0; /* front */
+  return d > 0 ? 2 : 3; /* left / right */
+}
+function drawCharSprite(charRow, dirCol, cx, cy, size) {
+  if (!spriteReady) return;
+  const sw = spriteSheet.width / SS_COLS;
+  const sh = spriteSheet.height / SS_ROWS;
+  const sx = dirCol * sw, sy = charRow * sh;
+  ctx.drawImage(spriteSheet, sx, sy, sw, sh, cx - size/2, cy - size, size, size * (sh/sw));
+}
+
 /* ---- Canvas setup ---- */
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 let W = 320, H = 180, HORIZON;
@@ -1099,7 +1124,15 @@ function drawSprites() {
         ctx.ellipse(sx, sy, sc * 0.5, sc * 0.15, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        if (kartReady && sc > 8) {
+        if (spriteReady && sc > 8) {
+          const cpuIdx = cpus.indexOf(c);
+          const charRow = CHAR_CPU[cpuIdx] || 1;
+          const dirCol = getSpriteDir(player.angle, c.angle);
+          ctx.save();
+          if (c.spinT > 0) ctx.rotate(Math.sin(c.spinT * 12) * 0.3);
+          drawCharSprite(charRow, dirCol, sx, sy, sc * 1.2);
+          ctx.restore();
+        } else if (kartReady && sc > 8) {
           const w = Math.round(sc * 1.2);
           const h = Math.round(w * (kartImg.height / kartImg.width));
           const tinted = makeTintedKart(c.color, w);
@@ -1192,16 +1225,20 @@ function drawPlayerKart() {
     ctx.globalAlpha = 1.0;
   }
 
-  if (kartReady) {
-    const w = Math.round(W * 0.2);
-    const h = Math.round(w * (kartImg.height / kartImg.width));
-    ctx.save();
-    ctx.translate(centerX + wobble, kartY);
-    if (player.spinT > 0) ctx.rotate(Math.sin(player.spinT * 12) * 0.3);
-    else ctx.rotate(player.steer * 0.06);
-    ctx.drawImage(kartImg, -w/2, 0, w, h);
-    ctx.restore();
+  /* Draw player using sprite sheet or fallback */
+  const pSize = Math.round(W * 0.22);
+  let pDir = 1; /* default: back */
+  if (player.steer < -0.3) pDir = 2; /* turning left */
+  else if (player.steer > 0.3) pDir = 3; /* turning right */
+  ctx.save();
+  ctx.translate(wobble, 0);
+  if (spriteReady) {
+    drawCharSprite(CHAR_PLAYER, pDir, centerX, kartY + pSize, pSize);
+  } else if (kartReady) {
+    const w = pSize, h = Math.round(w * (kartImg.height / kartImg.width));
+    ctx.drawImage(kartImg, centerX - w/2, kartY, w, h);
   }
+  ctx.restore();
 }
 
 /* ================================================================

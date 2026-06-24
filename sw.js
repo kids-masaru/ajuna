@@ -34,6 +34,7 @@ const LOCAL_FILES = [
   './programming.html',
   './sushi.html',
   './kart.html',
+  './kart_sprites.png',
 ];
 
 // インストール時：ローカルファイルを全部キャッシュ
