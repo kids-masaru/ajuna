@@ -703,20 +703,31 @@ const itemIconEl = itemBtnEl.querySelector('.item-icon');
 const countEl = document.getElementById('count');
 const flashEl = document.getElementById('flashOverlay');
 
-itemBtnEl.addEventListener('pointerdown', e => { e.preventDefault(); useItem(); });
+let flickStartY = 0;
+itemBtnEl.addEventListener('pointerdown', e => { e.preventDefault(); flickStartY = e.clientY; });
+itemBtnEl.addEventListener('pointerup', e => {
+  const dy = e.clientY - flickStartY;
+  if (dy < -30) useItem('forward');       /* swipe up = throw forward */
+  else if (dy > 30) useItem('backward');  /* swipe down = throw backward */
+  else useItem('forward');                /* tap = default forward */
+});
 
 const keys = {};
-addEventListener('keydown', e => { keys[e.key] = true; if (e.key === ' ') useItem(); });
+addEventListener('keydown', e => { keys[e.key] = true; if (e.key === ' ') useItem('forward'); if (e.key === 'Shift') useItem('backward'); });
 addEventListener('keyup', e => { keys[e.key] = false; });
 
 /* ================================================================
    ITEM USE
    ================================================================ */
-function useItem() {
+function useItem(dir) {
   if (gameState !== 'play' || !player.item) return;
   const it = player.item;
   player.item = null;
   updateItemUI();
+  const fwd = dir === 'forward' ? 1 : -1;
+  /* Forward: (-sin, cos), Backward: (sin, -cos) */
+  const fdx = -Math.sin(player.angle) * fwd;
+  const fdy = Math.cos(player.angle) * fwd;
   switch (it) {
     case 'mushroom':
       player.boostT = 1.5;
@@ -727,18 +738,18 @@ function useItem() {
       break;
     case 'banana':
       bananas.push({
-        x: player.x - Math.cos(player.angle) * 30,
-        y: player.y - Math.sin(player.angle) * 30,
+        x: player.x - fdx * 30,
+        y: player.y - fdy * 30,
         active: true
       });
       break;
     case 'shell': {
       const spd = 5;
       shells.push({
-        x: player.x + Math.cos(player.angle) * 20,
-        y: player.y + Math.sin(player.angle) * 20,
-        dx: Math.cos(player.angle) * spd,
-        dy: Math.sin(player.angle) * spd,
+        x: player.x + fdx * 20,
+        y: player.y + fdy * 20,
+        dx: fdx * spd,
+        dy: fdy * spd,
         active: true, ttl: 4
       });
       break;
