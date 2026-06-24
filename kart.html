@@ -150,7 +150,7 @@ let trackMapData; // Uint32Array of track pixels
 let trackCenterline = []; // [{x, y}] control points
 let trackWaypoints = []; // smoothed waypoints for CPU AI
 
-const ROAD_WIDTH = 52; // half-width in map pixels
+const ROAD_WIDTH = 65; // half-width in map pixels
 const ROAD_COLOR     = 0xFF767676; // #767676 ABGR
 const GRASS_COLOR_A  = 0xFF88AA33; // #3aa88 ABGR
 const GRASS_COLOR_B  = 0xFF779922;
@@ -361,10 +361,10 @@ function isOnRoad(wx, wy) {
 /* ================================================================
    MODE 7 RENDERER
    ================================================================ */
-const CAMERA_HEIGHT = 80;
-const FOCAL_LENGTH = 160;
-const FOG_START = 400;
-const FOG_END = 900;
+const CAMERA_HEIGHT = 14;
+const FOCAL_LENGTH = 200;
+const FOG_START = 250;
+const FOG_END = 600;
 
 /* Sky gradient colors */
 const SKY_TOP_R = 0x3b, SKY_TOP_G = 0x7d, SKY_TOP_B = 0xd8;
