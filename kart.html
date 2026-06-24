@@ -808,15 +808,20 @@ function checkLapCrossing(entity) {
   const n = wp.length;
   const curIdx = nearestWaypointIdx(entity.x, entity.y);
   const halfN = Math.floor(n / 2);
+  const sIdx = startLineIdx;
+
+  /* Distance from start line in waypoint indices (wrapping) */
+  let distFromStart = (curIdx - sIdx + n) % n;
+  let distFromHalf = (curIdx - ((sIdx + halfN) % n) + n) % n;
 
   /* Must have passed the halfway point */
-  if (curIdx > halfN * 0.4 && curIdx < halfN * 1.6) {
+  if (distFromHalf < n * 0.15) {
     entity.checkpointHalf = true;
   }
 
   /* Near start line and has passed checkpoint */
-  if (entity.checkpointHalf && curIdx < n * 0.05) {
-    const sp = wp[startLineIdx];
+  if (entity.checkpointHalf && distFromStart < n * 0.05) {
+    const sp = wp[sIdx];
     const dx = entity.x - sp.x;
     const dy = entity.y - sp.y;
     if (dx*dx + dy*dy < LAP_ZONE_RADIUS * LAP_ZONE_RADIUS) {
@@ -1256,8 +1261,8 @@ function drawPlayerKart() {
     const ci = Math.floor(performance.now() * 0.01) % rc.length;
     ctx.globalAlpha = 0.4;
     ctx.fillStyle = rc[ci];
-    const w2 = Math.round(W * 0.22), h2 = Math.round(w2 * 0.8);
-    ctx.fillRect(centerX + wobble - w2/2, kartY - 4, w2, h2);
+    const r2 = Math.round(W * 0.12);
+    ctx.beginPath(); ctx.arc(centerX + wobble, kartY + r2 * 0.3, r2, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1.0;
   }
 
