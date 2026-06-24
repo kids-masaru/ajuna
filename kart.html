@@ -145,10 +145,8 @@ function getSpriteDir(viewAngle, objAngle) {
   let d = objAngle - viewAngle;
   while (d > Math.PI) d -= Math.PI * 2;
   while (d < -Math.PI) d += Math.PI * 2;
-  const a = Math.abs(d);
-  if (a < Math.PI * 0.25) return 1; /* back */
-  if (a > Math.PI * 0.75) return 0; /* front */
-  return d > 0 ? 2 : 3; /* left / right */
+  /* Only back or front: if facing similar direction = back, opposite = front */
+  return Math.abs(d) < Math.PI * 0.5 ? 1 : 0;
 }
 function drawCharSprite(charRow, dirCol, cx, cy, size) {
   if (!spriteReady || !spriteSheetClean) return;
