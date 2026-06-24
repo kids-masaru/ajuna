@@ -570,7 +570,7 @@ function initPlayer() {
   const p1 = wp[(startIdx + 5) % wp.length];
   player.x = p0.x;
   player.y = p0.y;
-  player.angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+  player.angle = Math.atan2(-(p1.x - p0.x), p1.y - p0.y);
   player.speed = 0;
   player.steer = 0;
   player.lap = 0;
@@ -597,7 +597,7 @@ function initCPUs() {
     cpus.push({
       x: p.x + (i - 1) * 15,
       y: p.y + (i - 1) * 8,
-      angle: Math.atan2(pn.y - p.y, pn.x - p.x),
+      angle: Math.atan2(-(pn.x - p.x), pn.y - p.y),
       speed: 0,
       baseSpeed: 2.5 + Math.random() * 0.6,
       color: CPU_COLORS[i],
@@ -834,13 +834,13 @@ function update(dt) {
   }
   player.speed = Math.max(0, Math.min(maxSpeed, player.speed));
 
-  /* Turning: steering rate inversely related to speed (faster = wider turns) */
-  const turnRate = 0.03 * (1.0 + 0.5 / (1 + player.speed * 0.5));
-  player.angle += player.steer * player.speed * turnRate;
+  /* Turning: reduced rate to prevent U-turns */
+  const turnRate = 0.012;
+  player.angle += player.steer * turnRate * Math.min(player.speed, 3);
 
-  /* Move forward */
-  player.x += Math.cos(player.angle) * player.speed;
-  player.y += Math.sin(player.angle) * player.speed;
+  /* Move forward: camera looks in (-sin, cos) direction, so move that way */
+  player.x += -Math.sin(player.angle) * player.speed;
+  player.y += Math.cos(player.angle) * player.speed;
 
   /* Lap crossing */
   if (checkLapCrossing(player)) {
@@ -906,7 +906,7 @@ function update(dt) {
       c.waypointIdx = (c.waypointIdx + 5) % nWp;
     }
 
-    const desiredAngle = Math.atan2(dy, dx);
+    const desiredAngle = Math.atan2(-dx, dy);
     let angleDiff = desiredAngle - c.angle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
@@ -921,8 +921,8 @@ function update(dt) {
       c.angle += Math.sin(c.spinT * 12) * 0.2;
     }
 
-    c.x += Math.cos(c.angle) * c.speed;
-    c.y += Math.sin(c.angle) * c.speed;
+    c.x += -Math.sin(c.angle) * c.speed;
+    c.y += Math.cos(c.angle) * c.speed;
 
     /* CPU lap crossing */
     checkLapCrossing(c);
