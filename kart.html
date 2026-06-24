@@ -347,20 +347,15 @@ function drawStartFinishLine() {
 
 /* Check if a position is on the road (by color) */
 function isOnRoad(wx, wy) {
-  const mx = Math.floor(wx) & (MAP_SIZE - 1);
-  const my = Math.floor(wy) & (MAP_SIZE - 1);
-  const pixel = trackMapData[my * MAP_SIZE + mx];
-  /* Road colors are grays: #555 = 0xFF555555, #666 = 0xFF666666 */
-  const r = (pixel >> 0) & 0xFF;
-  const g = (pixel >> 8) & 0xFF;
-  const b = (pixel >> 16) & 0xFF;
-  /* Road pixels: gray tones where r=g=b and value > 0x40 and < 0xA0 */
-  /* Also include checkerboard (very dark or white) and white lines */
-  const isGray = Math.abs(r - g) < 20 && Math.abs(g - b) < 20;
-  const isRoad = isGray && r > 0x30;
-  /* Also check for rumble strip (red/white) - treat as partial road */
-  const isRumble = (r > 0xBB && g < 0x50 && b < 0x50); // red
-  return isRoad || isRumble;
+  /* Distance-based check: if player is within ROAD_WIDTH of any waypoint, they're on road */
+  const wp = trackWaypoints;
+  if (!wp || wp.length === 0) return true;
+  const checkEvery = Math.max(1, Math.floor(wp.length / 80));
+  for (let i = 0; i < wp.length; i += checkEvery) {
+    const dx = wx - wp[i].x, dy = wy - wp[i].y;
+    if (dx*dx + dy*dy < (ROAD_WIDTH+8) * (ROAD_WIDTH+8)) return true;
+  }
+  return false;
 }
 
 /* ================================================================
