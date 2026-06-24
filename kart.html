@@ -834,9 +834,9 @@ function update(dt) {
   }
   player.speed = Math.max(0, Math.min(maxSpeed, player.speed));
 
-  /* Turning: reduced rate to prevent U-turns */
+  /* Turning: negative because camera forward is (-sin,cos), so right turn = decrease angle */
   const turnRate = 0.012;
-  player.angle += player.steer * turnRate * Math.min(player.speed, 3);
+  player.angle -= player.steer * turnRate * Math.min(player.speed, 3);
 
   /* Move forward: camera looks in (-sin, cos) direction, so move that way */
   player.x += -Math.sin(player.angle) * player.speed;
@@ -1076,7 +1076,7 @@ function drawSprites() {
   /* Draw each sprite */
   for (const sp of sprites) {
     const { sx, sy, dist } = sp.proj;
-    const scale = FOCAL_LENGTH / dist;
+    const scale = FOCAL_LENGTH / dist * 0.15;
 
     switch (sp.type) {
       case 'cpu': {
