@@ -510,7 +510,7 @@ function worldToScreen(objX, objY) {
    PLAYER & GAME STATE
    ================================================================ */
 const player = {
-  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 5.0,
+  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 2.5,
   steer: 0, lap: 0, totalLaps: 3,
   item: null, boostT: 0, starT: 0, spinT: 0,
   waypointIdx: 0, // current target waypoint
@@ -615,9 +615,9 @@ function placeItemBoxes() {
   itemBoxPositions = [];
   const wp = trackWaypoints;
   const n = wp.length;
-  const numSets = 6;
+  const numSets = 3;
   const spacing = Math.floor(n / numSets);
-  const laneOffsets = [-25, -8, 8, 25];
+  const laneOffsets = [-15, 0, 15];
 
   for (let s = 0; s < numSets; s++) {
     const baseIdx = (Math.floor(spacing * (s + 0.5)) + startLineIdx) % n;
@@ -828,7 +828,7 @@ function update(dt) {
   if (player.boostT > 0) { maxSpeed = player.maxSpeed * 1.8; }
 
   if (gasOn) {
-    player.speed += (onRoad ? 0.12 : 0.05);
+    player.speed += (onRoad ? 0.06 : 0.02);
   } else {
     player.speed -= 0.03;
   }
@@ -836,11 +836,18 @@ function update(dt) {
 
   /* Turning: negative because camera forward is (-sin,cos), so right turn = decrease angle */
   const turnRate = 0.012;
-  player.angle -= player.steer * turnRate * Math.min(player.speed, 3);
+  player.angle += player.steer * turnRate * Math.min(player.speed, 3);
 
   /* Move forward: camera looks in (-sin, cos) direction, so move that way */
   player.x += -Math.sin(player.angle) * player.speed;
   player.y += Math.cos(player.angle) * player.speed;
+
+  /* Keep player inside map bounds (with margin) */
+  const MARGIN = 30;
+  if (player.x < MARGIN) { player.x = MARGIN; player.speed *= 0.5; }
+  if (player.x > MAP_SIZE - MARGIN) { player.x = MAP_SIZE - MARGIN; player.speed *= 0.5; }
+  if (player.y < MARGIN) { player.y = MARGIN; player.speed *= 0.5; }
+  if (player.y > MAP_SIZE - MARGIN) { player.y = MAP_SIZE - MARGIN; player.speed *= 0.5; }
 
   /* Lap crossing */
   if (checkLapCrossing(player)) {
@@ -923,6 +930,8 @@ function update(dt) {
 
     c.x += -Math.sin(c.angle) * c.speed;
     c.y += Math.cos(c.angle) * c.speed;
+    c.x = Math.max(MARGIN, Math.min(MAP_SIZE - MARGIN, c.x));
+    c.y = Math.max(MARGIN, Math.min(MAP_SIZE - MARGIN, c.y));
 
     /* CPU lap crossing */
     checkLapCrossing(c);
