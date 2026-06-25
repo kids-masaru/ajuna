@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v55';
+const CACHE_NAME = 'ajuna-v56';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -66,17 +66,19 @@ self.addEventListener('fetch', event => {
   const isExternal = url.origin !== self.location.origin;
 
   if (isExternal) {
-    // 外部リソース（Tailwind CSS、Google Fonts）：キャッシュがあれば使う、なければ取得してキャッシュ
+    // 外部リソース：ネットワーク優先、失敗時のみキャッシュ
     event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
-          if (response.ok || response.type === 'opaque') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return response;
-        }).catch(() => cached);
+      fetch(event.request).then(response => {
+        if (response.ok || response.type === 'opaque') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => {
+        return caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          return new Response('', { status: 503, statusText: 'Offline' });
+        });
       })
     );
   } else {
