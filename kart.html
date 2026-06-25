@@ -832,7 +832,9 @@ function checkLapCrossing(entity) {
 function getProgress(entity) {
   const n = trackWaypoints.length;
   const idx = nearestWaypointIdx(entity.x, entity.y);
-  return entity.lap + idx / n;
+  /* Adjust index relative to startLineIdx so start=0 */
+  const relIdx = (idx - startLineIdx + n) % n;
+  return entity.lap + relIdx / n;
 }
 
 function getPosition() {
@@ -1176,7 +1178,7 @@ function drawSprites() {
         break;
       }
       case 'itembox': {
-        const sc = Math.max(5, 24 * scale); /* 1.2x bigger */
+        const sc = Math.max(8, 48 * scale); /* 2x size */
         const t = performance.now() * 0.002;
         const colors = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff'];
         const ci = Math.floor(t) % colors.length;
@@ -1369,16 +1371,16 @@ function drawHUD() {
   ctx.fillStyle = '#ffd84d';
   ctx.fillText('LAP', W - 10, fs * 1.8 + 4);
 
-  /* Position - right bottom, big */
+  /* Position - left side, large */
   if (gameState === 'play') {
     const pos = getPosition();
     const posStr = ['1st','2nd','3rd','4th'][pos - 1];
-    ctx.textAlign = 'right';
-    ctx.font = 'bold ' + Math.round(fs * 2.2) + 'px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.font = 'bold ' + Math.round(fs * 2) + 'px sans-serif';
     ctx.fillStyle = 'rgba(0,0,0,.4)';
-    ctx.fillText(posStr, W - 10, H - Math.round(H * 0.22) + 2);
+    ctx.fillText(posStr, 10, H * 0.45 + 2);
     ctx.fillStyle = (pos === 1) ? '#ffd93b' : '#fff';
-    ctx.fillText(posStr, W - 12, H - Math.round(H * 0.22));
+    ctx.fillText(posStr, 8, H * 0.45);
   }
 
   /* Speed - small, left bottom area */
