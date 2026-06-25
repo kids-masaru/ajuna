@@ -79,7 +79,7 @@
 </div>
 
 <div id="stage">
-  <a href="index.html" class="gp-home" style="z-index:30">🏠</a>
+  <a href="index.html" class="gp-home" style="z-index:30;width:44px;height:44px;font-size:22px">🏠</a>
   <canvas id="game"></canvas>
 
   <div id="btnL" class="steer-btn">◀</div>
@@ -221,70 +221,23 @@ function buildTrackCenterline() {
      The track has: long straight, wide right, tight chicane,
      back straight, hairpin left, S-curves, final right curve. */
   const pts = [
-    // === ZONE 1: Start straight (long, fast) ===
-    {x: 200, y: 800},
-    {x: 300, y: 800},
-    {x: 420, y: 798},
-    {x: 540, y: 796},
-    {x: 660, y: 794},
-    // === ZONE 2: Wide sweeping right into back area ===
-    {x: 740, y: 780},
-    {x: 800, y: 740},
-    {x: 840, y: 680},
-    {x: 855, y: 610},
-    {x: 850, y: 540},
-    // === ZONE 3: Short straight then sharp left hairpin ===
-    {x: 830, y: 480},
-    {x: 810, y: 430},
-    {x: 760, y: 390},
-    {x: 700, y: 370},
-    // === ZONE 4: Quick right kink ===
-    {x: 650, y: 380},
-    {x: 620, y: 410},
-    {x: 630, y: 450},
-    {x: 670, y: 470},
-    // === ZONE 5: Downhill straight (fast section) ===
-    {x: 720, y: 480},
-    {x: 760, y: 460},
-    {x: 800, y: 420},
-    {x: 830, y: 360},
-    {x: 840, y: 290},
-    // === ZONE 6: Long left sweeper at top ===
-    {x: 820, y: 230},
-    {x: 770, y: 185},
-    {x: 700, y: 160},
-    {x: 620, y: 155},
-    {x: 540, y: 165},
-    // === ZONE 7: Technical S-curves ===
-    {x: 480, y: 190},
-    {x: 440, y: 230},
-    {x: 420, y: 280},
-    {x: 440, y: 330},
-    {x: 480, y: 360},
-    {x: 460, y: 400},
-    {x: 410, y: 420},
-    // === ZONE 8: Tight U-turn ===
-    {x: 350, y: 410},
-    {x: 310, y: 380},
-    {x: 280, y: 340},
-    {x: 270, y: 290},
-    {x: 290, y: 245},
-    {x: 330, y: 215},
-    // === ZONE 9: Medium straight ===
-    {x: 360, y: 200},
-    {x: 330, y: 190},
-    {x: 280, y: 200},
-    {x: 230, y: 230},
-    // === ZONE 10: Wide left into home straight ===
-    {x: 195, y: 280},
-    {x: 170, y: 350},
-    {x: 160, y: 440},
-    {x: 165, y: 530},
-    {x: 180, y: 610},
-    // === ZONE 11: Final right curve back to start ===
-    {x: 190, y: 680},
-    {x: 185, y: 740},
-    {x: 185, y: 780},
+    // === 角丸の四角形コース ===
+    // 下辺ストレート（スタート/ゴール）左→右
+    {x: 250, y: 780}, {x: 350, y: 780}, {x: 450, y: 780}, {x: 550, y: 780}, {x: 650, y: 780},
+    // 右下の角丸
+    {x: 720, y: 770}, {x: 770, y: 740}, {x: 800, y: 700}, {x: 810, y: 650},
+    // 右辺ストレート 下→上
+    {x: 810, y: 570}, {x: 810, y: 490}, {x: 810, y: 410}, {x: 810, y: 330},
+    // 右上の角丸
+    {x: 800, y: 270}, {x: 770, y: 230}, {x: 720, y: 210}, {x: 660, y: 200},
+    // 上辺ストレート 右→左
+    {x: 570, y: 200}, {x: 480, y: 200}, {x: 390, y: 200}, {x: 310, y: 200},
+    // 左上の角丸
+    {x: 260, y: 210}, {x: 220, y: 240}, {x: 200, y: 280}, {x: 190, y: 340},
+    // 左辺ストレート 上→下
+    {x: 190, y: 420}, {x: 190, y: 500}, {x: 190, y: 580}, {x: 190, y: 650},
+    // 左下の角丸（スタートに戻る）
+    {x: 200, y: 710}, {x: 220, y: 750}, {x: 250, y: 775},
   ];
   return pts;
 }
@@ -1402,45 +1355,42 @@ function drawMiniMap() {
    ================================================================ */
 function drawHUD() {
   const fs = Math.max(9, Math.round(H * 0.06));
-  const bw = Math.round(W * 0.12);
-  const bh = fs * 2 + 4;
-  const gap = 4;
-  const topY = 4;
 
-  /* HUD boxes across the top (like other games) */
-  function hudBox(x, label, value, valueColor) {
-    ctx.fillStyle = 'rgba(16,20,30,.75)';
-    const r = 5;
-    ctx.beginPath();
-    ctx.moveTo(x+r, topY); ctx.lineTo(x+bw-r, topY); ctx.arc(x+bw-r, topY+r, r, -Math.PI/2, 0);
-    ctx.lineTo(x+bw, topY+bh-r); ctx.arc(x+bw-r, topY+bh-r, r, 0, Math.PI/2);
-    ctx.lineTo(x+r, topY+bh); ctx.arc(x+r, topY+bh-r, r, Math.PI/2, Math.PI);
-    ctx.lineTo(x, topY+r); ctx.arc(x+r, topY+r, r, Math.PI, Math.PI*1.5);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.font = 'bold ' + Math.round(fs * 0.6) + 'px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd84d';
-    ctx.fillText(label, x + bw/2, topY + fs * 0.65);
-    ctx.font = 'bold ' + fs + 'px sans-serif';
-    ctx.fillStyle = valueColor || '#fff';
-    ctx.fillText(value, x + bw/2, topY + bh - 4);
-  }
-
+  /* Lap - right top */
+  ctx.textAlign = 'right';
+  ctx.font = 'bold ' + Math.round(fs * 1.2) + 'px sans-serif';
+  ctx.fillStyle = 'rgba(0,0,0,.5)';
   const lapStr = Math.min(player.lap + 1, player.totalLaps) + '/' + player.totalLaps;
-  hudBox(gap, 'LAP', lapStr);
+  const lapW = ctx.measureText(lapStr).width + 12;
+  ctx.fillRect(W - lapW - 8, 4, lapW + 4, fs * 1.4 + 4);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(lapStr, W - 10, fs * 1.2 + 4);
+  ctx.font = 'bold ' + Math.round(fs * 0.55) + 'px sans-serif';
+  ctx.fillStyle = '#ffd84d';
+  ctx.fillText('LAP', W - 10, fs * 1.8 + 4);
 
+  /* Position - right bottom, big */
   if (gameState === 'play') {
     const pos = getPosition();
     const posStr = ['1st','2nd','3rd','4th'][pos - 1];
-    hudBox(gap + bw + gap, 'RANK', posStr, pos === 1 ? '#ffd93b' : '#fff');
+    ctx.textAlign = 'right';
+    ctx.font = 'bold ' + Math.round(fs * 2.2) + 'px sans-serif';
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    ctx.fillText(posStr, W - 10, H - Math.round(H * 0.22) + 2);
+    ctx.fillStyle = (pos === 1) ? '#ffd93b' : '#fff';
+    ctx.fillText(posStr, W - 12, H - Math.round(H * 0.22));
   }
 
+  /* Speed - small, left bottom area */
+  ctx.textAlign = 'left';
+  ctx.font = 'bold ' + fs + 'px sans-serif';
   const speedDisplay = Math.round(player.speed * 60);
-  hudBox(gap + (bw + gap) * 2, 'SPD', '' + speedDisplay, '#7CFC00');
+  ctx.fillStyle = 'rgba(0,0,0,.4)';
+  ctx.fillRect(4, H - fs - 8, Math.round(W * 0.15), fs + 4);
+  ctx.fillStyle = '#7CFC00';
+  ctx.fillText(speedDisplay + '', 8, H - 8);
 
   /* Time */
-  ctx.textAlign = 'left';
   ctx.fillStyle = '#fff';
   ctx.fillText(gameTime ? gameTime.toFixed(1) : '0.0', 8, H - 8);
 
