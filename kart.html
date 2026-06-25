@@ -869,13 +869,11 @@ function update(dt) {
 
   /* Speed */
   const gasOn = input.gas || keys['ArrowUp'];
-  const onRoad = isOnRoad(player.x, player.y);
   let maxSpeed = player.maxSpeed;
-  if (!onRoad) { maxSpeed *= 0.3; player.speed *= 0.97; } /* strong off-road penalty */
   if (player.boostT > 0) { maxSpeed = player.maxSpeed * 1.8; }
 
   if (gasOn) {
-    player.speed += (onRoad ? 0.06 : 0.015);
+    player.speed += 0.06;
   } else {
     player.speed -= 0.03;
   }
@@ -886,8 +884,16 @@ function update(dt) {
   player.angle -= player.steer * turnRate * Math.min(player.speed, 3);
 
   /* Move forward: camera looks in (-sin, cos) direction, so move that way */
+  const prevX = player.x, prevY = player.y;
   player.x += -Math.sin(player.angle) * player.speed;
   player.y += Math.cos(player.angle) * player.speed;
+
+  /* Wall: if moved off road, push back onto road */
+  if (!isOnRoad(player.x, player.y)) {
+    player.x = prevX;
+    player.y = prevY;
+    player.speed *= 0.5;
+  }
 
   /* Keep player inside map bounds (with margin) */
   const MARGIN = 30;
@@ -1396,15 +1402,6 @@ function drawHUD() {
   ctx.fillStyle = '#fff';
   ctx.fillText(gameTime ? gameTime.toFixed(1) : '0.0', 8, H - 8);
 
-  /* Off-road indicator */
-  if (gameState === 'play' && !isOnRoad(player.x, player.y)) {
-    ctx.fillStyle = 'rgba(0,0,0,.5)';
-    ctx.fillRect(W/2 - 40, HORIZON + 10, 80, fs + 4);
-    ctx.fillStyle = '#ff4444';
-    ctx.textAlign = 'center';
-    ctx.fillText('OFF ROAD', W/2, HORIZON + 8 + fs);
-    ctx.textAlign = 'left';
-  }
 }
 
 /* ================================================================
