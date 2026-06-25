@@ -538,7 +538,7 @@ function worldToScreen(objX, objY) {
    PLAYER & GAME STATE
    ================================================================ */
 const player = {
-  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 2.7,
+  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 1.9,
   steer: 0, lap: 0, totalLaps: 3,
   item: null, boostT: 0, starT: 0, spinT: 0,
   waypointIdx: 0, // current target waypoint
@@ -627,7 +627,7 @@ function initCPUs() {
       y: p.y + (i - 1) * 8,
       angle: Math.atan2(-(pn.x - p.x), pn.y - p.y),
       speed: 0,
-      baseSpeed: 2.0 + Math.random() * 0.7,
+      baseSpeed: 1.4 + Math.random() * 0.5,
       color: CPU_COLORS[i],
       waypointIdx: (idx + 20) % n,
       lap: 0,
