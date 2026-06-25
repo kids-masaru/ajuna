@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>ドットカート</title>
+<link rel="stylesheet" href="assets/kit.css">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; touch-action:none; }
   html,body { width:100%; height:100%; overflow:hidden; background:#0a0a14; font-family:"Courier New",monospace; }
@@ -34,10 +35,7 @@
     color:#fff; font-size:28px; font-weight:bold; display:none; align-items:center; justify-content:center; }
   #btnGas.on { background:rgba(80,255,80,.6); }
 
-  #homeBtn { position:absolute; top:8px; left:8px; z-index:30; width:36px; height:36px;
-    background:rgba(255,255,255,.18); border:2px solid rgba(255,255,255,.5); border-radius:50%;
-    display:flex; align-items:center; justify-content:center; font-size:18px;
-    text-decoration:none; box-shadow:2px 2px 0 #000; }
+
 
   #itemBtn { position:absolute; right:16px; bottom:106px; width:80px; height:80px; z-index:12;
     border:4px solid #fff; border-radius:16px; background:rgba(0,0,0,.45);
@@ -57,10 +55,10 @@
   #msg h2 { font-size:13px; letter-spacing:2px; color:#7fd0ff; margin-bottom:14px; }
   #msg p { font-size:12px; line-height:1.8; }
   #msg .big { font-size:40px; color:#ff5a5a; margin:8px 0; }
-  #startBtn { pointer-events:auto; margin-top:16px; display:inline-block; background:#2244cc; color:#fff;
-    border:3px solid #fff; padding:12px 30px; font-size:15px; font-weight:bold; letter-spacing:2px;
-    font-family:inherit; cursor:pointer; box-shadow:4px 4px 0 #000; }
-  #startBtn:active { transform:translate(2px,2px); box-shadow:2px 2px 0 #000; }
+  #startBtn { pointer-events:auto; margin-top:16px; display:inline-block; background:#e23b3b; color:#fff;
+    border:none; border-radius:14px; padding:14px 36px; font-size:18px; font-weight:900; letter-spacing:2px;
+    font-family:inherit; cursor:pointer; box-shadow:0 6px 0 #9e2020; }
+  #startBtn:active { transform:translateY(6px); box-shadow:0 0 0 #9e2020; }
 
   #count { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); z-index:25;
     font-size:80px; font-weight:bold; color:#fff; text-shadow:4px 4px 0 #000,0 0 22px #ffd93b;
@@ -71,16 +69,17 @@
   .hidden { display:none !important; }
 </style>
 </head>
-<body>
+<body class="gp gp-lime gp-dark">
 
 <div class="rotate-notice">
   <div class="ico">📱</div>
-  <p>スマホを横向きにしてね</p>
+  <h2 style="font-size:24px;font-weight:900;text-shadow:0 3px 0 #e23b3b">よこむきにしてね</h2>
+  <p style="color:#ffd84d;font-weight:800">スマホを よこにすると あそべるよ！</p>
   <button class="rotate-go" onclick="forceLandscape()">よこむきにする 🔄</button>
 </div>
 
 <div id="stage">
-  <a id="homeBtn" href="index.html">🏠</a>
+  <a href="index.html" class="gp-home" style="z-index:30">🏠</a>
   <canvas id="game"></canvas>
 
   <div id="btnL" class="steer-btn">◀</div>
@@ -573,7 +572,7 @@ function worldToScreen(objX, objY) {
    PLAYER & GAME STATE
    ================================================================ */
 const player = {
-  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 2.5,
+  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 3.0,
   steer: 0, lap: 0, totalLaps: 3,
   item: null, boostT: 0, starT: 0, spinT: 0,
   waypointIdx: 0, // current target waypoint
@@ -662,7 +661,7 @@ function initCPUs() {
       y: p.y + (i - 1) * 8,
       angle: Math.atan2(-(pn.x - p.x), pn.y - p.y),
       speed: 0,
-      baseSpeed: 2.5 + Math.random() * 0.6,
+      baseSpeed: 2.2 + Math.random() * 0.8,
       color: CPU_COLORS[i],
       waypointIdx: (idx + 20) % n,
       lap: 0,
@@ -1350,8 +1349,8 @@ function drawMiniMap() {
   function miniY(wy) { return offY + (wy - minY) * scaleM; }
 
   /* Draw track path */
-  ctx.strokeStyle = '#888';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#999';
+  ctx.lineWidth = 5;
   ctx.beginPath();
   ctx.moveTo(miniX(trackWaypoints[0].x), miniY(trackWaypoints[0].y));
   for (let i = 1; i < trackWaypoints.length; i += 3) {
@@ -1387,34 +1386,46 @@ function drawMiniMap() {
    HUD
    ================================================================ */
 function drawHUD() {
-  ctx.textAlign = 'left';
-  const fs = Math.max(10, Math.round(H * 0.07));
-  ctx.font = 'bold ' + fs + 'px monospace';
+  const fs = Math.max(9, Math.round(H * 0.06));
+  const bw = Math.round(W * 0.12);
+  const bh = fs * 2 + 4;
+  const gap = 4;
+  const topY = 4;
 
-  /* Lap */
-  ctx.fillStyle = 'rgba(0,0,0,.6)';
-  ctx.fillRect(4, 4, Math.round(W * 0.25), fs + 6);
-  ctx.fillStyle = '#fff';
-  ctx.fillText('LAP ' + Math.min(player.lap + 1, player.totalLaps) + '/' + player.totalLaps, 8, fs + 2);
+  /* HUD boxes across the top (like other games) */
+  function hudBox(x, label, value, valueColor) {
+    ctx.fillStyle = 'rgba(16,20,30,.75)';
+    const r = 5;
+    ctx.beginPath();
+    ctx.moveTo(x+r, topY); ctx.lineTo(x+bw-r, topY); ctx.arc(x+bw-r, topY+r, r, -Math.PI/2, 0);
+    ctx.lineTo(x+bw, topY+bh-r); ctx.arc(x+bw-r, topY+bh-r, r, 0, Math.PI/2);
+    ctx.lineTo(x+r, topY+bh); ctx.arc(x+r, topY+bh-r, r, Math.PI/2, Math.PI);
+    ctx.lineTo(x, topY+r); ctx.arc(x+r, topY+r, r, Math.PI, Math.PI*1.5);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.font = 'bold ' + Math.round(fs * 0.6) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd84d';
+    ctx.fillText(label, x + bw/2, topY + fs * 0.65);
+    ctx.font = 'bold ' + fs + 'px sans-serif';
+    ctx.fillStyle = valueColor || '#fff';
+    ctx.fillText(value, x + bw/2, topY + bh - 4);
+  }
 
-  /* Speed */
-  ctx.fillStyle = 'rgba(0,0,0,.6)';
-  ctx.fillRect(4, fs + 12, Math.round(W * 0.25), fs + 6);
-  ctx.fillStyle = '#7CFC00';
-  const speedDisplay = Math.round(player.speed * 60);
-  ctx.fillText('SPD ' + speedDisplay, 8, fs * 2 + 10);
+  const lapStr = Math.min(player.lap + 1, player.totalLaps) + '/' + player.totalLaps;
+  hudBox(gap, 'LAP', lapStr);
 
-  /* Position */
   if (gameState === 'play') {
     const pos = getPosition();
     const posStr = ['1st','2nd','3rd','4th'][pos - 1];
-    ctx.fillStyle = 'rgba(0,0,0,.6)';
-    ctx.fillRect(4, fs * 2 + 20, Math.round(W * 0.15), fs + 6);
-    ctx.fillStyle = (pos === 1) ? '#ffd93b' : '#fff';
-    ctx.fillText(posStr, 8, fs * 3 + 18);
+    hudBox(gap + bw + gap, 'RANK', posStr, pos === 1 ? '#ffd93b' : '#fff');
   }
 
+  const speedDisplay = Math.round(player.speed * 60);
+  hudBox(gap + (bw + gap) * 2, 'SPD', '' + speedDisplay, '#7CFC00');
+
   /* Time */
+  ctx.textAlign = 'left';
   ctx.fillStyle = '#fff';
   ctx.fillText(gameTime ? gameTime.toFixed(1) : '0.0', 8, H - 8);
 
@@ -1457,10 +1468,7 @@ function render() {
   /* 3. Put imageData to canvas */
   ctx.putImageData(outputImageData, 0, 0);
 
-  /* DEBUG: show state info */
-  ctx.fillStyle='#0f0'; ctx.font='10px monospace'; ctx.textAlign='left';
-  ctx.fillText('PX:'+Math.round(player.x)+' PY:'+Math.round(player.y)+' A:'+player.angle.toFixed(2)+' SPD:'+player.speed.toFixed(1)+' ROAD:'+isOnRoad(player.x,player.y), 4, H-14);
-  ctx.fillText('WP0:'+Math.round(trackWaypoints[0]?.x||0)+','+Math.round(trackWaypoints[0]?.y||0)+' WPn:'+trackWaypoints.length+' TM:'+(trackMapData?trackMapData.length:'NULL'), 4, H-4);
+  /* Debug removed */
 
   /* 4. Draw sprites on top (using canvas API for easier drawing) */
   drawSprites();
