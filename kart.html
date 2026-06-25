@@ -572,14 +572,14 @@ function worldToScreen(objX, objY) {
    PLAYER & GAME STATE
    ================================================================ */
 const player = {
-  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 3.0,
+  x: 0, y: 0, angle: 0, speed: 0, maxSpeed: 2.7,
   steer: 0, lap: 0, totalLaps: 3,
   item: null, boostT: 0, starT: 0, spinT: 0,
   waypointIdx: 0, // current target waypoint
   lastCrossIdx: -1, // last waypoint crossed for lap detection
   time: 0, startT: 0,
   lightningT: 0, flashT: 0,
-  checkpointHalf: false
+  nextCheckpoint: 0
 };
 
 const ITEMS = [
@@ -644,7 +644,7 @@ function initPlayer() {
   player.lastCrossIdx = -1;
   player.lightningT = 0;
   player.flashT = 0;
-  player.checkpointHalf = false;
+  player.nextCheckpoint = 0;
 }
 
 function initCPUs() {
@@ -661,14 +661,14 @@ function initCPUs() {
       y: p.y + (i - 1) * 8,
       angle: Math.atan2(-(pn.x - p.x), pn.y - p.y),
       speed: 0,
-      baseSpeed: 2.2 + Math.random() * 0.8,
+      baseSpeed: 2.0 + Math.random() * 0.7,
       color: CPU_COLORS[i],
       waypointIdx: (idx + 20) % n,
       lap: 0,
       spinT: 0,
       shrinkT: 0,
       lapProgress: 0, // fractional progress through lap
-      checkpointHalf: false
+      nextCheckpoint: 0
     });
   }
 }
@@ -836,26 +836,27 @@ function checkLapCrossing(entity) {
   const wp = trackWaypoints;
   const n = wp.length;
   const curIdx = nearestWaypointIdx(entity.x, entity.y);
-  const halfN = Math.floor(n / 2);
   const sIdx = startLineIdx;
+  const NUM_CP = 4;
 
-  /* Distance from start line in waypoint indices (wrapping) */
+  /* Check which checkpoint zone the entity is in */
   let distFromStart = (curIdx - sIdx + n) % n;
-  let distFromHalf = (curIdx - ((sIdx + halfN) % n) + n) % n;
+  let cpZone = Math.floor(distFromStart / (n / NUM_CP));
+  cpZone = Math.min(cpZone, NUM_CP - 1);
 
-  /* Must have passed the halfway point */
-  if (distFromHalf < n * 0.15) {
-    entity.checkpointHalf = true;
+  /* Mark checkpoint as reached (must be in order) */
+  if (cpZone === entity.nextCheckpoint) {
+    entity.nextCheckpoint = cpZone + 1;
   }
 
-  /* Near start line and has passed checkpoint */
-  if (entity.checkpointHalf && distFromStart < n * 0.05) {
+  /* Near start line and ALL checkpoints passed */
+  if (entity.nextCheckpoint >= NUM_CP && distFromStart < n * 0.05) {
     const sp = wp[sIdx];
     const dx = entity.x - sp.x;
     const dy = entity.y - sp.y;
     if (dx*dx + dy*dy < LAP_ZONE_RADIUS * LAP_ZONE_RADIUS) {
       entity.lap++;
-      entity.checkpointHalf = false;
+      entity.nextCheckpoint = 0;
       return true;
     }
   }
@@ -902,11 +903,11 @@ function update(dt) {
   const gasOn = input.gas || keys['ArrowUp'];
   const onRoad = isOnRoad(player.x, player.y);
   let maxSpeed = player.maxSpeed;
-  if (!onRoad) maxSpeed *= 0.45;
+  if (!onRoad) { maxSpeed *= 0.3; player.speed *= 0.97; } /* strong off-road penalty */
   if (player.boostT > 0) { maxSpeed = player.maxSpeed * 1.8; }
 
   if (gasOn) {
-    player.speed += (onRoad ? 0.06 : 0.02);
+    player.speed += (onRoad ? 0.06 : 0.015);
   } else {
     player.speed -= 0.03;
   }
