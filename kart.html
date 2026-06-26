@@ -378,7 +378,8 @@ function isOnRoad(wx, wy) {
   /* Distance-based check: if player is within ROAD_WIDTH of any waypoint, they're on road */
   const wp = trackWaypoints;
   if (!wp || wp.length === 0) return true;
-  const limit = ROAD_WIDTH * ROAD_WIDTH;
+  const rw = ROAD_WIDTH - 5;
+  const limit = rw * rw;
   for (let i = 0; i < wp.length; i++) {
     const dx = wx - wp[i].x, dy = wy - wp[i].y;
     if (dx*dx + dy*dy < limit) return true;
@@ -884,15 +885,16 @@ function update(dt) {
   player.angle -= player.steer * turnRate * Math.min(player.speed, 3);
 
   /* Move forward: camera looks in (-sin, cos) direction, so move that way */
-  const prevX = player.x, prevY = player.y;
   player.x += -Math.sin(player.angle) * player.speed;
   player.y += Math.cos(player.angle) * player.speed;
 
-  /* Wall: if moved off road, push back onto road */
+  /* Wall: if off road, snap back to nearest waypoint on road */
   if (!isOnRoad(player.x, player.y)) {
-    player.x = prevX;
-    player.y = prevY;
-    player.speed *= 0.5;
+    const nearest = nearestWaypointIdx(player.x, player.y);
+    const wp = trackWaypoints[nearest];
+    player.x = wp.x;
+    player.y = wp.y;
+    player.speed *= 0.3;
   }
 
   /* Keep player inside map bounds (with margin) */
@@ -1426,23 +1428,21 @@ function render() {
   /* 1. Sky (rendered into imageData buffer) */
   renderSky();
 
-  /* 2. Mode 7 ground */
-  renderMode7();
+  /* 2. Mode 7 ground (skip on title screen) */
+  if (gameState !== 'title') renderMode7();
 
   /* 3. Put imageData to canvas */
   ctx.putImageData(outputImageData, 0, 0);
 
   /* Debug removed */
 
-  /* 4. Draw sprites on top (using canvas API for easier drawing) */
-  drawSprites();
-
-  /* 5. Player kart */
-  drawPlayerKart();
-
-  /* 6. UI elements */
-  drawMiniMap();
-  drawHUD();
+  /* 4. Only draw game elements if track is built */
+  if (trackWaypoints.length > 0 && gameState !== 'title') {
+    drawSprites();
+    drawPlayerKart();
+    drawMiniMap();
+    drawHUD();
+  }
   drawFlash();
 }
 
