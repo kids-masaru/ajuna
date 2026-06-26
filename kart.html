@@ -546,7 +546,8 @@ const player = {
   lastCrossIdx: -1, // last waypoint crossed for lap detection
   time: 0, startT: 0,
   lightningT: 0, flashT: 0,
-  nextCheckpoint: 0
+  nextCheckpoint: 0,
+  wallHitT: 0
 };
 
 const ITEMS = [
@@ -857,6 +858,7 @@ function update(dt) {
   if (player.spinT > 0) player.spinT -= dt;
   if (player.lightningT > 0) player.lightningT -= dt;
   if (player.flashT > 0) player.flashT -= dt;
+  if (player.wallHitT > 0) player.wallHitT -= dt;
 
   /* Steering */
   let tSteer = 0;
@@ -885,16 +887,16 @@ function update(dt) {
   player.angle -= player.steer * turnRate * Math.min(player.speed, 3);
 
   /* Move forward: camera looks in (-sin, cos) direction, so move that way */
+  const prevX = player.x, prevY = player.y;
   player.x += -Math.sin(player.angle) * player.speed;
   player.y += Math.cos(player.angle) * player.speed;
 
-  /* Wall: if off road, snap back to nearest waypoint on road */
+  /* Wall: if off road, stay at previous position (wall collision) */
   if (!isOnRoad(player.x, player.y)) {
-    const nearest = nearestWaypointIdx(player.x, player.y);
-    const wp = trackWaypoints[nearest];
-    player.x = wp.x;
-    player.y = wp.y;
-    player.speed *= 0.3;
+    player.x = prevX;
+    player.y = prevY;
+    player.speed = 0;
+    player.wallHitT = 0.3; /* visual feedback timer */
   }
 
   /* Keep player inside map bounds (with margin) */
@@ -1292,6 +1294,17 @@ function drawPlayerKart() {
     ctx.drawImage(kartImg, centerX - w/2, kartY, w, h);
   }
   ctx.restore();
+
+  /* Wall hit visual effect */
+  if (player.wallHitT > 0) {
+    ctx.globalAlpha = player.wallHitT * 2;
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(0, 0, W, 3);
+    ctx.fillRect(0, H - 3, W, 3);
+    ctx.fillRect(0, 0, 3, H);
+    ctx.fillRect(W - 3, 0, 3, H);
+    ctx.globalAlpha = 1;
+  }
 }
 
 /* ================================================================
@@ -1428,11 +1441,17 @@ function render() {
   /* 1. Sky (rendered into imageData buffer) */
   renderSky();
 
-  /* 2. Mode 7 ground (skip on title screen) */
-  if (gameState !== 'title') renderMode7();
+  /* 2. Mode 7 ground */
+  if (trackMapData) renderMode7();
 
   /* 3. Put imageData to canvas */
   ctx.putImageData(outputImageData, 0, 0);
+
+  /* Title screen: fill ground area with green if no track */
+  if (!trackMapData) {
+    ctx.fillStyle = '#3a8';
+    ctx.fillRect(0, HORIZON, W, H - HORIZON);
+  }
 
   /* Debug removed */
 
