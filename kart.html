@@ -378,10 +378,10 @@ function isOnRoad(wx, wy) {
   /* Distance-based check: if player is within ROAD_WIDTH of any waypoint, they're on road */
   const wp = trackWaypoints;
   if (!wp || wp.length === 0) return true;
-  const checkEvery = Math.max(1, Math.floor(wp.length / 80));
-  for (let i = 0; i < wp.length; i += checkEvery) {
+  const limit = ROAD_WIDTH * ROAD_WIDTH;
+  for (let i = 0; i < wp.length; i++) {
     const dx = wx - wp[i].x, dy = wy - wp[i].y;
-    if (dx*dx + dy*dy < (ROAD_WIDTH+8) * (ROAD_WIDTH+8)) return true;
+    if (dx*dx + dy*dy < limit) return true;
   }
   return false;
 }
