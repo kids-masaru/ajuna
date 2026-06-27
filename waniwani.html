@@ -45,19 +45,29 @@ body {
 }
 #score-bar > * { pointer-events: auto; }
 
+#score-display-box {
+  background: #111;
+  border: 3px solid #444;
+  border-radius: 10px;
+  padding: 8px 20px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 2px 6px rgba(0,0,0,0.5);
+}
 #hud-count {
-  font-size: 52px;
+  font-family: 'Courier New', monospace;
+  font-size: 48px;
   font-weight: 900;
-  color: #fff;
-  text-shadow: 2px 3px 0 #1a3a1a, 0 0 20px rgba(255,200,0,0.4);
-  letter-spacing: 2px;
+  color: #00ff44;
+  text-shadow: 0 0 10px #00ff44, 0 0 20px rgba(0,255,68,0.3);
+  letter-spacing: 4px;
 }
 #hud-points {
-  font-size: 22px;
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
   font-weight: 800;
-  color: #ffd84d;
-  text-shadow: 1px 2px 0 #1a3a1a;
+  color: #ffaa00;
+  text-shadow: 0 0 8px #ffaa00;
   margin-top: 2px;
+  letter-spacing: 2px;
 }
 #hud-timer-row {
   font-size: 16px;
@@ -532,8 +542,10 @@ body {
 
     <!-- Score Bar (top) -->
     <div id="score-bar" style="display:none;">
-      <div id="hud-count">0 ひき</div>
-      <div id="hud-points">0 てん</div>
+      <div id="score-display-box">
+        <div id="hud-count">000</div>
+        <div id="hud-points">0 てん</div>
+      </div>
       <div id="hud-timer-row">のこり 60 びょう</div>
     </div>
 
@@ -638,6 +650,13 @@ body {
   </div>
 
 <script>
+window.onerror = function(msg, src, line) {
+  document.title = 'ERR:' + msg + ' L' + line;
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;padding:8px;font-size:12px;';
+  d.textContent = 'ERR: ' + msg + ' (line ' + line + ')';
+  document.body.appendChild(d);
+};
 // ============================================================
 // Whack-a-Croc (ワニワニパニック) - Arcade Style
 // Crocs pop DOWN from holes in a rocky cliff
@@ -989,7 +1008,7 @@ function updateComboDisplay() {
 // HUD updates
 // ============================================================
 function updateHUD() {
-  document.getElementById('hud-count').textContent = hitCount + ' ひき';
+  document.getElementById('hud-count').textContent = String(hitCount).padStart(3, '0');
   document.getElementById('hud-points').textContent = score + ' てん';
   const timerEl = document.getElementById('hud-timer-row');
   timerEl.textContent = 'のこり ' + timeLeft + ' びょう';
