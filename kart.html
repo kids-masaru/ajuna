@@ -1383,20 +1383,14 @@ function drawMiniMap() {
 function drawHUD() {
   const fs = Math.max(9, Math.round(H * 0.06));
 
-  /* Lap - right top */
-  ctx.textAlign = 'right';
-  ctx.font = 'bold ' + Math.round(fs * 1.2) + 'px sans-serif';
-  ctx.fillStyle = 'rgba(0,0,0,.5)';
+  /* Lap - left top (above position) */
+  ctx.textAlign = 'left';
+  ctx.font = 'bold ' + Math.round(fs * 1.1) + 'px sans-serif';
   const lapStr = Math.min(player.lap + 1, player.totalLaps) + '/' + player.totalLaps;
-  const lapW = ctx.measureText(lapStr).width + 12;
-  ctx.fillRect(W - lapW - 8, 4, lapW + 4, fs * 1.4 + 4);
-  ctx.fillStyle = '#fff';
-  ctx.fillText(lapStr, W - 10, fs * 1.2 + 4);
-  ctx.font = 'bold ' + Math.round(fs * 0.55) + 'px sans-serif';
   ctx.fillStyle = '#ffd84d';
-  ctx.fillText('LAP', W - 10, fs * 1.8 + 4);
+  ctx.fillText('LAP ' + lapStr, 8, H * 0.32);
 
-  /* Position - left side, large */
+  /* Position - left side, below lap */
   if (gameState === 'play') {
     const pos = getPosition();
     const posStr = ['1st','2nd','3rd','4th'][pos - 1];
