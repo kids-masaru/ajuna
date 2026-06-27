@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v59';
+const CACHE_NAME = 'ajuna-v60';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
