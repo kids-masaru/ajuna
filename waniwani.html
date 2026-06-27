@@ -6,6 +6,13 @@
 <title>ワニワニパニック</title>
 <link rel="stylesheet" href="assets/kit.css">
 <style>
+@font-face {
+  font-family: 'DSEG7';
+  src: url('https://cdn.jsdelivr.net/npm/dseg@0.46/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2') format('woff2');
+  font-weight: normal;
+}
+</style>
+<style>
 /* ===== Base ===== */
 body {
   margin: 0;
@@ -53,21 +60,31 @@ body {
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 2px 6px rgba(0,0,0,0.5);
 }
 #hud-count {
-  font-family: 'Courier New', monospace;
+  font-family: 'DSEG7', 'Courier New', monospace;
   font-size: 48px;
-  font-weight: 900;
+  font-weight: 400;
   color: #00ff44;
   text-shadow: 0 0 10px #00ff44, 0 0 20px rgba(0,255,68,0.3);
   letter-spacing: 4px;
+  text-align: right;
+  min-width: 160px;
+}
+#hud-count-suffix {
+  font-family: sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #00ff44;
+  margin-left: 4px;
 }
 #hud-points {
-  font-family: 'Courier New', monospace;
+  font-family: 'DSEG7', 'Courier New', monospace;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 400;
   color: #ffaa00;
   text-shadow: 0 0 8px #ffaa00;
   margin-top: 2px;
   letter-spacing: 2px;
+  text-align: right;
 }
 #hud-timer-row {
   font-size: 16px;
@@ -228,7 +245,7 @@ body {
   top: -10px;
   left: -12px;
   right: -12px;
-  height: 52%;
+  height: 40%;
   background:
     radial-gradient(ellipse 50px 20px at 20% 90%, rgba(100,85,65,0.5) 0%, transparent 70%),
     radial-gradient(ellipse 40px 18px at 75% 85%, rgba(90,75,58,0.4) 0%, transparent 70%),
@@ -259,11 +276,11 @@ body {
 }
 
 .croc-img.pop {
-  transform: translateX(-50%) translateY(5%);
+  transform: translateX(-50%) translateY(35%);
 }
 
 .croc-img.hit {
-  transform: translateX(-50%) translateY(5%) rotate(12deg) scale(0.88);
+  transform: translateX(-50%) translateY(35%) rotate(12deg) scale(0.88);
   filter: brightness(1.5) saturate(0.7);
   transition: transform 0.12s ease-out, filter 0.12s ease-out;
 }
@@ -543,7 +560,7 @@ body {
     <!-- Score Bar (top) -->
     <div id="score-bar" style="display:none;">
       <div id="score-display-box">
-        <div id="hud-count">000</div>
+        <div style="display:flex;align-items:baseline;justify-content:flex-end"><div id="hud-count">000</div><span id="hud-count-suffix">ひき</span></div>
         <div id="hud-points">0 てん</div>
       </div>
       <div id="hud-timer-row">のこり 60 びょう</div>
