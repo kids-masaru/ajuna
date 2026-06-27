@@ -822,11 +822,11 @@ function useItem(dir) {
 function updateItemUI() {
   if (player.item) {
     itemBtnEl.classList.add('ready');
-    /* TODO: 透過PNG画像が来たら以下のコメントを外す
+    
     const imgSrc = player.item === 'mushroom' ? 'item_mushroom.png' : player.item === 'fire' ? 'item_fire.png' : null;
     if (imgSrc) {
       itemIconEl.innerHTML = '<img src="'+imgSrc+'" style="width:36px;height:36px;image-rendering:pixelated;">';
-    } else */
+    } else
     itemIconEl.textContent = itemEmoji(player.item);
   } else {
     itemBtnEl.classList.remove('ready');

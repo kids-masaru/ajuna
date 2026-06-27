@@ -34,6 +34,7 @@ const LOCAL_FILES = [
   './programming.html',
   './sushi.html',
   './waniwani.html',
+  './wani_head.png',
   './fishing.html',
   './kart.html',
   './kart_sprites.png',
