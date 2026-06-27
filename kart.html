@@ -98,7 +98,11 @@
     <h1>PIXEL KART RACING</h1>
     <h2>ドットカート</h2>
     <p>GO＝アクセル ◀▶＝ハンドル<br>アイテムボックスを取ってアイテムゲット！<br>右下ボタンでアイテム使用<br>3周してゴールゲートをくぐれ！</p>
-    <button id="startBtn">スタート</button>
+    <div id="loadingText" style="color:#ffd84d;font-size:14px;font-weight:800;margin-top:12px">
+      <span style="display:inline-block;animation:spin 1s linear infinite">⏳</span> よみこみちゅう...
+    </div>
+    <button id="startBtn" style="display:none">スタート</button>
+    <style>@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}</style>
   </div>
   <div id="charSelect" style="display:none;position:absolute;inset:0;z-index:22;background:rgba(10,10,20,.95);flex-direction:column;align-items:center;justify-content:center;padding:16px;color:#fff;text-align:center;">
     <h2 style="font-size:20px;font-weight:900;color:#ffd84d;margin-bottom:16px;text-shadow:1px 1px 2px #000">キャラクターをえらぼう！</h2>
@@ -186,6 +190,20 @@ const rabbitFront = new Image(); rabbitFront.src = 'kart_rabbit_front.png';
 let rabbitReady = false;
 rabbitBack.onload = () => { if (rabbitFront.complete) rabbitReady = true; };
 rabbitFront.onload = () => { if (rabbitBack.complete) rabbitReady = true; };
+
+/* Wait for all images to load before showing start button */
+const allCharImages = [catBack,catFront,dogBack,dogFront,rabbitBack,rabbitFront,foxBack,foxFront,pandaBack,pandaFront,tigerBack,tigerFront,mushroomImg,fireImg];
+function checkAllLoaded() {
+  if (allCharImages.every(img => img.complete)) {
+    const lt = document.getElementById('loadingText');
+    if (lt) lt.style.display = 'none';
+    const sb = document.getElementById('startBtn');
+    if (sb) sb.style.display = '';
+  } else {
+    setTimeout(checkAllLoaded, 200);
+  }
+}
+setTimeout(checkAllLoaded, 300);
 
 /* Character image lookup: charRow -> {front, back} */
 function getCharImages(charRow) {
