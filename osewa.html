@@ -59,7 +59,7 @@ body {
 #doll-area {
   position: relative;
   z-index: 5;
-  flex: 1;
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -72,8 +72,8 @@ body {
 
 #doll-wrapper {
   position: relative;
-  width: 240px;
-  height: min(380px, 55vh);
+  width: 220px;
+  height: min(340px, 48vh);
 }
 
 /* ===== Image Layers ===== */
@@ -336,16 +336,17 @@ body {
 
 /* ===== Menu Bar ===== */
 #menu-bar {
-  position: relative;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 30;
-  width: 100%;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 6px 4px max(6px, env(safe-area-inset-bottom));
+  padding: 6px 4px max(12px, env(safe-area-inset-bottom));
   background: rgba(255,255,255,0.95);
   box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
-  flex-shrink: 0;
 }
 
 .menu-btn {
@@ -797,7 +798,7 @@ window.onerror = function(msg, src, line) {
 // Data
 // ============================================================
 var CLOTHES = [
-  { name: 'ピンクドレス', img: 'doll_cloth_1.png?v=2', color: '#f9a8d4', shape: 'dress' },
+  { name: 'ピンクドレス', img: 'doll_cloth_1.png?v=3', color: '#f9a8d4', shape: 'dress' },
   { name: 'みずいろドレス', img: 'doll_cloth_2.png?v=2', color: '#93c5fd', shape: 'dress' },
   { name: 'オーバーオール', img: 'doll_cloth_3.png?v=2', color: '#5b8dbf', shape: 'overalls' },
   { name: 'パジャマ', img: 'doll_cloth_4.png?v=2', color: '#f9c5d1', shape: 'pajama' },
