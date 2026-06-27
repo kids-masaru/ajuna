@@ -53,6 +53,19 @@ const LOCAL_FILES = [
   './kart_fox_front.png',
   './kart_fox_back.png',
   './osewa.html',
+  './doll_base.png',
+  './doll_hair_1.png',
+  './doll_hair_2.png',
+  './doll_hair_3.png',
+  './doll_cloth_1.png',
+  './doll_cloth_2.png',
+  './doll_cloth_3.png',
+  './doll_cloth_4.png',
+  './doll_cloth_5.png',
+  './doll_food_1.png',
+  './doll_food_2.png',
+  './doll_food_3.png',
+  './doll_food_4.png',
 ];
 
 // インストール時：ローカルファイルを全部キャッシュ

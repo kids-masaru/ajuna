@@ -797,9 +797,9 @@ window.onerror = function(msg, src, line) {
 var CLOTHES = [
   { name: 'ピンクドレス', img: 'doll_cloth_1.png', color: '#f9a8d4', shape: 'dress' },
   { name: 'みずいろドレス', img: 'doll_cloth_2.png', color: '#93c5fd', shape: 'dress' },
-  { name: 'オーバーオール', img: 'doll_cloth_3.png', color: '#86efac', shape: 'overalls' },
-  { name: 'パジャマ', img: 'doll_cloth_4.png', color: '#c4b5fd', shape: 'pajama' },
-  { name: 'おようふく', img: 'doll_cloth_5.png', color: '#fca5a5', shape: 'shirt' },
+  { name: 'オーバーオール', img: 'doll_cloth_3.png', color: '#5b8dbf', shape: 'overalls' },
+  { name: 'パジャマ', img: 'doll_cloth_4.png', color: '#f9c5d1', shape: 'pajama' },
+  { name: 'キラキラドレス', img: 'doll_cloth_5.png', color: '#f472b6', shape: 'dress' },
 ];
 
 var HAIRS = [
@@ -1084,8 +1084,11 @@ function openMenu(menu) {
   if (menu === 'cloth') {
     title = '👗 おようふくをえらんでね';
     items = CLOTHES.map(function(c, i) {
+      var thumb = useImages
+        ? '<img src="'+c.img+'" style="width:40px;height:60px;object-fit:contain;">'
+        : '<div class="sel-swatch" style="background:' + c.color + '"></div>';
       return {
-        html: '<div class="sel-swatch" style="background:' + c.color + '"></div><div class="sel-name">' + c.name + '</div>',
+        html: thumb + '<div class="sel-name">' + c.name + '</div>',
         active: i === state.clothIdx,
         onClick: function() { changeCloth(i); },
       };
@@ -1093,8 +1096,11 @@ function openMenu(menu) {
   } else if (menu === 'hair') {
     title = '💇 かみがたをえらんでね';
     items = HAIRS.map(function(h, i) {
+      var thumb = useImages
+        ? '<img src="'+h.img+'" style="width:40px;height:60px;object-fit:contain;">'
+        : '<div class="sel-swatch" style="background:' + h.color + '"></div>';
       return {
-        html: '<div class="sel-swatch" style="background:' + h.color + '"></div><div class="sel-name">' + h.name + '</div>',
+        html: thumb + '<div class="sel-name">' + h.name + '</div>',
         active: i === state.hairIdx,
         onClick: function() { changeHair(i); },
       };
@@ -1102,8 +1108,11 @@ function openMenu(menu) {
   } else if (menu === 'food') {
     title = '🍽️ なにをたべる？';
     items = FOODS.map(function(f, i) {
+      var thumb = useImages
+        ? '<img src="'+f.img+'" style="width:40px;height:40px;object-fit:contain;">'
+        : '<div class="sel-emoji">' + f.emoji + '</div>';
       return {
-        html: '<div class="sel-emoji">' + f.emoji + '</div><div class="sel-name">' + f.name + '</div>',
+        html: thumb + '<div class="sel-name">' + f.name + '</div>',
         active: false,
         onClick: function() { startFeeding(i); },
       };
@@ -1177,7 +1186,11 @@ function startFeeding(idx) {
   feedBites = 0;
   var food = FOODS[idx];
 
-  feedFood.textContent = food.emoji;
+  if (useImages) {
+    feedFood.innerHTML = '<img src="'+food.img+'" style="width:120px;height:120px;object-fit:contain;pointer-events:none;">';
+  } else {
+    feedFood.textContent = food.emoji;
+  }
   feedFood.style.fontSize = '64px';
   feedOverlay.classList.add('show');
   feedMsg.classList.remove('show');
