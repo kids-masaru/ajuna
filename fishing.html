@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>さかなつり</title>
+<link rel="stylesheet" href="assets/kit.css">
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  user-select: none;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  background: linear-gradient(180deg, #e0f7fa 0%, #80deea 40%, #0097a7 100%);
+  width: 100vw;
+  height: 100dvh;
+}
+
+#game-container {
+  width: 100vw;
+  height: 100dvh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: max(14px, env(safe-area-inset-top)) 16px 8px 16px;
+  pointer-events: none;
+}
+#hud > * { pointer-events: auto; }
+
+.hud-box {
+  background: rgba(255,255,255,0.92);
+  border-radius: var(--gp-r-full);
+  padding: 6px 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--gp-ink);
+  box-shadow: var(--gp-shadow-sm);
+  white-space: nowrap;
+}
+.hud-box.warning {
+  animation: hud-pulse 0.5s ease-in-out infinite alternate;
+  color: #e11d48;
+}
+@keyframes hud-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* Bucket */
+#bucket {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 8px 12px max(12px, env(safe-area-inset-bottom)) 12px;
+  background: linear-gradient(0deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 100%);
+  min-height: 52px;
+  pointer-events: none;
+}
+.bucket-fish {
+  width: 32px;
+  height: 32px;
+  animation: bucket-pop 0.4s ease-out both;
+}
+@keyframes bucket-pop {
+  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+  70% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Canvas */
+#pond-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Screens */
+.screen-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.screen-bg {
+  background:
+    radial-gradient(120% 90% at 50% 0%,
+      color-mix(in srgb, var(--gp-accent) 55%, #11131f) 0%, transparent 60%),
+    linear-gradient(180deg, #1b1e2c 0%, #11131f 100%);
+}
+
+.result-modal {
+  background: #ffffff;
+  border-radius: var(--gp-r-lg);
+  box-shadow: var(--gp-shadow-lg);
+  padding: 32px 28px;
+  border: 6px solid color-mix(in srgb, var(--gp-accent) 40%, #ffffff);
+  max-width: 320px;
+  width: 85%;
+}
+
+.result-score {
+  font-weight: 900;
+  font-size: clamp(2.4rem, 10vw, 3.6rem);
+  color: var(--gp-accent-d);
+  line-height: 1.1;
+}
+.result-label {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--gp-ink-soft);
+  margin-bottom: 4px;
+}
+
+/* Catch effect overlay */
+.catch-text {
+  position: absolute;
+  z-index: 50;
+  font-weight: 900;
+  font-size: 2rem;
+  color: #fff;
+  text-shadow: 0 3px 8px rgba(0,0,0,0.3), 0 0 20px var(--gp-accent);
+  pointer-events: none;
+  animation: catch-float 1s ease-out forwards;
+}
+@keyframes catch-float {
+  0% { transform: scale(0.5) translateY(0); opacity: 1; }
+  30% { transform: scale(1.3) translateY(-10px); opacity: 1; }
+  100% { transform: scale(1) translateY(-60px); opacity: 0; }
+}
+
+.miss-text {
+  position: absolute;
+  z-index: 50;
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: #f87171;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  pointer-events: none;
+  animation: miss-shake 0.6s ease-out forwards;
+}
+@keyframes miss-shake {
+  0% { transform: translateX(0) scale(1); opacity: 1; }
+  15% { transform: translateX(-8px) scale(1.1); }
+  30% { transform: translateX(8px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(3px); opacity: 1; }
+  100% { transform: translateX(0) scale(0.8); opacity: 0; }
+}
+
+/* Splash particles */
+.splash-particle {
+  position: absolute;
+  z-index: 45;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  pointer-events: none;
+  animation: splash-fly 0.6s ease-out forwards;
+}
+@keyframes splash-fly {
+  0% { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { opacity: 0; }
+}
+</style>
+</head>
+<body class="gp gp-cyan">
+
+<div id="game-container">
+  <canvas id="pond-canvas"></canvas>
+
+  <div id="hud" style="display:none;">
+    <a href="index.html" class="gp-home-inline">🏠</a>
+    <div class="hud-box" id="score-display">🐟 0ひき</div>
+    <div class="hud-box" id="timer-display">⏱ 60</div>
+  </div>
+
+  <div id="bucket" style="display:none;"></div>
+
+  <!-- Title Screen -->
+  <div id="title-screen" class="screen-overlay screen-bg">
+    <div class="gp-hero" style="font-size:clamp(60px,21vw,98px);">🎣</div>
+    <div class="gp-title" style="color:#fff;">さかなつり</div>
+    <div class="gp-subtitle" style="color:rgba(255,255,255,0.7);">おさかなの おくちが あいてるときに タップしよう！</div>
+    <button id="start-btn" class="gp-btn gp-btn--lg" style="margin-top:16px;">はじめる</button>
+  </div>
+
+  <!-- Result Screen -->
+  <div id="result-screen" class="screen-overlay screen-bg" style="display:none;">
+    <div class="result-modal gp-pop">
+      <div style="font-size:48px;margin-bottom:8px;">🏆</div>
+      <div class="result-label">つれた かず</div>
+      <div class="result-score" id="final-score">0ひき</div>
+      <div id="result-fish-row" style="display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:16px 0 20px;"></div>
+      <button id="retry-btn" class="gp-btn">もういっかい</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  さかなつり - Fishing Game
+// ============================================================
+
+const canvas = document.getElementById('pond-canvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('game-container');
+
+// --- Audio (Web Audio API) ---
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playTone(freq, duration, type, vol, ramp) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+  if (ramp) gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  else gain.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function playSplash() {
+  if (!audioCtx) return;
+  // Noise burst for splash
+  const bufferSize = audioCtx.sampleRate * 0.15;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+  }
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 2000;
+  filter.Q.value = 0.5;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  noise.start();
+  // Plus a nice plop
+  playTone(400, 0.15, 'sine', 0.12, true);
+  setTimeout(() => playTone(300, 0.1, 'sine', 0.08, true), 50);
+}
+
+function playCatchSound() {
+  playSplash();
+  // Happy ascending notes
+  setTimeout(() => playTone(523, 0.12, 'triangle', 0.15, true), 100);
+  setTimeout(() => playTone(659, 0.12, 'triangle', 0.15, true), 200);
+  setTimeout(() => playTone(784, 0.2, 'triangle', 0.18, true), 300);
+}
+
+function playMissSound() {
+  playTone(200, 0.15, 'square', 0.08, true);
+  setTimeout(() => playTone(150, 0.2, 'square', 0.08, true), 100);
+}
+
+function playTickSound() {
+  playTone(800, 0.05, 'sine', 0.06, true);
+}
+
+function playFanfare() {
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((n, i) => {
+    setTimeout(() => playTone(n, 0.3, 'triangle', 0.15, true), i * 200);
+  });
+  setTimeout(() => {
+    playTone(784, 0.15, 'triangle', 0.12, true);
+    setTimeout(() => playTone(1047, 0.5, 'triangle', 0.18, true), 150);
+  }, 900);
+}
+
+// Ambient water loop
+let ambientInterval = null;
+function startAmbient() {
+  if (!audioCtx) return;
+  // Gentle random bubbles
+  ambientInterval = setInterval(() => {
+    if (Math.random() < 0.3) {
+      const f = 600 + Math.random() * 800;
+      playTone(f, 0.08, 'sine', 0.02, true);
+    }
+  }, 400);
+}
+function stopAmbient() {
+  clearInterval(ambientInterval);
+  ambientInterval = null;
+}
+
+// --- Canvas resize ---
+let W, H, pondCX, pondCY, pondR;
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  W = container.clientWidth;
+  H = container.clientHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  pondCX = W / 2;
+  pondCY = H * 0.46;
+  pondR = Math.min(W, H * 0.55) * 0.42;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- Fish colors ---
+const FISH_COLORS = [
+  { body: '#ef4444', fin: '#dc2626', name: 'red' },     // red
+  { body: '#facc15', fin: '#eab308', name: 'yellow' },   // yellow
+  { body: '#22c55e', fin: '#16a34a', name: 'green' },    // green
+  { body: '#3b82f6', fin: '#2563eb', name: 'blue' },     // blue
+  { body: '#f472b6', fin: '#ec4899', name: 'pink' },     // pink
+  { body: '#fb923c', fin: '#f97316', name: 'orange' },   // orange
+];
+
+// --- Fish class ---
+class Fish {
+  constructor(ring, index, total) {
+    this.id = Math.random();
+    this.ring = ring;
+    this.color = FISH_COLORS[Math.floor(Math.random() * FISH_COLORS.length)];
+    this.angle = (index / total) * Math.PI * 2 + Math.random() * 0.3;
+    this.radius = pondR * (0.35 + ring * 0.28);
+    this.speed = (0.3 + Math.random() * 0.25) * (ring % 2 === 0 ? 1 : -1);
+    this.size = 22 + Math.random() * 6;
+
+    // Mouth timing
+    this.mouthPhase = Math.random() * Math.PI * 2;
+    this.mouthOpenDuration = 0.7 + Math.random() * 0.3;  // ~0.7-1.0s open
+    this.mouthCloseDuration = 1.0 + Math.random() * 0.5; // ~1.0-1.5s closed
+    this.mouthCycle = this.mouthOpenDuration + this.mouthCloseDuration;
+
+    this.caught = false;
+    this.catchTime = 0;
+    this.catchX = 0;
+    this.catchY = 0;
+
+    // Wobble
+    this.wobblePhase = Math.random() * Math.PI * 2;
+  }
+
+  get x() {
+    return pondCX + Math.cos(this.angle) * this.radius;
+  }
+
+  get y() {
+    return pondCY + Math.sin(this.angle) * this.radius;
+  }
+
+  get mouthOpen() {
+    const t = ((performance.now() / 1000) + this.mouthPhase) % this.mouthCycle;
+    return t < this.mouthOpenDuration;
+  }
+
+  get mouthAmount() {
+    const t = ((performance.now() / 1000) + this.mouthPhase) % this.mouthCycle;
+    if (t < this.mouthOpenDuration) {
+      // Ease in-out for smooth open
+      const p = t / this.mouthOpenDuration;
+      return Math.sin(p * Math.PI) * 0.9;
+    }
+    return 0;
+  }
+
+  update(dt) {
+    if (this.caught) return;
+    this.angle += this.speed * dt;
+    this.wobblePhase += dt * 3;
+  }
+
+  draw(ctx) {
+    if (this.caught) {
+      // Fly-up animation
+      const elapsed = (performance.now() - this.catchTime) / 1000;
+      if (elapsed > 0.8) return;
+      const progress = elapsed / 0.8;
+      const x = this.catchX;
+      const y = this.catchY - progress * 120;
+      const scale = 1 + progress * 0.3;
+      const alpha = 1 - progress;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.rotate(-progress * 0.5);
+      this.drawBody(ctx, 0, 0, 0.5);
+      ctx.restore();
+      return;
+    }
+
+    const x = this.x;
+    const y = this.y;
+    // Fish faces the direction of travel
+    const facingAngle = this.angle + (this.speed > 0 ? Math.PI / 2 : -Math.PI / 2);
+    const wobble = Math.sin(this.wobblePhase) * 0.08;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(facingAngle + wobble);
+    this.drawBody(ctx, 0, 0, this.mouthAmount);
+    ctx.restore();
+  }
+
+  drawBody(ctx, x, y, mouthAmt) {
+    const s = this.size;
+
+    // Tail fin
+    ctx.fillStyle = this.color.fin;
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.8, y);
+    ctx.lineTo(x - s * 1.3, y - s * 0.5);
+    ctx.lineTo(x - s * 1.3, y + s * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Body (oval)
+    ctx.fillStyle = this.color.body;
+    ctx.beginPath();
+    ctx.ellipse(x, y, s, s * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Belly highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + s * 0.1, s * 0.7, s * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dorsal fin
+    ctx.fillStyle = this.color.fin;
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.1, y - s * 0.55);
+    ctx.quadraticCurveTo(x + s * 0.1, y - s * 1.0, x + s * 0.5, y - s * 0.55);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eye (white)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x + s * 0.4, y - s * 0.12, s * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pupil
+    ctx.fillStyle = '#1a1a2e';
+    ctx.beginPath();
+    ctx.arc(x + s * 0.46, y - s * 0.12, s * 0.11, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye shine
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x + s * 0.5, y - s * 0.18, s * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mouth
+    if (mouthAmt > 0.05) {
+      // Open mouth - draw a circle/arc
+      const mouthX = x + s * 0.85;
+      const mouthY = y + s * 0.05;
+      const mouthR = s * 0.22 * mouthAmt;
+      ctx.fillStyle = '#1a1a2e';
+      ctx.beginPath();
+      ctx.arc(mouthX, mouthY, mouthR, 0, Math.PI * 2);
+      ctx.fill();
+      // Inner mouth (dark red)
+      ctx.fillStyle = '#7f1d1d';
+      ctx.beginPath();
+      ctx.arc(mouthX, mouthY, mouthR * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Closed mouth - small line
+      ctx.strokeStyle = '#1a1a2e';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x + s * 0.7, y + s * 0.05);
+      ctx.lineTo(x + s * 0.9, y + s * 0.02);
+      ctx.stroke();
+    }
+  }
+
+  hitTest(px, py) {
+    if (this.caught) return false;
+    const dx = px - this.x;
+    const dy = py - this.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    return dist < this.size * 1.8; // Generous tap area for 4-year-old
+  }
+}
+
+// --- Hook animation ---
+let hookAnim = null;
+
+function showHook(x, y, success) {
+  hookAnim = {
+    x, y,
+    startTime: performance.now(),
+    success,
+    duration: success ? 500 : 400,
+  };
+}
+
+function drawHook(ctx) {
+  if (!hookAnim) return;
+  const elapsed = performance.now() - hookAnim.startTime;
+  if (elapsed > hookAnim.duration) { hookAnim = null; return; }
+  const progress = elapsed / hookAnim.duration;
+
+  const x = hookAnim.x;
+  let y = hookAnim.y;
+
+  if (hookAnim.success) {
+    // Hook comes down then pulls up
+    const down = Math.min(progress * 3, 1);
+    const up = Math.max(0, (progress - 0.3) / 0.7);
+    y = hookAnim.y - 40 + down * 40 - up * 80;
+  } else {
+    // Bounce off
+    const bounce = Math.sin(progress * Math.PI) * 20;
+    y = hookAnim.y - bounce;
+  }
+
+  // Rod line from top
+  ctx.strokeStyle = '#4a4a4a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, 0);
+  ctx.lineTo(x, y - 8);
+  ctx.stroke();
+
+  // Hook
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(x, y, 8, -Math.PI * 0.5, Math.PI * 0.8);
+  ctx.stroke();
+
+  // Hook point
+  ctx.fillStyle = '#888';
+  ctx.beginPath();
+  const tipAngle = Math.PI * 0.8;
+  const tipX = x + Math.cos(tipAngle) * 8;
+  const tipY = y + Math.sin(tipAngle) * 8;
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(tipX - 3, tipY + 5);
+  ctx.lineTo(tipX + 3, tipY + 3);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// --- Splash particles ---
+let particles = [];
+
+function spawnSplash(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.3;
+    const speed = 80 + Math.random() * 120;
+    const el = document.createElement('div');
+    el.className = 'splash-particle';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.background = i % 2 === 0 ? 'rgba(255,255,255,0.8)' : color;
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed - 60;
+    el.style.animation = 'none';
+    container.appendChild(el);
+    particles.push({ el, x, y, vx, vy, life: 0 });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life += dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 300 * dt; // gravity
+    p.el.style.left = p.x + 'px';
+    p.el.style.top = p.y + 'px';
+    p.el.style.opacity = Math.max(0, 1 - p.life / 0.6);
+    if (p.life > 0.6) {
+      p.el.remove();
+      particles.splice(i, 1);
+    }
+  }
+}
+
+// --- Floating text ---
+function showFloatingText(x, y, text, className) {
+  const el = document.createElement('div');
+  el.className = className;
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.transform = 'translate(-50%, -50%)';
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+// --- Game state ---
+let gameState = 'title'; // title, playing, result
+let score = 0;
+let timeLeft = 60;
+let fishes = [];
+let caughtColors = [];
+let lastTime = 0;
+let tickPlayed = {};
+let respawnQueue = [];
+
+const scoreDisplay = document.getElementById('score-display');
+const timerDisplay = document.getElementById('timer-display');
+const hud = document.getElementById('hud');
+const bucket = document.getElementById('bucket');
+const titleScreen = document.getElementById('title-screen');
+const resultScreen = document.getElementById('result-screen');
+const finalScore = document.getElementById('final-score');
+const resultFishRow = document.getElementById('result-fish-row');
+
+// --- Create fishes ---
+function createFishes() {
+  fishes = [];
+  // Ring 0: 5 fish, close to center
+  for (let i = 0; i < 5; i++) fishes.push(new Fish(0, i, 5));
+  // Ring 1: 5 fish, middle
+  for (let i = 0; i < 5; i++) fishes.push(new Fish(1, i, 5));
+  // Ring 2: 4 fish, outer
+  for (let i = 0; i < 4; i++) fishes.push(new Fish(2, i, 4));
+}
+
+// --- Draw pond ---
+function drawPond(ctx) {
+  // Water shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(pondCX, pondCY + 6, pondR + 8, pondR + 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pond border
+  ctx.fillStyle = '#a0d2db';
+  ctx.beginPath();
+  ctx.arc(pondCX, pondCY, pondR + 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Water gradient
+  const grad = ctx.createRadialGradient(pondCX - pondR * 0.2, pondCY - pondR * 0.3, 0, pondCX, pondCY, pondR);
+  grad.addColorStop(0, '#7dd3fc');
+  grad.addColorStop(0.4, '#38bdf8');
+  grad.addColorStop(0.7, '#0ea5e9');
+  grad.addColorStop(1, '#0284c7');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(pondCX, pondCY, pondR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Water shine
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(pondCX - pondR * 0.25, pondCY - pondR * 0.3, pondR * 0.5, pondR * 0.25, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Gentle ripples
+  const t = performance.now() / 1000;
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    const rippleR = pondR * (0.3 + i * 0.25) + Math.sin(t + i) * 5;
+    ctx.beginPath();
+    ctx.arc(pondCX, pondCY, rippleR, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// --- Draw bucket fish icon onto a small canvas for the bucket area ---
+function createBucketFishCanvas(color) {
+  const c = document.createElement('canvas');
+  c.width = 64;
+  c.height = 64;
+  c.className = 'bucket-fish';
+  const cx = c.getContext('2d');
+  cx.translate(32, 32);
+  cx.scale(1.2, 1.2);
+  // Simplified fish
+  const s = 14;
+  // Tail
+  cx.fillStyle = color.fin;
+  cx.beginPath();
+  cx.moveTo(-s * 0.8, 0);
+  cx.lineTo(-s * 1.3, -s * 0.5);
+  cx.lineTo(-s * 1.3, s * 0.5);
+  cx.closePath();
+  cx.fill();
+  // Body
+  cx.fillStyle = color.body;
+  cx.beginPath();
+  cx.ellipse(0, 0, s, s * 0.6, 0, 0, Math.PI * 2);
+  cx.fill();
+  // Eye
+  cx.fillStyle = '#fff';
+  cx.beginPath();
+  cx.arc(s * 0.35, -s * 0.1, s * 0.18, 0, Math.PI * 2);
+  cx.fill();
+  cx.fillStyle = '#1a1a2e';
+  cx.beginPath();
+  cx.arc(s * 0.4, -s * 0.1, s * 0.09, 0, Math.PI * 2);
+  cx.fill();
+  return c;
+}
+
+// --- Tap handling ---
+function handleTap(px, py) {
+  if (gameState !== 'playing') return;
+
+  // Check if tap is near any fish (check from front to back)
+  let hitFish = null;
+  let closestDist = Infinity;
+  for (const fish of fishes) {
+    if (fish.caught) continue;
+    const dx = px - fish.x;
+    const dy = py - fish.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (fish.hitTest(px, py) && dist < closestDist) {
+      closestDist = dist;
+      hitFish = fish;
+    }
+  }
+
+  if (!hitFish) return; // Tapped empty water
+
+  if (hitFish.mouthOpen) {
+    // CAUGHT!
+    hitFish.caught = true;
+    hitFish.catchTime = performance.now();
+    hitFish.catchX = hitFish.x;
+    hitFish.catchY = hitFish.y;
+    score++;
+    caughtColors.push(hitFish.color);
+    scoreDisplay.textContent = '🐟 ' + score + 'ひき';
+
+    // Effects
+    playCatchSound();
+    showHook(hitFish.x, hitFish.y, true);
+    spawnSplash(hitFish.x, hitFish.y, hitFish.color.body);
+    showFloatingText(hitFish.x, hitFish.y - 30, 'つれた！', 'catch-text');
+
+    // Add to bucket
+    const fishCanvas = createBucketFishCanvas(hitFish.color);
+    bucket.appendChild(fishCanvas);
+
+    // Schedule respawn
+    respawnQueue.push({ time: performance.now() + 2500 + Math.random() * 1500, ring: hitFish.ring });
+  } else {
+    // MISS!
+    playMissSound();
+    showHook(hitFish.x, hitFish.y, false);
+    showFloatingText(hitFish.x, hitFish.y - 20, 'ブブー', 'miss-text');
+  }
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  ensureAudio();
+  const rect = canvas.getBoundingClientRect();
+  const px = e.clientX - rect.left;
+  const py = e.clientY - rect.top;
+  handleTap(px, py);
+});
+
+// --- Game loop ---
+function gameLoop(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+  lastTime = timestamp;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (gameState === 'playing') {
+    // Update timer
+    timeLeft -= dt;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      endGame();
+    }
+    const secs = Math.ceil(timeLeft);
+    timerDisplay.textContent = '⏱ ' + secs;
+
+    // Warning state for last 10 seconds
+    if (secs <= 10) {
+      timerDisplay.classList.add('warning');
+      // Tick sounds
+      const secKey = Math.floor(timeLeft);
+      if (!tickPlayed[secKey] && secs > 0) {
+        tickPlayed[secKey] = true;
+        playTickSound();
+      }
+    } else {
+      timerDisplay.classList.remove('warning');
+    }
+
+    // Respawn fish
+    const now = performance.now();
+    for (let i = respawnQueue.length - 1; i >= 0; i--) {
+      if (now >= respawnQueue[i].time) {
+        const ring = respawnQueue[i].ring;
+        const newFish = new Fish(ring, 0, 1);
+        newFish.angle = Math.random() * Math.PI * 2;
+        fishes.push(newFish);
+        respawnQueue.splice(i, 1);
+      }
+    }
+
+    // Update fish
+    for (const fish of fishes) fish.update(dt);
+
+    // Draw
+    drawPond(ctx);
+    // Draw fish sorted by ring (inner first, outer on top)
+    const sorted = [...fishes].sort((a, b) => a.ring - b.ring);
+    for (const fish of sorted) fish.draw(ctx);
+    drawHook(ctx);
+
+    // Update particles
+    updateParticles(dt);
+  } else if (gameState === 'title' || gameState === 'result') {
+    // Still draw a pretty pond in the background
+    drawPond(ctx);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// --- Start/End ---
+function startGame() {
+  ensureAudio();
+  gameState = 'playing';
+  score = 0;
+  timeLeft = 60;
+  caughtColors = [];
+  tickPlayed = {};
+  respawnQueue = [];
+  hookAnim = null;
+  particles.forEach(p => p.el.remove());
+  particles = [];
+
+  createFishes();
+  scoreDisplay.textContent = '🐟 0ひき';
+  timerDisplay.textContent = '⏱ 60';
+  timerDisplay.classList.remove('warning');
+  bucket.innerHTML = '';
+
+  titleScreen.style.display = 'none';
+  resultScreen.style.display = 'none';
+  hud.style.display = 'flex';
+  bucket.style.display = 'flex';
+
+  startAmbient();
+}
+
+function endGame() {
+  gameState = 'result';
+  stopAmbient();
+  playFanfare();
+
+  hud.style.display = 'none';
+  bucket.style.display = 'none';
+  resultScreen.style.display = 'flex';
+
+  finalScore.textContent = score + 'ひき';
+
+  // Show caught fish in result
+  resultFishRow.innerHTML = '';
+  caughtColors.forEach(color => {
+    const c = createBucketFishCanvas(color);
+    c.style.width = '36px';
+    c.style.height = '36px';
+    resultFishRow.appendChild(c);
+  });
+}
+
+// --- Button handlers ---
+document.getElementById('start-btn').addEventListener('click', () => {
+  ensureAudio();
+  startGame();
+});
+document.getElementById('retry-btn').addEventListener('click', () => {
+  startGame();
+});
+
+// --- Kick off ---
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
