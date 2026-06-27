@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>おせわごっこ</title>
+<link rel="stylesheet" href="assets/kit.css">
+<style>
+/* ===== Base ===== */
+body {
+  margin: 0; padding: 0;
+  overflow: hidden;
+  user-select: none;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  width: 100vw;
+  height: 100dvh;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+}
+
+/* ===== Room Background ===== */
+#room {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  background:
+    radial-gradient(ellipse 200% 100% at 50% 120%, #f5e6d3 0%, transparent 70%),
+    linear-gradient(180deg, #fce4ec 0%, #fdf2f8 40%, #fce7f3 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Wallpaper pattern */
+#room::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle 3px at 20px 20px, rgba(244,163,196,0.15) 2px, transparent 3px),
+    radial-gradient(circle 3px at 50px 50px, rgba(244,163,196,0.12) 2px, transparent 3px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* Floor */
+#room::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 25%;
+  background: linear-gradient(180deg, #f5e6d3 0%, #edd5be 100%);
+  border-top: 3px solid #e0c9ab;
+  pointer-events: none;
+}
+
+/* ===== Doll Area ===== */
+#doll-area {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 340px;
+  padding-top: max(20px, env(safe-area-inset-top));
+}
+
+#doll-wrapper {
+  position: relative;
+  width: 240px;
+  height: 380px;
+}
+
+/* ===== Image Layers ===== */
+.doll-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#img-base { z-index: 1; }
+#img-cloth { z-index: 2; }
+#img-hair { z-index: 3; }
+#img-acc { z-index: 4; }
+
+/* ===== CSS Placeholder Doll ===== */
+#css-doll {
+  position: absolute;
+  inset: 0;
+  width: 240px;
+  height: 380px;
+  z-index: 1;
+}
+
+.cd-hair-back {
+  position: absolute;
+  left: 50%; top: 18px;
+  transform: translateX(-50%);
+  z-index: 1;
+  transition: all 0.4s;
+}
+.cd-hair-back.long {
+  width: 120px; height: 190px;
+  background: #8B5E3C;
+  border-radius: 60px 60px 40px 40px;
+}
+.cd-hair-back.pony {
+  width: 110px; height: 120px;
+  background: #8B5E3C;
+  border-radius: 55px 55px 20px 20px;
+}
+.cd-hair-back.pony::after {
+  content: '';
+  position: absolute;
+  right: -10px; top: 50px;
+  width: 35px; height: 80px;
+  background: #8B5E3C;
+  border-radius: 0 40px 20px 0;
+  transform: rotate(15deg);
+}
+.cd-hair-back.twin {
+  width: 140px; height: 110px;
+  background: #8B5E3C;
+  border-radius: 55px 55px 10px 10px;
+}
+.cd-hair-back.twin::before, .cd-hair-back.twin::after {
+  content: '';
+  position: absolute;
+  top: 40px;
+  width: 35px; height: 90px;
+  background: #8B5E3C;
+  border-radius: 0 0 18px 18px;
+}
+.cd-hair-back.twin::before { left: -8px; transform: rotate(-8deg); }
+.cd-hair-back.twin::after { right: -8px; transform: rotate(8deg); }
+
+.cd-body {
+  position: absolute;
+  top: 135px; left: 50%;
+  transform: translateX(-50%);
+  width: 55px; height: 90px;
+  background: #fddcb5;
+  border-radius: 10px 10px 4px 4px;
+  z-index: 2;
+}
+
+.cd-arm {
+  position: absolute;
+  top: 140px;
+  width: 18px; height: 65px;
+  background: #fddcb5;
+  border-radius: 10px;
+  z-index: 2;
+}
+.cd-arm.l { left: 68px; }
+.cd-arm.r { right: 68px; }
+
+.cd-leg {
+  position: absolute;
+  top: 220px;
+  width: 22px; height: 75px;
+  background: #fddcb5;
+  border-radius: 0 0 10px 10px;
+  z-index: 1;
+}
+.cd-leg.l { left: 88px; }
+.cd-leg.r { right: 88px; }
+
+.cd-foot {
+  position: absolute;
+  top: 288px;
+  width: 28px; height: 16px;
+  background: #d4a87c;
+  border-radius: 50%;
+  z-index: 1;
+}
+.cd-foot.l { left: 84px; }
+.cd-foot.r { right: 84px; }
+
+.cd-head {
+  position: absolute;
+  top: 42px; left: 50%;
+  transform: translateX(-50%);
+  width: 100px; height: 100px;
+  background: #fddcb5;
+  border-radius: 50%;
+  z-index: 4;
+}
+
+.cd-eye {
+  position: absolute;
+  width: 14px; height: 18px;
+  background: #2d1b0e;
+  border-radius: 50%;
+  top: 38px;
+}
+.cd-eye.l { left: 24px; }
+.cd-eye.r { right: 24px; }
+.cd-eye::after {
+  content: '';
+  position: absolute;
+  width: 6px; height: 6px;
+  background: white;
+  border-radius: 50%;
+  top: 3px; right: 1px;
+}
+
+.cd-blush {
+  position: absolute;
+  width: 18px; height: 10px;
+  background: rgba(255,140,140,0.4);
+  border-radius: 50%;
+  top: 54px;
+}
+.cd-blush.l { left: 10px; }
+.cd-blush.r { right: 10px; }
+
+.cd-mouth {
+  position: absolute;
+  bottom: 26px; left: 50%;
+  transform: translateX(-50%);
+  width: 14px; height: 7px;
+  border-bottom: 3px solid #e07070;
+  border-radius: 0 0 50% 50%;
+  transition: all 0.3s;
+}
+.cd-mouth.eating {
+  width: 16px; height: 12px;
+  background: #e07070;
+  border-radius: 50%;
+  border: none;
+  animation: mouth-chomp 0.3s ease-in-out infinite;
+}
+.cd-mouth.sleeping {
+  width: 10px; height: 0;
+  border-bottom-width: 2px;
+}
+
+@keyframes mouth-chomp {
+  0%, 100% { transform: translateX(-50%) scaleY(1); }
+  50% { transform: translateX(-50%) scaleY(0.3); }
+}
+
+.cd-cloth {
+  position: absolute;
+  top: 130px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  transition: all 0.4s;
+}
+.cd-cloth.dress {
+  width: 80px; height: 110px;
+  border-radius: 6px 6px 50% 50% / 6px 6px 35% 35%;
+}
+.cd-cloth.shirt {
+  width: 72px; height: 55px;
+  border-radius: 6px;
+}
+.cd-cloth.overalls {
+  width: 68px; height: 95px;
+  border-radius: 6px 6px 8px 8px;
+}
+.cd-cloth.overalls::before, .cd-cloth.overalls::after {
+  content: '';
+  position: absolute;
+  top: 0; width: 10px; height: 20px;
+  background: inherit;
+  filter: brightness(0.9);
+  border-radius: 2px;
+}
+.cd-cloth.overalls::before { left: 12px; }
+.cd-cloth.overalls::after { right: 12px; }
+.cd-cloth.pajama {
+  width: 72px; height: 100px;
+  border-radius: 6px 6px 10px 10px;
+}
+
+.cd-hair-front {
+  position: absolute;
+  left: 50%; top: 38px;
+  transform: translateX(-50%);
+  width: 96px; height: 30px;
+  background: #8B5E3C;
+  border-radius: 48px 48px 0 0;
+  z-index: 5;
+  transition: all 0.4s;
+}
+
+/* ===== Speech Bubble ===== */
+#speech {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: white;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ec4899;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#speech.show { opacity: 1; }
+#speech::after {
+  content: '';
+  position: absolute;
+  bottom: -8px; left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: white;
+  border-bottom: none;
+}
+
+/* ===== Mood Hearts ===== */
+#mood-bar {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 20;
+  font-size: 20px;
+  letter-spacing: 2px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+
+/* ===== Menu Bar ===== */
+#menu-bar {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 6px 4px max(6px, env(safe-area-inset-bottom));
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+}
+
+.menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: clamp(52px, 16vw, 68px);
+  height: clamp(52px, 16vw, 68px);
+  border-radius: 16px;
+  border: 3px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+  padding: 4px 2px;
+}
+.menu-btn:active { transform: scale(0.9); }
+.menu-btn .icon { font-size: clamp(20px, 5vw, 26px); line-height: 1.2; }
+.menu-btn .label { font-size: 9px; font-weight: 700; color: #6b7280; line-height: 1.2; }
+.menu-btn.active { border-color: #f472b6; background: #fce7f3; }
+
+.menu-btn[data-menu="cloth"] .icon::before { content: '👗'; }
+.menu-btn[data-menu="hair"] .icon::before { content: '💇'; }
+.menu-btn[data-menu="food"] .icon::before { content: '🍽️'; }
+.menu-btn[data-menu="bath"] .icon::before { content: '🛁'; }
+.menu-btn[data-menu="sleep"] .icon::before { content: '💤'; }
+
+/* ===== Selection Panel ===== */
+#select-panel {
+  position: fixed;
+  bottom: clamp(64px, 16vw + 18px, 86px);
+  left: 0; right: 0;
+  z-index: 25;
+  background: white;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+  padding: 14px 12px 10px;
+  transform: translateY(110%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+#select-panel.open { transform: translateY(0); }
+
+#panel-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #9ca3af;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+}
+
+.sel-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px 6px;
+  border-radius: 14px;
+  border: 3px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.sel-item:active { transform: scale(0.92); }
+.sel-item.active { border-color: #f472b6; background: #fce7f3; }
+
+.sel-swatch {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.1);
+  margin-bottom: 4px;
+}
+.sel-emoji {
+  font-size: 28px;
+  line-height: 40px;
+  height: 40px;
+  margin-bottom: 4px;
+}
+.sel-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+/* ===== Effect Layer ===== */
+#effect-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sparkle {
+  position: absolute;
+  font-size: 18px;
+  pointer-events: none;
+  animation: sparkle-up 0.8s ease-out forwards;
+}
+@keyframes sparkle-up {
+  0% { opacity: 1; transform: scale(0) rotate(0deg); }
+  40% { opacity: 1; transform: scale(1.2) rotate(90deg); }
+  100% { opacity: 0; transform: scale(0.5) rotate(180deg) translateY(-40px); }
+}
+
+.heart-fly {
+  position: absolute;
+  font-size: 22px;
+  pointer-events: none;
+  animation: heart-up 1s ease-out forwards;
+}
+@keyframes heart-up {
+  0% { opacity: 1; transform: translateY(0) scale(0.5); }
+  50% { opacity: 1; transform: translateY(-40px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
+}
+
+/* ===== Bath Overlay ===== */
+#bath-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 50%, #60a5fa 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+#bath-overlay.show { opacity: 1; pointer-events: auto; }
+
+#bath-tub {
+  position: relative;
+  width: 220px; height: 180px;
+  background: white;
+  border-radius: 20px 20px 50% 50%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#bath-doll {
+  font-size: 80px;
+  line-height: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(173,216,230,0.4));
+  pointer-events: none;
+  animation: bubble-float 2s ease-out forwards;
+}
+@keyframes bubble-float {
+  0% { opacity: 0.8; transform: translateY(0) scale(0.5); }
+  50% { opacity: 0.6; transform: translateY(-30px) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(0.3); }
+}
+
+#bath-msg {
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin-top: 16px;
+  min-height: 36px;
+}
+
+#bath-count {
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+#btn-bath-done {
+  margin-top: 20px;
+}
+
+/* ===== Sleep Overlay ===== */
+#sleep-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s;
+}
+#sleep-overlay.show { opacity: 1; pointer-events: auto; }
+
+#sleep-doll {
+  font-size: 80px;
+  animation: sleep-rock 3s ease-in-out infinite;
+}
+@keyframes sleep-rock {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+#sleep-zzz {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fbbf24;
+  animation: zzz-float 2s ease-in-out infinite;
+}
+@keyframes zzz-float {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(-15px); opacity: 1; }
+}
+
+.star {
+  position: absolute;
+  font-size: 14px;
+  animation: star-twinkle 2s ease-in-out infinite;
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+#sleep-msg {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  min-height: 30px;
+}
+
+/* ===== Feeding Overlay ===== */
+#feed-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#feed-overlay.show { opacity: 1; pointer-events: auto; }
+
+#feed-food {
+  font-size: 64px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+#feed-food:active { transform: scale(0.85); }
+
+#feed-msg {
+  position: absolute;
+  top: 30%;
+  font-size: 28px;
+  font-weight: 800;
+  color: #f472b6;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+#feed-msg.show { opacity: 1; }
+
+/* ===== Title Screen ===== */
+#title-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: linear-gradient(180deg, #fce4ec 0%, #fdf2f8 50%, #fce7f3 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: opacity 0.5s;
+}
+#title-screen.hidden { opacity: 0; pointer-events: none; }
+
+.title-doll { font-size: 80px; animation: gp-float 3s ease-in-out infinite; }
+.title-name {
+  font-size: clamp(1.6rem, 7vw, 2.4rem);
+  font-weight: 900;
+  color: #ec4899;
+  text-shadow: 0 2px 8px rgba(236,72,153,0.2);
+}
+.title-sub {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f9a8d4;
+}
+
+/* ===== Doll animation ===== */
+#doll-wrapper.bounce {
+  animation: doll-bounce 0.5s ease-out;
+}
+@keyframes doll-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.08) rotate(3deg); }
+  60% { transform: scale(0.95) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ===== Responsive ===== */
+@media (max-height: 600px) {
+  #doll-wrapper { width: 180px; height: 290px; }
+  .cd-head { width: 80px; height: 80px; top: 30px; }
+  .cd-eye { width: 12px; height: 15px; top: 32px; }
+  .cd-eye.l { left: 20px; } .cd-eye.r { right: 20px; }
+  .cd-blush { top: 44px; }
+  .cd-blush.l { left: 8px; } .cd-blush.r { right: 8px; }
+  .cd-mouth { bottom: 22px; }
+  .cd-body { top: 105px; width: 44px; height: 72px; }
+  .cd-arm { top: 108px; width: 14px; height: 52px; }
+  .cd-arm.l { left: 54px; } .cd-arm.r { right: 54px; }
+  .cd-leg { top: 173px; width: 18px; height: 60px; }
+  .cd-leg.l { left: 65px; } .cd-leg.r { right: 65px; }
+  .cd-foot { top: 228px; width: 22px; height: 13px; }
+  .cd-foot.l { left: 62px; } .cd-foot.r { right: 62px; }
+  .cd-cloth { top: 100px; }
+  .cd-hair-front { top: 26px; width: 76px; height: 24px; }
+  .cd-hair-back { top: 12px; }
+  .cd-hair-back.long { width: 96px; height: 152px; }
+  .cd-hair-back.pony { width: 88px; height: 96px; }
+  .cd-hair-back.twin { width: 112px; height: 88px; }
+}
+</style>
+</head>
+<body class="gp gp-pink">
+  <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
+
+  <!-- ===== Main Room ===== -->
+  <div id="room">
+    <div id="mood-bar"></div>
+
+    <div id="doll-area">
+      <div id="doll-wrapper">
+        <!-- Image layers (shown when images available) -->
+        <img id="img-base" class="doll-img" alt="" style="display:none">
+        <img id="img-cloth" class="doll-img" alt="" style="display:none">
+        <img id="img-hair" class="doll-img" alt="" style="display:none">
+        <img id="img-acc" class="doll-img" alt="" style="display:none">
+
+        <!-- CSS placeholder doll -->
+        <div id="css-doll">
+          <div class="cd-hair-back long" id="cd-hb"></div>
+          <div class="cd-body"></div>
+          <div class="cd-arm l"></div>
+          <div class="cd-arm r"></div>
+          <div class="cd-leg l"></div>
+          <div class="cd-leg r"></div>
+          <div class="cd-foot l"></div>
+          <div class="cd-foot r"></div>
+          <div class="cd-head" id="cd-head">
+            <div class="cd-eye l"></div>
+            <div class="cd-eye r"></div>
+            <div class="cd-blush l"></div>
+            <div class="cd-blush r"></div>
+            <div class="cd-mouth" id="cd-mouth"></div>
+          </div>
+          <div class="cd-cloth dress" id="cd-cloth" style="background:#f9a8d4"></div>
+          <div class="cd-hair-front" id="cd-hf"></div>
+        </div>
+
+        <!-- Speech bubble -->
+        <div id="speech"></div>
+      </div>
+
+      <!-- Effect layer -->
+      <div id="effect-layer"></div>
+
+      <!-- Feeding overlay -->
+      <div id="feed-overlay">
+        <div id="feed-food"></div>
+        <div id="feed-msg"></div>
+      </div>
+    </div>
+
+    <!-- Menu bar -->
+    <div id="menu-bar">
+      <button class="menu-btn" data-menu="cloth"><span class="icon"></span><span class="label">おきがえ</span></button>
+      <button class="menu-btn" data-menu="hair"><span class="icon"></span><span class="label">かみがた</span></button>
+      <button class="menu-btn" data-menu="food"><span class="icon"></span><span class="label">ごはん</span></button>
+      <button class="menu-btn" data-menu="bath"><span class="icon"></span><span class="label">おふろ</span></button>
+      <button class="menu-btn" data-menu="sleep"><span class="icon"></span><span class="label">おやすみ</span></button>
+    </div>
+
+    <!-- Selection panel -->
+    <div id="select-panel">
+      <div id="panel-title"></div>
+      <div id="select-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== Bath Overlay ===== -->
+  <div id="bath-overlay">
+    <div id="bath-tub">
+      <div id="bath-doll">👧</div>
+    </div>
+    <div id="bath-msg">タップしてあらってね！</div>
+    <div id="bath-count"></div>
+    <button class="gp-btn" id="btn-bath-done" style="display:none">もどる</button>
+  </div>
+
+  <!-- ===== Sleep Overlay ===== -->
+  <div id="sleep-overlay">
+    <div id="sleep-doll">😴</div>
+    <div id="sleep-zzz">💤 すやすや…</div>
+    <div id="sleep-msg"></div>
+    <button class="gp-btn" id="btn-sleep-wake" style="margin-top:20px;display:none">おはよう！</button>
+  </div>
+
+  <!-- ===== Title Screen ===== -->
+  <div id="title-screen">
+    <div class="title-doll">👧</div>
+    <div class="title-name">おせわごっこ</div>
+    <div class="title-sub">おにんぎょうの おせわを しよう！</div>
+    <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:20px">はじめる！</button>
+  </div>
+
+<script>
+window.onerror = function(msg, src, line) {
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;padding:8px;font-size:12px;';
+  d.textContent = 'ERR: ' + msg + ' (line ' + line + ')';
+  document.body.appendChild(d);
+};
+
+// ============================================================
+// Data
+// ============================================================
+var CLOTHES = [
+  { name: 'ピンクドレス', img: 'doll_cloth_1.png', color: '#f9a8d4', shape: 'dress' },
+  { name: 'みずいろドレス', img: 'doll_cloth_2.png', color: '#93c5fd', shape: 'dress' },
+  { name: 'オーバーオール', img: 'doll_cloth_3.png', color: '#86efac', shape: 'overalls' },
+  { name: 'パジャマ', img: 'doll_cloth_4.png', color: '#c4b5fd', shape: 'pajama' },
+  { name: 'おようふく', img: 'doll_cloth_5.png', color: '#fca5a5', shape: 'shirt' },
+];
+
+var HAIRS = [
+  { name: 'ロングヘア', img: 'doll_hair_1.png', color: '#8B5E3C', style: 'long' },
+  { name: 'ポニーテール', img: 'doll_hair_2.png', color: '#6B3A2A', style: 'pony' },
+  { name: 'ツインテール', img: 'doll_hair_3.png', color: '#4A2512', style: 'twin' },
+];
+
+var FOODS = [
+  { name: 'カレーライス', img: 'doll_food_1.png', emoji: '🍛' },
+  { name: 'おにぎり', img: 'doll_food_2.png', emoji: '🍙' },
+  { name: 'パンケーキ', img: 'doll_food_3.png', emoji: '🥞' },
+  { name: 'りんご', img: 'doll_food_4.png', emoji: '🍎' },
+];
+
+// ============================================================
+// State
+// ============================================================
+var state = {
+  clothIdx: 0,
+  hairIdx: 0,
+  scene: 'title',
+  activeMenu: null,
+  mood: 3,
+  bathTaps: 0,
+};
+
+// ============================================================
+// DOM
+// ============================================================
+var dollWrapper = document.getElementById('doll-wrapper');
+var cssDoll = document.getElementById('css-doll');
+var cdCloth = document.getElementById('cd-cloth');
+var cdHairBack = document.getElementById('cd-hb');
+var cdHairFront = document.getElementById('cd-hf');
+var cdMouth = document.getElementById('cd-mouth');
+var speechEl = document.getElementById('speech');
+var moodBar = document.getElementById('mood-bar');
+var effectLayer = document.getElementById('effect-layer');
+var selectPanel = document.getElementById('select-panel');
+var selectGrid = document.getElementById('select-grid');
+var panelTitle = document.getElementById('panel-title');
+var feedOverlay = document.getElementById('feed-overlay');
+var feedFood = document.getElementById('feed-food');
+var feedMsg = document.getElementById('feed-msg');
+var bathOverlay = document.getElementById('bath-overlay');
+var sleepOverlay = document.getElementById('sleep-overlay');
+
+var imgBase = document.getElementById('img-base');
+var imgCloth = document.getElementById('img-cloth');
+var imgHair = document.getElementById('img-hair');
+var imgAcc = document.getElementById('img-acc');
+
+var useImages = false;
+
+// ============================================================
+// Audio
+// ============================================================
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var audioCtx;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playPop() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(600, t);
+  osc.frequency.exponentialRampToValueAtTime(900, t + 0.05);
+  osc.frequency.exponentialRampToValueAtTime(500, t + 0.12);
+  g.gain.setValueAtTime(0.12, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+  osc.start(t); osc.stop(t + 0.12);
+}
+
+function playChomp() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(200, t);
+  osc.frequency.exponentialRampToValueAtTime(150, t + 0.08);
+  g.gain.setValueAtTime(0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+  osc.start(t); osc.stop(t + 0.1);
+}
+
+function playSplash() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var bufferSize = audioCtx.sampleRate * 0.2;
+  var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  var data = buffer.getChannelData(0);
+  for (var i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2) * 0.3;
+  }
+  var src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  var filt = audioCtx.createBiquadFilter();
+  filt.type = 'lowpass'; filt.frequency.value = 2000;
+  src.connect(filt); filt.connect(audioCtx.destination);
+  src.start(t);
+}
+
+function playSparkle() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [880, 1100, 1320].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.08);
+    g.gain.setValueAtTime(0, t + i * 0.08);
+    g.gain.linearRampToValueAtTime(0.1, t + i * 0.08 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.2);
+    osc.start(t + i * 0.08);
+    osc.stop(t + i * 0.08 + 0.2);
+  });
+}
+
+function playLullaby() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var notes = [523, 587, 659, 587, 523, 0, 523, 587, 659, 784];
+  notes.forEach(function(f, i) {
+    if (f === 0) return;
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.3);
+    g.gain.setValueAtTime(0, t + i * 0.3);
+    g.gain.linearRampToValueAtTime(0.08, t + i * 0.3 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.3 + 0.28);
+    osc.start(t + i * 0.3);
+    osc.stop(t + i * 0.3 + 0.28);
+  });
+}
+
+// ============================================================
+// Image layer management
+// ============================================================
+function checkImages() {
+  var test = new Image();
+  test.onload = function() {
+    useImages = true;
+    cssDoll.style.display = 'none';
+    updateImageLayers();
+  };
+  test.onerror = function() {
+    useImages = false;
+    cssDoll.style.display = '';
+    updateCssDoll();
+  };
+  test.src = 'doll_base.png';
+}
+
+function updateImageLayers() {
+  if (!useImages) return;
+  imgBase.src = 'doll_base.png';
+  imgBase.style.display = '';
+  imgCloth.src = CLOTHES[state.clothIdx].img;
+  imgCloth.style.display = '';
+  imgHair.src = HAIRS[state.hairIdx].img;
+  imgHair.style.display = '';
+}
+
+// ============================================================
+// CSS doll updates
+// ============================================================
+function updateCssDoll() {
+  var cloth = CLOTHES[state.clothIdx];
+  var hair = HAIRS[state.hairIdx];
+
+  cdCloth.className = 'cd-cloth ' + cloth.shape;
+  cdCloth.style.background = cloth.color;
+
+  cdHairBack.className = 'cd-hair-back ' + hair.style;
+  cdHairBack.style.background = hair.color;
+  cdHairFront.style.background = hair.color;
+
+  var backAfter = cdHairBack.style;
+  // color for pseudo-elements is inherited via background
+}
+
+// ============================================================
+// Speech bubble
+// ============================================================
+var speechTimer = null;
+function showSpeech(text, duration) {
+  if (speechTimer) clearTimeout(speechTimer);
+  speechEl.textContent = text;
+  speechEl.classList.add('show');
+  speechTimer = setTimeout(function() {
+    speechEl.classList.remove('show');
+  }, duration || 2000);
+}
+
+// ============================================================
+// Mood
+// ============================================================
+function updateMood() {
+  var hearts = '';
+  for (var i = 0; i < 3; i++) {
+    hearts += i < state.mood ? '❤️' : '🤍';
+  }
+  moodBar.textContent = hearts;
+}
+
+// ============================================================
+// Effects
+// ============================================================
+function spawnSparkles(count) {
+  for (var i = 0; i < (count || 5); i++) {
+    var el = document.createElement('div');
+    el.className = 'sparkle';
+    el.textContent = '✨';
+    el.style.left = (30 + Math.random() * 40) + '%';
+    el.style.top = (20 + Math.random() * 50) + '%';
+    el.style.animationDelay = (Math.random() * 0.3) + 's';
+    effectLayer.appendChild(el);
+    el.addEventListener('animationend', function() { this.remove(); });
+  }
+}
+
+function spawnHearts(count) {
+  for (var i = 0; i < (count || 4); i++) {
+    var el = document.createElement('div');
+    el.className = 'heart-fly';
+    el.textContent = '💕';
+    el.style.left = (25 + Math.random() * 50) + '%';
+    el.style.top = (30 + Math.random() * 30) + '%';
+    el.style.animationDelay = (i * 0.15) + 's';
+    effectLayer.appendChild(el);
+    el.addEventListener('animationend', function() { this.remove(); });
+  }
+}
+
+function dollBounce() {
+  dollWrapper.classList.remove('bounce');
+  void dollWrapper.offsetWidth;
+  dollWrapper.classList.add('bounce');
+}
+
+// ============================================================
+// Menu handling
+// ============================================================
+function openMenu(menu) {
+  if (state.activeMenu === menu) {
+    closeMenu();
+    return;
+  }
+  state.activeMenu = menu;
+
+  document.querySelectorAll('.menu-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.menu === menu);
+  });
+
+  if (menu === 'bath') {
+    closeMenu();
+    startBath();
+    return;
+  }
+  if (menu === 'sleep') {
+    closeMenu();
+    startSleep();
+    return;
+  }
+
+  var items = [];
+  var title = '';
+
+  if (menu === 'cloth') {
+    title = '👗 おようふくをえらんでね';
+    items = CLOTHES.map(function(c, i) {
+      return {
+        html: '<div class="sel-swatch" style="background:' + c.color + '"></div><div class="sel-name">' + c.name + '</div>',
+        active: i === state.clothIdx,
+        onClick: function() { changeCloth(i); },
+      };
+    });
+  } else if (menu === 'hair') {
+    title = '💇 かみがたをえらんでね';
+    items = HAIRS.map(function(h, i) {
+      return {
+        html: '<div class="sel-swatch" style="background:' + h.color + '"></div><div class="sel-name">' + h.name + '</div>',
+        active: i === state.hairIdx,
+        onClick: function() { changeHair(i); },
+      };
+    });
+  } else if (menu === 'food') {
+    title = '🍽️ なにをたべる？';
+    items = FOODS.map(function(f, i) {
+      return {
+        html: '<div class="sel-emoji">' + f.emoji + '</div><div class="sel-name">' + f.name + '</div>',
+        active: false,
+        onClick: function() { startFeeding(i); },
+      };
+    });
+  }
+
+  panelTitle.textContent = title;
+  selectGrid.innerHTML = '';
+  items.forEach(function(item) {
+    var btn = document.createElement('button');
+    btn.className = 'sel-item' + (item.active ? ' active' : '');
+    btn.innerHTML = item.html;
+    btn.addEventListener('click', function() {
+      ensureAudio();
+      item.onClick();
+    });
+    selectGrid.appendChild(btn);
+  });
+
+  selectPanel.classList.add('open');
+}
+
+function closeMenu() {
+  state.activeMenu = null;
+  selectPanel.classList.remove('open');
+  document.querySelectorAll('.menu-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+}
+
+// ============================================================
+// Dress up
+// ============================================================
+function changeCloth(idx) {
+  state.clothIdx = idx;
+  if (useImages) {
+    updateImageLayers();
+  } else {
+    updateCssDoll();
+  }
+  dollBounce();
+  spawnSparkles(6);
+  playPop();
+  showSpeech('かわいい！ ✨', 1500);
+  openMenu('cloth');
+}
+
+function changeHair(idx) {
+  state.hairIdx = idx;
+  if (useImages) {
+    updateImageLayers();
+  } else {
+    updateCssDoll();
+  }
+  dollBounce();
+  spawnSparkles(4);
+  playPop();
+  showSpeech('すてき！ 💫', 1500);
+  openMenu('hair');
+}
+
+// ============================================================
+// Feeding
+// ============================================================
+var feedBites = 0;
+var feedIdx = 0;
+
+function startFeeding(idx) {
+  closeMenu();
+  feedIdx = idx;
+  feedBites = 0;
+  var food = FOODS[idx];
+
+  feedFood.textContent = food.emoji;
+  feedFood.style.fontSize = '64px';
+  feedOverlay.classList.add('show');
+  feedMsg.classList.remove('show');
+
+  cdMouth.className = 'cd-mouth';
+  showSpeech(food.name + ' たべたい！', 1500);
+}
+
+function biteFeed() {
+  feedBites++;
+  playChomp();
+  cdMouth.className = 'cd-mouth eating';
+
+  feedMsg.textContent = 'もぐもぐ！';
+  feedMsg.classList.add('show');
+  setTimeout(function() { feedMsg.classList.remove('show'); }, 500);
+
+  var scale = Math.max(0.3, 1 - feedBites * 0.2);
+  feedFood.style.transform = 'scale(' + scale + ')';
+
+  if (feedBites >= 4) {
+    setTimeout(function() { finishFeeding(); }, 400);
+  }
+}
+
+function finishFeeding() {
+  feedOverlay.classList.remove('show');
+  feedFood.style.transform = '';
+  cdMouth.className = 'cd-mouth';
+
+  state.mood = Math.min(3, state.mood + 1);
+  updateMood();
+
+  spawnHearts(6);
+  playSparkle();
+  dollBounce();
+  showSpeech('おいしかった！ 😋', 2000);
+}
+
+feedFood.addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  biteFeed();
+});
+
+// ============================================================
+// Bath
+// ============================================================
+function startBath() {
+  state.scene = 'bath';
+  state.bathTaps = 0;
+  bathOverlay.classList.add('show');
+  document.getElementById('bath-msg').textContent = 'タップしてあらってね！';
+  document.getElementById('bath-count').textContent = '';
+  document.getElementById('btn-bath-done').style.display = 'none';
+}
+
+function bathTap(e) {
+  if (state.scene !== 'bath') return;
+  state.bathTaps++;
+  playSplash();
+
+  var tub = document.getElementById('bath-tub');
+  var rect = tub.getBoundingClientRect();
+  var x = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width/2) - rect.left;
+  var y = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height/2) - rect.top;
+
+  for (var i = 0; i < 3; i++) {
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    var size = 10 + Math.random() * 20;
+    bubble.style.width = size + 'px';
+    bubble.style.height = size + 'px';
+    bubble.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
+    bubble.style.top = (y + (Math.random() - 0.5) * 30) + 'px';
+    tub.appendChild(bubble);
+    bubble.addEventListener('animationend', function() { this.remove(); });
+  }
+
+  var msgEl = document.getElementById('bath-msg');
+  var msgs = ['ゴシゴシ！', 'あわあわ～', 'きもちいい！', 'ジャブジャブ！'];
+  msgEl.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+
+  if (state.bathTaps >= 8) {
+    finishBath();
+  } else {
+    document.getElementById('bath-count').textContent =
+      'あと ' + (8 - state.bathTaps) + ' かい！';
+  }
+}
+
+function finishBath() {
+  var msgEl = document.getElementById('bath-msg');
+  msgEl.textContent = 'ぴかぴか！ ✨';
+  document.getElementById('bath-count').textContent = '';
+  document.getElementById('btn-bath-done').style.display = '';
+  playSparkle();
+
+  state.mood = Math.min(3, state.mood + 1);
+  updateMood();
+}
+
+function exitBath() {
+  bathOverlay.classList.remove('show');
+  state.scene = 'main';
+  showSpeech('きれいになったよ！ 🛁', 2000);
+  spawnSparkles(8);
+  dollBounce();
+}
+
+document.getElementById('bath-tub').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  bathTap(e);
+});
+
+document.getElementById('btn-bath-done').addEventListener('click', function() {
+  ensureAudio();
+  exitBath();
+});
+
+// ============================================================
+// Sleep
+// ============================================================
+var sleepTimer = null;
+
+function startSleep() {
+  state.scene = 'sleep';
+  sleepOverlay.classList.add('show');
+  document.getElementById('sleep-msg').textContent = '';
+  document.getElementById('btn-sleep-wake').style.display = 'none';
+  playLullaby();
+
+  var starContainer = sleepOverlay;
+  for (var i = 0; i < 12; i++) {
+    var star = document.createElement('div');
+    star.className = 'star';
+    star.textContent = '⭐';
+    star.style.left = (5 + Math.random() * 90) + '%';
+    star.style.top = (5 + Math.random() * 40) + '%';
+    star.style.animationDelay = (Math.random() * 2) + 's';
+    star.style.fontSize = (10 + Math.random() * 14) + 'px';
+    starContainer.appendChild(star);
+  }
+
+  sleepTimer = setTimeout(function() {
+    document.getElementById('sleep-msg').textContent = 'ぐっすり ねんね… 🌙';
+    document.getElementById('btn-sleep-wake').style.display = '';
+  }, 3000);
+}
+
+function wakeUp() {
+  if (sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
+
+  sleepOverlay.querySelectorAll('.star').forEach(function(s) { s.remove(); });
+  sleepOverlay.classList.remove('show');
+  state.scene = 'main';
+
+  state.mood = 3;
+  updateMood();
+  showSpeech('おはよう！ ☀️', 2000);
+  spawnSparkles(6);
+  dollBounce();
+  playSparkle();
+}
+
+document.getElementById('btn-sleep-wake').addEventListener('click', function() {
+  ensureAudio();
+  wakeUp();
+});
+
+// ============================================================
+// Menu button handlers
+// ============================================================
+document.querySelectorAll('.menu-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    ensureAudio();
+    openMenu(this.dataset.menu);
+  });
+});
+
+// Close panel on tap outside
+document.getElementById('room').addEventListener('pointerdown', function(e) {
+  if (state.activeMenu && !e.target.closest('#select-panel') && !e.target.closest('.menu-btn')) {
+    closeMenu();
+  }
+});
+
+// ============================================================
+// Title & init
+// ============================================================
+document.getElementById('btn-start').addEventListener('click', function() {
+  ensureAudio();
+  playSparkle();
+  document.getElementById('title-screen').classList.add('hidden');
+  state.scene = 'main';
+  updateMood();
+  if (useImages) updateImageLayers();
+  else updateCssDoll();
+  showSpeech('いっしょにあそぼ！ 💕', 2500);
+});
+
+document.addEventListener('dblclick', function(e) { e.preventDefault(); });
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+checkImages();
+updateMood();
+</script>
+</body>
+</html>

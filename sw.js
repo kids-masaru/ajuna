@@ -52,6 +52,7 @@ const LOCAL_FILES = [
   './item_fire.png',
   './kart_fox_front.png',
   './kart_fox_back.png',
+  './osewa.html',
 ];
 
 // インストール時：ローカルファイルを全部キャッシュ
