@@ -65,13 +65,15 @@ body {
   justify-content: center;
   width: 100%;
   max-width: 340px;
-  padding-top: max(20px, env(safe-area-inset-top));
+  padding-top: max(10px, env(safe-area-inset-top));
+  min-height: 0;
+  overflow: hidden;
 }
 
 #doll-wrapper {
   position: relative;
   width: 240px;
-  height: 380px;
+  height: min(380px, 55vh);
 }
 
 /* ===== Image Layers ===== */
@@ -795,17 +797,17 @@ window.onerror = function(msg, src, line) {
 // Data
 // ============================================================
 var CLOTHES = [
-  { name: 'ピンクドレス', img: 'doll_cloth_1.png', color: '#f9a8d4', shape: 'dress' },
-  { name: 'みずいろドレス', img: 'doll_cloth_2.png', color: '#93c5fd', shape: 'dress' },
-  { name: 'オーバーオール', img: 'doll_cloth_3.png', color: '#5b8dbf', shape: 'overalls' },
-  { name: 'パジャマ', img: 'doll_cloth_4.png', color: '#f9c5d1', shape: 'pajama' },
-  { name: 'キラキラドレス', img: 'doll_cloth_5.png', color: '#f472b6', shape: 'dress' },
+  { name: 'ピンクドレス', img: 'doll_cloth_1.png?v=2', color: '#f9a8d4', shape: 'dress' },
+  { name: 'みずいろドレス', img: 'doll_cloth_2.png?v=2', color: '#93c5fd', shape: 'dress' },
+  { name: 'オーバーオール', img: 'doll_cloth_3.png?v=2', color: '#5b8dbf', shape: 'overalls' },
+  { name: 'パジャマ', img: 'doll_cloth_4.png?v=2', color: '#f9c5d1', shape: 'pajama' },
+  { name: 'キラキラドレス', img: 'doll_cloth_5.png?v=2', color: '#f472b6', shape: 'dress' },
 ];
 
 var HAIRS = [
-  { name: 'ロングヘア', img: 'doll_hair_1.png', color: '#8B5E3C', style: 'long' },
-  { name: 'ポニーテール', img: 'doll_hair_2.png', color: '#6B3A2A', style: 'pony' },
-  { name: 'ツインテール', img: 'doll_hair_3.png', color: '#4A2512', style: 'twin' },
+  { name: 'ロングヘア', img: 'doll_hair_1.png?v=2', color: '#8B5E3C', style: 'long' },
+  { name: 'ポニーテール', img: 'doll_hair_2.png?v=2', color: '#6B3A2A', style: 'pony' },
+  { name: 'ツインテール', img: 'doll_hair_3.png?v=2', color: '#4A2512', style: 'twin' },
 ];
 
 var FOODS = [
@@ -963,12 +965,12 @@ function checkImages() {
     cssDoll.style.display = '';
     updateCssDoll();
   };
-  test.src = 'doll_base.png';
+  test.src = 'doll_base.png?v=2';
 }
 
 function updateImageLayers() {
   if (!useImages) return;
-  imgBase.src = 'doll_base.png';
+  imgBase.src = 'doll_base.png?v=2';
   imgBase.style.display = '';
   imgCloth.src = CLOTHES[state.clothIdx].img;
   imgCloth.style.display = '';
