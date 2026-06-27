@@ -1086,13 +1086,13 @@ function showCharSelect() {
 
   CHARACTERS.forEach((ch, i) => {
     const card = document.createElement('div');
-    card.style.cssText = 'width:100px;padding:8px;background:rgba(255,255,255,.1);border:3px solid ' + ch.color + ';border-radius:12px;cursor:pointer;text-align:center;';
+    card.style.cssText = 'width:130px;padding:8px;background:rgba(255,255,255,.1);border:3px solid ' + ch.color + ';border-radius:12px;cursor:pointer;text-align:center;';
 
     const imgs = getCharImages(ch.row);
     if (imgs) {
       const img = document.createElement('img');
       img.src = imgs.front.src;
-      img.style.cssText = 'width:80px;height:auto;image-rendering:pixelated;';
+      img.style.cssText = 'width:104px;height:auto;image-rendering:pixelated;';
       card.appendChild(img);
     }
 
