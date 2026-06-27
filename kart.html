@@ -100,6 +100,10 @@
     <p>GO＝アクセル ◀▶＝ハンドル<br>アイテムボックスを取ってアイテムゲット！<br>右下ボタンでアイテム使用<br>3周してゴールゲートをくぐれ！</p>
     <button id="startBtn">スタート</button>
   </div>
+  <div id="charSelect" style="display:none;position:absolute;inset:0;z-index:22;background:rgba(10,10,20,.95);flex-direction:column;align-items:center;justify-content:center;padding:16px;color:#fff;text-align:center;">
+    <h2 style="font-size:20px;font-weight:900;color:#ffd84d;margin-bottom:16px;text-shadow:1px 1px 2px #000">キャラクターをえらぼう！</h2>
+    <div id="charGrid" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:360px;"></div>
+  </div>
 </div>
 
 <script>
@@ -167,17 +171,34 @@ let tigerReady = false;
 tigerBack.onload = () => { if (tigerFront.complete) tigerReady = true; };
 tigerFront.onload = () => { if (tigerBack.complete) tigerReady = true; };
 
+const rabbitBack = new Image(); rabbitBack.src = 'kart_rabbit_back.png';
+const rabbitFront = new Image(); rabbitFront.src = 'kart_rabbit_front.png';
+let rabbitReady = false;
+rabbitBack.onload = () => { if (rabbitFront.complete) rabbitReady = true; };
+rabbitFront.onload = () => { if (rabbitBack.complete) rabbitReady = true; };
+
 /* Character image lookup: charRow -> {front, back} */
 function getCharImages(charRow) {
   if (charRow === 0 && catReady) return { front: catFront, back: catBack };
   if (charRow === 1 && dogReady) return { front: dogFront, back: dogBack };
+  if (charRow === 2 && rabbitReady) return { front: rabbitFront, back: rabbitBack };
   if (charRow === 4 && pandaReady) return { front: pandaFront, back: pandaBack };
   if (charRow === 5 && tigerReady) return { front: tigerFront, back: tigerBack };
   return null;
 }
+
+/* Character data array */
+const CHARACTERS = [
+  { id: 'cat', name: 'ネコ', color: '#3b82f6', row: 0 },
+  { id: 'dog', name: 'イヌ', color: '#ef4444', row: 1 },
+  { id: 'rabbit', name: 'ウサギ', color: '#22c55e', row: 2 },
+  { id: 'panda', name: 'パンダ', color: '#1f2937', row: 4 },
+  { id: 'tiger', name: 'トラ', color: '#eab308', row: 5 },
+];
+let selectedCharIdx = 0;
 const SS_COLS = 4, SS_ROWS = 6;
-const CHAR_PLAYER = 0; /* Cat = player */
-const CHAR_CPU = [1, 4, 5]; /* Dog, Panda, Tiger = CPUs */
+function getPlayerCharRow() { return CHARACTERS[selectedCharIdx].row; }
+function getCpuCharRows() { return CHARACTERS.filter((_, i) => i !== selectedCharIdx).map(c => c.row); }
 function getSpriteDir(viewAngle, objAngle) {
   let d = objAngle - viewAngle;
   while (d > Math.PI) d -= Math.PI * 2;
@@ -638,7 +659,8 @@ function initCPUs() {
   cpus = [];
   const wp = trackWaypoints;
   const n = wp.length;
-  for (let i = 0; i < 3; i++) {
+  const cpuChars = CHARACTERS.filter((_, i) => i !== selectedCharIdx);
+  for (let i = 0; i < Math.min(3, cpuChars.length); i++) {
     const offset = 15 + i * 10;
     const idx = (startLineIdx - offset + n) % n;
     const p = wp[idx];
@@ -649,7 +671,7 @@ function initCPUs() {
       angle: Math.atan2(-(pn.x - p.x), pn.y - p.y),
       speed: 0,
       baseSpeed: 1.4 + Math.random() * 0.5,
-      color: CPU_COLORS[i],
+      color: cpuChars[i].color,
       waypointIdx: (idx + 20) % n,
       lap: 0,
       spinT: 0,
@@ -1053,7 +1075,42 @@ function update(dt) {
 /* ================================================================
    COUNTDOWN & START
    ================================================================ */
-document.getElementById('startBtn').addEventListener('click', beginCountdown);
+document.getElementById('startBtn').addEventListener('click', showCharSelect);
+
+function showCharSelect() {
+  document.getElementById('msg').classList.add('hidden');
+  const screen = document.getElementById('charSelect');
+  screen.style.display = 'flex';
+  const grid = document.getElementById('charGrid');
+  grid.innerHTML = '';
+
+  CHARACTERS.forEach((ch, i) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'width:100px;padding:8px;background:rgba(255,255,255,.1);border:3px solid ' + ch.color + ';border-radius:12px;cursor:pointer;text-align:center;';
+
+    const imgs = getCharImages(ch.row);
+    if (imgs) {
+      const img = document.createElement('img');
+      img.src = imgs.front.src;
+      img.style.cssText = 'width:80px;height:auto;image-rendering:pixelated;';
+      card.appendChild(img);
+    }
+
+    const name = document.createElement('div');
+    name.textContent = ch.name;
+    name.style.cssText = 'color:#fff;font-weight:900;font-size:14px;margin-top:4px;';
+    card.appendChild(name);
+
+    card.addEventListener('click', () => selectCharacter(i));
+    grid.appendChild(card);
+  });
+}
+
+function selectCharacter(idx) {
+  selectedCharIdx = idx;
+  document.getElementById('charSelect').style.display = 'none';
+  beginCountdown();
+}
 
 function beginCountdown() {
   document.getElementById('msg').classList.add('hidden');
@@ -1112,7 +1169,7 @@ function winGame() {
   m.classList.remove('hidden');
   const posStr = ['1st','2nd','3rd','4th'][pos - 1];
   m.innerHTML = `<h1>GOAL!</h1><div class="big">${posStr} PLACE</div><p>TIME ${gameTime.toFixed(2)}秒</p><button id="startBtn">もう一回</button>`;
-  document.getElementById('startBtn').addEventListener('click', beginCountdown);
+  document.getElementById('startBtn').addEventListener('click', showCharSelect);
   itemBtnEl.classList.remove('ready');
 }
 
@@ -1181,7 +1238,8 @@ function drawSprites() {
 
         if (spriteReady && sc > 8) {
           const cpuIdx = cpus.indexOf(c);
-          const charRow = CHAR_CPU[cpuIdx] || 1;
+          const cpuRows = getCpuCharRows();
+          const charRow = cpuRows[cpuIdx] || 1;
           const dirCol = getSpriteDir(player.angle, c.angle);
           ctx.save();
           if (c.spinT > 0) ctx.rotate(Math.sin(c.spinT * 12) * 0.3);
@@ -1304,12 +1362,13 @@ function drawPlayerKart() {
     ctx.globalAlpha = 1.0;
   }
 
-  /* Draw player using sprite sheet or fallback */
+  /* Draw player using selected character's back image or fallback */
   const pSize = Math.round(W * 0.22);
   ctx.save();
   ctx.translate(wobble, 0);
-  if (catReady) {
-    const img = catBack;
+  const playerCharImgs = getCharImages(CHARACTERS[selectedCharIdx].row);
+  if (playerCharImgs) {
+    const img = playerCharImgs.back;
     const w = pSize, h = pSize * (img.height / img.width);
     ctx.drawImage(img, centerX - w/2, kartY, w, h);
   } else if (kartReady) {
@@ -1379,7 +1438,7 @@ function drawMiniMap() {
   ctx.fillRect(miniX(sp.x) - 2, miniY(sp.y) - 2, 4, 4);
 
   /* Player dot */
-  ctx.fillStyle = '#ff3b3b';
+  ctx.fillStyle = CHARACTERS[selectedCharIdx].color;
   ctx.beginPath();
   ctx.arc(miniX(player.x), miniY(player.y), 3, 0, Math.PI * 2);
   ctx.fill();
