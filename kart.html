@@ -88,6 +88,11 @@
   <div id="itemBtn"><span class="item-icon"></span><span class="dash">?</span><span class="lbl">ITEM</span></div>
   <div id="count"></div>
   <div id="flashOverlay"></div>
+  <div id="hudOverlay" style="display:none;position:absolute;left:8px;top:50%;transform:translateY(-60%);z-index:20;pointer-events:none;font-family:'Helvetica Neue',Arial,sans-serif;">
+    <div id="hudLap" style="color:#ffd84d;font-size:14px;font-weight:900;text-shadow:1px 1px 2px #000;letter-spacing:1px"></div>
+    <div id="hudPos" style="color:#fff;font-size:32px;font-weight:900;text-shadow:2px 2px 3px #000;letter-spacing:1px;margin:2px 0"></div>
+    <div id="hudSpd" style="color:#7CFC00;font-size:13px;font-weight:800;text-shadow:1px 1px 2px #000"></div>
+  </div>
 
   <div id="msg">
     <h1>PIXEL KART RACING</h1>
@@ -156,11 +161,18 @@ let pandaReady = false;
 pandaBack.onload = () => { if (pandaFront.complete) pandaReady = true; };
 pandaFront.onload = () => { if (pandaBack.complete) pandaReady = true; };
 
+const tigerBack = new Image(); tigerBack.src = 'kart_tiger_back.png';
+const tigerFront = new Image(); tigerFront.src = 'kart_tiger_front.png';
+let tigerReady = false;
+tigerBack.onload = () => { if (tigerFront.complete) tigerReady = true; };
+tigerFront.onload = () => { if (tigerBack.complete) tigerReady = true; };
+
 /* Character image lookup: charRow -> {front, back} */
 function getCharImages(charRow) {
   if (charRow === 0 && catReady) return { front: catFront, back: catBack };
   if (charRow === 1 && dogReady) return { front: dogFront, back: dogBack };
   if (charRow === 4 && pandaReady) return { front: pandaFront, back: pandaBack };
+  if (charRow === 5 && tigerReady) return { front: tigerFront, back: tigerBack };
   return null;
 }
 const SS_COLS = 4, SS_ROWS = 6;
@@ -1388,37 +1400,22 @@ function drawMiniMap() {
    HUD
    ================================================================ */
 function drawHUD() {
-  const fs = Math.max(9, Math.round(H * 0.06));
+  const hudEl = document.getElementById('hudOverlay');
+  hudEl.style.display = 'block';
 
-  /* Lap - left top (above position) */
-  ctx.textAlign = 'left';
-  ctx.font = 'bold ' + Math.round(fs * 1.1) + 'px sans-serif';
-  const lapStr = Math.min(player.lap + 1, player.totalLaps) + '/' + player.totalLaps;
-  ctx.fillStyle = '#ffd84d';
-  ctx.fillText('LAP ' + lapStr, 8, H * 0.32);
+  const lapStr = 'LAP ' + Math.min(player.lap + 1, player.totalLaps) + '/' + player.totalLaps;
+  document.getElementById('hudLap').textContent = lapStr;
 
-  /* Position - left side, below lap */
   if (gameState === 'play') {
     const pos = getPosition();
     const posStr = ['1st','2nd','3rd','4th'][pos - 1];
-    ctx.textAlign = 'left';
-    ctx.font = 'bold ' + Math.round(fs * 2) + 'px sans-serif';
-    ctx.fillStyle = 'rgba(0,0,0,.4)';
-    ctx.fillText(posStr, 10, H * 0.45 + 2);
-    ctx.fillStyle = (pos === 1) ? '#ffd93b' : '#fff';
-    ctx.fillText(posStr, 8, H * 0.45);
+    const posEl = document.getElementById('hudPos');
+    posEl.textContent = posStr;
+    posEl.style.color = (pos === 1) ? '#ffd93b' : '#fff';
   }
 
-  /* Speed - below position, left side */
-  ctx.textAlign = 'left';
-  ctx.font = 'bold ' + Math.round(fs * 0.9) + 'px sans-serif';
   const speedDisplay = Math.round(player.speed * 60);
-  ctx.fillStyle = '#7CFC00';
-  ctx.fillText('SPD ' + speedDisplay, 8, H * 0.52);
-
-  /* Time */
-  ctx.fillStyle = '#fff';
-  ctx.fillText(gameTime ? gameTime.toFixed(1) : '0.0', 8, H - 8);
+  document.getElementById('hudSpd').textContent = 'SPD ' + speedDisplay;
 
 }
 
