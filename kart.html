@@ -146,6 +146,10 @@ spriteSheet.onload = () => {
   spriteReady = true;
 };
 
+/* ---- Item images ---- */
+const mushroomImg = new Image(); mushroomImg.src = 'item_mushroom.png';
+const fireImg = new Image(); fireImg.src = 'item_fire.png';
+
 /* ---- Individual character images (transparent PNGs) ---- */
 const catBack = new Image(); catBack.src = 'kart_cat_back.png';
 const catFront = new Image(); catFront.src = 'kart_cat_front.png';
@@ -165,6 +169,12 @@ let pandaReady = false;
 pandaBack.onload = () => { if (pandaFront.complete) pandaReady = true; };
 pandaFront.onload = () => { if (pandaBack.complete) pandaReady = true; };
 
+const foxBack = new Image(); foxBack.src = 'kart_fox_back.png';
+const foxFront = new Image(); foxFront.src = 'kart_fox_front.png';
+let foxReady = false;
+foxBack.onload = () => { if (foxFront.complete) foxReady = true; };
+foxFront.onload = () => { if (foxBack.complete) foxReady = true; };
+
 const tigerBack = new Image(); tigerBack.src = 'kart_tiger_back.png';
 const tigerFront = new Image(); tigerFront.src = 'kart_tiger_front.png';
 let tigerReady = false;
@@ -182,6 +192,7 @@ function getCharImages(charRow) {
   if (charRow === 0 && catReady) return { front: catFront, back: catBack };
   if (charRow === 1 && dogReady) return { front: dogFront, back: dogBack };
   if (charRow === 2 && rabbitReady) return { front: rabbitFront, back: rabbitBack };
+  if (charRow === 3 && foxReady) return { front: foxFront, back: foxBack };
   if (charRow === 4 && pandaReady) return { front: pandaFront, back: pandaBack };
   if (charRow === 5 && tigerReady) return { front: tigerFront, back: tigerBack };
   return null;
@@ -192,6 +203,7 @@ const CHARACTERS = [
   { id: 'cat', name: 'ネコ', color: '#3b82f6', row: 0 },
   { id: 'dog', name: 'イヌ', color: '#ef4444', row: 1 },
   { id: 'rabbit', name: 'ウサギ', color: '#22c55e', row: 2 },
+  { id: 'fox', name: 'キツネ', color: '#f97316', row: 3 },
   { id: 'panda', name: 'パンダ', color: '#1f2937', row: 4 },
   { id: 'tiger', name: 'トラ', color: '#eab308', row: 5 },
 ];
@@ -593,7 +605,7 @@ const player = {
 const ITEMS = [
   {name:'mushroom', emoji:'\u{1F344}', weight:35},
   {name:'banana',   emoji:'\u{1F34C}', weight:25},
-  {name:'shell',    emoji:'\u{1F422}', weight:20},
+  {name:'fire',     emoji:'🔥', weight:20},
   {name:'star',     emoji:'⭐',    weight:10},
   {name:'lightning', emoji:'⚡',   weight:10}
 ];
@@ -770,7 +782,7 @@ function useItem(dir) {
         active: true
       });
       break;
-    case 'shell': {
+    case 'fire': {
       const spd = 5;
       shells.push({
         x: player.x + fdx * 20,
@@ -1212,7 +1224,7 @@ function drawSprites() {
     if (!s.active) continue;
     const proj = worldToScreen(s.x, s.y);
     if (proj) {
-      sprites.push({ type: 'shell', proj, data: s });
+      sprites.push({ type: 'fire', proj, data: s });
     }
   }
 
@@ -1306,25 +1318,16 @@ function drawSprites() {
         ctx.stroke();
         break;
       }
-      case 'shell': {
-        const sc = Math.max(4, 14 * scale);
-        const r = sc * 0.45;
-        /* Shell body (green oval) */
-        ctx.fillStyle = '#22aa44';
-        ctx.beginPath(); ctx.ellipse(sx, sy - r, r, r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
-        /* Dark outline */
-        ctx.strokeStyle = '#0e5522'; ctx.lineWidth = Math.max(1, sc * 0.08); ctx.stroke();
-        /* Hexagon pattern on shell */
-        ctx.strokeStyle = '#116633'; ctx.lineWidth = Math.max(1, sc * 0.06);
-        ctx.beginPath(); ctx.moveTo(sx - r*0.3, sy - r); ctx.lineTo(sx + r*0.3, sy - r);
-        ctx.moveTo(sx - r*0.5, sy - r*0.65); ctx.lineTo(sx + r*0.5, sy - r*0.65);
-        ctx.moveTo(sx - r*0.5, sy - r*1.35); ctx.lineTo(sx + r*0.5, sy - r*1.35);
-        ctx.moveTo(sx - r*0.15, sy - r*0.5); ctx.lineTo(sx - r*0.15, sy - r*1.5);
-        ctx.moveTo(sx + r*0.15, sy - r*0.5); ctx.lineTo(sx + r*0.15, sy - r*1.5);
-        ctx.stroke();
-        /* Highlight */
-        ctx.fillStyle = 'rgba(255,255,255,.25)';
-        ctx.beginPath(); ctx.ellipse(sx - r*0.2, sy - r*1.2, r*0.2, r*0.15, -0.3, 0, Math.PI*2); ctx.fill();
+      case 'fire': {
+        const sc = Math.max(6, 18 * scale);
+        /* Bounce animation */
+        const bounce = Math.abs(Math.sin(performance.now() * 0.008 + sx)) * sc * 0.4;
+        if (fireImg.complete) {
+          ctx.drawImage(fireImg, sx - sc/2, sy - sc - bounce, sc, sc);
+        } else {
+          ctx.fillStyle = '#ff6600';
+          ctx.beginPath(); ctx.arc(sx, sy - sc*0.3 - bounce, sc*0.3, 0, Math.PI*2); ctx.fill();
+        }
         break;
       }
     }

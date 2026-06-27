@@ -45,6 +45,10 @@ const LOCAL_FILES = [
   './kart_tiger_back.png',
   './kart_rabbit_front.png',
   './kart_rabbit_back.png',
+  './item_mushroom.png',
+  './item_fire.png',
+  './kart_fox_front.png',
+  './kart_fox_back.png',
 ];
 
 // インストール時：ローカルファイルを全部キャッシュ
