@@ -524,12 +524,11 @@ class Fish {
       ctx.arc(x, y + s * 0.2, mouthR, Math.PI * 1.1, Math.PI * 1.9);
       ctx.stroke();
     } else {
-      // Closed mouth - small line
+      // Closed mouth - small curved line at bottom of face
       ctx.strokeStyle = '#1a1a2e';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x + s * 0.7, y + s * 0.05);
-      ctx.lineTo(x + s * 0.9, y + s * 0.02);
+      ctx.arc(x, y + s * 0.25, s * 0.15, 0.2, Math.PI - 0.2);
       ctx.stroke();
     }
   }
@@ -828,7 +827,6 @@ function gameLoop(timestamp) {
 
   ctx.clearRect(0, 0, W, H);
 
-  try {
   if (gameState === 'playing') {
     // Update timer
     timeLeft -= dt;
@@ -867,6 +865,13 @@ function gameLoop(timestamp) {
     // Update fish
     for (const fish of fishes) fish.update(dt);
 
+    // Remove caught fish after animation completes (0.8s)
+    for (let i = fishes.length - 1; i >= 0; i--) {
+      if (fishes[i].caught && performance.now() - fishes[i].catchTime > 900) {
+        fishes.splice(i, 1);
+      }
+    }
+
     // Draw
     drawPond(ctx);
     // Draw fish sorted by ring (inner first, outer on top)
@@ -879,7 +884,6 @@ function gameLoop(timestamp) {
   } else if (gameState === 'title' || gameState === 'result') {
     drawPond(ctx);
   }
-  } catch(e) { console.error(e); }
 
   requestAnimationFrame(gameLoop);
 }
