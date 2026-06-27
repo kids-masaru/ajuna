@@ -33,6 +33,7 @@ const LOCAL_FILES = [
   './haikei.png',
   './programming.html',
   './sushi.html',
+  './waniwani.html',
   './fishing.html',
   './kart.html',
   './kart_sprites.png',
