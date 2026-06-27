@@ -28,19 +28,45 @@ body {
   align-items: center;
 }
 
-/* ===== Score Bar (top) ===== */
+/* ===== Score Bar (top 1/3) ===== */
 #score-bar {
   position: relative;
   z-index: 20;
   width: 100%;
+  height: 30vh;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
   padding: max(10px, env(safe-area-inset-top)) 12px 6px 12px;
   box-sizing: border-box;
   pointer-events: none;
+  background: linear-gradient(180deg, #1a3a1a 0%, #2d5a2d 80%, transparent 100%);
 }
 #score-bar > * { pointer-events: auto; }
+
+#hud-count {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 2px 3px 0 #1a3a1a, 0 0 20px rgba(255,200,0,0.4);
+  letter-spacing: 2px;
+}
+#hud-points {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffd84d;
+  text-shadow: 1px 2px 0 #1a3a1a;
+  margin-top: 2px;
+}
+#hud-timer-row {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+  margin-top: 4px;
+}
+#hud-timer-row.warning { color: #ff4444; animation: pulse-warn 0.5s infinite; }
+@keyframes pulse-warn { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
 .hud-box {
   background: rgba(255,255,255,0.93);
@@ -506,8 +532,9 @@ body {
 
     <!-- Score Bar (top) -->
     <div id="score-bar" style="display:none;">
-      <div class="hud-box" id="hud-score">0 てん</div>
-      <div class="hud-box" id="hud-timer">60</div>
+      <div id="hud-count">0 ひき</div>
+      <div id="hud-points">0 てん</div>
+      <div id="hud-timer-row">のこり 60 びょう</div>
     </div>
 
     <!-- Combo display -->
@@ -632,6 +659,7 @@ const holeDivs = document.querySelectorAll('.hole');
 // ============================================================
 let gameState = 'title'; // title | playing | gameover
 let score     = 0;
+let hitCount  = 0;
 let timeLeft  = 60;
 let combo     = 0;
 let maxCombo  = 0;
@@ -892,6 +920,7 @@ function hitCroc(idx, event) {
     playComboSound(combo);
   }
   score += points;
+  hitCount++;
   updateHUD();
   updateComboDisplay();
 
@@ -960,9 +989,10 @@ function updateComboDisplay() {
 // HUD updates
 // ============================================================
 function updateHUD() {
-  document.getElementById('hud-score').textContent = score + ' てん';
-  const timerEl = document.getElementById('hud-timer');
-  timerEl.textContent = timeLeft;
+  document.getElementById('hud-count').textContent = hitCount + ' ひき';
+  document.getElementById('hud-points').textContent = score + ' てん';
+  const timerEl = document.getElementById('hud-timer-row');
+  timerEl.textContent = 'のこり ' + timeLeft + ' びょう';
 
   if (timeLeft <= 10) {
     timerEl.classList.add('warning');
@@ -1041,6 +1071,7 @@ function startTimer() {
 function startGame() {
   gameState = 'playing';
   score     = 0;
+  hitCount  = 0;
   combo     = 0;
   maxCombo  = 0;
   totalHits = 0;
