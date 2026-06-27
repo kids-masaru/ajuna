@@ -563,7 +563,7 @@ body {
         <div style="display:flex;align-items:baseline;justify-content:flex-end"><div id="hud-count">000</div><span id="hud-count-suffix">ひき</span></div>
         <div id="hud-points">0 てん</div>
       </div>
-      <div id="hud-timer-row">のこり 60 びょう</div>
+      <div id="hud-timer-row">のこり 30 びょう</div>
     </div>
 
     <!-- Combo display -->
@@ -696,7 +696,7 @@ const holeDivs = document.querySelectorAll('.hole');
 let gameState = 'title'; // title | playing | gameover
 let score     = 0;
 let hitCount  = 0;
-let timeLeft  = 60;
+let timeLeft  = 30;
 let combo     = 0;
 let maxCombo  = 0;
 let totalHits = 0;
@@ -852,12 +852,12 @@ function playFanfare() {
 // Difficulty parameters
 // ============================================================
 function getDifficulty() {
-  const elapsed = 60 - timeLeft;
-  if (elapsed < 15) {
+  const elapsed = 30 - timeLeft;
+  if (elapsed < 8) {
     return { maxCrocs: 2, popDuration: 2000, spawnDelay: 1200 };
-  } else if (elapsed < 30) {
+  } else if (elapsed < 16) {
     return { maxCrocs: 3, popDuration: 1500, spawnDelay: 900 };
-  } else if (elapsed < 45) {
+  } else if (elapsed < 24) {
     return { maxCrocs: 4, popDuration: 1200, spawnDelay: 700 };
   } else {
     return { maxCrocs: 5, popDuration: 800, spawnDelay: 500 };
@@ -1083,7 +1083,7 @@ function startSpawning() {
 // Game timer
 // ============================================================
 function startTimer() {
-  timeLeft = 60;
+  timeLeft = 30;
   updateHUD();
 
   gameTimer = setInterval(() => {
@@ -1111,7 +1111,7 @@ function startGame() {
   combo     = 0;
   maxCombo  = 0;
   totalHits = 0;
-  timeLeft  = 60;
+  timeLeft  = 30;
 
   // Reset all crocs
   crocImgs.forEach((imgEl, i) => {
