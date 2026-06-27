@@ -15,7 +15,7 @@ body {
   overscroll-behavior: none;
   width: 100vw;
   height: 100dvh;
-  background: #1a5c2a;
+  background: linear-gradient(170deg, #2d8c3e 0%, #1a6b2a 30%, #f5a623 85%, #e8872a 100%);
 }
 
 #game-container {
@@ -27,7 +27,7 @@ body {
   align-items: center;
 }
 
-/* HUD */
+/* ===== HUD ===== */
 #hud {
   position: absolute;
   top: 0;
@@ -47,22 +47,415 @@ body {
   border-radius: var(--gp-r-full);
   padding: 6px 16px;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--gp-ink);
   box-shadow: var(--gp-shadow-sm);
   white-space: nowrap;
+  min-width: 70px;
+  text-align: center;
 }
 
-/* Canvas */
-#gameCanvas {
+#hud-timer.warning {
+  color: #dc2626;
+  animation: timer-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes timer-pulse {
+  0% { transform: scale(1); background: rgba(255,255,255,0.92); }
+  100% { transform: scale(1.08); background: rgba(255,200,200,0.95); }
+}
+
+/* ===== Combo display ===== */
+#combo-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 900;
+  font-size: 2.5rem;
+  color: #fff;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.4), 0 0 30px rgba(255,200,0,0.6);
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#combo-display.show {
+  opacity: 1;
+  animation: combo-pop 0.3s ease-out;
+}
+
+@keyframes combo-pop {
+  0% { transform: translate(-50%, -50%) scale(0.5); }
+  60% { transform: translate(-50%, -50%) scale(1.3); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ===== Game Field ===== */
+#field {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: clamp(12px, 3vw, 28px);
+  width: min(92vw, 560px);
+  height: min(55vh, 380px);
+  padding: 10px;
+}
+
+/* ===== Decorative leaves ===== */
+.leaf {
+  position: absolute;
+  width: 60px;
+  height: 40px;
+  background: #1e7a32;
+  border-radius: 0 60% 0 60%;
+  opacity: 0.5;
+  z-index: 0;
+  pointer-events: none;
+}
+.leaf:nth-child(1) { top: 8%; left: 2%; transform: rotate(-30deg); background: #2d9640; }
+.leaf:nth-child(2) { top: 5%; right: 5%; transform: rotate(40deg); background: #1e7a32; }
+.leaf:nth-child(3) { bottom: 12%; left: 4%; transform: rotate(20deg); background: #2d9640; width: 50px; height: 35px; }
+.leaf:nth-child(4) { bottom: 8%; right: 3%; transform: rotate(-50deg); background: #1e7a32; width: 45px; height: 30px; }
+
+/* ===== Hole ===== */
+.hole {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.hole-bg {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  height: 45%;
+  background: radial-gradient(ellipse at center, #3d2010 0%, #2a1508 60%, #1a0c04 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 8px 16px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.3);
+  z-index: 1;
+}
+
+/* Grass rim around hole */
+.hole-rim {
+  position: absolute;
+  bottom: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 36%;
+  background: radial-gradient(ellipse at center bottom, #3da34a 0%, #2d8c3e 40%, transparent 70%);
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ===== Crocodile ===== */
+.croc-wrapper {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 75%;
+  height: 80%;
+  overflow: hidden;
+  z-index: 2;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.croc {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(105%);
+  width: 90%;
+  height: 85%;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.croc.up {
+  transform: translateX(-50%) translateY(10%);
+}
+
+.croc.hit {
+  transform: translateX(-50%) translateY(10%) rotate(8deg) scale(0.92);
+}
+
+.croc.retreat {
+  transform: translateX(-50%) translateY(105%);
+  transition: transform 0.2s ease-in;
+}
+
+/* ===== Croc Head ===== */
+.croc-head {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 40%, #16a34a 100%);
+  border-radius: 45% 45% 35% 35% / 40% 40% 20% 20%;
+  box-shadow: inset 0 -4px 8px rgba(0,0,0,0.15), inset 0 4px 8px rgba(255,255,255,0.2);
+  overflow: visible;
+}
+
+/* Croc nostrils bumps on top */
+.croc-head::before {
+  content: '';
+  position: absolute;
+  top: -6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 65%;
+  height: 20%;
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+  border-radius: 50% 50% 40% 40%;
+}
+
+/* ===== Croc Eyes ===== */
+.croc-eyes {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  display: flex;
+  justify-content: space-between;
+  z-index: 5;
+}
+
+.eye {
+  width: 34%;
+  aspect-ratio: 1;
+  background: #fff;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  border: 2px solid #16a34a;
+}
+
+.pupil {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  background: #1a1a2e;
+  border-radius: 50%;
+  top: 25%;
+  left: 25%;
+}
+
+.pupil::after {
+  content: '';
+  position: absolute;
+  width: 35%;
+  height: 35%;
+  background: #fff;
+  border-radius: 50%;
+  top: 10%;
+  right: 10%;
+}
+
+/* ===== Croc Nose ===== */
+.croc-nose {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 45%;
+  display: flex;
+  justify-content: space-between;
+  z-index: 6;
+}
+
+.croc-nose::before,
+.croc-nose::after {
+  content: '';
+  width: 9px;
+  height: 7px;
+  background: #0f5a24;
+  border-radius: 50%;
+}
+
+/* ===== Croc Mouth ===== */
+.croc-mouth {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 75%;
+  height: 28%;
+  background: #dc2626;
+  border-radius: 0 0 40% 40% / 0 0 60% 60%;
+  overflow: hidden;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.3);
+  border: 2px solid #15803d;
+  border-top: none;
+}
+
+.teeth {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  height: 40%;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 8%;
 }
 
-/* Screens */
+.teeth::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  width: 16%;
+  height: 80%;
+  background: #fff;
+  border-radius: 0 0 40% 40%;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.teeth::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 12%;
+  width: 16%;
+  height: 80%;
+  background: #fff;
+  border-radius: 0 0 40% 40%;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.tooth-mid {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14%;
+  height: 65%;
+  background: #fff;
+  border-radius: 0 0 40% 40%;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+/* tongue */
+.croc-mouth::after {
+  content: '';
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 45%;
+  height: 40%;
+  background: #ef4444;
+  border-radius: 50% 50% 40% 40%;
+}
+
+/* ===== Hit Effect ===== */
+.hit-effect {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-weight: 900;
+  font-size: clamp(1rem, 4vw, 1.6rem);
+  color: #fbbf24;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 0 12px rgba(255,200,0,0.5);
+  z-index: 20;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.hit-effect.show {
+  animation: hit-pop 0.5s ease-out forwards;
+}
+
+@keyframes hit-pop {
+  0% { transform: translateX(-50%) scale(0) rotate(-10deg); opacity: 1; }
+  30% { transform: translateX(-50%) scale(1.4) rotate(5deg); opacity: 1; }
+  60% { transform: translateX(-50%) scale(1.1) rotate(-3deg); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.8) translateY(-30px) rotate(0deg); opacity: 0; }
+}
+
+/* ===== Stars (hit daze) ===== */
+.stars {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 40%;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+}
+
+.stars.show {
+  opacity: 1;
+  animation: stars-spin 0.6s linear;
+}
+
+.stars .star {
+  position: absolute;
+  font-size: clamp(0.7rem, 2.5vw, 1.2rem);
+}
+.stars .star:nth-child(1) {
+  top: 0; left: 10%;
+  animation: star-orbit1 0.6s linear;
+}
+.stars .star:nth-child(2) {
+  top: 5%; right: 10%;
+  animation: star-orbit2 0.6s linear;
+}
+.stars .star:nth-child(3) {
+  top: -5%; left: 45%;
+  animation: star-orbit3 0.6s linear;
+}
+
+@keyframes star-orbit1 {
+  0% { transform: translate(15px, 5px) scale(0); }
+  30% { transform: translate(-8px, -12px) scale(1.2); }
+  100% { transform: translate(20px, -20px) scale(0); }
+}
+@keyframes star-orbit2 {
+  0% { transform: translate(-15px, 5px) scale(0); }
+  30% { transform: translate(8px, -12px) scale(1.2); }
+  100% { transform: translate(-20px, -20px) scale(0); }
+}
+@keyframes star-orbit3 {
+  0% { transform: translate(0, 10px) scale(0); }
+  30% { transform: translate(0, -8px) scale(1.3); }
+  100% { transform: translate(0, -25px) scale(0); }
+}
+
+/* ===== Score Fly ===== */
+.score-fly {
+  position: fixed;
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: #fbbf24;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  pointer-events: none;
+  z-index: 100;
+  animation: score-fly-up 0.7s ease-out forwards;
+}
+
+@keyframes score-fly-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+}
+
+/* ===== Screens ===== */
 .screen {
   position: absolute;
   inset: 0;
@@ -81,12 +474,12 @@ body {
   pointer-events: none;
 }
 
-/* Title screen */
+/* ===== Title Screen ===== */
 #title-screen {
   background:
     radial-gradient(120% 90% at 50% 0%,
       rgba(34,197,94,0.55) 0%, transparent 60%),
-    linear-gradient(180deg, #1b2e1c 0%, #11201f 100%);
+    linear-gradient(180deg, #1b4a24 0%, #0f2e17 100%);
 }
 
 .title-croc {
@@ -110,7 +503,19 @@ body {
   color: rgba(255,255,255,0.7);
 }
 
-/* Result screen */
+/* Decorative crocs on title */
+.title-deco {
+  position: absolute;
+  font-size: 2.5rem;
+  opacity: 0.3;
+  animation: gp-float 4s ease-in-out infinite;
+}
+.title-deco:nth-child(1) { top: 15%; left: 8%; animation-delay: -1s; }
+.title-deco:nth-child(2) { top: 20%; right: 10%; animation-delay: -2.5s; transform: scaleX(-1); }
+.title-deco:nth-child(3) { bottom: 18%; left: 12%; animation-delay: -0.5s; }
+.title-deco:nth-child(4) { bottom: 22%; right: 8%; animation-delay: -3s; transform: scaleX(-1); }
+
+/* ===== Result Screen ===== */
 #result-screen {
   background: rgba(0,0,0,0.75);
   backdrop-filter: blur(8px);
@@ -144,7 +549,13 @@ body {
 
 .result-score {
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  color: var(--gp-ink-soft);
+}
+
+.result-detail {
+  font-weight: 700;
+  font-size: 0.95rem;
   color: var(--gp-ink-soft);
 }
 
@@ -154,7 +565,7 @@ body {
   color: var(--gp-accent-d);
 }
 
-/* Confetti */
+/* ===== Confetti ===== */
 .confetti {
   position: absolute;
   width: 10px;
@@ -164,21 +575,28 @@ body {
   z-index: 60;
 }
 
-/* Screen shake */
+/* ===== Screen shake ===== */
 @keyframes screen-shake {
-  0%, 100% { transform: translate(0, 0) rotate(0); }
-  10% { transform: translate(-8px, -6px) rotate(-1deg); }
-  20% { transform: translate(8px, 4px) rotate(1deg); }
-  30% { transform: translate(-6px, 8px) rotate(-0.5deg); }
-  40% { transform: translate(6px, -4px) rotate(0.5deg); }
-  50% { transform: translate(-4px, 6px) rotate(-1deg); }
-  60% { transform: translate(4px, -8px) rotate(0.5deg); }
-  70% { transform: translate(-8px, 4px) rotate(-0.5deg); }
-  80% { transform: translate(6px, 6px) rotate(1deg); }
-  90% { transform: translate(-4px, -6px) rotate(-0.5deg); }
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5px, -3px); }
+  20% { transform: translate(5px, 2px); }
+  30% { transform: translate(-3px, 5px); }
+  40% { transform: translate(3px, -2px); }
+  50% { transform: translate(-2px, 3px); }
 }
-.shaking {
-  animation: screen-shake 0.4s ease-in-out;
+
+/* ===== Responsive adjustments ===== */
+@media (orientation: landscape) and (max-height: 500px) {
+  #field {
+    height: min(70vh, 340px);
+    width: min(80vw, 580px);
+  }
+  .hud-box { font-size: 0.9rem; padding: 4px 12px; }
+}
+
+@media (max-width: 360px) {
+  .croc-mouth { height: 24%; }
+  .eye { width: 30%; }
 }
 </style>
 </head>
@@ -186,30 +604,178 @@ body {
   <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
 
   <div id="game-container">
-    <canvas id="gameCanvas"></canvas>
+
+    <!-- Decorative leaves -->
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
 
     <!-- HUD -->
     <div id="hud" style="display:none;">
-      <div class="hud-box" id="hud-round">ラウンド 1</div>
-      <div class="hud-box" id="hud-score">🦷 0</div>
+      <div class="hud-box" id="hud-score">0 てん</div>
+      <div class="hud-box" id="hud-timer">60</div>
+    </div>
+
+    <!-- Combo display -->
+    <div id="combo-display"></div>
+
+    <!-- Game field -->
+    <div id="field" style="display:none;">
+      <!-- Hole 0 -->
+      <div class="hole" data-id="0">
+        <div class="hole-bg"></div>
+        <div class="croc-wrapper">
+          <div class="croc" data-id="0">
+            <div class="stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <div class="hit-effect">BONK!</div>
+            <div class="croc-head">
+              <div class="croc-eyes">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+              </div>
+              <div class="croc-nose"></div>
+              <div class="croc-mouth">
+                <div class="teeth"><div class="tooth-mid"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hole-rim"></div>
+      </div>
+
+      <!-- Hole 1 -->
+      <div class="hole" data-id="1">
+        <div class="hole-bg"></div>
+        <div class="croc-wrapper">
+          <div class="croc" data-id="1">
+            <div class="stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <div class="hit-effect">BONK!</div>
+            <div class="croc-head">
+              <div class="croc-eyes">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+              </div>
+              <div class="croc-nose"></div>
+              <div class="croc-mouth">
+                <div class="teeth"><div class="tooth-mid"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hole-rim"></div>
+      </div>
+
+      <!-- Hole 2 -->
+      <div class="hole" data-id="2">
+        <div class="hole-bg"></div>
+        <div class="croc-wrapper">
+          <div class="croc" data-id="2">
+            <div class="stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <div class="hit-effect">BONK!</div>
+            <div class="croc-head">
+              <div class="croc-eyes">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+              </div>
+              <div class="croc-nose"></div>
+              <div class="croc-mouth">
+                <div class="teeth"><div class="tooth-mid"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hole-rim"></div>
+      </div>
+
+      <!-- Hole 3 -->
+      <div class="hole" data-id="3">
+        <div class="hole-bg"></div>
+        <div class="croc-wrapper">
+          <div class="croc" data-id="3">
+            <div class="stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <div class="hit-effect">BONK!</div>
+            <div class="croc-head">
+              <div class="croc-eyes">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+              </div>
+              <div class="croc-nose"></div>
+              <div class="croc-mouth">
+                <div class="teeth"><div class="tooth-mid"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hole-rim"></div>
+      </div>
+
+      <!-- Hole 4 -->
+      <div class="hole" data-id="4">
+        <div class="hole-bg"></div>
+        <div class="croc-wrapper">
+          <div class="croc" data-id="4">
+            <div class="stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <div class="hit-effect">BONK!</div>
+            <div class="croc-head">
+              <div class="croc-eyes">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+              </div>
+              <div class="croc-nose"></div>
+              <div class="croc-mouth">
+                <div class="teeth"><div class="tooth-mid"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hole-rim"></div>
+      </div>
+
+      <!-- Hole 5 -->
+      <div class="hole" data-id="5">
+        <div class="hole-bg"></div>
+        <div class="croc-wrapper">
+          <div class="croc" data-id="5">
+            <div class="stars"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <div class="hit-effect">BONK!</div>
+            <div class="croc-head">
+              <div class="croc-eyes">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+              </div>
+              <div class="croc-nose"></div>
+              <div class="croc-mouth">
+                <div class="teeth"><div class="tooth-mid"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hole-rim"></div>
+      </div>
     </div>
 
     <!-- Title screen -->
     <div id="title-screen" class="screen">
+      <div class="title-deco">🐊</div>
+      <div class="title-deco">🐊</div>
+      <div class="title-deco">🐊</div>
+      <div class="title-deco">🐊</div>
       <div class="title-croc">🐊</div>
       <div class="title-text">ワニワニパニック</div>
-      <div class="title-sub">はを おしてみよう！</div>
+      <div class="title-sub">ワニを たたいてね！</div>
       <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:16px;">
-        あそぶ！
+        はじめる！
       </button>
     </div>
 
     <!-- Result screen -->
     <div id="result-screen" class="screen hidden">
       <div class="result-card gp-pop">
-        <div class="result-emoji" id="result-emoji">😱</div>
-        <div class="result-title" id="result-title">ガブッ！</div>
-        <div class="result-score" id="result-score">0 ほん おせたよ！</div>
+        <div class="result-emoji" id="result-emoji">🎉</div>
+        <div class="result-title" id="result-title">おしまい！</div>
+        <div class="result-score" id="result-score">0 てん</div>
+        <div class="result-detail" id="result-detail"></div>
         <div class="result-best" id="result-best"></div>
         <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px;">
           もういっかい！
@@ -220,30 +786,41 @@ body {
 
 <script>
 // ============================================================
-// ワニワニパニック - Crocodile Dentist Game
+// Whack-a-Croc (ワニワニパニック) - Arcade Style
 // ============================================================
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
 const container = document.getElementById('game-container');
-
-// Screens
 const titleScreen = document.getElementById('title-screen');
 const resultScreen = document.getElementById('result-screen');
 const hud = document.getElementById('hud');
+const field = document.getElementById('field');
+const comboDisplay = document.getElementById('combo-display');
 
+// DOM elements for each hole
+const crocs = document.querySelectorAll('.croc');
+const holes = document.querySelectorAll('.hole');
+
+// ============================================================
 // State
-let gameState = 'title'; // title, playing, gameover, win
-let round = 1;
+// ============================================================
+let gameState = 'title'; // title | playing | gameover
 let score = 0;
-let totalScore = 0;
-let bestScore = parseInt(localStorage.getItem('waniwani-best') || '0');
-let teeth = [];
-let badTeethIndices = [];
-let mouthSnapProgress = 0; // 0 = open, 1 = closed
-let mouthSnapping = false;
-let eyeState = 'normal'; // normal, scared, stars
-let W, H;
+let timeLeft = 60;
+let combo = 0;
+let maxCombo = 0;
+let totalHits = 0;
+let bestScore = parseInt(localStorage.getItem('waniwani-whack-best') || '0');
+
+// Croc state per hole
+const crocState = new Array(6).fill(null).map(() => ({
+  isUp: false,
+  isHit: false,
+  timer: null,
+}));
+
+let gameTimer = null;
+let spawnInterval = null;
+let tickTimer = null;
 
 // ============================================================
 // Audio (Web Audio API)
@@ -256,546 +833,511 @@ function ensureAudio() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-function playClick() {
+function playBoing() {
   ensureAudio();
+  const t = audioCtx.currentTime;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.connect(gain);
   gain.connect(audioCtx.destination);
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
-  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
-  osc.start(audioCtx.currentTime);
-  osc.stop(audioCtx.currentTime + 0.12);
+  osc.frequency.setValueAtTime(300, t);
+  osc.frequency.exponentialRampToValueAtTime(600, t + 0.05);
+  osc.frequency.exponentialRampToValueAtTime(200, t + 0.15);
+  gain.gain.setValueAtTime(0.15, t);
+  gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+  osc.start(t);
+  osc.stop(t + 0.15);
 }
 
-function playSnap() {
+function playBonk(comboNum) {
   ensureAudio();
   const t = audioCtx.currentTime;
 
-  // Loud chomp noise
-  const bufferSize = audioCtx.sampleRate * 0.3;
+  // Base pitch rises with combo
+  const basePitch = 400 + Math.min(comboNum, 10) * 40;
+
+  // Satisfying thwack noise burst
+  const bufferSize = audioCtx.sampleRate * 0.15;
   const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
   }
   const noise = audioCtx.createBufferSource();
   noise.buffer = buffer;
+
+  // Band-pass filter for thwack character
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'bandpass';
+  filt.frequency.value = 1200;
+  filt.Q.value = 1.5;
+
   const noiseGain = audioCtx.createGain();
-  noise.connect(noiseGain);
+  noise.connect(filt);
+  filt.connect(noiseGain);
   noiseGain.connect(audioCtx.destination);
-  noiseGain.gain.setValueAtTime(0.6, t);
-  noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+  noiseGain.gain.setValueAtTime(0.35, t);
+  noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
   noise.start(t);
 
-  // Low thump
+  // Pitched bonk tone
   const osc = audioCtx.createOscillator();
   const oscGain = audioCtx.createGain();
   osc.connect(oscGain);
   oscGain.connect(audioCtx.destination);
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(120, t);
-  osc.frequency.exponentialRampToValueAtTime(40, t + 0.25);
-  oscGain.gain.setValueAtTime(0.5, t);
-  oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(basePitch, t);
+  osc.frequency.exponentialRampToValueAtTime(basePitch * 0.6, t + 0.1);
+  oscGain.gain.setValueAtTime(0.2, t);
+  oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
   osc.start(t);
-  osc.stop(t + 0.25);
-
-  // Growl
-  const growl = audioCtx.createOscillator();
-  const growlGain = audioCtx.createGain();
-  growl.connect(growlGain);
-  growlGain.connect(audioCtx.destination);
-  growl.type = 'sawtooth';
-  growl.frequency.setValueAtTime(80, t + 0.1);
-  growl.frequency.setValueAtTime(90, t + 0.2);
-  growl.frequency.setValueAtTime(70, t + 0.35);
-  growlGain.gain.setValueAtTime(0, t);
-  growlGain.gain.linearRampToValueAtTime(0.35, t + 0.15);
-  growlGain.gain.linearRampToValueAtTime(0.3, t + 0.4);
-  growlGain.gain.exponentialRampToValueAtTime(0.01, t + 0.7);
-  growl.start(t);
-  growl.stop(t + 0.7);
+  osc.stop(t + 0.12);
 }
 
-function playVictory() {
+function playComboSound(comboNum) {
   ensureAudio();
   const t = audioCtx.currentTime;
-  const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
-  notes.forEach((freq, i) => {
+  // Ascending notes for combo
+  const baseFreq = 523 + comboNum * 80; // C5 + ascending
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(baseFreq, t);
+  osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, t + 0.15);
+  gain.gain.setValueAtTime(0.15, t);
+  gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+  osc.start(t);
+  osc.stop(t + 0.2);
+}
+
+function playTick() {
+  ensureAudio();
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, t);
+  gain.gain.setValueAtTime(0.08, t);
+  gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+  osc.start(t);
+  osc.stop(t + 0.05);
+
+  // Tock (lower)
+  setTimeout(() => {
+    if (audioCtx.state !== 'running') return;
+    const t2 = audioCtx.currentTime;
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(600, t2);
+    gain2.gain.setValueAtTime(0.06, t2);
+    gain2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.05);
+    osc2.start(t2);
+    osc2.stop(t2 + 0.05);
+  }, 250);
+}
+
+function playFanfare() {
+  ensureAudio();
+  const t = audioCtx.currentTime;
+  const melody = [523, 659, 784, 880, 1047]; // C5 E5 G5 A5 C6
+  melody.forEach((freq, i) => {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(freq, t + i * 0.15);
-    gain.gain.setValueAtTime(0, t + i * 0.15);
-    gain.gain.linearRampToValueAtTime(0.2, t + i * 0.15 + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.15 + 0.35);
-    osc.start(t + i * 0.15);
-    osc.stop(t + i * 0.15 + 0.35);
+    osc.type = i < 3 ? 'square' : 'sine';
+    osc.frequency.setValueAtTime(freq, t + i * 0.12);
+    gain.gain.setValueAtTime(0, t + i * 0.12);
+    gain.gain.linearRampToValueAtTime(0.18, t + i * 0.12 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.12 + (i === melody.length - 1 ? 0.6 : 0.25));
+    osc.start(t + i * 0.12);
+    osc.stop(t + i * 0.12 + (i === melody.length - 1 ? 0.6 : 0.25));
   });
 }
 
 // ============================================================
-// Teeth setup
+// Difficulty parameters
 // ============================================================
-function initTeeth() {
-  teeth = [];
-  const numBad = Math.min(round, 11); // max 11 bad out of 12
-  badTeethIndices = [];
-
-  // Pick random bad teeth
-  const indices = Array.from({length: 12}, (_, i) => i);
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-  for (let i = 0; i < numBad; i++) {
-    badTeethIndices.push(indices[i]);
-  }
-
-  for (let i = 0; i < 12; i++) {
-    teeth.push({
-      index: i,
-      row: i < 6 ? 'top' : 'bottom',
-      col: i < 6 ? i : i - 6,
-      pressed: false,
-      pressing: false,
-      pressAnim: 0,
-      isBad: badTeethIndices.includes(i),
-    });
-  }
-
-  score = 0;
-  mouthSnapProgress = 0;
-  mouthSnapping = false;
-  eyeState = 'normal';
-  updateHUD();
-}
-
-function updateHUD() {
-  document.getElementById('hud-round').textContent = 'ラウンド ' + round;
-  document.getElementById('hud-score').textContent = '🦷 ' + score;
-}
-
-// ============================================================
-// Resize
-// ============================================================
-function resize() {
-  const dpr = window.devicePixelRatio || 1;
-  W = container.clientWidth;
-  H = container.clientHeight;
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-window.addEventListener('resize', resize);
-resize();
-
-// ============================================================
-// Drawing
-// ============================================================
-function getToothRect(tooth) {
-  // Layout teeth in the crocodile's mouth
-  const mouthL = W * 0.08;
-  const mouthR = W * 0.92;
-  const mouthW = mouthR - mouthL;
-  const toothW = Math.min(mouthW / 7, 62);
-  const gap = (mouthW - toothW * 6) / 7;
-  const toothH = Math.min(H * 0.1, 70);
-
-  const centerY = H * 0.5;
-  const mouthOpenH = H * 0.32;
-
-  // Snap offset
-  const snapDist = mouthOpenH * 0.42 * mouthSnapProgress;
-
-  let x = mouthL + gap + tooth.col * (toothW + gap);
-  let y;
-
-  if (tooth.row === 'top') {
-    const baseY = centerY - mouthOpenH * 0.5 + snapDist;
-    y = baseY - toothH * 0.1;
-    // Push down when pressed
-    if (tooth.pressAnim > 0) {
-      y += toothH * 0.5 * tooth.pressAnim;
-    }
+function getDifficulty() {
+  const elapsed = 60 - timeLeft;
+  if (elapsed < 15) {
+    // Phase 1: slow, 1-2 crocs
+    return { maxCrocs: 2, popDuration: 2000, spawnDelay: 1200 };
+  } else if (elapsed < 30) {
+    // Phase 2: medium, 2-3 crocs
+    return { maxCrocs: 3, popDuration: 1500, spawnDelay: 900 };
+  } else if (elapsed < 45) {
+    // Phase 3: fast, 2-4 crocs
+    return { maxCrocs: 4, popDuration: 1200, spawnDelay: 700 };
   } else {
-    const baseY = centerY + mouthOpenH * 0.5 - toothH - snapDist;
-    y = baseY + toothH * 0.1;
-    // Push up when pressed
-    if (tooth.pressAnim > 0) {
-      y -= toothH * 0.5 * tooth.pressAnim;
-    }
+    // Phase 4: frenzy! 3-5 crocs
+    return { maxCrocs: 5, popDuration: 800, spawnDelay: 500 };
   }
-
-  return { x, y, w: toothW, h: toothH };
-}
-
-function drawCrocodile() {
-  const centerX = W / 2;
-  const centerY = H * 0.5;
-  const headW = W * 0.96;
-  const headH = H * 0.75;
-  const mouthOpenH = H * 0.32;
-  const snapDist = mouthOpenH * 0.42 * mouthSnapProgress;
-
-  // ---------- BODY / HEAD ----------
-  // Head background (behind mouth)
-  ctx.save();
-
-  // Upper head
-  const upperJawBottom = centerY - mouthOpenH * 0.05 + snapDist;
-  const upperJawTop = centerY - headH * 0.5;
-
-  // Lower head
-  const lowerJawTop = centerY + mouthOpenH * 0.05 - snapDist;
-  const lowerJawBottom = centerY + headH * 0.5;
-
-  // -- Draw mouth interior (red/pink) --
-  ctx.fillStyle = '#c0392b';
-  ctx.beginPath();
-  const mouthTop = upperJawBottom - 8;
-  const mouthBottom = lowerJawTop + 8;
-  const ml = W * 0.06;
-  const mr = W * 0.94;
-  ctx.roundRect(ml, mouthTop, mr - ml, mouthBottom - mouthTop, 12);
-  ctx.fill();
-
-  // Darker back of throat
-  ctx.fillStyle = '#7b241c';
-  const throatMargin = 30;
-  ctx.beginPath();
-  ctx.roundRect(ml + throatMargin, mouthTop + 10, mr - ml - throatMargin * 2, mouthBottom - mouthTop - 20, 8);
-  ctx.fill();
-
-  // Tongue
-  ctx.fillStyle = '#e74c3c';
-  const tongueW = W * 0.25;
-  const tongueH = (mouthBottom - mouthTop) * 0.3;
-  ctx.beginPath();
-  ctx.ellipse(centerX, mouthBottom - tongueH * 0.2, tongueW / 2, tongueH, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // -- Upper jaw (green) --
-  const jawR = 20;
-  ctx.fillStyle = '#27ae60';
-  ctx.beginPath();
-  ctx.moveTo(centerX - headW / 2, upperJawBottom);
-  ctx.lineTo(centerX - headW / 2, upperJawTop + jawR);
-  ctx.quadraticCurveTo(centerX - headW / 2, upperJawTop, centerX - headW / 2 + jawR, upperJawTop);
-  ctx.lineTo(centerX + headW / 2 - jawR, upperJawTop);
-  ctx.quadraticCurveTo(centerX + headW / 2, upperJawTop, centerX + headW / 2, upperJawTop + jawR);
-  ctx.lineTo(centerX + headW / 2, upperJawBottom);
-  ctx.closePath();
-  ctx.fill();
-
-  // Upper jaw scales/bumps
-  ctx.fillStyle = '#219150';
-  const scaleSize = 14;
-  for (let sx = centerX - headW / 2 + 30; sx < centerX + headW / 2 - 20; sx += 32) {
-    for (let sy = upperJawTop + 20; sy < upperJawBottom - 20; sy += 28) {
-      ctx.beginPath();
-      ctx.arc(sx + (sy % 56 === 20 ? 14 : 0), sy, scaleSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Lip ridge on upper jaw
-  ctx.fillStyle = '#1e8449';
-  ctx.beginPath();
-  ctx.roundRect(centerX - headW / 2 + 4, upperJawBottom - 14, headW - 8, 14, [0, 0, 6, 6]);
-  ctx.fill();
-
-  // -- Lower jaw (green) --
-  ctx.fillStyle = '#27ae60';
-  ctx.beginPath();
-  ctx.moveTo(centerX - headW / 2, lowerJawTop);
-  ctx.lineTo(centerX - headW / 2, lowerJawBottom - jawR);
-  ctx.quadraticCurveTo(centerX - headW / 2, lowerJawBottom, centerX - headW / 2 + jawR, lowerJawBottom);
-  ctx.lineTo(centerX + headW / 2 - jawR, lowerJawBottom);
-  ctx.quadraticCurveTo(centerX + headW / 2, lowerJawBottom, centerX + headW / 2, lowerJawBottom - jawR);
-  ctx.lineTo(centerX + headW / 2, lowerJawTop);
-  ctx.closePath();
-  ctx.fill();
-
-  // Lower jaw scales
-  ctx.fillStyle = '#219150';
-  for (let sx = centerX - headW / 2 + 30; sx < centerX + headW / 2 - 20; sx += 32) {
-    for (let sy = lowerJawTop + 26; sy < lowerJawBottom - 10; sy += 28) {
-      ctx.beginPath();
-      ctx.arc(sx + (sy % 56 === 26 ? 14 : 0), sy, scaleSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Lip ridge on lower jaw
-  ctx.fillStyle = '#1e8449';
-  ctx.beginPath();
-  ctx.roundRect(centerX - headW / 2 + 4, lowerJawTop, headW - 8, 14, [6, 6, 0, 0]);
-  ctx.fill();
-
-  // -- Nostrils on upper jaw --
-  const nostrilY = upperJawTop + 25;
-  ctx.fillStyle = '#1a6b37';
-  ctx.beginPath();
-  ctx.ellipse(centerX - 22, nostrilY, 8, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(centerX + 22, nostrilY, 8, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // -- Eyes (sitting on top of the upper jaw like bumps) --
-  const eyeR = Math.min(30, W * 0.075);
-  const eyeY = upperJawTop - eyeR * 0.15;
-  const eyeSpacing = headW * 0.22;
-
-  // Eye bumps (green mounds behind eyes)
-  [-1, 1].forEach(side => {
-    const ex = centerX + side * eyeSpacing;
-    ctx.fillStyle = '#22a854';
-    ctx.beginPath();
-    ctx.ellipse(ex, eyeY + eyeR * 0.3, eyeR * 1.4, eyeR * 1.3, 0, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  if (eyeState === 'stars') {
-    // Star eyes for victory
-    ctx.fillStyle = '#f1c40f';
-    ctx.font = `${eyeR * 2.2}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('⭐', centerX - eyeSpacing, eyeY);
-    ctx.fillText('⭐', centerX + eyeSpacing, eyeY);
-  } else {
-    // White of eye
-    [-1, 1].forEach(side => {
-      const ex = centerX + side * eyeSpacing;
-
-      // Eye white
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.ellipse(ex, eyeY, eyeR, eyeR * 1.1, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#1a5c2a';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      if (eyeState === 'scared') {
-        // Angry narrowed eyes
-        const pupilR = eyeR * 0.5;
-        ctx.fillStyle = '#c0392b';
-        ctx.beginPath();
-        ctx.arc(ex, eyeY, pupilR, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Angry eyebrow
-        ctx.strokeStyle = '#1a5c2a';
-        ctx.lineWidth = 5;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        const browInner = side === -1 ? ex + eyeR * 0.6 : ex - eyeR * 0.6;
-        const browOuter = side === -1 ? ex - eyeR * 0.8 : ex + eyeR * 0.8;
-        ctx.moveTo(browInner, eyeY - eyeR * 0.7);
-        ctx.lineTo(browOuter, eyeY - eyeR * 1.1);
-        ctx.stroke();
-      } else {
-        // Normal: pupil looking slightly up
-        const pupilR = eyeR * 0.45;
-        ctx.fillStyle = '#1a1a2e';
-        ctx.beginPath();
-        ctx.arc(ex, eyeY - eyeR * 0.15, pupilR, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Glint
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(ex + pupilR * 0.35, eyeY - eyeR * 0.35, pupilR * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
-  }
-
-  ctx.restore();
-
-  // ---------- TEETH ----------
-  teeth.forEach(tooth => {
-    if (tooth.pressed && mouthSnapping) return; // hide pressed teeth during snap
-    const r = getToothRect(tooth);
-    const radius = Math.min(r.w * 0.3, 10);
-
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.beginPath();
-    ctx.roundRect(r.x + 2, r.y + 2, r.w, r.h, radius);
-    ctx.fill();
-
-    // Tooth body
-    if (tooth.pressed) {
-      ctx.fillStyle = '#b0b0b0';
-    } else {
-      // Gradient for 3D look
-      const grad = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(1, '#e8e8e0');
-      ctx.fillStyle = grad;
-    }
-    ctx.beginPath();
-    ctx.roundRect(r.x, r.y, r.w, r.h, radius);
-    ctx.fill();
-
-    // Tooth outline
-    ctx.strokeStyle = tooth.pressed ? '#909090' : '#d0d0c8';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Tooth shine (only if not pressed)
-    if (!tooth.pressed) {
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.beginPath();
-      ctx.roundRect(r.x + r.w * 0.2, r.y + 3, r.w * 0.25, r.h * 0.3, 3);
-      ctx.fill();
-    }
-  });
 }
 
 // ============================================================
-// Animation loop
+// Croc spawning
 // ============================================================
-let lastTime = 0;
-
-function gameLoop(time) {
-  const dt = Math.min((time - lastTime) / 1000, 0.05);
-  lastTime = time;
-
-  if (['playing', 'snapping', 'winning', 'gameover', 'win'].includes(gameState)) {
-    // Animate tooth press
-    teeth.forEach(tooth => {
-      if (tooth.pressing && tooth.pressAnim < 1) {
-        tooth.pressAnim = Math.min(1, tooth.pressAnim + dt / 0.15);
-        if (tooth.pressAnim >= 1) {
-          tooth.pressing = false;
-          tooth.pressed = true;
-        }
-      }
-    });
-
-    // Animate mouth snap
-    if (mouthSnapping && mouthSnapProgress < 1) {
-      mouthSnapProgress = Math.min(1, mouthSnapProgress + dt / 0.3);
-    }
-
-    // Draw
-    ctx.clearRect(0, 0, W, H);
-
-    // Background
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-    bgGrad.addColorStop(0, '#1a5c2a');
-    bgGrad.addColorStop(1, '#0d3318');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, W, H);
-
-    drawCrocodile();
-  }
-
-  requestAnimationFrame(gameLoop);
-}
-requestAnimationFrame(gameLoop);
-
-// ============================================================
-// Input handling
-// ============================================================
-function getToothAtPos(px, py) {
-  // Check all teeth, return the one that was tapped
-  for (let i = teeth.length - 1; i >= 0; i--) {
-    const tooth = teeth[i];
-    if (tooth.pressed || tooth.pressing) continue;
-    const r = getToothRect(tooth);
-    // Generous hit area
-    const padding = 8;
-    if (px >= r.x - padding && px <= r.x + r.w + padding &&
-        py >= r.y - padding && py <= r.y + r.h + padding) {
-      return tooth;
-    }
-  }
-  return null;
-}
-
-function handleTap(px, py) {
+function popUpCroc() {
   if (gameState !== 'playing') return;
 
-  const tooth = getToothAtPos(px, py);
-  if (!tooth) return;
+  const diff = getDifficulty();
 
-  if (tooth.isBad) {
-    // BAD TOOTH! Game over!
-    gameState = 'snapping'; // prevent further taps
-    tooth.pressing = true;
-    tooth.pressAnim = 0;
-    playSnap();
+  // Count active crocs
+  const activeCount = crocState.filter(c => c.isUp && !c.isHit).length;
+  if (activeCount >= diff.maxCrocs) return;
 
-    setTimeout(() => {
-      mouthSnapping = true;
-      eyeState = 'scared';
-      container.classList.add('shaking');
-      setTimeout(() => container.classList.remove('shaking'), 400);
-
-      // Vibrate if available
-      if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
-
-      setTimeout(() => {
-        gameState = 'gameover';
-        showResult(false);
-      }, 800);
-    }, 200);
-  } else {
-    // Safe tooth
-    tooth.pressing = true;
-    tooth.pressAnim = 0;
-    score++;
-    totalScore++;
-    updateHUD();
-    playClick();
-
-    // Vibrate briefly
-    if (navigator.vibrate) navigator.vibrate(30);
-
-    // Check win condition
-    const remaining = teeth.filter(t => !t.pressed && !t.pressing && !t.isBad);
-    if (remaining.length === 0) {
-      // All safe teeth pressed!
-      gameState = 'winning'; // prevent further taps
-      setTimeout(() => {
-        gameState = 'win';
-        eyeState = 'stars';
-        playVictory();
-        spawnConfetti();
-        setTimeout(() => showResult(true), 1200);
-      }, 300);
+  // Find available holes (not up and not recently hit)
+  const available = [];
+  for (let i = 0; i < 6; i++) {
+    if (!crocState[i].isUp && !crocState[i].isHit) {
+      available.push(i);
     }
+  }
+  if (available.length === 0) return;
+
+  // Pick random hole
+  const holeIdx = available[Math.floor(Math.random() * available.length)];
+  const crocEl = crocs[holeIdx];
+  const state = crocState[holeIdx];
+
+  state.isUp = true;
+  state.isHit = false;
+
+  // Pop up
+  crocEl.classList.remove('retreat', 'hit');
+  crocEl.classList.add('up');
+  playBoing();
+
+  // Schedule retreat
+  state.timer = setTimeout(() => {
+    if (state.isUp && !state.isHit) {
+      retreatCroc(holeIdx);
+      // Missed - reset combo
+      combo = 0;
+      updateComboDisplay();
+    }
+  }, diff.popDuration);
+}
+
+function retreatCroc(idx) {
+  const crocEl = crocs[idx];
+  const state = crocState[idx];
+
+  state.isUp = false;
+  crocEl.classList.remove('up', 'hit');
+  crocEl.classList.add('retreat');
+
+  // Clear hit effect and stars
+  const hitEffect = crocEl.querySelector('.hit-effect');
+  const stars = crocEl.querySelector('.stars');
+  hitEffect.classList.remove('show');
+  stars.classList.remove('show');
+
+  // Reset after animation
+  setTimeout(() => {
+    crocEl.classList.remove('retreat');
+    state.isHit = false;
+  }, 250);
+}
+
+function hitCroc(idx, event) {
+  const state = crocState[idx];
+  if (!state.isUp || state.isHit || gameState !== 'playing') return;
+
+  state.isHit = true;
+  if (state.timer) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  const crocEl = crocs[idx];
+
+  // Combo tracking
+  combo++;
+  totalHits++;
+  if (combo > maxCombo) maxCombo = combo;
+
+  // Calculate score
+  let points = 10;
+  let bonusText = '';
+  if (combo >= 3) {
+    const multiplier = Math.min(combo, 10);
+    points = 10 * multiplier;
+    bonusText = ' x' + multiplier;
+    playComboSound(combo);
+  }
+  score += points;
+  updateHUD();
+  updateComboDisplay();
+
+  // Play bonk sound
+  playBonk(combo);
+
+  // Show hit effect
+  const hitEffect = crocEl.querySelector('.hit-effect');
+  const hitTexts = ['BONK!', 'パチン！', 'えいっ！', 'ぺしっ！'];
+  hitEffect.textContent = hitTexts[Math.floor(Math.random() * hitTexts.length)] + bonusText;
+  hitEffect.classList.remove('show');
+  void hitEffect.offsetWidth; // force reflow
+  hitEffect.classList.add('show');
+
+  // Show stars
+  const stars = crocEl.querySelector('.stars');
+  stars.classList.remove('show');
+  void stars.offsetWidth;
+  stars.classList.add('show');
+
+  // Croc hit animation
+  crocEl.classList.add('hit');
+
+  // Spawn flying score at tap location
+  if (event) {
+    spawnScoreFly(event.clientX || event.touches?.[0]?.clientX || 0,
+                  event.clientY || event.touches?.[0]?.clientY || 0,
+                  '+' + points);
+  }
+
+  // Vibrate
+  if (navigator.vibrate) navigator.vibrate(40);
+
+  // Retreat after brief pause
+  setTimeout(() => retreatCroc(idx), 350);
+}
+
+// ============================================================
+// Score fly animation
+// ============================================================
+function spawnScoreFly(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'score-fly';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
+// ============================================================
+// Combo display
+// ============================================================
+function updateComboDisplay() {
+  if (combo >= 3) {
+    comboDisplay.textContent = 'COMBO x' + combo + '!';
+    comboDisplay.classList.remove('show');
+    void comboDisplay.offsetWidth;
+    comboDisplay.classList.add('show');
+  } else {
+    comboDisplay.classList.remove('show');
   }
 }
 
-canvas.addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const px = e.clientX - rect.left;
-  const py = e.clientY - rect.top;
-  handleTap(px, py);
-});
+// ============================================================
+// HUD updates
+// ============================================================
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score + ' てん';
+  const timerEl = document.getElementById('hud-timer');
+  timerEl.textContent = timeLeft;
+
+  if (timeLeft <= 10) {
+    timerEl.classList.add('warning');
+  } else {
+    timerEl.classList.remove('warning');
+  }
+}
+
+// ============================================================
+// Spawn loop
+// ============================================================
+function startSpawning() {
+  // Use variable-rate spawning
+  function scheduleNext() {
+    if (gameState !== 'playing') return;
+    const diff = getDifficulty();
+
+    // Add some randomness to spawn delay
+    const jitter = diff.spawnDelay * 0.4 * (Math.random() - 0.5);
+    const delay = Math.max(200, diff.spawnDelay + jitter);
+
+    spawnInterval = setTimeout(() => {
+      popUpCroc();
+      scheduleNext();
+    }, delay);
+  }
+
+  // Also try to keep multiple crocs up based on difficulty
+  function spawnBurst() {
+    if (gameState !== 'playing') return;
+    const diff = getDifficulty();
+    const activeCount = crocState.filter(c => c.isUp && !c.isHit).length;
+    const deficit = diff.maxCrocs - activeCount - 1;
+    for (let i = 0; i < deficit && i < 2; i++) {
+      setTimeout(() => popUpCroc(), i * 150);
+    }
+  }
+
+  // Initial pop
+  setTimeout(() => {
+    popUpCroc();
+    scheduleNext();
+  }, 800);
+
+  // Periodic burst check
+  const burstCheck = setInterval(() => {
+    if (gameState !== 'playing') {
+      clearInterval(burstCheck);
+      return;
+    }
+    spawnBurst();
+  }, 2000);
+}
+
+// ============================================================
+// Game timer
+// ============================================================
+function startTimer() {
+  timeLeft = 60;
+  updateHUD();
+
+  gameTimer = setInterval(() => {
+    if (gameState !== 'playing') return;
+    timeLeft--;
+    updateHUD();
+
+    // Tick-tock in last 10 seconds
+    if (timeLeft <= 10 && timeLeft > 0) {
+      playTick();
+    }
+
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+// ============================================================
+// Game lifecycle
+// ============================================================
+function startGame() {
+  gameState = 'playing';
+  score = 0;
+  combo = 0;
+  maxCombo = 0;
+  totalHits = 0;
+  timeLeft = 60;
+
+  // Reset all crocs
+  crocs.forEach((crocEl, i) => {
+    crocEl.classList.remove('up', 'hit', 'retreat');
+    const state = crocState[i];
+    state.isUp = false;
+    state.isHit = false;
+    if (state.timer) clearTimeout(state.timer);
+    state.timer = null;
+
+    crocEl.querySelector('.hit-effect').classList.remove('show');
+    crocEl.querySelector('.stars').classList.remove('show');
+  });
+
+  titleScreen.classList.add('hidden');
+  resultScreen.classList.add('hidden');
+  hud.style.display = '';
+  field.style.display = '';
+  comboDisplay.classList.remove('show');
+
+  updateHUD();
+  startTimer();
+  startSpawning();
+}
+
+function endGame() {
+  gameState = 'gameover';
+
+  // Clean up timers
+  clearInterval(gameTimer);
+  clearTimeout(spawnInterval);
+
+  // Retreat all crocs
+  for (let i = 0; i < 6; i++) {
+    const state = crocState[i];
+    if (state.timer) clearTimeout(state.timer);
+    if (state.isUp) retreatCroc(i);
+  }
+
+  // Slight delay then show result
+  setTimeout(() => {
+    playFanfare();
+    spawnConfetti();
+    showResult();
+  }, 600);
+}
+
+function showResult() {
+  const emoji = document.getElementById('result-emoji');
+  const title = document.getElementById('result-title');
+  const scoreEl = document.getElementById('result-score');
+  const detailEl = document.getElementById('result-detail');
+  const bestEl = document.getElementById('result-best');
+
+  scoreEl.textContent = score + ' てん';
+
+  // Emoji and title based on score
+  if (score >= 500) {
+    emoji.textContent = '🏆';
+    title.textContent = 'すごすぎ！！';
+  } else if (score >= 300) {
+    emoji.textContent = '🎉';
+    title.textContent = 'やったね！';
+  } else if (score >= 150) {
+    emoji.textContent = '😊';
+    title.textContent = 'がんばったね！';
+  } else {
+    emoji.textContent = '🐊';
+    title.textContent = 'おしまい！';
+  }
+
+  // Detail stats
+  const details = [];
+  details.push(totalHits + ' ひき たたいたよ');
+  if (maxCombo >= 3) {
+    details.push('さいだいコンボ: ' + maxCombo);
+  }
+  detailEl.textContent = details.join(' / ');
+
+  // High score
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('waniwani-whack-best', bestScore.toString());
+    bestEl.textContent = '🏆 あたらしい きろく！ ' + bestScore + ' てん';
+    bestEl.style.color = '#e11d48';
+  } else if (bestScore > 0) {
+    bestEl.textContent = 'さいこう きろく: ' + bestScore + ' てん';
+    bestEl.style.color = '';
+  } else {
+    bestEl.textContent = '';
+  }
+
+  resultScreen.classList.remove('hidden');
+}
 
 // ============================================================
 // Confetti
 // ============================================================
 function spawnConfetti() {
   const colors = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#e67e22', '#1abc9c', '#ff69b4'];
-  for (let i = 0; i < 60; i++) {
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+
+  for (let i = 0; i < 50; i++) {
     const el = document.createElement('div');
     el.className = 'confetti';
     el.style.left = Math.random() * 100 + '%';
@@ -804,7 +1346,7 @@ function spawnConfetti() {
     el.style.width = (6 + Math.random() * 8) + 'px';
     el.style.height = (6 + Math.random() * 8) + 'px';
     el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-    el.style.transform = `rotate(${Math.random() * 360}deg)`;
+    el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
     container.appendChild(el);
 
     const destX = (Math.random() - 0.5) * W * 0.8;
@@ -813,8 +1355,8 @@ function spawnConfetti() {
     const delay = Math.random() * 400;
 
     el.animate([
-      { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
-      { transform: `translate(${destX}px, ${destY}px) rotate(${720 + Math.random() * 720}deg)`, opacity: 0 }
+      { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+      { transform: 'translate(' + destX + 'px, ' + destY + 'px) rotate(' + (720 + Math.random() * 720) + 'deg)', opacity: 0 }
     ], {
       duration: dur,
       delay: delay,
@@ -825,74 +1367,34 @@ function spawnConfetti() {
 }
 
 // ============================================================
-// Screens
+// Input handling
 // ============================================================
-function showResult(won) {
-  const emoji = document.getElementById('result-emoji');
-  const title = document.getElementById('result-title');
-  const scoreEl = document.getElementById('result-score');
-  const bestEl = document.getElementById('result-best');
-
-  if (won) {
-    emoji.textContent = '🎉';
-    title.textContent = 'やったね！';
-    scoreEl.textContent = `ラウンド ${round} クリア！`;
-  } else {
-    emoji.textContent = '🐊';
-    title.textContent = 'ガブッ！！';
-    scoreEl.textContent = `${score} ほん おせたよ！`;
-  }
-
-  if (totalScore > bestScore) {
-    bestScore = totalScore;
-    localStorage.setItem('waniwani-best', bestScore.toString());
-    bestEl.textContent = '🏆 あたらしい きろく！ ' + bestScore;
-  } else if (bestScore > 0) {
-    bestEl.textContent = 'さいこう きろく: ' + bestScore;
-  } else {
-    bestEl.textContent = '';
-  }
-
-  resultScreen.classList.remove('hidden');
-
-  // If won, auto-advance on retry
-  document.getElementById('btn-retry').textContent = won ? 'つぎの ラウンド！' : 'もういっかい！';
-  document.getElementById('btn-retry')._won = won;
-}
-
-function startGame(newGame) {
-  if (newGame) {
-    round = 1;
-    totalScore = 0;
-  }
-  titleScreen.classList.add('hidden');
-  resultScreen.classList.add('hidden');
-  hud.style.display = '';
-  gameState = 'playing';
-  initTeeth();
-}
+holes.forEach((hole, idx) => {
+  const wrapper = hole.querySelector('.croc-wrapper');
+  wrapper.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    hitCroc(idx, e);
+  });
+});
 
 // ============================================================
 // Button handlers
 // ============================================================
 document.getElementById('btn-start').addEventListener('click', () => {
   ensureAudio();
-  startGame(true);
+  startGame();
 });
 
 document.getElementById('btn-retry').addEventListener('click', () => {
   ensureAudio();
-  const won = document.getElementById('btn-retry')._won;
-  if (won) {
-    round++;
-    startGame(false);
-  } else {
-    startGame(true);
-  }
+  startGame();
 });
 
 // Prevent double-tap zoom
 document.addEventListener('dblclick', (e) => e.preventDefault());
+
+// Prevent context menu on long press
+document.addEventListener('contextmenu', (e) => e.preventDefault());
 </script>
 </body>
 </html>
