@@ -1262,7 +1262,7 @@ function drawSprites() {
     switch (sp.type) {
       case 'cpu': {
         const c = sp.data;
-        let sc = Math.max(6, 40 * scale);
+        let sc = Math.max(6, 60 * scale);
         if (c.shrinkT > 0) sc *= 0.55;
 
         /* Shadow */
@@ -1331,7 +1331,7 @@ function drawSprites() {
         break;
       }
       case 'banana': {
-        const sc = Math.max(3, 12 * scale);
+        const sc = Math.max(3, 24 * scale);
         ctx.fillStyle = '#ffd700';
         ctx.beginPath();
         ctx.arc(sx, sy - sc * 0.3, sc * 0.5, Math.PI * 0.2, Math.PI * 1.2);
@@ -1342,7 +1342,7 @@ function drawSprites() {
         break;
       }
       case 'fire': {
-        const sc = Math.max(4, 12 * scale);
+        const sc = Math.max(4, 24 * scale);
         /* Bouncing red ball - hops up and down */
         const bounce = Math.abs(Math.sin(performance.now() * 0.012 + sx * 0.1)) * sc * 1.5;
         const r = sc * 0.4;

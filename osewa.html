@@ -88,6 +88,7 @@ body {
 }
 #img-base { z-index: 1; }
 #img-cloth { z-index: 2; }
+#img-shoes { z-index: 2; }
 #img-hair { z-index: 3; }
 #img-acc { z-index: 4; }
 
@@ -354,8 +355,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: clamp(52px, 16vw, 68px);
-  height: clamp(52px, 16vw, 68px);
+  width: clamp(48px, 14vw, 62px);
+  height: clamp(48px, 14vw, 62px);
   border-radius: 16px;
   border: 3px solid #e5e7eb;
   background: white;
@@ -371,6 +372,7 @@ body {
 
 .menu-btn[data-menu="cloth"] .icon::before { content: '👗'; }
 .menu-btn[data-menu="hair"] .icon::before { content: '💇'; }
+.menu-btn[data-menu="shoes"] .icon::before { content: '👟'; }
 .menu-btn[data-menu="food"] .icon::before { content: '🍽️'; }
 .menu-btn[data-menu="bath"] .icon::before { content: '🛁'; }
 .menu-btn[data-menu="sleep"] .icon::before { content: '💤'; }
@@ -707,6 +709,7 @@ body {
         <img id="img-base" class="doll-img" alt="" style="display:none">
         <img id="img-cloth" class="doll-img" alt="" style="display:none">
         <img id="img-hair" class="doll-img" alt="" style="display:none">
+        <img id="img-shoes" class="doll-img" alt="" style="display:none">
         <img id="img-acc" class="doll-img" alt="" style="display:none">
 
         <!-- CSS placeholder doll -->
@@ -748,6 +751,7 @@ body {
     <div id="menu-bar">
       <button class="menu-btn" data-menu="cloth"><span class="icon"></span><span class="label">おきがえ</span></button>
       <button class="menu-btn" data-menu="hair"><span class="icon"></span><span class="label">かみがた</span></button>
+      <button class="menu-btn" data-menu="shoes"><span class="icon"></span><span class="label">くつ</span></button>
       <button class="menu-btn" data-menu="food"><span class="icon"></span><span class="label">ごはん</span></button>
       <button class="menu-btn" data-menu="bath"><span class="icon"></span><span class="label">おふろ</span></button>
       <button class="menu-btn" data-menu="sleep"><span class="icon"></span><span class="label">おやすみ</span></button>
@@ -811,6 +815,13 @@ var HAIRS = [
   { name: 'ツインテール', img: 'doll_hair_3.png?v=3', color: '#4A2512', style: 'twin' },
 ];
 
+var SHOES = [
+  { name: 'はだし', img: null, color: '#fddcb5', emoji: '🦶' },
+  { name: 'ピンクくつ', img: 'doll_shoes_1.png?v=1', color: '#f9a8d4', emoji: '👟' },
+  { name: 'スニーカー', img: 'doll_shoes_2.png?v=1', color: '#93c5fd', emoji: '👟' },
+  { name: 'ブーツ', img: 'doll_shoes_3.png?v=1', color: '#8B5E3C', emoji: '👢' },
+];
+
 var FOODS = [
   { name: 'カレーライス', img: 'doll_food_1.png', emoji: '🍛' },
   { name: 'おにぎり', img: 'doll_food_2.png', emoji: '🍙' },
@@ -824,6 +835,7 @@ var FOODS = [
 var state = {
   clothIdx: 0,
   hairIdx: 0,
+  shoesIdx: 0,
   scene: 'title',
   activeMenu: null,
   mood: 3,
@@ -853,6 +865,7 @@ var sleepOverlay = document.getElementById('sleep-overlay');
 
 var imgBase = document.getElementById('img-base');
 var imgCloth = document.getElementById('img-cloth');
+var imgShoes = document.getElementById('img-shoes');
 var imgHair = document.getElementById('img-hair');
 var imgAcc = document.getElementById('img-acc');
 
@@ -977,6 +990,13 @@ function updateImageLayers() {
   imgCloth.style.display = '';
   imgHair.src = HAIRS[state.hairIdx].img;
   imgHair.style.display = '';
+  var shoe = SHOES[state.shoesIdx];
+  if (shoe.img) {
+    imgShoes.src = shoe.img;
+    imgShoes.style.display = '';
+  } else {
+    imgShoes.style.display = 'none';
+  }
 }
 
 // ============================================================
@@ -1108,6 +1128,18 @@ function openMenu(menu) {
         onClick: function() { changeHair(i); },
       };
     });
+  } else if (menu === 'shoes') {
+    title = '👟 くつをえらんでね';
+    items = SHOES.map(function(s, i) {
+      var thumb = (useImages && s.img)
+        ? '<img src="'+s.img+'" style="width:40px;height:60px;object-fit:contain;">'
+        : '<div class="sel-emoji">' + s.emoji + '</div>';
+      return {
+        html: thumb + '<div class="sel-name">' + s.name + '</div>',
+        active: i === state.shoesIdx,
+        onClick: function() { changeShoes(i); },
+      };
+    });
   } else if (menu === 'food') {
     title = '🍽️ なにをたべる？';
     items = FOODS.map(function(f, i) {
@@ -1175,6 +1207,18 @@ function changeHair(idx) {
   playPop();
   showSpeech('すてき！ 💫', 1500);
   openMenu('hair');
+}
+
+function changeShoes(idx) {
+  state.shoesIdx = idx;
+  if (useImages) {
+    updateImageLayers();
+  }
+  dollBounce();
+  spawnSparkles(4);
+  playPop();
+  showSpeech(idx === 0 ? 'はだしだ！' : 'おしゃれ！ 👟', 1500);
+  openMenu('shoes');
 }
 
 // ============================================================
