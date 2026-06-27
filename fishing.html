@@ -432,7 +432,7 @@ class Fish {
       ctx.translate(x, y);
       ctx.scale(scale, scale);
       ctx.rotate(-progress * 0.5);
-      this.drawBody(ctx, 0, 0, 0.5);
+      this.drawFaceUp(ctx, 0, 0, 0.5);
       ctx.restore();
       return;
     }
@@ -828,6 +828,7 @@ function gameLoop(timestamp) {
 
   ctx.clearRect(0, 0, W, H);
 
+  try {
   if (gameState === 'playing') {
     // Update timer
     timeLeft -= dt;
@@ -876,9 +877,9 @@ function gameLoop(timestamp) {
     // Update particles
     updateParticles(dt);
   } else if (gameState === 'title' || gameState === 'result') {
-    // Still draw a pretty pond in the background
     drawPond(ctx);
   }
+  } catch(e) { console.error(e); }
 
   requestAnimationFrame(gameLoop);
 }
