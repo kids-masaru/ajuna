@@ -804,10 +804,15 @@ function useItem(dir) {
 function updateItemUI() {
   if (player.item) {
     itemBtnEl.classList.add('ready');
-    itemIconEl.textContent = itemEmoji(player.item);
+    const imgSrc = player.item === 'mushroom' ? 'item_mushroom.png' : player.item === 'fire' ? 'item_fire.png' : null;
+    if (imgSrc) {
+      itemIconEl.innerHTML = '<img src="'+imgSrc+'" style="width:36px;height:36px;image-rendering:pixelated;">';
+    } else {
+      itemIconEl.textContent = itemEmoji(player.item);
+    }
   } else {
     itemBtnEl.classList.remove('ready');
-    itemIconEl.textContent = '';
+    itemIconEl.innerHTML = '';
   }
 }
 
@@ -1319,15 +1324,19 @@ function drawSprites() {
         break;
       }
       case 'fire': {
-        const sc = Math.max(6, 18 * scale);
-        /* Bounce animation */
-        const bounce = Math.abs(Math.sin(performance.now() * 0.008 + sx)) * sc * 0.4;
-        if (fireImg.complete) {
-          ctx.drawImage(fireImg, sx - sc/2, sy - sc - bounce, sc, sc);
-        } else {
-          ctx.fillStyle = '#ff6600';
-          ctx.beginPath(); ctx.arc(sx, sy - sc*0.3 - bounce, sc*0.3, 0, Math.PI*2); ctx.fill();
-        }
+        const sc = Math.max(4, 12 * scale);
+        /* Bouncing red ball - hops up and down */
+        const bounce = Math.abs(Math.sin(performance.now() * 0.012 + sx * 0.1)) * sc * 1.5;
+        const r = sc * 0.4;
+        /* Shadow */
+        ctx.fillStyle = 'rgba(0,0,0,.2)';
+        ctx.beginPath(); ctx.ellipse(sx, sy, r * 0.8, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+        /* Red ball */
+        ctx.fillStyle = '#ee2222';
+        ctx.beginPath(); ctx.arc(sx, sy - r - bounce, r, 0, Math.PI * 2); ctx.fill();
+        /* Highlight */
+        ctx.fillStyle = 'rgba(255,255,255,.5)';
+        ctx.beginPath(); ctx.arc(sx - r*0.25, sy - r*1.4 - bounce, r * 0.3, 0, Math.PI * 2); ctx.fill();
         break;
       }
     }
