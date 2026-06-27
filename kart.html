@@ -825,7 +825,7 @@ function updateItemUI() {
     
     const imgSrc = player.item === 'mushroom' ? 'item_mushroom.png' : player.item === 'fire' ? 'item_fire.png' : null;
     if (imgSrc) {
-      itemIconEl.innerHTML = '<img src="'+imgSrc+'" style="width:70px;height:70px;image-rendering:pixelated;object-fit:contain;object-position:center bottom;margin-top:15px;">';
+      itemIconEl.innerHTML = '<img src="'+imgSrc+'" style="width:70px;height:70px;image-rendering:pixelated;object-fit:contain;object-position:center bottom;margin-top:30px;">';
     } else
     itemIconEl.textContent = itemEmoji(player.item);
   } else {
