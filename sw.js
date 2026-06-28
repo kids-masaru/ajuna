@@ -70,6 +70,7 @@ const LOCAL_FILES = [
   './doll_shoes_2.png',
   './doll_shoes_3.png',
   './doll_bath.png',
+  './doll_sleep.png',
 ];
 
 // インストール時：ローカルファイルを全部キャッシュ
