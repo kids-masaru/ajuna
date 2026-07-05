@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v75';
+const CACHE_NAME = 'ajuna-v76';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -72,6 +72,14 @@ const LOCAL_FILES = [
   './swing.html',
   './swing_bg.png',
   './swing_girl.png',
+  './icon_oekaki.png',
+  './icon_piano.png',
+  './icon_snow.png',
+  './icon_karuta.png',
+  './icon_puzzle.png',
+  './icon_kaimono.png',
+  './icon_hiragana.png',
+  './icon_eawase.png',
   './doll_bath.png',
   './doll_sleep.png',
 ];
