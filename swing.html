@@ -60,18 +60,18 @@ body {
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
 }
 
-/* Rope from pivot to girl */
-#rope {
+/* Rope from pivot to girl (2 lines side by side) */
+#rope-l, #rope-r {
   position: absolute;
   top: 0;
-  left: -1px;
   width: 3px;
   height: 130px;
   background: linear-gradient(180deg, #a08060, #c0a080);
-  transform-origin: top center;
   z-index: -1;
   border-radius: 1px;
 }
+#rope-l { left: -8px; }
+#rope-r { left: 5px; }
 
 /* HUD */
 #hud {
@@ -307,7 +307,8 @@ body {
 
     <div id="pendulum-wrap">
       <div id="pendulum">
-        <div id="rope"></div>
+        <div id="rope-l"></div>
+        <div id="rope-r"></div>
         <img id="swing-girl-img" src="swing_girl.png" alt="ブランコの女の子">
       </div>
     </div>
