@@ -70,6 +70,8 @@ const LOCAL_FILES = [
   './doll_sneakers.png',
   './doll_boots.png',
   './swing.html',
+  './swing_bg.png',
+  './swing_girl.png',
   './doll_bath.png',
   './doll_sleep.png',
 ];
