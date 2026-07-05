@@ -491,7 +491,7 @@ function showSwipeFb(dir) {
 function handleSwipe(velX) {
   if (state !== 'playing' || swipeCooldown) return;
   var swipeDir = velX > 0 ? 1 : -1;
-  var swingDir = angularVel > 0 ? 1 : -1;
+  var swingDir = angularVel > 0 ? -1 : 1;
   var strength = Math.min(Math.abs(velX) / 8, 1);
 
   if (strength < 0.15) return;
@@ -505,7 +505,7 @@ function handleSwipe(velX) {
   // Same direction as swing = good push
   if (swipeDir === swingDir || Math.abs(angularVel) < 0.002) {
     var boost = 0.008 + strength * 0.012;
-    angularVel += boost * swipeDir;
+    angularVel -= boost * swipeDir;
     pushCount++;
 
     var newHeight = Math.abs(angle) + Math.abs(angularVel) * 200;
