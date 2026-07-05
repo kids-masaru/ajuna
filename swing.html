@@ -10,7 +10,7 @@ body {
   margin: 0; padding: 0;
   overflow: hidden;
   user-select: none;
-  touch-action: manipulation;
+  touch-action: none;
   overscroll-behavior: none;
   width: 100vw; height: 100dvh;
 }
@@ -21,7 +21,6 @@ body {
   overflow: hidden;
 }
 
-/* Background: white base + image on top */
 #bg {
   position: absolute;
   inset: 0;
@@ -38,7 +37,7 @@ body {
 /* Swing pendulum */
 #pendulum-wrap {
   position: absolute;
-  top: 22%;
+  top: 20%;
   left: 50%;
   width: 0; height: 0;
   z-index: 5;
@@ -53,24 +52,12 @@ body {
 
 #swing-girl-img {
   position: absolute;
-  top: 0;
-  left: -75px;
-  width: 150px;
+  top: 50px;
+  left: -90px;
+  width: 180px;
   height: auto;
   pointer-events: none;
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
-}
-
-/* Rope extension from branch to pendulum origin */
-#rope-ext {
-  position: absolute;
-  top: 18%;
-  left: 50%;
-  width: 3px;
-  height: 4%;
-  background: linear-gradient(180deg, #a08060, #c0a080);
-  z-index: 4;
-  transform: translateX(-50%);
 }
 
 /* HUD */
@@ -95,7 +82,6 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   backdrop-filter: blur(4px);
 }
-
 #timer-box.warning { color: #ff6b6b; animation: timer-warn 0.5s infinite alternate; }
 @keyframes timer-warn { 0% { opacity: 1; } 100% { opacity: 0.5; } }
 
@@ -133,83 +119,66 @@ body {
   z-index: 15;
 }
 
-/* Push button */
-#push-btn {
+/* Swipe hint */
+#swipe-hint {
   position: absolute;
-  bottom: max(24px, 6%);
+  bottom: max(30px, 8%);
   left: 50%;
   transform: translateX(-50%);
-  width: 110px; height: 110px;
-  border-radius: 50%;
-  border: 5px solid rgba(255,255,255,0.4);
-  background: rgba(255,255,255,0.15);
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  font-weight: 900;
-  color: rgba(255,255,255,0.5);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.15s;
-  backdrop-filter: blur(4px);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-#push-btn.ready {
-  border-color: #fbbf24;
-  background: rgba(251,191,36,0.5);
-  color: #fff;
-  box-shadow: 0 0 30px rgba(251,191,36,0.6), 0 0 60px rgba(251,191,36,0.3);
-  animation: btn-pulse 0.4s ease-in-out infinite alternate;
-}
-@keyframes btn-pulse {
-  0% { transform: translateX(-50%) scale(1); }
-  100% { transform: translateX(-50%) scale(1.1); }
-}
-#push-btn:active { transform: translateX(-50%) scale(0.9); }
-#push-btn.perfect-flash {
-  border-color: #fbbf24;
-  background: rgba(251,191,36,0.7);
-  box-shadow: 0 0 40px rgba(251,191,36,0.8);
-}
-#push-btn.good-flash {
-  border-color: #34d399;
-  background: rgba(52,211,153,0.6);
-  box-shadow: 0 0 30px rgba(52,211,153,0.6);
-}
-#push-btn.miss-flash {
-  border-color: #f87171;
-  background: rgba(248,113,113,0.4);
-}
-
-/* Arrow */
-#arrow {
-  position: absolute;
-  bottom: max(145px, 18%);
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 32px;
   z-index: 15;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  opacity: 0.8;
+}
+
+#swipe-arrow-left, #swipe-arrow-right {
+  font-size: 28px;
+  animation: swipe-anim 1.5s ease-in-out infinite;
+}
+#swipe-arrow-left { animation-direction: alternate; }
+#swipe-arrow-right { animation-direction: alternate-reverse; }
+@keyframes swipe-anim {
+  0% { transform: translateX(-8px); opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { transform: translateX(8px); opacity: 0.4; }
+}
+
+/* Swipe feedback */
+#swipe-feedback {
+  position: absolute;
+  bottom: max(80px, 14%);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  font-size: 40px;
   opacity: 0;
-  transition: opacity 0.2s;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  transition: opacity 0.15s;
 }
-#arrow.show {
-  opacity: 1;
-  animation: arrow-bounce 0.3s ease-in-out infinite alternate;
+#swipe-feedback.show { opacity: 1; }
+#swipe-feedback.right { animation: fb-right 0.4s ease-out; }
+#swipe-feedback.left { animation: fb-left 0.4s ease-out; }
+@keyframes fb-right {
+  0% { transform: translateX(-50%) translateX(-20px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateX(-50%) translateX(30px); opacity: 0; }
 }
-@keyframes arrow-bounce {
-  0% { transform: translateX(-50%) translateY(0); }
-  100% { transform: translateX(-50%) translateY(8px); }
+@keyframes fb-left {
+  0% { transform: translateX(-50%) translateX(20px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateX(-50%) translateX(-30px); opacity: 0; }
 }
 
 /* Result text */
 #result-text {
   position: absolute;
-  top: 40%;
+  top: 38%;
   left: 50%;
   transform: translateX(-50%);
   font-size: 30px;
@@ -226,7 +195,7 @@ body {
   100% { transform: translateX(-50%) scale(1); }
 }
 
-/* Sparkle effects */
+/* Sparkle */
 .sparkle {
   position: absolute;
   pointer-events: none;
@@ -240,7 +209,22 @@ body {
   100% { opacity: 0; transform: scale(0.5) translateY(-30px); }
 }
 
-/* Title screen */
+/* Touch trail */
+.touch-trail {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(251,191,36,0.4);
+  pointer-events: none;
+  z-index: 8;
+  animation: trail-fade 0.4s ease-out forwards;
+}
+@keyframes trail-fade {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.3); }
+}
+
+/* Title */
 #title-screen {
   position: fixed; inset: 0; z-index: 50;
   background: white;
@@ -265,12 +249,12 @@ body {
 }
 .title-sub {
   font-size: 1rem; font-weight: 700;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.95);
   text-align: center; line-height: 1.6;
   text-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 
-/* Result screen */
+/* Result */
 #result-screen {
   position: fixed; inset: 0; z-index: 50;
   background: rgba(0,0,0,0.6);
@@ -314,15 +298,20 @@ body {
       </div>
     </div>
 
-    <div id="arrow">👇</div>
+    <div id="swipe-hint">
+      <span id="swipe-arrow-left">👈</span>
+      <span>ゆびで ゆらしてね</span>
+      <span id="swipe-arrow-right">👉</span>
+    </div>
+
+    <div id="swipe-feedback"></div>
     <div id="result-text"></div>
-    <div id="push-btn">おして！</div>
   </div>
 
   <div id="title-screen">
     <div class="title-emoji">🎠</div>
     <div class="title-name">ブランコ</div>
-    <div class="title-sub">ボタンがひかったら おして！<br>タイミングよく おすと<br>たかく とべるよ！</div>
+    <div class="title-sub">ゆびを よこに うごかして<br>ブランコを ゆらそう！</div>
     <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:16px">はじめる！</button>
   </div>
 
@@ -345,14 +334,14 @@ window.onerror = function(msg, src, line) {
 };
 
 var pendulum = document.getElementById('pendulum');
-var pushBtn = document.getElementById('push-btn');
-var arrowEl = document.getElementById('arrow');
 var resultText = document.getElementById('result-text');
 var scoreEl = document.getElementById('score');
 var timerEl = document.getElementById('timer');
 var timerBox = document.getElementById('timer-box');
 var heightBar = document.getElementById('height-bar');
 var gameEl = document.getElementById('game');
+var swipeHint = document.getElementById('swipe-hint');
+var swipeFb = document.getElementById('swipe-feedback');
 
 var AudioCtx = window.AudioContext || window.webkitAudioContext;
 var audioCtx;
@@ -364,20 +353,42 @@ function ensureAudio() {
 var state = 'title';
 var angle = 0;
 var angularVel = 0;
-var swingHeight = 5;
+var swingHeight = 0;
 var score = 0;
-var combo = 0;
-var totalPushes = 0;
-var perfectCount = 0;
-var goodCount = 0;
+var pushCount = 0;
+var maxHeight = 0;
 var gameTime = 30;
 var timeLeft = 30;
 var timerInterval = null;
-var pushCooldown = false;
-var isReady = false;
 
 var gravity = 0.0004;
 var damping = 0.998;
+
+// Touch tracking
+var touchStartX = null;
+var lastTouchX = null;
+var touchVelX = 0;
+var swipeCooldown = false;
+
+function playWhoosh(strength) {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var bufSize = audioCtx.sampleRate * 0.12;
+  var buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  var data = buf.getChannelData(0);
+  for (var i = 0; i < bufSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2) * 0.15;
+  }
+  var src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  var filt = audioCtx.createBiquadFilter();
+  filt.type = 'bandpass';
+  filt.frequency.value = 800 + strength * 400;
+  filt.Q.value = 1;
+  src.connect(filt);
+  filt.connect(audioCtx.destination);
+  src.start(t);
+}
 
 function playChime(freq) {
   ensureAudio();
@@ -388,11 +399,27 @@ function playChime(freq) {
   osc.type = 'sine';
   osc.frequency.setValueAtTime(freq, t);
   g.gain.setValueAtTime(0.1, t);
-  g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-  osc.start(t); osc.stop(t + 0.12);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+  osc.start(t); osc.stop(t + 0.15);
 }
 
-function playPerfect() {
+function playSuccess() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [660, 880].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.08);
+    g.gain.setValueAtTime(0, t + i * 0.08);
+    g.gain.linearRampToValueAtTime(0.1, t + i * 0.08 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.12);
+    osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.12);
+  });
+}
+
+function playBigSuccess() {
   ensureAudio();
   var t = audioCtx.currentTime;
   [880, 1100, 1320].forEach(function(f, i) {
@@ -406,34 +433,6 @@ function playPerfect() {
     g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.06 + 0.15);
     osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
   });
-}
-
-function playGood() {
-  ensureAudio();
-  var t = audioCtx.currentTime;
-  var osc = audioCtx.createOscillator();
-  var g = audioCtx.createGain();
-  osc.connect(g); g.connect(audioCtx.destination);
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(660, t);
-  osc.frequency.exponentialRampToValueAtTime(880, t + 0.1);
-  g.gain.setValueAtTime(0.1, t);
-  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-  osc.start(t); osc.stop(t + 0.15);
-}
-
-function playMiss() {
-  ensureAudio();
-  var t = audioCtx.currentTime;
-  var osc = audioCtx.createOscillator();
-  var g = audioCtx.createGain();
-  osc.connect(g); g.connect(audioCtx.destination);
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(200, t);
-  osc.frequency.exponentialRampToValueAtTime(100, t + 0.12);
-  g.gain.setValueAtTime(0.05, t);
-  g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-  osc.start(t); osc.stop(t + 0.12);
 }
 
 function playFanfare() {
@@ -453,73 +452,128 @@ function playFanfare() {
 }
 
 function spawnSparkles() {
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 5; i++) {
     var el = document.createElement('div');
     el.className = 'sparkle';
     el.textContent = '✨';
-    el.style.left = (30 + Math.random() * 40) + '%';
-    el.style.top = (30 + Math.random() * 30) + '%';
+    el.style.left = (25 + Math.random() * 50) + '%';
+    el.style.top = (25 + Math.random() * 35) + '%';
     el.style.animationDelay = (Math.random() * 0.2) + 's';
     gameEl.appendChild(el);
     el.addEventListener('animationend', function() { this.remove(); });
   }
 }
 
-function showResult(text, color, cls) {
+function spawnTrail(x, y) {
+  var el = document.createElement('div');
+  el.className = 'touch-trail';
+  el.style.left = (x - 10) + 'px';
+  el.style.top = (y - 10) + 'px';
+  gameEl.appendChild(el);
+  el.addEventListener('animationend', function() { this.remove(); });
+}
+
+function showResult(text, color) {
   resultText.textContent = text;
   resultText.style.color = color;
   resultText.classList.remove('show');
   void resultText.offsetWidth;
   resultText.classList.add('show');
-  pushBtn.className = cls + '-flash';
-  setTimeout(function() {
-    resultText.classList.remove('show');
-    pushBtn.className = '';
-  }, 500);
+  setTimeout(function() { resultText.classList.remove('show'); }, 600);
 }
 
-function handleTap() {
-  if (state !== 'playing' || pushCooldown) return;
-  totalPushes++;
-  pushCooldown = true;
-  setTimeout(function() { pushCooldown = false; }, 300);
+function showSwipeFb(dir) {
+  swipeFb.textContent = dir > 0 ? '→' : '←';
+  swipeFb.className = dir > 0 ? 'show right' : 'show left';
+  setTimeout(function() { swipeFb.className = ''; }, 400);
+}
 
-  if (isReady && angle < 0) {
-    var backness = Math.abs(angle) / Math.max(swingHeight, 5);
+function handleSwipe(velX) {
+  if (state !== 'playing' || swipeCooldown) return;
+  var swipeDir = velX > 0 ? 1 : -1;
+  var swingDir = angularVel > 0 ? 1 : -1;
+  var strength = Math.min(Math.abs(velX) / 8, 1);
 
-    if (backness > 0.7) {
-      combo++;
-      perfectCount++;
-      var points = 100 * Math.min(combo, 5);
-      score += points;
-      swingHeight = Math.min(55, swingHeight + 5);
-      angularVel += 0.015;
-      showResult('パーフェクト！ +' + points, '#fbbf24', 'perfect');
-      playPerfect();
+  if (strength < 0.15) return;
+
+  swipeCooldown = true;
+  setTimeout(function() { swipeCooldown = false; }, 200);
+
+  showSwipeFb(swipeDir);
+  playWhoosh(strength);
+
+  // Same direction as swing = good push
+  if (swipeDir === swingDir || Math.abs(angularVel) < 0.002) {
+    var boost = 0.008 + strength * 0.012;
+    angularVel += boost * swipeDir;
+    pushCount++;
+
+    var newHeight = Math.abs(angle) + Math.abs(angularVel) * 200;
+    if (newHeight > swingHeight) swingHeight = newHeight;
+
+    var points = Math.round(strength * 50 + swingHeight * 2);
+    score += points;
+    scoreEl.textContent = score;
+
+    if (strength > 0.6 && swingHeight > 25) {
+      showResult('すごい！ +' + points, '#fbbf24');
+      playBigSuccess();
       spawnSparkles();
       if (navigator.vibrate) navigator.vibrate(30);
+    } else if (strength > 0.3) {
+      showResult('いいね！ +' + points, '#34d399');
+      playSuccess();
     } else {
-      combo++;
-      goodCount++;
-      var points = 50 * Math.min(combo, 3);
-      score += points;
-      swingHeight = Math.min(55, swingHeight + 2);
-      angularVel += 0.01;
-      showResult('いいね！ +' + points, '#34d399', 'good');
-      playGood();
+      playChime(660 + swingHeight * 10);
     }
-  } else {
-    combo = 0;
-    showResult('おしい！', '#f87171', 'miss');
-    playMiss();
+
+    if (swingHeight > maxHeight) maxHeight = swingHeight;
+    heightBar.style.height = Math.min(100, (swingHeight / 55) * 100) + '%';
   }
 
-  scoreEl.textContent = score;
-  heightBar.style.height = Math.min(100, (swingHeight / 55) * 100) + '%';
+  // Hide hint after first successful swipe
+  if (pushCount >= 2) swipeHint.style.opacity = '0';
 }
 
+// Touch/pointer events
+gameEl.addEventListener('pointerdown', function(e) {
+  if (state !== 'playing') return;
+  e.preventDefault();
+  touchStartX = e.clientX;
+  lastTouchX = e.clientX;
+  touchVelX = 0;
+});
+
+gameEl.addEventListener('pointermove', function(e) {
+  if (state !== 'playing' || touchStartX === null) return;
+  e.preventDefault();
+  var dx = e.clientX - lastTouchX;
+  touchVelX = dx;
+  lastTouchX = e.clientX;
+  spawnTrail(e.clientX, e.clientY);
+
+  if (Math.abs(e.clientX - touchStartX) > 20) {
+    handleSwipe(touchVelX);
+    touchStartX = e.clientX;
+  }
+});
+
+gameEl.addEventListener('pointerup', function(e) {
+  if (touchStartX !== null && Math.abs(touchVelX) > 2) {
+    handleSwipe(touchVelX * 1.5);
+  }
+  touchStartX = null;
+  lastTouchX = null;
+  touchVelX = 0;
+});
+
+gameEl.addEventListener('pointercancel', function() {
+  touchStartX = null;
+  lastTouchX = null;
+  touchVelX = 0;
+});
+
 var lastTime = 0;
-var readyChimePlayed = false;
 
 function gameLoop(now) {
   if (state !== 'playing') { requestAnimationFrame(gameLoop); return; }
@@ -534,47 +588,31 @@ function gameLoop(now) {
   angularVel *= damping;
   angle += angularVel * dt;
 
+  // Track swing height
+  swingHeight = Math.max(swingHeight * 0.999, Math.abs(angle));
+
   pendulum.style.transform = 'rotate(' + angle + 'deg)';
-
-  var wasReady = isReady;
-  isReady = angle < -2 && angularVel > -0.003;
-
-  if (isReady && !pushCooldown) {
-    pushBtn.classList.add('ready');
-    arrowEl.classList.add('show');
-    if (!readyChimePlayed) {
-      playChime(1200);
-      readyChimePlayed = true;
-    }
-  } else {
-    pushBtn.classList.remove('ready');
-    arrowEl.classList.remove('show');
-    if (!isReady) readyChimePlayed = false;
-  }
 
   requestAnimationFrame(gameLoop);
 }
 
 function startGame() {
   state = 'playing';
-  angle = -8;
+  angle = -5;
   angularVel = 0;
-  swingHeight = 8;
+  swingHeight = 5;
   score = 0;
-  combo = 0;
-  totalPushes = 0;
-  perfectCount = 0;
-  goodCount = 0;
+  pushCount = 0;
+  maxHeight = 0;
   timeLeft = gameTime;
   lastTime = 0;
-  pushCooldown = false;
-  isReady = false;
-  readyChimePlayed = false;
+  swipeCooldown = false;
 
   scoreEl.textContent = '0';
   timerEl.textContent = timeLeft;
   timerBox.classList.remove('warning');
   heightBar.style.height = '0%';
+  swipeHint.style.opacity = '0.8';
 
   document.getElementById('title-screen').classList.add('hidden');
   document.getElementById('result-screen').classList.remove('show');
@@ -592,8 +630,6 @@ function startGame() {
 function endGame() {
   state = 'ended';
   clearInterval(timerInterval);
-  pushBtn.className = '';
-  arrowEl.classList.remove('show');
 
   setTimeout(function() {
     playFanfare();
@@ -608,19 +644,14 @@ function endGame() {
     else if (score >= 400) { emoji.textContent = '😊'; title.textContent = 'がんばったね！'; }
     else { emoji.textContent = '🎠'; title.textContent = 'おしまい！'; }
 
-    var details = [];
-    if (perfectCount > 0) details.push('パーフェクト ' + perfectCount + ' かい');
-    if (goodCount > 0) details.push('いいね ' + goodCount + ' かい');
-    detail.textContent = details.join(' / ');
+    var detail_text = 'さいこうの たかさ: ' + Math.round(maxHeight);
+    if (pushCount > 0) detail_text += ' / ' + pushCount + ' かい おした';
+    detail.textContent = detail_text;
 
     document.getElementById('result-screen').classList.add('show');
   }, 500);
 }
 
-pushBtn.addEventListener('pointerdown', function(e) {
-  e.preventDefault();
-  handleTap();
-});
 document.getElementById('btn-start').addEventListener('click', function() {
   ensureAudio();
   startGame();
