@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ブランコ</title>
+<link rel="stylesheet" href="assets/kit.css">
+<style>
+body {
+  margin: 0; padding: 0;
+  overflow: hidden;
+  user-select: none;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  width: 100vw; height: 100dvh;
+}
+
+#game {
+  width: 100vw; height: 100dvh;
+  position: relative;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 40%, #90EE90 70%, #228B22 100%);
+  display: flex; flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Sky decorations */
+.cloud {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+.cloud::before, .cloud::after {
+  content: '';
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+}
+#cloud1 { width: 80px; height: 30px; top: 8%; left: 10%; }
+#cloud1::before { width: 40px; height: 25px; top: -12px; left: 15px; }
+#cloud1::after { width: 50px; height: 20px; top: -8px; left: 35px; }
+#cloud2 { width: 60px; height: 22px; top: 12%; right: 15%; }
+#cloud2::before { width: 35px; height: 20px; top: -10px; left: 10px; }
+#cloud2::after { width: 40px; height: 16px; top: -6px; left: 25px; }
+
+/* Sun */
+#sun {
+  position: absolute;
+  top: 5%; right: 10%;
+  width: 50px; height: 50px;
+  background: #FFD700;
+  border-radius: 50%;
+  box-shadow: 0 0 30px rgba(255,215,0,0.5);
+}
+
+/* Ground */
+#ground {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30%;
+  background: linear-gradient(180deg, #4CAF50 0%, #388E3C 30%, #2E7D32 100%);
+  border-top: 4px solid #33691E;
+}
+
+/* Swing frame (A-shape) */
+#swing-area {
+  position: absolute;
+  top: 15%;
+  width: 200px;
+  height: 55%;
+  display: flex;
+  justify-content: center;
+}
+
+#frame-left, #frame-right {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 100%;
+  background: linear-gradient(180deg, #8B4513, #A0522D);
+  border-radius: 4px;
+}
+#frame-left { left: 20px; transform: rotate(5deg); transform-origin: top center; }
+#frame-right { right: 20px; transform: rotate(-5deg); transform-origin: top center; }
+
+#frame-top {
+  position: absolute;
+  top: 0;
+  left: 10px; right: 10px;
+  height: 10px;
+  background: linear-gradient(180deg, #A0522D, #8B4513);
+  border-radius: 5px;
+}
+
+/* Swing rope + girl (pendulum) */
+#pendulum {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform-origin: 0 0;
+  transform: translateX(-50%) rotate(0deg);
+  transition: none;
+  will-change: transform;
+}
+
+#rope-left, #rope-right {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 180px;
+  background: linear-gradient(180deg, #666, #888);
+}
+#rope-left { left: -12px; }
+#rope-right { right: -12px; }
+
+/* Seat */
+#seat {
+  position: absolute;
+  top: 175px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 8px;
+  background: #8B4513;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* CSS Girl on swing */
+#girl {
+  position: absolute;
+  top: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 80px;
+}
+
+.girl-head {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 30px; height: 30px;
+  background: #fddcb5;
+  border-radius: 50%;
+  z-index: 2;
+}
+.girl-eye {
+  position: absolute;
+  width: 5px; height: 6px;
+  background: #2d1b0e;
+  border-radius: 50%;
+  top: 12px;
+}
+.girl-eye.l { left: 7px; }
+.girl-eye.r { right: 7px; }
+.girl-eye::after {
+  content: '';
+  position: absolute;
+  width: 2px; height: 2px;
+  background: white;
+  border-radius: 50%;
+  top: 1px; right: 0;
+}
+.girl-mouth {
+  position: absolute;
+  bottom: 7px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 3px;
+  border-bottom: 2px solid #e07070;
+  border-radius: 0 0 50% 50%;
+}
+.girl-blush {
+  position: absolute;
+  width: 7px; height: 4px;
+  background: rgba(255,140,140,0.4);
+  border-radius: 50%;
+  top: 17px;
+}
+.girl-blush.l { left: 2px; }
+.girl-blush.r { right: 2px; }
+
+.girl-hair {
+  position: absolute;
+  top: -3px; left: 50%;
+  transform: translateX(-50%);
+  width: 34px; height: 35px;
+  background: #8B5E3C;
+  border-radius: 50% 50% 30% 30%;
+  z-index: 1;
+}
+.girl-hair::after {
+  content: '';
+  position: absolute;
+  top: 15px; left: -2px;
+  width: 38px; height: 30px;
+  background: #8B5E3C;
+  border-radius: 0 0 40% 40%;
+  z-index: 0;
+}
+
+.girl-body {
+  position: absolute;
+  top: 28px; left: 50%;
+  transform: translateX(-50%);
+  width: 22px; height: 28px;
+  background: #f9a8d4;
+  border-radius: 4px 4px 8px 8px;
+}
+
+.girl-leg {
+  position: absolute;
+  top: 52px;
+  width: 8px; height: 22px;
+  background: #fddcb5;
+  border-radius: 0 0 4px 4px;
+}
+.girl-leg.l { left: 14px; }
+.girl-leg.r { right: 14px; }
+
+.girl-arm {
+  position: absolute;
+  top: 30px;
+  width: 6px; height: 20px;
+  background: #fddcb5;
+  border-radius: 3px;
+}
+.girl-arm.l { left: 8px; transform: rotate(15deg); }
+.girl-arm.r { right: 8px; transform: rotate(-15deg); }
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+#score-box {
+  background: rgba(255,255,255,0.9);
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-weight: 800;
+  font-size: 16px;
+  color: #ec4899;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#height-bar-wrap {
+  position: absolute;
+  right: 12px;
+  top: 20%;
+  width: 30px;
+  height: 40%;
+  background: rgba(255,255,255,0.3);
+  border-radius: 15px;
+  border: 3px solid rgba(255,255,255,0.6);
+  z-index: 15;
+  overflow: hidden;
+}
+
+#height-bar {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, #f472b6, #ec4899);
+  border-radius: 0 0 12px 12px;
+  transition: height 0.3s;
+}
+
+#height-label {
+  position: absolute;
+  right: 12px;
+  top: calc(20% - 18px);
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  z-index: 15;
+}
+
+/* Timing indicator */
+#timing-ring {
+  position: absolute;
+  bottom: max(100px, 12%);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 5px solid rgba(255,255,255,0.4);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#timing-fill {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: background 0.1s;
+}
+
+#timing-ring.perfect { border-color: #fbbf24; }
+#timing-ring.perfect #timing-fill { background: rgba(251,191,36,0.5); }
+#timing-ring.good { border-color: #34d399; }
+#timing-ring.good #timing-fill { background: rgba(52,211,153,0.4); }
+#timing-ring.miss { border-color: #f87171; }
+#timing-ring.miss #timing-fill { background: rgba(248,113,113,0.3); }
+
+/* Tap area */
+#tap-area {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  height: 40%;
+  z-index: 10;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Result text */
+#result-text {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  font-weight: 900;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  text-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+#result-text.show { opacity: 1; animation: result-pop 0.5s ease-out; }
+@keyframes result-pop {
+  0% { transform: translateX(-50%) scale(0.5); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* Title screen */
+#title-screen {
+  position: fixed; inset: 0; z-index: 50;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 50%, #90EE90 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  transition: opacity 0.5s;
+}
+#title-screen.hidden { opacity: 0; pointer-events: none; }
+.title-emoji { font-size: 60px; animation: gp-float 3s ease-in-out infinite; }
+.title-name {
+  font-size: clamp(1.8rem, 7vw, 2.4rem);
+  font-weight: 900; color: #ec4899;
+  text-shadow: 0 2px 8px rgba(236,72,153,0.2);
+}
+.title-sub { font-size: 0.95rem; font-weight: 700; color: #f9a8d4; }
+
+/* Result screen */
+#result-screen {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.6);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; opacity: 0; pointer-events: none;
+  transition: opacity 0.5s;
+}
+#result-screen.show { opacity: 1; pointer-events: auto; }
+.result-card {
+  background: white; border-radius: 24px;
+  padding: 28px 24px; max-width: 300px; width: 85%;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+.result-emoji { font-size: 56px; }
+.result-title { font-weight: 900; font-size: 1.5rem; color: #333; }
+.result-score { font-weight: 800; font-size: 1.2rem; color: #ec4899; }
+.result-detail { font-weight: 700; font-size: 0.9rem; color: #888; }
+
+/* Flowers on ground */
+.flower {
+  position: absolute;
+  font-size: 14px;
+  bottom: 5%;
+  z-index: 5;
+}
+</style>
+</head>
+<body class="gp gp-pink">
+  <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
+
+  <div id="game">
+    <!-- Sky -->
+    <div class="cloud" id="cloud1"></div>
+    <div class="cloud" id="cloud2"></div>
+    <div id="sun"></div>
+
+    <!-- Ground -->
+    <div id="ground">
+      <div class="flower" style="left:10%">🌸</div>
+      <div class="flower" style="left:25%">🌼</div>
+      <div class="flower" style="left:55%">🌸</div>
+      <div class="flower" style="left:75%">🌷</div>
+      <div class="flower" style="left:90%">🌼</div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div id="score-box">⭐ <span id="score">0</span></div>
+    </div>
+    <div id="height-label">たかさ</div>
+    <div id="height-bar-wrap"><div id="height-bar"></div></div>
+
+    <!-- Swing -->
+    <div id="swing-area">
+      <div id="frame-left"></div>
+      <div id="frame-right"></div>
+      <div id="frame-top"></div>
+
+      <div id="pendulum">
+        <div id="rope-left"></div>
+        <div id="rope-right"></div>
+        <div id="girl">
+          <div class="girl-hair"></div>
+          <div class="girl-head">
+            <div class="girl-eye l"></div>
+            <div class="girl-eye r"></div>
+            <div class="girl-blush l"></div>
+            <div class="girl-blush r"></div>
+            <div class="girl-mouth"></div>
+          </div>
+          <div class="girl-body"></div>
+          <div class="girl-arm l"></div>
+          <div class="girl-arm r"></div>
+          <div class="girl-leg l"></div>
+          <div class="girl-leg r"></div>
+        </div>
+        <div id="seat"></div>
+      </div>
+    </div>
+
+    <!-- Timing ring -->
+    <div id="timing-ring"><div id="timing-fill"></div></div>
+
+    <!-- Result text -->
+    <div id="result-text"></div>
+
+    <!-- Tap area -->
+    <div id="tap-area"></div>
+  </div>
+
+  <!-- Title -->
+  <div id="title-screen">
+    <div class="title-emoji">🎠</div>
+    <div class="title-name">ブランコ</div>
+    <div class="title-sub">タイミングよく おしてね！</div>
+    <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:16px">はじめる！</button>
+  </div>
+
+  <!-- Result -->
+  <div id="result-screen">
+    <div class="result-card gp-pop">
+      <div class="result-emoji" id="r-emoji">🎉</div>
+      <div class="result-title" id="r-title">すごい！</div>
+      <div class="result-score" id="r-score"></div>
+      <div class="result-detail" id="r-detail"></div>
+      <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px">もういっかい！</button>
+    </div>
+  </div>
+
+<script>
+window.onerror = function(msg, src, line) {
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;padding:8px;font-size:12px;';
+  d.textContent = 'ERR: ' + msg + ' (line ' + line + ')';
+  document.body.appendChild(d);
+};
+
+var pendulum = document.getElementById('pendulum');
+var timingRing = document.getElementById('timing-ring');
+var resultText = document.getElementById('result-text');
+var scoreEl = document.getElementById('score');
+var heightBar = document.getElementById('height-bar');
+
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var audioCtx;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+// Game state
+var state = 'title';
+var angle = 0;
+var angularVel = 0;
+var maxAngle = 5;
+var score = 0;
+var combo = 0;
+var totalPushes = 0;
+var perfectCount = 0;
+var goodCount = 0;
+var gameTime = 30;
+var timeLeft = 30;
+var timerInterval = null;
+
+// Physics
+var gravity = 0.0004;
+var damping = 0.997;
+var pushForce = 0.012;
+
+// Timing
+var beatInterval = 800;
+var lastBeatTime = 0;
+var beatPhase = 0;
+
+function playTick(freq) {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq || 800, t);
+  g.gain.setValueAtTime(0.08, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+  osc.start(t); osc.stop(t + 0.08);
+}
+
+function playPerfect() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [880, 1100, 1320].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.06);
+    g.gain.setValueAtTime(0, t + i * 0.06);
+    g.gain.linearRampToValueAtTime(0.12, t + i * 0.06 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.06 + 0.15);
+    osc.start(t + i * 0.06);
+    osc.stop(t + i * 0.06 + 0.15);
+  });
+}
+
+function playGood() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(660, t);
+  osc.frequency.exponentialRampToValueAtTime(880, t + 0.1);
+  g.gain.setValueAtTime(0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+  osc.start(t); osc.stop(t + 0.15);
+}
+
+function playMiss() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(200, t);
+  osc.frequency.exponentialRampToValueAtTime(100, t + 0.15);
+  g.gain.setValueAtTime(0.06, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+  osc.start(t); osc.stop(t + 0.15);
+}
+
+function playFanfare() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [523, 659, 784, 880, 1047].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = i < 3 ? 'square' : 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.12);
+    g.gain.setValueAtTime(0, t + i * 0.12);
+    g.gain.linearRampToValueAtTime(0.15, t + i * 0.12 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.12 + (i === 4 ? 0.5 : 0.2));
+    osc.start(t + i * 0.12);
+    osc.stop(t + i * 0.12 + (i === 4 ? 0.5 : 0.2));
+  });
+}
+
+function showResult(text, color, cls) {
+  resultText.textContent = text;
+  resultText.style.color = color;
+  resultText.classList.remove('show');
+  void resultText.offsetWidth;
+  resultText.classList.add('show');
+  timingRing.className = cls;
+  setTimeout(function() {
+    resultText.classList.remove('show');
+    timingRing.className = '';
+  }, 600);
+}
+
+function handleTap() {
+  if (state !== 'playing') return;
+  totalPushes++;
+
+  var swingPhase = Math.atan2(-angularVel, angle);
+  var isAtBack = angle < -2 && angularVel > -0.005;
+  var isNearBack = angle < 0 && angularVel > -0.01;
+
+  var maxA = Math.abs(maxAngle);
+  var normalizedAngle = maxA > 0 ? angle / maxA : 0;
+
+  if (normalizedAngle < -0.7 && angularVel >= -0.003) {
+    // Perfect: at the back, about to swing forward
+    combo++;
+    perfectCount++;
+    var points = 100 * Math.min(combo, 5);
+    score += points;
+    maxAngle = Math.min(60, Math.abs(maxAngle) + 4);
+    angularVel += pushForce * 1.2;
+    showResult('パーフェクト！ +' + points, '#fbbf24', 'perfect');
+    playPerfect();
+    if (navigator.vibrate) navigator.vibrate(30);
+  } else if (normalizedAngle < -0.3 && angularVel >= -0.008) {
+    // Good
+    combo++;
+    goodCount++;
+    var points = 50 * Math.min(combo, 3);
+    score += points;
+    maxAngle = Math.min(60, Math.abs(maxAngle) + 2);
+    angularVel += pushForce * 0.8;
+    showResult('いいね！ +' + points, '#34d399', 'good');
+    playGood();
+  } else {
+    // Miss
+    combo = 0;
+    maxAngle = Math.max(5, Math.abs(maxAngle) - 1);
+    showResult('おしい！', '#f87171', 'miss');
+    playMiss();
+  }
+
+  scoreEl.textContent = score;
+  var heightPct = Math.min(100, (Math.abs(maxAngle) / 60) * 100);
+  heightBar.style.height = heightPct + '%';
+}
+
+var lastTime = 0;
+function gameLoop(now) {
+  if (state !== 'playing') { requestAnimationFrame(gameLoop); return; }
+
+  var dt = lastTime ? (now - lastTime) : 16;
+  lastTime = now;
+  if (dt > 50) dt = 50;
+
+  // Beat tick sound
+  beatPhase += dt;
+  if (beatPhase >= beatInterval) {
+    beatPhase -= beatInterval;
+    playTick(angle < 0 ? 1000 : 800);
+  }
+
+  // Pendulum physics
+  var angleRad = angle * Math.PI / 180;
+  var accel = -gravity * Math.sin(angleRad) * dt;
+  angularVel += accel;
+  angularVel *= damping;
+  angle += angularVel * dt;
+
+  // Track max angle
+  maxAngle = Math.max(Math.abs(angle), Math.abs(maxAngle) * 0.999);
+
+  // Update visual
+  pendulum.style.transform = 'translateX(-50%) rotate(' + angle + 'deg)';
+
+  // Timing ring glow based on position
+  var normalizedAngle = maxAngle > 0 ? angle / maxAngle : 0;
+  var ringOpacity = normalizedAngle < -0.5 ? Math.min(1, (-normalizedAngle - 0.5) * 2) : 0;
+  timingRing.style.borderColor = 'rgba(251,191,36,' + (0.3 + ringOpacity * 0.7) + ')';
+
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  state = 'playing';
+  angle = -5;
+  angularVel = 0;
+  maxAngle = 5;
+  score = 0;
+  combo = 0;
+  totalPushes = 0;
+  perfectCount = 0;
+  goodCount = 0;
+  timeLeft = gameTime;
+  lastTime = 0;
+  beatPhase = 0;
+
+  scoreEl.textContent = '0';
+  heightBar.style.height = '0%';
+
+  document.getElementById('title-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('show');
+
+  timerInterval = setInterval(function() {
+    timeLeft--;
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  state = 'ended';
+  clearInterval(timerInterval);
+
+  setTimeout(function() {
+    playFanfare();
+
+    var emoji = document.getElementById('r-emoji');
+    var title = document.getElementById('r-title');
+    var scoreR = document.getElementById('r-score');
+    var detail = document.getElementById('r-detail');
+
+    scoreR.textContent = '⭐ ' + score + ' てん';
+
+    if (score >= 2000) {
+      emoji.textContent = '🏆';
+      title.textContent = 'すごすぎ！！';
+    } else if (score >= 1000) {
+      emoji.textContent = '🎉';
+      title.textContent = 'やったね！';
+    } else if (score >= 400) {
+      emoji.textContent = '😊';
+      title.textContent = 'がんばったね！';
+    } else {
+      emoji.textContent = '🎠';
+      title.textContent = 'おしまい！';
+    }
+
+    var details = [];
+    if (perfectCount > 0) details.push('パーフェクト ' + perfectCount + ' かい');
+    if (goodCount > 0) details.push('いいね ' + goodCount + ' かい');
+    detail.textContent = details.join(' / ');
+
+    document.getElementById('result-screen').classList.add('show');
+  }, 500);
+}
+
+// Event listeners
+document.getElementById('tap-area').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  handleTap();
+});
+
+document.getElementById('btn-start').addEventListener('click', function() {
+  ensureAudio();
+  startGame();
+});
+
+document.getElementById('btn-retry').addEventListener('click', function() {
+  ensureAudio();
+  startGame();
+});
+
+document.addEventListener('dblclick', function(e) { e.preventDefault(); });
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+// Start idle animation
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
