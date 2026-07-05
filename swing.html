@@ -661,7 +661,6 @@ function handleTap() {
     }
   } else {
     combo = 0;
-    swingHeight = Math.max(5, swingHeight - 1);
     showResult('おしい！', '#f87171', 'miss');
     playMiss();
   }
@@ -693,7 +692,7 @@ function gameLoop(now) {
 
   // Determine if in "ready" zone (swing is on the left/back side and slowing down)
   var wasReady = isReady;
-  isReady = angle < -swingHeight * 0.3 && angularVel > -0.005;
+  isReady = angle < -2 && angularVel > -0.003;
 
   // Show/hide visual cue
   if (isReady && !pushCooldown) {
