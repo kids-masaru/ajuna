@@ -24,7 +24,6 @@ body {
   overflow: hidden;
 }
 
-/* Sky decorations */
 .cloud {
   position: absolute;
   background: white;
@@ -44,7 +43,6 @@ body {
 #cloud2::before { width: 35px; height: 20px; top: -10px; left: 10px; }
 #cloud2::after { width: 40px; height: 16px; top: -6px; left: 25px; }
 
-/* Sun */
 #sun {
   position: absolute;
   top: 5%; right: 10%;
@@ -54,7 +52,6 @@ body {
   box-shadow: 0 0 30px rgba(255,215,0,0.5);
 }
 
-/* Ground */
 #ground {
   position: absolute;
   bottom: 0; left: 0; right: 0;
@@ -63,7 +60,6 @@ body {
   border-top: 4px solid #33691E;
 }
 
-/* Swing frame (A-shape) */
 #swing-area {
   position: absolute;
   top: 15%;
@@ -93,14 +89,12 @@ body {
   border-radius: 5px;
 }
 
-/* Swing rope + girl (pendulum) */
 #pendulum {
   position: absolute;
   top: 10px;
   left: 50%;
   transform-origin: 0 0;
   transform: translateX(-50%) rotate(0deg);
-  transition: none;
   will-change: transform;
 }
 
@@ -114,27 +108,23 @@ body {
 #rope-left { left: -12px; }
 #rope-right { right: -12px; }
 
-/* Seat */
 #seat {
   position: absolute;
   top: 175px;
   left: 50%;
   transform: translateX(-50%);
-  width: 40px;
-  height: 8px;
+  width: 40px; height: 8px;
   background: #8B4513;
   border-radius: 3px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-/* CSS Girl on swing */
 #girl {
   position: absolute;
   top: 110px;
   left: 50%;
   transform: translateX(-50%);
-  width: 50px;
-  height: 80px;
+  width: 50px; height: 80px;
 }
 
 .girl-head {
@@ -180,7 +170,6 @@ body {
 }
 .girl-blush.l { left: 2px; }
 .girl-blush.r { right: 2px; }
-
 .girl-hair {
   position: absolute;
   top: -3px; left: 50%;
@@ -199,7 +188,6 @@ body {
   border-radius: 0 0 40% 40%;
   z-index: 0;
 }
-
 .girl-body {
   position: absolute;
   top: 28px; left: 50%;
@@ -208,7 +196,6 @@ body {
   background: #f9a8d4;
   border-radius: 4px 4px 8px 8px;
 }
-
 .girl-leg {
   position: absolute;
   top: 52px;
@@ -218,7 +205,6 @@ body {
 }
 .girl-leg.l { left: 14px; }
 .girl-leg.r { right: 14px; }
-
 .girl-arm {
   position: absolute;
   top: 30px;
@@ -237,7 +223,6 @@ body {
   z-index: 20;
   display: flex;
   justify-content: center;
-  gap: 16px;
   padding: 0 12px;
   pointer-events: none;
 }
@@ -264,7 +249,6 @@ body {
   z-index: 15;
   overflow: hidden;
 }
-
 #height-bar {
   position: absolute;
   bottom: 0;
@@ -274,7 +258,6 @@ body {
   border-radius: 0 0 12px 12px;
   transition: height 0.3s;
 }
-
 #height-label {
   position: absolute;
   right: 12px;
@@ -286,59 +269,92 @@ body {
   z-index: 15;
 }
 
-/* Timing indicator */
-#timing-ring {
+/* Push button */
+#push-btn {
   position: absolute;
-  bottom: max(100px, 12%);
+  bottom: max(30px, 8%);
   left: 50%;
   transform: translateX(-50%);
-  width: 80px; height: 80px;
+  width: 120px; height: 120px;
   border-radius: 50%;
-  border: 5px solid rgba(255,255,255,0.4);
+  border: 6px solid rgba(255,255,255,0.5);
+  background: rgba(200,200,200,0.3);
   z-index: 15;
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
-}
-
-#timing-fill {
-  width: 60px; height: 60px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.2);
-  transition: background 0.1s;
-}
-
-#timing-ring.perfect { border-color: #fbbf24; }
-#timing-ring.perfect #timing-fill { background: rgba(251,191,36,0.5); }
-#timing-ring.good { border-color: #34d399; }
-#timing-ring.good #timing-fill { background: rgba(52,211,153,0.4); }
-#timing-ring.miss { border-color: #f87171; }
-#timing-ring.miss #timing-fill { background: rgba(248,113,113,0.3); }
-
-/* Tap area */
-#tap-area {
-  position: absolute;
-  bottom: 0;
-  left: 0; right: 0;
-  height: 40%;
-  z-index: 10;
+  font-size: 18px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.5);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+
+#push-btn.ready {
+  border-color: #fbbf24;
+  background: rgba(251,191,36,0.4);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(251,191,36,0.6), 0 0 60px rgba(251,191,36,0.3);
+  animation: btn-pulse 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes btn-pulse {
+  0% { transform: translateX(-50%) scale(1); }
+  100% { transform: translateX(-50%) scale(1.1); }
+}
+
+#push-btn:active {
+  transform: translateX(-50%) scale(0.9);
+}
+
+#push-btn.perfect-flash {
+  border-color: #fbbf24;
+  background: rgba(251,191,36,0.7);
+  box-shadow: 0 0 40px rgba(251,191,36,0.8);
+}
+#push-btn.good-flash {
+  border-color: #34d399;
+  background: rgba(52,211,153,0.6);
+  box-shadow: 0 0 30px rgba(52,211,153,0.6);
+}
+#push-btn.miss-flash {
+  border-color: #f87171;
+  background: rgba(248,113,113,0.4);
+}
+
+/* Arrow indicator */
+#arrow {
+  position: absolute;
+  bottom: max(160px, 20%);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 36px;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#arrow.show {
+  opacity: 1;
+  animation: arrow-bounce 0.3s ease-in-out infinite alternate;
+}
+@keyframes arrow-bounce {
+  0% { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(8px); }
 }
 
 /* Result text */
 #result-text {
   position: absolute;
-  top: 35%;
+  top: 30%;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 900;
   z-index: 20;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.3s;
   text-shadow: 0 3px 6px rgba(0,0,0,0.2);
 }
 #result-text.show { opacity: 1; animation: result-pop 0.5s ease-out; }
@@ -347,6 +363,23 @@ body {
   50% { transform: translateX(-50%) scale(1.3); }
   100% { transform: translateX(-50%) scale(1); }
 }
+
+/* Timer */
+#timer-box {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: 12px;
+  z-index: 20;
+  background: rgba(255,255,255,0.9);
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-weight: 800;
+  font-size: 14px;
+  color: #6b7280;
+  pointer-events: none;
+}
+#timer-box.warning { color: #ef4444; animation: timer-warn 0.5s infinite alternate; }
+@keyframes timer-warn { 0% { opacity: 1; } 100% { opacity: 0.5; } }
 
 /* Title screen */
 #title-screen {
@@ -364,7 +397,7 @@ body {
   font-weight: 900; color: #ec4899;
   text-shadow: 0 2px 8px rgba(236,72,153,0.2);
 }
-.title-sub { font-size: 0.95rem; font-weight: 700; color: #f9a8d4; }
+.title-sub { font-size: 0.95rem; font-weight: 700; color: #f9a8d4; text-align: center; line-height: 1.6; }
 
 /* Result screen */
 #result-screen {
@@ -388,7 +421,6 @@ body {
 .result-score { font-weight: 800; font-size: 1.2rem; color: #ec4899; }
 .result-detail { font-weight: 700; font-size: 0.9rem; color: #888; }
 
-/* Flowers on ground */
 .flower {
   position: absolute;
   font-size: 14px;
@@ -401,12 +433,10 @@ body {
   <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
 
   <div id="game">
-    <!-- Sky -->
     <div class="cloud" id="cloud1"></div>
     <div class="cloud" id="cloud2"></div>
     <div id="sun"></div>
 
-    <!-- Ground -->
     <div id="ground">
       <div class="flower" style="left:10%">🌸</div>
       <div class="flower" style="left:25%">🌼</div>
@@ -415,19 +445,17 @@ body {
       <div class="flower" style="left:90%">🌼</div>
     </div>
 
-    <!-- HUD -->
     <div id="hud">
       <div id="score-box">⭐ <span id="score">0</span></div>
     </div>
+    <div id="timer-box">🕐 <span id="timer">30</span></div>
     <div id="height-label">たかさ</div>
     <div id="height-bar-wrap"><div id="height-bar"></div></div>
 
-    <!-- Swing -->
     <div id="swing-area">
       <div id="frame-left"></div>
       <div id="frame-right"></div>
       <div id="frame-top"></div>
-
       <div id="pendulum">
         <div id="rope-left"></div>
         <div id="rope-right"></div>
@@ -450,25 +478,18 @@ body {
       </div>
     </div>
 
-    <!-- Timing ring -->
-    <div id="timing-ring"><div id="timing-fill"></div></div>
-
-    <!-- Result text -->
+    <div id="arrow">👇</div>
     <div id="result-text"></div>
-
-    <!-- Tap area -->
-    <div id="tap-area"></div>
+    <div id="push-btn">おして！</div>
   </div>
 
-  <!-- Title -->
   <div id="title-screen">
     <div class="title-emoji">🎠</div>
     <div class="title-name">ブランコ</div>
-    <div class="title-sub">タイミングよく おしてね！</div>
+    <div class="title-sub">ボタンがひかったら おして！<br>タイミングよく おすと<br>たかく とべるよ！</div>
     <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:16px">はじめる！</button>
   </div>
 
-  <!-- Result -->
   <div id="result-screen">
     <div class="result-card gp-pop">
       <div class="result-emoji" id="r-emoji">🎉</div>
@@ -488,9 +509,12 @@ window.onerror = function(msg, src, line) {
 };
 
 var pendulum = document.getElementById('pendulum');
-var timingRing = document.getElementById('timing-ring');
+var pushBtn = document.getElementById('push-btn');
+var arrowEl = document.getElementById('arrow');
 var resultText = document.getElementById('result-text');
 var scoreEl = document.getElementById('score');
+var timerEl = document.getElementById('timer');
+var timerBox = document.getElementById('timer-box');
 var heightBar = document.getElementById('height-bar');
 
 var AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -500,11 +524,10 @@ function ensureAudio() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-// Game state
 var state = 'title';
 var angle = 0;
 var angularVel = 0;
-var maxAngle = 5;
+var swingHeight = 5;
 var score = 0;
 var combo = 0;
 var totalPushes = 0;
@@ -513,28 +536,23 @@ var goodCount = 0;
 var gameTime = 30;
 var timeLeft = 30;
 var timerInterval = null;
+var pushCooldown = false;
+var isReady = false;
 
-// Physics
 var gravity = 0.0004;
-var damping = 0.997;
-var pushForce = 0.012;
+var damping = 0.998;
 
-// Timing
-var beatInterval = 800;
-var lastBeatTime = 0;
-var beatPhase = 0;
-
-function playTick(freq) {
+function playChime(freq) {
   ensureAudio();
   var t = audioCtx.currentTime;
   var osc = audioCtx.createOscillator();
   var g = audioCtx.createGain();
   osc.connect(g); g.connect(audioCtx.destination);
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(freq || 800, t);
-  g.gain.setValueAtTime(0.08, t);
-  g.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
-  osc.start(t); osc.stop(t + 0.08);
+  osc.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+  osc.start(t); osc.stop(t + 0.12);
 }
 
 function playPerfect() {
@@ -576,10 +594,10 @@ function playMiss() {
   osc.connect(g); g.connect(audioCtx.destination);
   osc.type = 'square';
   osc.frequency.setValueAtTime(200, t);
-  osc.frequency.exponentialRampToValueAtTime(100, t + 0.15);
-  g.gain.setValueAtTime(0.06, t);
-  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-  osc.start(t); osc.stop(t + 0.15);
+  osc.frequency.exponentialRampToValueAtTime(100, t + 0.12);
+  g.gain.setValueAtTime(0.05, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+  osc.start(t); osc.stop(t + 0.12);
 }
 
 function playFanfare() {
@@ -605,72 +623,63 @@ function showResult(text, color, cls) {
   resultText.classList.remove('show');
   void resultText.offsetWidth;
   resultText.classList.add('show');
-  timingRing.className = cls;
+  pushBtn.className = cls + '-flash';
   setTimeout(function() {
     resultText.classList.remove('show');
-    timingRing.className = '';
-  }, 600);
+    pushBtn.className = '';
+  }, 500);
 }
 
 function handleTap() {
-  if (state !== 'playing') return;
+  if (state !== 'playing' || pushCooldown) return;
   totalPushes++;
+  pushCooldown = true;
+  setTimeout(function() { pushCooldown = false; }, 300);
 
-  var swingPhase = Math.atan2(-angularVel, angle);
-  var isAtBack = angle < -2 && angularVel > -0.005;
-  var isNearBack = angle < 0 && angularVel > -0.01;
+  if (isReady && angle < 0) {
+    var backness = Math.abs(angle) / Math.max(swingHeight, 5);
 
-  var maxA = Math.abs(maxAngle);
-  var normalizedAngle = maxA > 0 ? angle / maxA : 0;
-
-  if (normalizedAngle < -0.7 && angularVel >= -0.003) {
-    // Perfect: at the back, about to swing forward
-    combo++;
-    perfectCount++;
-    var points = 100 * Math.min(combo, 5);
-    score += points;
-    maxAngle = Math.min(60, Math.abs(maxAngle) + 4);
-    angularVel += pushForce * 1.2;
-    showResult('パーフェクト！ +' + points, '#fbbf24', 'perfect');
-    playPerfect();
-    if (navigator.vibrate) navigator.vibrate(30);
-  } else if (normalizedAngle < -0.3 && angularVel >= -0.008) {
-    // Good
-    combo++;
-    goodCount++;
-    var points = 50 * Math.min(combo, 3);
-    score += points;
-    maxAngle = Math.min(60, Math.abs(maxAngle) + 2);
-    angularVel += pushForce * 0.8;
-    showResult('いいね！ +' + points, '#34d399', 'good');
-    playGood();
+    if (backness > 0.7) {
+      combo++;
+      perfectCount++;
+      var points = 100 * Math.min(combo, 5);
+      score += points;
+      swingHeight = Math.min(55, swingHeight + 5);
+      angularVel += 0.015;
+      showResult('パーフェクト！ +' + points, '#fbbf24', 'perfect');
+      playPerfect();
+      if (navigator.vibrate) navigator.vibrate(30);
+    } else {
+      combo++;
+      goodCount++;
+      var points = 50 * Math.min(combo, 3);
+      score += points;
+      swingHeight = Math.min(55, swingHeight + 2);
+      angularVel += 0.01;
+      showResult('いいね！ +' + points, '#34d399', 'good');
+      playGood();
+    }
   } else {
-    // Miss
     combo = 0;
-    maxAngle = Math.max(5, Math.abs(maxAngle) - 1);
+    swingHeight = Math.max(5, swingHeight - 1);
     showResult('おしい！', '#f87171', 'miss');
     playMiss();
   }
 
   scoreEl.textContent = score;
-  var heightPct = Math.min(100, (Math.abs(maxAngle) / 60) * 100);
+  var heightPct = Math.min(100, (swingHeight / 55) * 100);
   heightBar.style.height = heightPct + '%';
 }
 
 var lastTime = 0;
+var readyChimePlayed = false;
+
 function gameLoop(now) {
   if (state !== 'playing') { requestAnimationFrame(gameLoop); return; }
 
   var dt = lastTime ? (now - lastTime) : 16;
   lastTime = now;
   if (dt > 50) dt = 50;
-
-  // Beat tick sound
-  beatPhase += dt;
-  if (beatPhase >= beatInterval) {
-    beatPhase -= beatInterval;
-    playTick(angle < 0 ? 1000 : 800);
-  }
 
   // Pendulum physics
   var angleRad = angle * Math.PI / 180;
@@ -679,25 +688,35 @@ function gameLoop(now) {
   angularVel *= damping;
   angle += angularVel * dt;
 
-  // Track max angle
-  maxAngle = Math.max(Math.abs(angle), Math.abs(maxAngle) * 0.999);
-
   // Update visual
   pendulum.style.transform = 'translateX(-50%) rotate(' + angle + 'deg)';
 
-  // Timing ring glow based on position
-  var normalizedAngle = maxAngle > 0 ? angle / maxAngle : 0;
-  var ringOpacity = normalizedAngle < -0.5 ? Math.min(1, (-normalizedAngle - 0.5) * 2) : 0;
-  timingRing.style.borderColor = 'rgba(251,191,36,' + (0.3 + ringOpacity * 0.7) + ')';
+  // Determine if in "ready" zone (swing is on the left/back side and slowing down)
+  var wasReady = isReady;
+  isReady = angle < -swingHeight * 0.3 && angularVel > -0.005;
+
+  // Show/hide visual cue
+  if (isReady && !pushCooldown) {
+    pushBtn.classList.add('ready');
+    arrowEl.classList.add('show');
+    if (!readyChimePlayed) {
+      playChime(1200);
+      readyChimePlayed = true;
+    }
+  } else {
+    pushBtn.classList.remove('ready');
+    arrowEl.classList.remove('show');
+    if (!isReady) readyChimePlayed = false;
+  }
 
   requestAnimationFrame(gameLoop);
 }
 
 function startGame() {
   state = 'playing';
-  angle = -5;
+  angle = -8;
   angularVel = 0;
-  maxAngle = 5;
+  swingHeight = 8;
   score = 0;
   combo = 0;
   totalPushes = 0;
@@ -705,9 +724,13 @@ function startGame() {
   goodCount = 0;
   timeLeft = gameTime;
   lastTime = 0;
-  beatPhase = 0;
+  pushCooldown = false;
+  isReady = false;
+  readyChimePlayed = false;
 
   scoreEl.textContent = '0';
+  timerEl.textContent = timeLeft;
+  timerBox.classList.remove('warning');
   heightBar.style.height = '0%';
 
   document.getElementById('title-screen').classList.add('hidden');
@@ -715,9 +738,9 @@ function startGame() {
 
   timerInterval = setInterval(function() {
     timeLeft--;
-    if (timeLeft <= 0) {
-      endGame();
-    }
+    timerEl.textContent = timeLeft;
+    if (timeLeft <= 10) timerBox.classList.add('warning');
+    if (timeLeft <= 0) endGame();
   }, 1000);
 
   requestAnimationFrame(gameLoop);
@@ -726,10 +749,11 @@ function startGame() {
 function endGame() {
   state = 'ended';
   clearInterval(timerInterval);
+  pushBtn.className = '';
+  arrowEl.classList.remove('show');
 
   setTimeout(function() {
     playFanfare();
-
     var emoji = document.getElementById('r-emoji');
     var title = document.getElementById('r-title');
     var scoreR = document.getElementById('r-score');
@@ -737,19 +761,10 @@ function endGame() {
 
     scoreR.textContent = '⭐ ' + score + ' てん';
 
-    if (score >= 2000) {
-      emoji.textContent = '🏆';
-      title.textContent = 'すごすぎ！！';
-    } else if (score >= 1000) {
-      emoji.textContent = '🎉';
-      title.textContent = 'やったね！';
-    } else if (score >= 400) {
-      emoji.textContent = '😊';
-      title.textContent = 'がんばったね！';
-    } else {
-      emoji.textContent = '🎠';
-      title.textContent = 'おしまい！';
-    }
+    if (score >= 2000) { emoji.textContent = '🏆'; title.textContent = 'すごすぎ！！'; }
+    else if (score >= 1000) { emoji.textContent = '🎉'; title.textContent = 'やったね！'; }
+    else if (score >= 400) { emoji.textContent = '😊'; title.textContent = 'がんばったね！'; }
+    else { emoji.textContent = '🎠'; title.textContent = 'おしまい！'; }
 
     var details = [];
     if (perfectCount > 0) details.push('パーフェクト ' + perfectCount + ' かい');
@@ -760,8 +775,7 @@ function endGame() {
   }, 500);
 }
 
-// Event listeners
-document.getElementById('tap-area').addEventListener('pointerdown', function(e) {
+pushBtn.addEventListener('pointerdown', function(e) {
   e.preventDefault();
   handleTap();
 });
@@ -770,16 +784,13 @@ document.getElementById('btn-start').addEventListener('click', function() {
   ensureAudio();
   startGame();
 });
-
 document.getElementById('btn-retry').addEventListener('click', function() {
   ensureAudio();
   startGame();
 });
-
 document.addEventListener('dblclick', function(e) { e.preventDefault(); });
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-// Start idle animation
 requestAnimationFrame(gameLoop);
 </script>
 </body>
