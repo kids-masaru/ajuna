@@ -52,23 +52,36 @@ body {
 
 #swing-girl-img {
   position: absolute;
-  top: 150px;
-  left: -75px;
-  width: 180px;
+  top: 120px;
+  left: -60px;
+  width: 144px;
   height: auto;
   pointer-events: none;
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
+/* Rope from pivot to girl */
+#rope {
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 3px;
+  height: 130px;
+  background: linear-gradient(180deg, #a08060, #c0a080);
+  transform-origin: top center;
+  z-index: -1;
+  border-radius: 1px;
 }
 
 /* HUD */
 #hud {
   position: absolute;
   top: max(10px, env(safe-area-inset-top));
-  left: 0; right: 0;
+  right: 12px;
   z-index: 20;
   display: flex;
-  justify-content: space-between;
-  padding: 0 12px;
+  flex-direction: column;
+  gap: 6px;
   pointer-events: none;
 }
 
@@ -286,14 +299,15 @@ body {
     <div id="bg-img"></div>
 
     <div id="hud">
-      <div id="timer-box">🕐 <span id="timer">30</span></div>
       <div id="score-box">⭐ <span id="score">0</span></div>
+      <div id="timer-box">🕐 <span id="timer">30</span></div>
     </div>
     <div id="height-label">たかさ</div>
     <div id="height-bar-wrap"><div id="height-bar"></div></div>
 
     <div id="pendulum-wrap">
       <div id="pendulum">
+        <div id="rope"></div>
         <img id="swing-girl-img" src="swing_girl.png" alt="ブランコの女の子">
       </div>
     </div>
