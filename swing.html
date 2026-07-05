@@ -52,8 +52,8 @@ body {
 
 #swing-girl-img {
   position: absolute;
-  top: 100px;
-  left: -90px;
+  top: 150px;
+  left: -75px;
   width: 180px;
   height: auto;
   pointer-events: none;
@@ -491,7 +491,7 @@ function showSwipeFb(dir) {
 function handleSwipe(velX) {
   if (state !== 'playing' || swipeCooldown) return;
   var swipeDir = velX > 0 ? 1 : -1;
-  var swingDir = angularVel > 0 ? -1 : 1;
+  var swingDir = angularVel > 0 ? 1 : -1;
   var strength = Math.min(Math.abs(velX) / 8, 1);
 
   if (strength < 0.15) return;
