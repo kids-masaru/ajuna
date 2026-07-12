@@ -80,6 +80,9 @@ const LOCAL_FILES = [
   './icon_kaimono.png',
   './icon_hiragana.png',
   './icon_eawase.png',
+  './osewa_room.png',
+  './osewa_park.png',
+  './osewa_shop.png',
   './doll_bath.png',
   './doll_sleep.png',
 ];

@@ -23,9 +23,7 @@ body {
   position: relative;
   width: 100vw;
   height: 100dvh;
-  background:
-    radial-gradient(ellipse 200% 100% at 50% 120%, #f5e6d3 0%, transparent 70%),
-    linear-gradient(180deg, #fce4ec 0%, #fdf2f8 40%, #fce7f3 100%);
+  background: url('osewa_room.png') center/cover no-repeat;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -372,25 +370,19 @@ body {
 }
 .loc-btn.active span { color: #ec4899; }
 
-/* ===== Room Backgrounds ===== */
-#room.park {
-  background:
-    radial-gradient(ellipse 200% 100% at 50% 120%, #8bc34a 0%, transparent 70%),
-    linear-gradient(180deg, #87CEEB 0%, #B0E0F6 40%, #90EE90 100%);
+/* ===== Room Backgrounds (image-based) ===== */
+#room {
+  background: url('osewa_room.png') center/cover no-repeat;
 }
-#room.park::after {
-  background: linear-gradient(180deg, #4CAF50 0%, #388E3C 100%);
-  border-top-color: #33691E;
+#room::before { display: none; }
+#room::after { display: none; }
+
+#room.park {
+  background: url('osewa_park.png') center/cover no-repeat;
 }
 
 #room.shop {
-  background:
-    radial-gradient(ellipse 200% 100% at 50% 120%, #e8d5b7 0%, transparent 70%),
-    linear-gradient(180deg, #fff8e1 0%, #ffecb3 40%, #ffe082 100%);
-}
-#room.shop::after {
-  background: linear-gradient(180deg, #d7ccc8 0%, #bcaaa4 100%);
-  border-top-color: #a1887f;
+  background: url('osewa_shop.png') center/cover no-repeat;
 }
 
 /* ===== Menu Bar ===== */
