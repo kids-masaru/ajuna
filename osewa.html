@@ -335,6 +335,64 @@ body {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
 }
 
+/* ===== Location Bar ===== */
+#location-bar {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  right: 8px;
+  z-index: 25;
+  display: flex;
+  gap: 6px;
+}
+
+.loc-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  background: rgba(255,255,255,0.85);
+  border: 2px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+.loc-btn span {
+  font-size: 8px;
+  font-weight: 800;
+  color: #888;
+}
+.loc-btn.active {
+  background: rgba(236,72,153,0.15);
+  border-color: #ec4899;
+  box-shadow: 0 2px 8px rgba(236,72,153,0.2);
+}
+.loc-btn.active span { color: #ec4899; }
+
+/* ===== Room Backgrounds ===== */
+#room.park {
+  background:
+    radial-gradient(ellipse 200% 100% at 50% 120%, #8bc34a 0%, transparent 70%),
+    linear-gradient(180deg, #87CEEB 0%, #B0E0F6 40%, #90EE90 100%);
+}
+#room.park::after {
+  background: linear-gradient(180deg, #4CAF50 0%, #388E3C 100%);
+  border-top-color: #33691E;
+}
+
+#room.shop {
+  background:
+    radial-gradient(ellipse 200% 100% at 50% 120%, #e8d5b7 0%, transparent 70%),
+    linear-gradient(180deg, #fff8e1 0%, #ffecb3 40%, #ffe082 100%);
+}
+#room.shop::after {
+  background: linear-gradient(180deg, #d7ccc8 0%, #bcaaa4 100%);
+  border-top-color: #a1887f;
+}
+
 /* ===== Menu Bar ===== */
 #menu-bar {
   position: fixed;
@@ -746,6 +804,13 @@ body {
       </div>
     </div>
 
+    <!-- Location bar -->
+    <div id="location-bar">
+      <button class="loc-btn active" data-loc="room">🏠<span>おへや</span></button>
+      <button class="loc-btn" data-loc="park">🌳<span>こうえん</span></button>
+      <button class="loc-btn" data-loc="shop">🏪<span>おみせ</span></button>
+    </div>
+
     <!-- Menu bar -->
     <div id="menu-bar">
       <button class="menu-btn" data-menu="cloth"><span class="icon"></span><span class="label">おきがえ</span></button>
@@ -839,6 +904,7 @@ var state = {
   activeMenu: null,
   mood: 3,
   bathTaps: 0,
+  location: 'room',
 };
 
 // ============================================================
@@ -1413,6 +1479,23 @@ document.querySelectorAll('.menu-btn').forEach(function(btn) {
   btn.addEventListener('click', function() {
     ensureAudio();
     openMenu(this.dataset.menu);
+  });
+});
+
+// Location buttons
+document.querySelectorAll('.loc-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    ensureAudio();
+    playPop();
+    var loc = this.dataset.loc;
+    state.location = loc;
+    var room = document.getElementById('room');
+    room.classList.remove('park', 'shop');
+    if (loc !== 'room') room.classList.add(loc);
+    document.querySelectorAll('.loc-btn').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    var msgs = { room: 'おへやに もどったよ！', park: 'こうえんに きたよ！', shop: 'おみせに きたよ！' };
+    showSpeech(msgs[loc] || '');
   });
 });
 
