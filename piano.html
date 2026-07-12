@@ -500,9 +500,11 @@
         // --- Start Button Logic ---
         document.getElementById('start-btn').addEventListener('click', () => {
             initAudio();
-            // Hide start overlay
             document.getElementById('start-overlay').style.display = 'none';
         });
+        // Auto-skip title screen
+        initAudio();
+        document.getElementById('start-overlay').style.display = 'none';
 
         // --- Forced Landscape Logic ---
         function forceLandscape() {

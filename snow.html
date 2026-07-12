@@ -563,6 +563,11 @@
                 gameLoop();
             }, 700);
         });
+        // Auto-skip title screen
+        initAudio();
+        startScreen.style.display = 'none';
+        isPlaying = true;
+        gameLoop();
 
     </script>
 </body>
