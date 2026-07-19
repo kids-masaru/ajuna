@@ -384,6 +384,80 @@ body {
 #room.shop {
   background: url('osewa_shop.png') center/cover no-repeat;
 }
+#room.shop-bakery {
+  background: url('osewa_shop_bakery.png') center/cover no-repeat;
+}
+#room.shop-toy {
+  background: url('osewa_shop_toy.png') center/cover no-repeat;
+}
+#room.shop-candy {
+  background: url('osewa_shop_candy.png') center/cover no-repeat;
+}
+#room.shop-flower {
+  background: url('osewa_shop_flower.png') center/cover no-repeat;
+}
+
+/* ===== Shop Select Overlay ===== */
+#shop-select {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+#shop-select-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+#shop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 280px;
+  width: 85%;
+}
+.shop-card {
+  background: white;
+  border: 3px solid #f9a8d4;
+  border-radius: 18px;
+  padding: 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.shop-card:active {
+  transform: scale(0.95);
+  background: #fdf2f8;
+}
+.shop-icon { font-size: 36px; }
+.shop-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ec4899;
+}
+#shop-back-btn {
+  margin-top: 8px;
+  background: rgba(255,255,255,0.9);
+  border: 2px solid rgba(0,0,0,0.1);
+  border-radius: 16px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #666;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* ===== Menu Bar ===== */
 #menu-bar {
@@ -801,6 +875,30 @@ body {
       <button class="loc-btn active" data-loc="room">🏠<span>おへや</span></button>
       <button class="loc-btn" data-loc="park">🌳<span>こうえん</span></button>
       <button class="loc-btn" data-loc="shop">🏪<span>おみせ</span></button>
+    </div>
+
+    <!-- Shop select overlay -->
+    <div id="shop-select" style="display:none">
+      <div id="shop-select-title">どこに いく？</div>
+      <div id="shop-grid">
+        <button class="shop-card" data-shop="bakery">
+          <div class="shop-icon">🍞</div>
+          <div class="shop-name">パンやさん</div>
+        </button>
+        <button class="shop-card" data-shop="toy">
+          <div class="shop-icon">🧸</div>
+          <div class="shop-name">おもちゃやさん</div>
+        </button>
+        <button class="shop-card" data-shop="candy">
+          <div class="shop-icon">🍬</div>
+          <div class="shop-name">おかしやさん</div>
+        </button>
+        <button class="shop-card" data-shop="flower">
+          <div class="shop-icon">🌸</div>
+          <div class="shop-name">おはなやさん</div>
+        </button>
+      </div>
+      <button id="shop-back-btn">🔙 もどる</button>
     </div>
 
     <!-- Menu bar -->
@@ -1486,9 +1584,40 @@ document.querySelectorAll('.loc-btn').forEach(function(btn) {
     if (loc !== 'room') room.classList.add(loc);
     document.querySelectorAll('.loc-btn').forEach(function(b) { b.classList.remove('active'); });
     this.classList.add('active');
-    var msgs = { room: 'おへやに もどったよ！', park: 'こうえんに きたよ！', shop: 'おみせに きたよ！' };
+    if (loc === 'shop') {
+      document.getElementById('shop-select').style.display = 'flex';
+      showSpeech('どこに いこうかな？');
+      return;
+    }
+    var msgs = { room: 'おへやに もどったよ！', park: 'こうえんに きたよ！' };
     showSpeech(msgs[loc] || '');
   });
+});
+
+// Shop cards
+document.querySelectorAll('.shop-card').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    ensureAudio();
+    playPop();
+    var shop = this.dataset.shop;
+    state.location = 'shop-' + shop;
+    var room = document.getElementById('room');
+    room.classList.remove('park', 'shop', 'shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
+    room.classList.add('shop-' + shop);
+    document.getElementById('shop-select').style.display = 'none';
+    var names = { bakery: 'パンやさん', toy: 'おもちゃやさん', candy: 'おかしやさん', flower: 'おはなやさん' };
+    showSpeech(names[shop] + 'に きたよ！');
+  });
+});
+
+document.getElementById('shop-back-btn').addEventListener('click', function() {
+  ensureAudio();
+  document.getElementById('shop-select').style.display = 'none';
+  var room = document.getElementById('room');
+  room.classList.remove('shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
+  room.classList.add('shop');
+  state.location = 'shop';
+  showSpeech('おみせに もどったよ！');
 });
 
 // Close panel on tap outside

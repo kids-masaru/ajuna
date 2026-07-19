@@ -83,6 +83,10 @@ const LOCAL_FILES = [
   './osewa_room.png',
   './osewa_park.png',
   './osewa_shop.png',
+  './osewa_shop_bakery.png',
+  './osewa_shop_toy.png',
+  './osewa_shop_candy.png',
+  './osewa_shop_flower.png',
   './doll_bath.png',
   './doll_sleep.png',
 ];
