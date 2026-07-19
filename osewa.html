@@ -63,7 +63,7 @@ body {
   justify-content: center;
   width: 100%;
   max-width: 340px;
-  padding-top: max(10px, env(safe-area-inset-top));
+  padding-top: calc(max(10px, env(safe-area-inset-top)) + 100px);
   min-height: 0;
   overflow: hidden;
 }
@@ -440,7 +440,12 @@ body {
   transform: scale(0.95);
   background: #fdf2f8;
 }
-.shop-icon { font-size: 36px; }
+.shop-icon-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 14px;
+  object-fit: cover;
+}
 .shop-name {
   font-size: 13px;
   font-weight: 800;
@@ -882,19 +887,19 @@ body {
       <div id="shop-select-title">どこに いく？</div>
       <div id="shop-grid">
         <button class="shop-card" data-shop="bakery">
-          <div class="shop-icon">🍞</div>
+          <img class="shop-icon-img" src="shop_icon_bakery.png" alt="">
           <div class="shop-name">パンやさん</div>
         </button>
         <button class="shop-card" data-shop="toy">
-          <div class="shop-icon">🧸</div>
+          <img class="shop-icon-img" src="shop_icon_toy.png" alt="">
           <div class="shop-name">おもちゃやさん</div>
         </button>
         <button class="shop-card" data-shop="candy">
-          <div class="shop-icon">🍬</div>
+          <img class="shop-icon-img" src="shop_icon_candy.png" alt="">
           <div class="shop-name">おかしやさん</div>
         </button>
         <button class="shop-card" data-shop="flower">
-          <div class="shop-icon">🌸</div>
+          <img class="shop-icon-img" src="shop_icon_flower.png" alt="">
           <div class="shop-name">おはなやさん</div>
         </button>
       </div>
