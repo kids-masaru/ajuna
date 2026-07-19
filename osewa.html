@@ -63,7 +63,7 @@ body {
   justify-content: center;
   width: 100%;
   max-width: 340px;
-  padding-top: calc(max(10px, env(safe-area-inset-top)) + 100px);
+  padding-top: calc(max(10px, env(safe-area-inset-top)) + 150px);
   min-height: 0;
   overflow: hidden;
 }
@@ -400,21 +400,28 @@ body {
 /* ===== Shop Select Overlay ===== */
 #shop-select {
   position: fixed;
-  inset: 0;
+  bottom: 0;
+  left: 0; right: 0;
   z-index: 35;
-  background: rgba(0,0,0,0.5);
+  background: rgba(255,255,255,0.95);
   backdrop-filter: blur(6px);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  gap: 12px;
+  animation: shop-slide-up 0.3s ease-out;
+}
+@keyframes shop-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 #shop-select-title {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
-  color: white;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  color: #ec4899;
 }
 #shop-grid {
   display: grid;
@@ -1585,13 +1592,13 @@ document.querySelectorAll('.loc-btn').forEach(function(btn) {
     var loc = this.dataset.loc;
     state.location = loc;
     var room = document.getElementById('room');
-    room.classList.remove('park', 'shop');
+    room.classList.remove('park', 'shop', 'shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
     if (loc !== 'room') room.classList.add(loc);
+    document.getElementById('shop-select').style.display = 'none';
     document.querySelectorAll('.loc-btn').forEach(function(b) { b.classList.remove('active'); });
     this.classList.add('active');
     if (loc === 'shop') {
-      document.getElementById('shop-select').style.display = 'flex';
-      showSpeech('どこに いこうかな？');
+      showSpeech('おみせに きたよ！タップしてね');
       return;
     }
     var msgs = { room: 'おへやに もどったよ！', park: 'こうえんに きたよ！' };
@@ -1623,6 +1630,16 @@ document.getElementById('shop-back-btn').addEventListener('click', function() {
   room.classList.add('shop');
   state.location = 'shop';
   showSpeech('おみせに もどったよ！');
+});
+
+// Tap on shop background to show shop select
+document.getElementById('room').addEventListener('pointerdown', function(e) {
+  if (state.location === 'shop'
+    && !e.target.closest('.loc-btn') && !e.target.closest('.menu-btn')
+    && !e.target.closest('#select-panel') && !e.target.closest('#shop-select')
+    && !e.target.closest('#doll-wrapper')) {
+    document.getElementById('shop-select').style.display = 'flex';
+  }
 });
 
 // Close panel on tap outside
