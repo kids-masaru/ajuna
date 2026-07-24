@@ -509,7 +509,7 @@ body {
 
 #basket {
   position: fixed;
-  top: calc(50% + 75px);
+  top: calc(50% + 45px);
   left: 50%;
   transform: translateX(-50%);
   width: 100px; height: 80px;
@@ -555,20 +555,21 @@ body {
 #exit-shop-btn {
   position: fixed;
   bottom: max(80px, 11%);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255,255,255,0.95);
-  border: 3px solid #ec4899;
-  border-radius: 20px;
-  padding: 10px 20px;
-  font-size: 15px;
-  font-weight: 800;
-  color: #ec4899;
+  left: 16px;
+  background: rgba(255,255,255,0.9);
+  border: 3px solid rgba(0,0,0,0.15);
+  border-radius: 50%;
+  width: 56px; height: 56px;
+  font-size: 22px;
+  line-height: 1;
   cursor: pointer;
   z-index: 14;
   pointer-events: auto;
   box-shadow: 0 3px 10px rgba(0,0,0,0.15);
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Park play button */
@@ -1082,7 +1083,7 @@ body {
       <div class="shop-shelf" id="shelf-left"></div>
       <div class="shop-shelf" id="shelf-right"></div>
       <div id="basket"><span id="basket-count">0こ</span></div>
-      <button id="exit-shop-btn">🚪 おみせを でる</button>
+      <button id="exit-shop-btn">🚪⬅️</button>
     </div>
 
     <!-- Park play button -->
