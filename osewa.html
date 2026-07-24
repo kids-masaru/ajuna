@@ -509,39 +509,34 @@ body {
 
 #basket {
   position: fixed;
-  bottom: max(80px, 12%);
+  top: calc(50% + 75px);
   left: 50%;
   transform: translateX(-50%);
-  width: 80px; height: 60px;
-  background: rgba(255,255,255,0.9);
-  border: 3px solid #ec4899;
-  border-radius: 12px 12px 16px 16px;
+  width: 100px; height: 80px;
+  background: transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
-  color: #ec4899;
   pointer-events: auto;
   z-index: 13;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
 }
 #basket::before {
   content: '🧺';
-  font-size: 32px;
-  position: absolute;
-  top: -8px;
+  font-size: 64px;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
 }
 #basket-count {
   position: absolute;
-  bottom: 4px;
-  font-size: 11px;
+  bottom: -2px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ec4899;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
 }
 
 #basket.highlight {
-  border-color: #fbbf24;
-  background: rgba(251,191,36,0.2);
-  box-shadow: 0 0 20px rgba(251,191,36,0.4);
+  filter: drop-shadow(0 0 15px rgba(251,191,36,0.8));
 }
 
 .basket-pop {
