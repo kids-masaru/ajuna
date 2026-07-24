@@ -458,6 +458,104 @@ body {
   font-weight: 800;
   color: #ec4899;
 }
+/* ===== Shopping in store ===== */
+#shopping-ui {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  display: none;
+}
+#shopping-ui.active { display: block; }
+
+.shop-shelf {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+}
+#shelf-left { top: 25%; left: 8px; }
+#shelf-right { top: 25%; right: 8px; }
+
+.shelf-item {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.9);
+  border: 3px solid #f9a8d4;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.shelf-item:active { transform: scale(1.1); }
+.shelf-item.dragging {
+  position: fixed;
+  z-index: 40;
+  opacity: 0.85;
+  transform: scale(1.2);
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.shelf-item.bought {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+#basket {
+  position: fixed;
+  bottom: max(80px, 12%);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px; height: 60px;
+  background: rgba(255,255,255,0.9);
+  border: 3px solid #ec4899;
+  border-radius: 12px 12px 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ec4899;
+  pointer-events: auto;
+  z-index: 13;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+#basket::before {
+  content: '🧺';
+  font-size: 32px;
+  position: absolute;
+  top: -8px;
+}
+#basket-count {
+  position: absolute;
+  bottom: 4px;
+  font-size: 11px;
+}
+
+#basket.highlight {
+  border-color: #fbbf24;
+  background: rgba(251,191,36,0.2);
+  box-shadow: 0 0 20px rgba(251,191,36,0.4);
+}
+
+.basket-pop {
+  position: fixed;
+  font-size: 28px;
+  pointer-events: none;
+  z-index: 41;
+  animation: basket-fly 0.5s ease-out forwards;
+}
+@keyframes basket-fly {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.3) translateY(20px); }
+}
+
 #shop-back-btn {
   margin-top: 8px;
   background: rgba(255,255,255,0.9);
@@ -740,6 +838,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: 100px;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s;
@@ -911,6 +1010,13 @@ body {
         </button>
       </div>
       <button id="shop-back-btn">🔙 もどる</button>
+    </div>
+
+    <!-- Shopping UI (shown inside stores) -->
+    <div id="shopping-ui">
+      <div class="shop-shelf" id="shelf-left"></div>
+      <div class="shop-shelf" id="shelf-right"></div>
+      <div id="basket"><span id="basket-count">0こ</span></div>
     </div>
 
     <!-- Menu bar -->
@@ -1595,6 +1701,7 @@ document.querySelectorAll('.loc-btn').forEach(function(btn) {
     room.classList.remove('park', 'shop', 'shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
     if (loc !== 'room') room.classList.add(loc);
     document.getElementById('shop-select').style.display = 'none';
+    closeShop();
     document.querySelectorAll('.loc-btn').forEach(function(b) { b.classList.remove('active'); });
     this.classList.add('active');
     if (loc === 'shop') {
@@ -1619,6 +1726,7 @@ document.querySelectorAll('.shop-card').forEach(function(btn) {
     document.getElementById('shop-select').style.display = 'none';
     var names = { bakery: 'パンやさん', toy: 'おもちゃやさん', candy: 'おかしやさん', flower: 'おはなやさん' };
     showSpeech(names[shop] + 'に きたよ！');
+    openShop(shop);
   });
 });
 
@@ -1629,8 +1737,113 @@ document.getElementById('shop-back-btn').addEventListener('click', function() {
   room.classList.remove('shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
   room.classList.add('shop');
   state.location = 'shop';
+  closeShop();
   showSpeech('おみせに もどったよ！');
 });
+
+// ============================================================
+// Shopping system
+// ============================================================
+var SHOP_ITEMS = {
+  bakery: ['🍞','🥐','🥖','🎂','🍩','🧁'],
+  toy:    ['🧸','🎪','🎨','🪀','🧩','🎠'],
+  candy:  ['🍬','🍭','🍫','🍪','🧁','🍡'],
+  flower: ['🌸','🌹','🌻','🌷','💐','🌺'],
+};
+
+var basketCount = 0;
+var dragItem = null;
+var dragOffX = 0;
+var dragOffY = 0;
+
+function openShop(shopType) {
+  var items = SHOP_ITEMS[shopType] || [];
+  var leftShelf = document.getElementById('shelf-left');
+  var rightShelf = document.getElementById('shelf-right');
+  leftShelf.innerHTML = '';
+  rightShelf.innerHTML = '';
+  basketCount = 0;
+  document.getElementById('basket-count').textContent = '0こ';
+
+  items.forEach(function(emoji, i) {
+    var el = document.createElement('div');
+    el.className = 'shelf-item';
+    el.textContent = emoji;
+    el.dataset.emoji = emoji;
+    el.addEventListener('pointerdown', startDrag);
+    if (i < 3) leftShelf.appendChild(el);
+    else rightShelf.appendChild(el);
+  });
+
+  document.getElementById('shopping-ui').classList.add('active');
+}
+
+function closeShop() {
+  document.getElementById('shopping-ui').classList.remove('active');
+}
+
+function startDrag(e) {
+  e.preventDefault();
+  if (this.classList.contains('bought')) return;
+  var rect = this.getBoundingClientRect();
+  dragItem = this.cloneNode(true);
+  dragItem.className = 'shelf-item dragging';
+  dragItem.style.left = rect.left + 'px';
+  dragItem.style.top = rect.top + 'px';
+  dragItem.style.width = rect.width + 'px';
+  dragItem.style.height = rect.height + 'px';
+  dragOffX = e.clientX - rect.left;
+  dragOffY = e.clientY - rect.top;
+  dragItem._src = this;
+  document.body.appendChild(dragItem);
+
+  document.addEventListener('pointermove', moveDrag);
+  document.addEventListener('pointerup', endDrag);
+}
+
+function moveDrag(e) {
+  if (!dragItem) return;
+  e.preventDefault();
+  dragItem.style.left = (e.clientX - dragOffX) + 'px';
+  dragItem.style.top = (e.clientY - dragOffY) + 'px';
+
+  var basket = document.getElementById('basket');
+  var br = basket.getBoundingClientRect();
+  var inBasket = e.clientX > br.left && e.clientX < br.right && e.clientY > br.top && e.clientY < br.bottom;
+  basket.classList.toggle('highlight', inBasket);
+}
+
+function endDrag(e) {
+  if (!dragItem) return;
+  document.removeEventListener('pointermove', moveDrag);
+  document.removeEventListener('pointerup', endDrag);
+
+  var basket = document.getElementById('basket');
+  var br = basket.getBoundingClientRect();
+  var inBasket = e.clientX > br.left - 20 && e.clientX < br.right + 20 && e.clientY > br.top - 20 && e.clientY < br.bottom + 20;
+
+  basket.classList.remove('highlight');
+
+  if (inBasket) {
+    dragItem._src.classList.add('bought');
+    basketCount++;
+    document.getElementById('basket-count').textContent = basketCount + 'こ';
+    ensureAudio();
+    playPop();
+    showSpeech(dragItem._src.dataset.emoji + ' かったよ！');
+
+    var pop = document.createElement('div');
+    pop.className = 'basket-pop';
+    pop.textContent = dragItem._src.dataset.emoji;
+    pop.style.left = br.left + br.width/2 - 14 + 'px';
+    pop.style.top = br.top + 'px';
+    document.body.appendChild(pop);
+    pop.addEventListener('animationend', function() { this.remove(); });
+  }
+
+  dragItem.remove();
+  dragItem = null;
+}
 
 // Tap on shop background to show shop select
 document.getElementById('room').addEventListener('pointerdown', function(e) {
