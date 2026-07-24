@@ -551,6 +551,73 @@ body {
   100% { opacity: 0; transform: scale(0.3) translateY(20px); }
 }
 
+/* Exit shop button */
+#exit-shop-btn {
+  position: fixed;
+  bottom: max(80px, 11%);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.95);
+  border: 3px solid #ec4899;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ec4899;
+  cursor: pointer;
+  z-index: 14;
+  pointer-events: auto;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Park play button */
+#park-play {
+  position: fixed;
+  bottom: max(80px, 11%);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 14;
+}
+#park-swing-btn {
+  display: block;
+  background: rgba(255,255,255,0.95);
+  border: 3px solid #4CAF50;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #388E3C;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Swipe hint for shop */
+#swipe-up-hint {
+  position: fixed;
+  bottom: max(24px, 5%);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 14;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  pointer-events: none;
+  display: none;
+  text-align: center;
+}
+#swipe-up-hint span {
+  display: block;
+  font-size: 20px;
+  animation: swipe-up-anim 1s ease-in-out infinite;
+}
+@keyframes swipe-up-anim {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 #shop-back-btn {
   margin-top: 8px;
   background: rgba(255,255,255,0.9);
@@ -976,6 +1043,9 @@ body {
       </div>
     </div>
 
+    <!-- Swipe up hint for shop -->
+    <div id="swipe-up-hint"><span>☝️</span>うえに スワイプ</div>
+
     <!-- Location bar -->
     <div id="location-bar">
       <button class="loc-btn active" data-loc="room">🏠<span>おへや</span></button>
@@ -1012,6 +1082,12 @@ body {
       <div class="shop-shelf" id="shelf-left"></div>
       <div class="shop-shelf" id="shelf-right"></div>
       <div id="basket"><span id="basket-count">0こ</span></div>
+      <button id="exit-shop-btn">🚪 おみせを でる</button>
+    </div>
+
+    <!-- Park play button -->
+    <div id="park-play" style="display:none">
+      <a href="swing.html" id="park-swing-btn">🎠 ブランコで あそぶ</a>
     </div>
 
     <!-- Menu bar -->
@@ -1699,8 +1775,10 @@ document.querySelectorAll('.loc-btn').forEach(function(btn) {
     closeShop();
     document.querySelectorAll('.loc-btn').forEach(function(b) { b.classList.remove('active'); });
     this.classList.add('active');
+    document.getElementById('swipe-up-hint').style.display = loc === 'shop' ? 'block' : 'none';
+    document.getElementById('park-play').style.display = loc === 'park' ? 'block' : 'none';
     if (loc === 'shop') {
-      showSpeech('おみせに きたよ！タップしてね');
+      showSpeech('おみせに きたよ！うえにスワイプ！');
       return;
     }
     var msgs = { room: 'おへやに もどったよ！', park: 'こうえんに きたよ！' };
@@ -1721,6 +1799,7 @@ document.querySelectorAll('.shop-card').forEach(function(btn) {
     document.getElementById('shop-select').style.display = 'none';
     var names = { bakery: 'パンやさん', toy: 'おもちゃやさん', candy: 'おかしやさん', flower: 'おはなやさん' };
     showSpeech(names[shop] + 'に きたよ！');
+    document.getElementById('swipe-up-hint').style.display = 'none';
     openShop(shop);
   });
 });
@@ -1733,6 +1812,7 @@ document.getElementById('shop-back-btn').addEventListener('click', function() {
   room.classList.add('shop');
   state.location = 'shop';
   closeShop();
+  document.getElementById('swipe-up-hint').style.display = 'block';
   showSpeech('おみせに もどったよ！');
 });
 
@@ -1840,14 +1920,33 @@ function endDrag(e) {
   dragItem = null;
 }
 
-// Tap on shop background to show shop select
+// Swipe up on shop to show shop select
+var shopSwipeStartY = null;
 document.getElementById('room').addEventListener('pointerdown', function(e) {
-  if (state.location === 'shop'
-    && !e.target.closest('.loc-btn') && !e.target.closest('.menu-btn')
-    && !e.target.closest('#select-panel') && !e.target.closest('#shop-select')
-    && !e.target.closest('#doll-wrapper')) {
+  if (state.location === 'shop') shopSwipeStartY = e.clientY;
+});
+document.getElementById('room').addEventListener('pointermove', function(e) {
+  if (shopSwipeStartY === null || state.location !== 'shop') return;
+  if (shopSwipeStartY - e.clientY > 60) {
+    shopSwipeStartY = null;
     document.getElementById('shop-select').style.display = 'flex';
   }
+});
+document.getElementById('room').addEventListener('pointerup', function() {
+  shopSwipeStartY = null;
+});
+
+// Exit shop button
+document.getElementById('exit-shop-btn').addEventListener('click', function() {
+  ensureAudio();
+  playPop();
+  var room = document.getElementById('room');
+  room.classList.remove('shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
+  room.classList.add('shop');
+  state.location = 'shop';
+  closeShop();
+  document.getElementById('swipe-up-hint').style.display = 'block';
+  showSpeech('おみせに もどったよ！');
 });
 
 // Close panel on tap outside
