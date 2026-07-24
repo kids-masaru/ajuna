@@ -680,7 +680,16 @@ document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
 // Auto-start if opened from osewa
 if (location.search.indexOf('from=osewa') !== -1) {
-  document.querySelector('.gp-home').style.display = 'none';
+  var homeBtn = document.querySelector('.gp-home');
+  homeBtn.href = '#';
+  homeBtn.textContent = '🔙';
+  homeBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (window.parent !== window) {
+      window.parent.document.getElementById('swing-overlay').style.display = 'none';
+      window.parent.document.getElementById('swing-iframe').src = '';
+    }
+  });
   ensureAudio();
   startGame();
 }
