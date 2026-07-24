@@ -1775,10 +1775,9 @@ document.querySelectorAll('.loc-btn').forEach(function(btn) {
     closeShop();
     document.querySelectorAll('.loc-btn').forEach(function(b) { b.classList.remove('active'); });
     this.classList.add('active');
-    document.getElementById('swipe-up-hint').style.display = loc === 'shop' ? 'block' : 'none';
     document.getElementById('park-play').style.display = loc === 'park' ? 'block' : 'none';
     if (loc === 'shop') {
-      showSpeech('おみせに きたよ！うえにスワイプ！');
+      showSpeech('おみせに きたよ！タップしてね');
       return;
     }
     var msgs = { room: 'おへやに もどったよ！', park: 'こうえんに きたよ！' };
@@ -1920,20 +1919,14 @@ function endDrag(e) {
   dragItem = null;
 }
 
-// Swipe up on shop to show shop select
-var shopSwipeStartY = null;
+// Tap on shop background to show shop select
 document.getElementById('room').addEventListener('pointerdown', function(e) {
-  if (state.location === 'shop') shopSwipeStartY = e.clientY;
-});
-document.getElementById('room').addEventListener('pointermove', function(e) {
-  if (shopSwipeStartY === null || state.location !== 'shop') return;
-  if (shopSwipeStartY - e.clientY > 60) {
-    shopSwipeStartY = null;
+  if (state.location === 'shop'
+    && !e.target.closest('.loc-btn') && !e.target.closest('.menu-btn')
+    && !e.target.closest('#select-panel') && !e.target.closest('#shop-select')
+    && !e.target.closest('#doll-wrapper')) {
     document.getElementById('shop-select').style.display = 'flex';
   }
-});
-document.getElementById('room').addEventListener('pointerup', function() {
-  shopSwipeStartY = null;
 });
 
 // Exit shop button
