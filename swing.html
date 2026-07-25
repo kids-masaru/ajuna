@@ -289,10 +289,29 @@ body {
 .result-title { font-weight: 900; font-size: 1.5rem; color: #333; }
 .result-score { font-weight: 800; font-size: 1.2rem; color: #ec4899; }
 .result-detail { font-weight: 700; font-size: 0.9rem; color: #888; }
+
+/* Loading screen */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 50%, #90EE90 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#loading-screen.hidden { display: none; }
 </style>
 </head>
 <body class="gp gp-pink">
   <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
+
+  <!-- Loading screen -->
+  <div id="loading-screen">
+    <div style="font-size:48px;animation:gp-float 2s ease-in-out infinite">🎠</div>
+    <div style="font-size:16px;font-weight:800;color:white;margin-top:12px">よみこみちゅう...</div>
+  </div>
 
   <div id="game">
     <div id="bg"></div>
@@ -337,6 +356,7 @@ body {
       <div class="result-score" id="r-score"></div>
       <div class="result-detail" id="r-detail"></div>
       <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px">もういっかい！</button>
+      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;display:none;background:#4CAF50">🌳 こうえんにもどる</button>
     </div>
   </div>
 
@@ -678,7 +698,29 @@ document.getElementById('btn-retry').addEventListener('click', function() {
 document.addEventListener('dblclick', function(e) { e.preventDefault(); });
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-// Auto-start if opened from osewa
+// Image preload and loading screen
+var loadingScreen = document.getElementById('loading-screen');
+var bgImg = new Image();
+var girlImg = new Image();
+var loaded = 0;
+function checkLoaded() {
+  loaded++;
+  if (loaded >= 2) {
+    loadingScreen.classList.add('hidden');
+    if (location.search.indexOf('from=osewa') !== -1) {
+      ensureAudio();
+      startGame();
+    }
+  }
+}
+bgImg.onload = checkLoaded;
+girlImg.onload = checkLoaded;
+bgImg.onerror = checkLoaded;
+girlImg.onerror = checkLoaded;
+bgImg.src = 'swing_bg.png';
+girlImg.src = 'swing_girl.png';
+
+// Auto-setup if opened from osewa
 if (location.search.indexOf('from=osewa') !== -1) {
   var homeBtn = document.querySelector('.gp-home');
   homeBtn.href = '#';
@@ -690,8 +732,13 @@ if (location.search.indexOf('from=osewa') !== -1) {
       window.parent.document.getElementById('swing-iframe').src = '';
     }
   });
-  ensureAudio();
-  startGame();
+  document.getElementById('btn-back-park').style.display = '';
+  document.getElementById('btn-back-park').addEventListener('click', function() {
+    if (window.parent !== window) {
+      window.parent.document.getElementById('swing-overlay').style.display = 'none';
+      window.parent.document.getElementById('swing-iframe').src = '';
+    }
+  });
 }
 
 requestAnimationFrame(gameLoop);
