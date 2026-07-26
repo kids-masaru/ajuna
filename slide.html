@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>すべりだい</title>
+<link rel="stylesheet" href="assets/kit.css">
+<style>
+body {
+  margin: 0; padding: 0;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+  width: 100vw; height: 100dvh;
+}
+
+#game {
+  width: 100vw; height: 100dvh;
+  position: relative;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 30%, #c8e6c9 70%, #4CAF50 100%);
+  overflow: hidden;
+}
+
+/* Slide track */
+#slide-track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 100%;
+  z-index: 2;
+}
+
+.track-segment {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Player */
+#player {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 40px;
+  z-index: 5;
+  transition: left 0.1s ease-out;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+}
+
+/* Obstacles */
+.obstacle {
+  position: absolute;
+  font-size: 32px;
+  z-index: 3;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+
+/* Collectibles */
+.collectible {
+  position: absolute;
+  font-size: 28px;
+  z-index: 3;
+  animation: collect-float 1s ease-in-out infinite alternate;
+}
+@keyframes collect-float {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-5px); }
+}
+
+.collected {
+  animation: collect-pop 0.3s ease-out forwards;
+}
+@keyframes collect-pop {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* Side rails */
+.rail {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  z-index: 1;
+}
+.rail-left {
+  left: calc(50% - 85px);
+  background: linear-gradient(180deg, #f44336 0%, #e91e63 50%, #9c27b0 100%);
+  border-radius: 4px;
+}
+.rail-right {
+  left: calc(50% + 77px);
+  background: linear-gradient(180deg, #ff9800 0%, #ff5722 50%, #e91e63 100%);
+  border-radius: 4px;
+}
+
+/* Slide top */
+#slide-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 50px;
+  background: linear-gradient(180deg, #795548, #8d6e63);
+  border-radius: 0 0 20px 20px;
+  z-index: 6;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Speed lines */
+.speed-line {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: rgba(255,255,255,0.5);
+  z-index: 1;
+  animation: speed-fly 0.3s linear forwards;
+}
+@keyframes speed-fly {
+  0% { opacity: 0.7; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(60px); }
+}
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: max(56px, calc(env(safe-area-inset-top) + 50px));
+  left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  pointer-events: none;
+}
+.hud-box {
+  background: rgba(0,0,0,0.4);
+  border-radius: 14px;
+  padding: 5px 12px;
+  font-weight: 800;
+  font-size: 14px;
+  color: white;
+  backdrop-filter: blur(4px);
+}
+
+/* Progress bar */
+#progress-wrap {
+  position: absolute;
+  left: 8px;
+  top: 25%;
+  width: 16px;
+  height: 50%;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  z-index: 15;
+  overflow: hidden;
+}
+#progress-bar {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, #4CAF50, #8BC34A);
+  border-radius: 8px;
+  transition: height 0.2s;
+}
+#progress-marker {
+  position: absolute;
+  left: -2px;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  text-align: center;
+  z-index: 16;
+  transition: top 0.2s;
+}
+
+/* Loading */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: linear-gradient(180deg, #87CEEB 0%, #c8e6c9 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#loading-screen.hidden { display: none; }
+
+/* Title */
+#title-screen {
+  position: fixed; inset: 0; z-index: 50;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 50%, #c8e6c9 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px;
+  transition: opacity 0.5s;
+}
+#title-screen.hidden { opacity: 0; pointer-events: none; }
+.title-emoji { font-size: 60px; animation: gp-float 3s ease-in-out infinite; }
+.title-name {
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-weight: 900; color: #4CAF50;
+  text-shadow: 0 2px 8px rgba(76,175,80,0.3);
+}
+.title-sub {
+  font-size: 1rem; font-weight: 700;
+  color: #66BB6A;
+  text-align: center; line-height: 1.6;
+}
+
+/* Result */
+#result-screen {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; opacity: 0; pointer-events: none;
+  transition: opacity 0.5s;
+}
+#result-screen.show { opacity: 1; pointer-events: auto; }
+.result-card {
+  background: white; border-radius: 24px;
+  padding: 28px 24px; max-width: 300px; width: 85%;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.result-emoji { font-size: 56px; }
+.result-title { font-weight: 900; font-size: 1.5rem; color: #333; }
+.result-score { font-weight: 800; font-size: 1.2rem; color: #4CAF50; }
+.result-detail { font-weight: 700; font-size: 0.9rem; color: #888; }
+
+/* Goal */
+#goal-line {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  text-align: center;
+  z-index: 4;
+  font-size: 20px;
+  font-weight: 900;
+  color: #f44336;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+</style>
+</head>
+<body class="gp gp-green">
+  <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
+
+  <div id="loading-screen">
+    <div style="font-size:48px;animation:gp-float 2s ease-in-out infinite">🛝</div>
+    <div style="font-size:16px;font-weight:800;color:#4CAF50;margin-top:12px">よみこみちゅう...</div>
+  </div>
+
+  <div id="game">
+    <div id="slide-top">スタート！</div>
+    <div class="rail rail-left"></div>
+    <div class="rail rail-right"></div>
+    <div id="slide-track"></div>
+    <div id="player">🧒</div>
+    <div id="goal-line">🏁 ゴール！ 🏁</div>
+
+    <div id="hud">
+      <div class="hud-box">⭐ <span id="score">0</span></div>
+      <div class="hud-box">🕐 <span id="timer">0.0</span></div>
+    </div>
+
+    <div id="progress-wrap">
+      <div id="progress-bar"></div>
+    </div>
+    <div id="progress-marker">🧒</div>
+  </div>
+
+  <div id="title-screen">
+    <div class="title-emoji">🛝</div>
+    <div class="title-name">すべりだい</div>
+    <div class="title-sub">ひだり・みぎに スワイプして<br>じゃまなものを よけよう！</div>
+    <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:16px;background:#4CAF50">はじめる！</button>
+  </div>
+
+  <div id="result-screen">
+    <div class="result-card gp-pop">
+      <div class="result-emoji" id="r-emoji">🎉</div>
+      <div class="result-title" id="r-title">ゴール！</div>
+      <div class="result-score" id="r-score"></div>
+      <div class="result-detail" id="r-detail"></div>
+      <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px;background:#4CAF50">もういっかい！</button>
+      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;display:none;background:#66BB6A">🌳 こうえんにもどる</button>
+    </div>
+  </div>
+
+<script>
+var player = document.getElementById('player');
+var scoreEl = document.getElementById('score');
+var timerEl = document.getElementById('timer');
+var gameEl = document.getElementById('game');
+var progressBar = document.getElementById('progress-bar');
+var progressMarker = document.getElementById('progress-marker');
+
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var audioCtx;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playCollect() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(880, t);
+  osc.frequency.exponentialRampToValueAtTime(1320, t + 0.1);
+  g.gain.setValueAtTime(0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+  osc.start(t); osc.stop(t + 0.12);
+}
+
+function playBump() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(150, t);
+  g.gain.setValueAtTime(0.08, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+  osc.start(t); osc.stop(t + 0.15);
+}
+
+function playFanfare() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [523, 659, 784, 1047].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.15);
+    g.gain.setValueAtTime(0, t + i * 0.15);
+    g.gain.linearRampToValueAtTime(0.15, t + i * 0.15 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.15 + (i === 3 ? 0.5 : 0.2));
+    osc.start(t + i * 0.15); osc.stop(t + i * 0.15 + (i === 3 ? 0.5 : 0.2));
+  });
+}
+
+var state = 'title';
+var playerX = 50;
+var score = 0;
+var distance = 0;
+var totalDistance = 3000;
+var speed = 2;
+var elapsed = 0;
+var obstacles = [];
+var collectibles = [];
+var lastSpawn = 0;
+var touchStartX = null;
+
+var OBSTACLE_ITEMS = ['🪨','🌲','🍂','🎈','🐦'];
+var COLLECT_ITEMS = ['⭐','💎','🌸','🍀','🦋'];
+
+function spawnItems() {
+  var screenH = window.innerHeight;
+  if (Math.random() < 0.4) {
+    var obs = document.createElement('div');
+    obs.className = 'obstacle';
+    obs.textContent = OBSTACLE_ITEMS[Math.floor(Math.random() * OBSTACLE_ITEMS.length)];
+    obs.style.left = (15 + Math.random() * 70) + '%';
+    obs.style.top = screenH + 'px';
+    obs._y = screenH;
+    obs._x = parseFloat(obs.style.left);
+    gameEl.appendChild(obs);
+    obstacles.push(obs);
+  }
+  if (Math.random() < 0.35) {
+    var col = document.createElement('div');
+    col.className = 'collectible';
+    col.textContent = COLLECT_ITEMS[Math.floor(Math.random() * COLLECT_ITEMS.length)];
+    col.style.left = (20 + Math.random() * 60) + '%';
+    col.style.top = screenH + 'px';
+    col._y = screenH;
+    col._x = parseFloat(col.style.left);
+    col._collected = false;
+    gameEl.appendChild(col);
+    collectibles.push(col);
+  }
+}
+
+function spawnSpeedLine() {
+  var el = document.createElement('div');
+  el.className = 'speed-line';
+  el.style.left = (10 + Math.random() * 80) + '%';
+  el.style.top = '-20px';
+  gameEl.appendChild(el);
+  el.addEventListener('animationend', function() { this.remove(); });
+}
+
+var lastTime = 0;
+
+function gameLoop(now) {
+  if (state !== 'playing') { requestAnimationFrame(gameLoop); return; }
+
+  var dt = lastTime ? Math.min(now - lastTime, 50) : 16;
+  lastTime = now;
+
+  elapsed += dt / 1000;
+  timerEl.textContent = elapsed.toFixed(1);
+
+  speed = 2 + distance / totalDistance * 3;
+  distance += speed * dt / 16;
+
+  var pct = Math.min(distance / totalDistance, 1);
+  progressBar.style.height = (pct * 100) + '%';
+  progressMarker.style.top = 'calc(25% + ' + (pct * 50) + '%)';
+
+  // Spawn
+  lastSpawn += dt;
+  if (lastSpawn > 400) {
+    lastSpawn = 0;
+    spawnItems();
+    if (Math.random() < 0.5) spawnSpeedLine();
+  }
+
+  // Move obstacles
+  var playerRect = { x: playerX - 5, w: 10, y: 60, h: 40 };
+  for (var i = obstacles.length - 1; i >= 0; i--) {
+    var o = obstacles[i];
+    o._y -= speed * dt / 16;
+    o.style.top = o._y + 'px';
+    if (o._y < -50) {
+      o.remove();
+      obstacles.splice(i, 1);
+      continue;
+    }
+    if (o._y < 100 && o._y > 30 && Math.abs(o._x - playerX) < 12) {
+      playBump();
+      score = Math.max(0, score - 10);
+      scoreEl.textContent = score;
+      o.style.opacity = '0.3';
+      o.remove();
+      obstacles.splice(i, 1);
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+  }
+
+  // Move collectibles
+  for (var j = collectibles.length - 1; j >= 0; j--) {
+    var c = collectibles[j];
+    c._y -= speed * dt / 16;
+    c.style.top = c._y + 'px';
+    if (c._y < -50) {
+      c.remove();
+      collectibles.splice(j, 1);
+      continue;
+    }
+    if (!c._collected && c._y < 100 && c._y > 30 && Math.abs(c._x - playerX) < 14) {
+      c._collected = true;
+      c.classList.add('collected');
+      score += 20;
+      scoreEl.textContent = score;
+      playCollect();
+      setTimeout(function(el) { el.remove(); }, 300, c);
+      collectibles.splice(j, 1);
+    }
+  }
+
+  // Goal
+  if (distance >= totalDistance) {
+    endGame();
+    return;
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  state = 'playing';
+  playerX = 50;
+  score = 0;
+  distance = 0;
+  elapsed = 0;
+  speed = 2;
+  lastSpawn = 0;
+  lastTime = 0;
+
+  obstacles.forEach(function(o) { o.remove(); });
+  collectibles.forEach(function(c) { c.remove(); });
+  obstacles = [];
+  collectibles = [];
+
+  player.style.left = '50%';
+  scoreEl.textContent = '0';
+  timerEl.textContent = '0.0';
+  progressBar.style.height = '0%';
+
+  document.getElementById('title-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('show');
+  document.getElementById('goal-line').style.display = 'none';
+
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  state = 'ended';
+  document.getElementById('goal-line').style.display = 'block';
+  document.getElementById('goal-line').style.top = '120px';
+
+  setTimeout(function() {
+    playFanfare();
+    var timeBonus = Math.max(0, Math.round((30 - elapsed) * 10));
+    var total = score + timeBonus;
+
+    document.getElementById('r-score').textContent = '⭐ ' + total + ' てん';
+    document.getElementById('r-detail').textContent = 'タイム: ' + elapsed.toFixed(1) + 'びょう';
+
+    if (total >= 300) {
+      document.getElementById('r-emoji').textContent = '🏆';
+      document.getElementById('r-title').textContent = 'すごすぎ！';
+    } else if (total >= 150) {
+      document.getElementById('r-emoji').textContent = '🎉';
+      document.getElementById('r-title').textContent = 'やったね！';
+    } else {
+      document.getElementById('r-emoji').textContent = '🛝';
+      document.getElementById('r-title').textContent = 'ゴール！';
+    }
+
+    document.getElementById('result-screen').classList.add('show');
+  }, 600);
+}
+
+// Touch controls
+gameEl.addEventListener('pointerdown', function(e) {
+  if (state !== 'playing') return;
+  touchStartX = e.clientX;
+});
+gameEl.addEventListener('pointermove', function(e) {
+  if (state !== 'playing' || touchStartX === null) return;
+  e.preventDefault();
+  var dx = e.clientX - touchStartX;
+  touchStartX = e.clientX;
+  playerX = Math.max(15, Math.min(85, playerX + dx / window.innerWidth * 100));
+  player.style.left = playerX + '%';
+});
+gameEl.addEventListener('pointerup', function() { touchStartX = null; });
+
+document.getElementById('btn-start').addEventListener('click', function() {
+  ensureAudio();
+  startGame();
+});
+document.getElementById('btn-retry').addEventListener('click', function() {
+  ensureAudio();
+  startGame();
+});
+
+// Auto-start if from osewa
+if (location.search.indexOf('from=osewa') !== -1) {
+  var homeBtn = document.querySelector('.gp-home');
+  homeBtn.href = '#';
+  homeBtn.textContent = '🔙';
+  homeBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (window.parent !== window) {
+      window.parent.document.getElementById('slide-overlay').style.display = 'none';
+      window.parent.document.getElementById('slide-iframe').src = '';
+    }
+  });
+  document.getElementById('btn-back-park').style.display = '';
+  document.getElementById('btn-back-park').addEventListener('click', function() {
+    if (window.parent !== window) {
+      window.parent.document.getElementById('slide-overlay').style.display = 'none';
+      window.parent.document.getElementById('slide-iframe').src = '';
+    }
+  });
+  document.getElementById('loading-screen').classList.add('hidden');
+  ensureAudio();
+  startGame();
+} else {
+  document.getElementById('loading-screen').classList.add('hidden');
+}
+
+document.addEventListener('dblclick', function(e) { e.preventDefault(); });
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

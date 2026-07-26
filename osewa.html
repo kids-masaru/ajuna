@@ -583,24 +583,33 @@ body {
   position: absolute;
   pointer-events: auto;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 50%;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s;
+  width: 64px; height: 64px;
+  background: rgba(255,255,255,0.85);
+  border: 3px solid rgba(76,175,80,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  animation: park-icon-bounce 2s ease-in-out infinite;
 }
 .park-zone:active {
-  background: rgba(255,255,255,0.3);
+  transform: scale(0.9);
+}
+@keyframes park-icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 #park-swing-zone {
-  right: 10%;
-  top: 30%;
-  width: 30%;
-  height: 25%;
+  right: 15%;
+  top: 35%;
 }
 #park-slide-zone {
-  left: 5%;
+  left: 15%;
   top: 35%;
-  width: 25%;
-  height: 25%;
+  animation-delay: 0.5s;
 }
 
 /* Swing game overlay */
@@ -609,6 +618,17 @@ body {
   inset: 0;
   z-index: 50;
   background: black;
+}
+#slide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: black;
+}
+#slide-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 #swing-iframe {
   width: 100%;
@@ -1110,12 +1130,18 @@ body {
 
     <!-- Park play zones -->
     <div id="park-play" style="display:none">
-      <div class="park-zone" id="park-swing-zone"></div>
+      <div class="park-zone" id="park-swing-zone">🎠</div>
+      <div class="park-zone" id="park-slide-zone">🛝</div>
     </div>
 
     <!-- Swing game overlay -->
     <div id="swing-overlay" style="display:none">
       <iframe id="swing-iframe" src="" allow="autoplay"></iframe>
+    </div>
+
+    <!-- Slide game overlay -->
+    <div id="slide-overlay" style="display:none">
+      <iframe id="slide-iframe" src="" allow="autoplay"></iframe>
     </div>
 
     <!-- Menu bar -->
@@ -1955,6 +1981,14 @@ document.getElementById('park-swing-zone').addEventListener('click', function() 
   document.getElementById('swing-iframe').src = 'swing.html?from=osewa';
 });
 
+
+// Park slide zone
+document.getElementById('park-slide-zone').addEventListener('click', function() {
+  ensureAudio();
+  playPop();
+  document.getElementById('slide-overlay').style.display = 'block';
+  document.getElementById('slide-iframe').src = 'slide.html?from=osewa';
+});
 
 // Tap on shop background to show shop select
 document.getElementById('room').addEventListener('pointerdown', function(e) {
