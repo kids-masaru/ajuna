@@ -572,43 +572,46 @@ body {
   justify-content: center;
 }
 
-/* Park play areas - tap zones on background */
+/* Park play areas */
 #park-play {
   position: fixed;
-  inset: 0;
-  z-index: 4;
+  bottom: max(80px, 11%);
+  left: 0; right: 0;
+  z-index: 14;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
   pointer-events: none;
 }
 .park-zone {
-  position: absolute;
   pointer-events: auto;
   cursor: pointer;
   border-radius: 50%;
   -webkit-tap-highlight-color: transparent;
-  width: 64px; height: 64px;
-  background: rgba(255,255,255,0.85);
+  width: 70px; height: 70px;
+  background: rgba(255,255,255,0.9);
   border: 3px solid rgba(76,175,80,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 36px;
   box-shadow: 0 3px 10px rgba(0,0,0,0.15);
   animation: park-icon-bounce 2s ease-in-out infinite;
+  padding: 0;
 }
 .park-zone:active {
-  transform: scale(0.9);
+  transform: scale(0.9) !important;
+}
+.park-zone-img {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 @keyframes park-icon-bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
-#park-swing-zone {
-  right: 15%;
-  top: 35%;
-}
 #park-slide-zone {
-  left: 15%;
-  top: 35%;
   animation-delay: 0.5s;
 }
 
@@ -1130,8 +1133,8 @@ body {
 
     <!-- Park play zones -->
     <div id="park-play" style="display:none">
-      <div class="park-zone" id="park-swing-zone">🎠</div>
-      <div class="park-zone" id="park-slide-zone">🛝</div>
+      <button class="park-zone" id="park-swing-zone"><img src="park_swing_icon.png" class="park-zone-img"></button>
+      <button class="park-zone" id="park-slide-zone">🛝</button>
     </div>
 
     <!-- Swing game overlay -->
