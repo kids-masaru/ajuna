@@ -1976,6 +1976,18 @@ function endDrag(e) {
   dragItem = null;
 }
 
+// Listen for close messages from iframes
+window.addEventListener('message', function(e) {
+  if (e.data === 'close-swing') {
+    document.getElementById('swing-overlay').style.display = 'none';
+    document.getElementById('swing-iframe').src = '';
+  }
+  if (e.data === 'close-slide') {
+    document.getElementById('slide-overlay').style.display = 'none';
+    document.getElementById('slide-iframe').src = '';
+  }
+});
+
 // Park swing zone
 document.getElementById('park-swing-zone').addEventListener('click', function() {
   ensureAudio();

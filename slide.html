@@ -576,6 +576,17 @@ document.getElementById('btn-retry').addEventListener('click', function() {
   startGame();
 });
 
+function goBackToPark() {
+  try {
+    if (window.parent !== window) {
+      window.parent.document.getElementById('slide-overlay').style.display = 'none';
+      window.parent.document.getElementById('slide-iframe').src = '';
+    }
+  } catch(e) {
+    window.parent.postMessage('close-slide', '*');
+  }
+}
+
 // Auto-start if from osewa
 if (location.search.indexOf('from=osewa') !== -1) {
   var homeBtn = document.querySelector('.gp-home');
@@ -583,17 +594,11 @@ if (location.search.indexOf('from=osewa') !== -1) {
   homeBtn.textContent = '🔙';
   homeBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    if (window.parent !== window) {
-      window.parent.document.getElementById('slide-overlay').style.display = 'none';
-      window.parent.document.getElementById('slide-iframe').src = '';
-    }
+    goBackToPark();
   });
   document.getElementById('btn-back-park').style.display = '';
   document.getElementById('btn-back-park').addEventListener('click', function() {
-    if (window.parent !== window) {
-      window.parent.document.getElementById('slide-overlay').style.display = 'none';
-      window.parent.document.getElementById('slide-iframe').src = '';
-    }
+    goBackToPark();
   });
   document.getElementById('loading-screen').classList.add('hidden');
   ensureAudio();

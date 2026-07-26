@@ -721,23 +721,28 @@ bgImg.src = 'swing_bg.png';
 girlImg.src = 'swing_girl.png';
 
 // Auto-setup if opened from osewa
+function goBackToPark() {
+  try {
+    if (window.parent !== window) {
+      window.parent.document.getElementById('swing-overlay').style.display = 'none';
+      window.parent.document.getElementById('swing-iframe').src = '';
+    }
+  } catch(e) {
+    window.parent.postMessage('close-swing', '*');
+  }
+}
+
 if (location.search.indexOf('from=osewa') !== -1) {
   var homeBtn = document.querySelector('.gp-home');
   homeBtn.href = '#';
   homeBtn.textContent = '🔙';
   homeBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    if (window.parent !== window) {
-      window.parent.document.getElementById('swing-overlay').style.display = 'none';
-      window.parent.document.getElementById('swing-iframe').src = '';
-    }
+    goBackToPark();
   });
   document.getElementById('btn-back-park').style.display = '';
   document.getElementById('btn-back-park').addEventListener('click', function() {
-    if (window.parent !== window) {
-      window.parent.document.getElementById('swing-overlay').style.display = 'none';
-      window.parent.document.getElementById('swing-iframe').src = '';
-    }
+    goBackToPark();
   });
 }
 
