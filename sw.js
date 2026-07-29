@@ -19,6 +19,7 @@ const LOCAL_FILES = [
   './manifest.json',
   './icon.png',
   './icon_hiragana.png',
+  './icon_woodpuzzle.png',
   './eawase.mp3',
   './kaimono_bgm.mp3',
   './carrace.html',
