@@ -18,6 +18,7 @@ const LOCAL_FILES = [
   './woodPuzzle.html',
   './manifest.json',
   './icon.png',
+  './icon_hiragana.png',
   './eawase.mp3',
   './kaimono_bgm.mp3',
   './carrace.html',
