@@ -20,6 +20,8 @@ const LOCAL_FILES = [
   './icon.png',
   './icon_hiragana.png',
   './icon_woodpuzzle.png',
+  './slide.html',
+  './slide_girl.png',
   './eawase.mp3',
   './kaimono_bgm.mp3',
   './carrace.html',
