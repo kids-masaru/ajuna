@@ -303,7 +303,7 @@ body {
 </style>
 </head>
 <body class="gp gp-green">
-  <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
+  <a href="#" class="gp-home" id="btn-back" aria-label="もどる">🔙</a>
 
   <div id="loading-screen">
     <div style="font-size:48px;animation:gp-float 2s ease-in-out infinite">🛝</div>
@@ -343,7 +343,7 @@ body {
       <div class="result-score" id="r-score"></div>
       <div class="result-detail" id="r-detail"></div>
       <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px;background:#4CAF50">もういっかい！</button>
-      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;display:none;background:#66BB6A">🌳 こうえんにもどる</button>
+      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;background:#66BB6A">🌳 こうえんにもどる</button>
     </div>
   </div>
 
@@ -665,30 +665,33 @@ document.getElementById('btn-retry').addEventListener('click', function() {
   startGame();
 });
 
+var fromOsewa = location.search.indexOf('from=osewa') !== -1;
+
 function goBackToPark() {
-  try {
-    if (window.parent !== window) {
-      window.parent.document.getElementById('slide-overlay').style.display = 'none';
-      window.parent.document.getElementById('slide-iframe').src = '';
+  if (fromOsewa) {
+    try {
+      if (window.parent !== window) {
+        window.parent.document.getElementById('slide-overlay').style.display = 'none';
+        window.parent.document.getElementById('slide-iframe').src = '';
+        return;
+      }
+    } catch(e) {
+      window.parent.postMessage('close-slide', '*');
+      return;
     }
-  } catch(e) {
-    window.parent.postMessage('close-slide', '*');
   }
+  window.location.href = 'osewa.html';
 }
 
-// Auto-start if from osewa
-if (location.search.indexOf('from=osewa') !== -1) {
-  var homeBtn = document.querySelector('.gp-home');
-  homeBtn.href = '#';
-  homeBtn.textContent = '🔙';
-  homeBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    goBackToPark();
-  });
-  document.getElementById('btn-back-park').style.display = '';
-  document.getElementById('btn-back-park').addEventListener('click', function() {
-    goBackToPark();
-  });
+document.getElementById('btn-back').addEventListener('click', function(e) {
+  e.preventDefault();
+  goBackToPark();
+});
+document.getElementById('btn-back-park').addEventListener('click', function() {
+  goBackToPark();
+});
+
+if (fromOsewa) {
   document.getElementById('loading-screen').classList.add('hidden');
   ensureAudio();
   startGame();

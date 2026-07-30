@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ブランコ</title>
+<link rel="stylesheet" href="assets/kit.css">
+<style>
+body {
+  margin: 0; padding: 0;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+  width: 100vw; height: 100dvh;
+}
+
+#game {
+  width: 100vw; height: 100dvh;
+  position: relative;
+  overflow: hidden;
+}
+
+#bg {
+  position: absolute;
+  inset: 0;
+  background: white;
+  z-index: 0;
+}
+#bg-img {
+  position: absolute;
+  inset: 0;
+  background: url('swing_bg.png') center/cover no-repeat;
+  z-index: 1;
+}
+
+/* Swing pendulum */
+#pendulum-wrap {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  width: 0; height: 0;
+  z-index: 5;
+}
+
+#pendulum {
+  position: absolute;
+  transform-origin: 0 0;
+  transform: rotate(0deg);
+  will-change: transform;
+}
+
+#swing-girl-img {
+  position: absolute;
+  top: 198px;
+  left: -87px;
+  width: 187px;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
+/* Rope from pivot to girl (2 lines side by side) */
+#rope-l, #rope-r {
+  position: absolute;
+  top: 28px;
+  width: 3px;
+  height: 195px;
+  background: linear-gradient(180deg, #a08060, #c0a080);
+  z-index: -1;
+  border-radius: 1px;
+}
+#rope-l { left: -4px; }
+#rope-r { left: -1px; }
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+#score-box, #timer-box {
+  background: rgba(0,0,0,0.5);
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-weight: 800;
+  font-size: 15px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  backdrop-filter: blur(4px);
+}
+#timer-box.warning { color: #ff6b6b; animation: timer-warn 0.5s infinite alternate; }
+@keyframes timer-warn { 0% { opacity: 1; } 100% { opacity: 0.5; } }
+
+/* Height bar */
+#height-bar-wrap {
+  position: absolute;
+  right: 10px;
+  top: 25%;
+  width: 24px;
+  height: 35%;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.4);
+  z-index: 15;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+#height-bar {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, #fbbf24, #f472b6);
+  border-radius: 0 0 10px 10px;
+  transition: height 0.3s;
+}
+#height-label {
+  position: absolute;
+  right: 8px;
+  top: calc(25% - 16px);
+  font-size: 9px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  z-index: 15;
+}
+
+/* Swipe hint */
+#swipe-hint {
+  position: absolute;
+  bottom: max(30px, 8%);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  opacity: 0.8;
+}
+
+#swipe-arrow-left, #swipe-arrow-right {
+  font-size: 28px;
+  animation: swipe-anim 1.5s ease-in-out infinite;
+}
+#swipe-arrow-left { animation-direction: alternate; }
+#swipe-arrow-right { animation-direction: alternate-reverse; }
+@keyframes swipe-anim {
+  0% { transform: translateX(-8px); opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { transform: translateX(8px); opacity: 0.4; }
+}
+
+/* Swipe feedback */
+#swipe-feedback {
+  position: absolute;
+  bottom: max(80px, 14%);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  font-size: 40px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+#swipe-feedback.show { opacity: 1; }
+#swipe-feedback.right { animation: fb-right 0.4s ease-out; }
+#swipe-feedback.left { animation: fb-left 0.4s ease-out; }
+@keyframes fb-right {
+  0% { transform: translateX(-50%) translateX(-20px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateX(-50%) translateX(30px); opacity: 0; }
+}
+@keyframes fb-left {
+  0% { transform: translateX(-50%) translateX(20px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateX(-50%) translateX(-30px); opacity: 0; }
+}
+
+/* Result text */
+#result-text {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 30px;
+  font-weight: 900;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+#result-text.show { opacity: 1; animation: result-pop 0.5s ease-out; }
+@keyframes result-pop {
+  0% { transform: translateX(-50%) scale(0.5); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* Sparkle */
+.sparkle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  font-size: 16px;
+  animation: sparkle-fly 0.8s ease-out forwards;
+}
+@keyframes sparkle-fly {
+  0% { opacity: 1; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(0.5) translateY(-30px); }
+}
+
+/* Touch trail */
+.touch-trail {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(251,191,36,0.4);
+  pointer-events: none;
+  z-index: 8;
+  animation: trail-fade 0.4s ease-out forwards;
+}
+@keyframes trail-fade {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.3); }
+}
+
+/* Title */
+#title-screen {
+  position: fixed; inset: 0; z-index: 50;
+  background: white;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px;
+  transition: opacity 0.5s;
+}
+#title-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('swing_bg.png') center/cover no-repeat;
+  opacity: 0.85;
+}
+#title-screen > * { position: relative; z-index: 1; }
+#title-screen.hidden { opacity: 0; pointer-events: none; }
+.title-emoji { font-size: 60px; animation: gp-float 3s ease-in-out infinite; }
+.title-name {
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-weight: 900; color: #fff;
+  text-shadow: 0 3px 12px rgba(0,0,0,0.5);
+}
+.title-sub {
+  font-size: 1rem; font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  text-align: center; line-height: 1.6;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+/* Result */
+#result-screen {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; opacity: 0; pointer-events: none;
+  transition: opacity 0.5s;
+}
+#result-screen.show { opacity: 1; pointer-events: auto; }
+.result-card {
+  background: white; border-radius: 24px;
+  padding: 28px 24px; max-width: 300px; width: 85%;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.result-emoji { font-size: 56px; }
+.result-title { font-weight: 900; font-size: 1.5rem; color: #333; }
+.result-score { font-weight: 800; font-size: 1.2rem; color: #ec4899; }
+.result-detail { font-weight: 700; font-size: 0.9rem; color: #888; }
+
+/* Loading screen */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 50%, #90EE90 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#loading-screen.hidden { display: none; }
+</style>
+</head>
+<body class="gp gp-pink">
+  <a href="#" class="gp-home" id="btn-back" aria-label="もどる">🔙</a>
+
+  <!-- Loading screen -->
+  <div id="loading-screen">
+    <div style="font-size:48px;animation:gp-float 2s ease-in-out infinite">🎠</div>
+    <div style="font-size:16px;font-weight:800;color:white;margin-top:12px">よみこみちゅう...</div>
+  </div>
+
+  <div id="game">
+    <div id="bg"></div>
+    <div id="bg-img"></div>
+
+    <div id="hud">
+      <div id="score-box">⭐ <span id="score">0</span></div>
+      <div id="timer-box">🕐 <span id="timer">30</span></div>
+    </div>
+    <div id="height-label">たかさ</div>
+    <div id="height-bar-wrap"><div id="height-bar"></div></div>
+
+    <div id="pendulum-wrap">
+      <div id="pendulum">
+        <div id="rope-l"></div>
+        <div id="rope-r"></div>
+        <img id="swing-girl-img" src="swing_girl.png" alt="ブランコの女の子">
+      </div>
+    </div>
+
+    <div id="swipe-hint">
+      <span id="swipe-arrow-left">👈</span>
+      <span>ゆびで ゆらしてね</span>
+      <span id="swipe-arrow-right">👉</span>
+    </div>
+
+    <div id="swipe-feedback"></div>
+    <div id="result-text"></div>
+  </div>
+
+  <div id="title-screen">
+    <div class="title-emoji">🎠</div>
+    <div class="title-name">ブランコ</div>
+    <div class="title-sub">ゆびを よこに うごかして<br>ブランコを ゆらそう！</div>
+    <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:16px">はじめる！</button>
+  </div>
+
+  <div id="result-screen">
+    <div class="result-card gp-pop">
+      <div class="result-emoji" id="r-emoji">🎉</div>
+      <div class="result-title" id="r-title">すごい！</div>
+      <div class="result-score" id="r-score"></div>
+      <div class="result-detail" id="r-detail"></div>
+      <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px">もういっかい！</button>
+      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;background:#4CAF50">🌳 こうえんにもどる</button>
+    </div>
+  </div>
+
+<script>
+window.onerror = function(msg, src, line) {
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;padding:8px;font-size:12px;';
+  d.textContent = 'ERR: ' + msg + ' (line ' + line + ')';
+  document.body.appendChild(d);
+};
+
+var pendulum = document.getElementById('pendulum');
+var resultText = document.getElementById('result-text');
+var scoreEl = document.getElementById('score');
+var timerEl = document.getElementById('timer');
+var timerBox = document.getElementById('timer-box');
+var heightBar = document.getElementById('height-bar');
+var gameEl = document.getElementById('game');
+var swipeHint = document.getElementById('swipe-hint');
+var swipeFb = document.getElementById('swipe-feedback');
+
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var audioCtx;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+var state = 'title';
+var angle = 0;
+var angularVel = 0;
+var swingHeight = 0;
+var score = 0;
+var pushCount = 0;
+var maxHeight = 0;
+var gameTime = 30;
+var timeLeft = 30;
+var timerInterval = null;
+
+var gravity = 0.0004;
+var damping = 0.998;
+
+// Touch tracking
+var touchStartX = null;
+var lastTouchX = null;
+var touchVelX = 0;
+var swipeCooldown = false;
+
+function playWhoosh(strength) {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var bufSize = audioCtx.sampleRate * 0.12;
+  var buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  var data = buf.getChannelData(0);
+  for (var i = 0; i < bufSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2) * 0.15;
+  }
+  var src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  var filt = audioCtx.createBiquadFilter();
+  filt.type = 'bandpass';
+  filt.frequency.value = 800 + strength * 400;
+  filt.Q.value = 1;
+  src.connect(filt);
+  filt.connect(audioCtx.destination);
+  src.start(t);
+}
+
+function playChime(freq) {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var g = audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+  osc.start(t); osc.stop(t + 0.15);
+}
+
+function playSuccess() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [660, 880].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.08);
+    g.gain.setValueAtTime(0, t + i * 0.08);
+    g.gain.linearRampToValueAtTime(0.1, t + i * 0.08 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.12);
+    osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.12);
+  });
+}
+
+function playBigSuccess() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [880, 1100, 1320].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.06);
+    g.gain.setValueAtTime(0, t + i * 0.06);
+    g.gain.linearRampToValueAtTime(0.12, t + i * 0.06 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.06 + 0.15);
+    osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
+  });
+}
+
+function playFanfare() {
+  ensureAudio();
+  var t = audioCtx.currentTime;
+  [523, 659, 784, 880, 1047].forEach(function(f, i) {
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type = i < 3 ? 'square' : 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.12);
+    g.gain.setValueAtTime(0, t + i * 0.12);
+    g.gain.linearRampToValueAtTime(0.15, t + i * 0.12 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.12 + (i === 4 ? 0.5 : 0.2));
+    osc.start(t + i * 0.12); osc.stop(t + i * 0.12 + (i === 4 ? 0.5 : 0.2));
+  });
+}
+
+function spawnSparkles() {
+  for (var i = 0; i < 5; i++) {
+    var el = document.createElement('div');
+    el.className = 'sparkle';
+    el.textContent = '✨';
+    el.style.left = (25 + Math.random() * 50) + '%';
+    el.style.top = (25 + Math.random() * 35) + '%';
+    el.style.animationDelay = (Math.random() * 0.2) + 's';
+    gameEl.appendChild(el);
+    el.addEventListener('animationend', function() { this.remove(); });
+  }
+}
+
+function spawnTrail(x, y) {
+  var el = document.createElement('div');
+  el.className = 'touch-trail';
+  el.style.left = (x - 10) + 'px';
+  el.style.top = (y - 10) + 'px';
+  gameEl.appendChild(el);
+  el.addEventListener('animationend', function() { this.remove(); });
+}
+
+function showResult(text, color) {
+  resultText.textContent = text;
+  resultText.style.color = color;
+  resultText.classList.remove('show');
+  void resultText.offsetWidth;
+  resultText.classList.add('show');
+  setTimeout(function() { resultText.classList.remove('show'); }, 600);
+}
+
+function showSwipeFb(dir) {
+  swipeFb.textContent = dir > 0 ? '→' : '←';
+  swipeFb.className = dir > 0 ? 'show right' : 'show left';
+  setTimeout(function() { swipeFb.className = ''; }, 400);
+}
+
+function handleSwipe(velX) {
+  if (state !== 'playing' || swipeCooldown) return;
+  var swipeDir = velX > 0 ? 1 : -1;
+  var swingDir = angularVel > 0 ? -1 : 1;
+  var strength = Math.min(Math.abs(velX) / 8, 1);
+
+  if (strength < 0.15) return;
+
+  swipeCooldown = true;
+  setTimeout(function() { swipeCooldown = false; }, 200);
+
+  showSwipeFb(swipeDir);
+  playWhoosh(strength);
+
+  // Same direction as swing = good push
+  if (swipeDir === swingDir || Math.abs(angularVel) < 0.002) {
+    var boost = 0.008 + strength * 0.012;
+    angularVel -= boost * swipeDir;
+    pushCount++;
+
+    var newHeight = Math.abs(angle) + Math.abs(angularVel) * 200;
+    if (newHeight > swingHeight) swingHeight = newHeight;
+
+    var points = Math.round(strength * 50 + swingHeight * 2);
+    score += points;
+    scoreEl.textContent = score;
+
+    if (strength > 0.6 && swingHeight > 25) {
+      showResult('すごい！ +' + points, '#fbbf24');
+      playBigSuccess();
+      spawnSparkles();
+      if (navigator.vibrate) navigator.vibrate(30);
+    } else if (strength > 0.3) {
+      showResult('いいね！ +' + points, '#34d399');
+      playSuccess();
+    } else {
+      playChime(660 + swingHeight * 10);
+    }
+
+    if (swingHeight > maxHeight) maxHeight = swingHeight;
+    heightBar.style.height = Math.min(100, (swingHeight / 55) * 100) + '%';
+  }
+
+  // Hide hint after first successful swipe
+  if (pushCount >= 2) swipeHint.style.opacity = '0';
+}
+
+// Touch/pointer events
+gameEl.addEventListener('pointerdown', function(e) {
+  if (state !== 'playing') return;
+  e.preventDefault();
+  touchStartX = e.clientX;
+  lastTouchX = e.clientX;
+  touchVelX = 0;
+});
+
+gameEl.addEventListener('pointermove', function(e) {
+  if (state !== 'playing' || touchStartX === null) return;
+  e.preventDefault();
+  var dx = e.clientX - lastTouchX;
+  touchVelX = dx;
+  lastTouchX = e.clientX;
+  spawnTrail(e.clientX, e.clientY);
+
+  if (Math.abs(e.clientX - touchStartX) > 20) {
+    handleSwipe(touchVelX);
+    touchStartX = e.clientX;
+  }
+});
+
+gameEl.addEventListener('pointerup', function(e) {
+  if (touchStartX !== null && Math.abs(touchVelX) > 2) {
+    handleSwipe(touchVelX * 1.5);
+  }
+  touchStartX = null;
+  lastTouchX = null;
+  touchVelX = 0;
+});
+
+gameEl.addEventListener('pointercancel', function() {
+  touchStartX = null;
+  lastTouchX = null;
+  touchVelX = 0;
+});
+
+var lastTime = 0;
+
+function gameLoop(now) {
+  if (state !== 'playing') { requestAnimationFrame(gameLoop); return; }
+
+  var dt = lastTime ? (now - lastTime) : 16;
+  lastTime = now;
+  if (dt > 50) dt = 50;
+
+  var angleRad = angle * Math.PI / 180;
+  var accel = -gravity * Math.sin(angleRad) * dt;
+  angularVel += accel;
+  angularVel *= damping;
+  angle += angularVel * dt;
+
+  // Track swing height
+  swingHeight = Math.max(swingHeight * 0.999, Math.abs(angle));
+
+  pendulum.style.transform = 'rotate(' + angle + 'deg)';
+
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  state = 'playing';
+  angle = -5;
+  angularVel = 0;
+  swingHeight = 5;
+  score = 0;
+  pushCount = 0;
+  maxHeight = 0;
+  timeLeft = gameTime;
+  lastTime = 0;
+  swipeCooldown = false;
+
+  scoreEl.textContent = '0';
+  timerEl.textContent = timeLeft;
+  timerBox.classList.remove('warning');
+  heightBar.style.height = '0%';
+  swipeHint.style.opacity = '0.8';
+
+  document.getElementById('title-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('show');
+
+  timerInterval = setInterval(function() {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if (timeLeft <= 10) timerBox.classList.add('warning');
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  state = 'ended';
+  clearInterval(timerInterval);
+
+  setTimeout(function() {
+    playFanfare();
+    var emoji = document.getElementById('r-emoji');
+    var title = document.getElementById('r-title');
+    var scoreR = document.getElementById('r-score');
+    var detail = document.getElementById('r-detail');
+
+    scoreR.textContent = '⭐ ' + score + ' てん';
+    if (score >= 2000) { emoji.textContent = '🏆'; title.textContent = 'すごすぎ！！'; }
+    else if (score >= 1000) { emoji.textContent = '🎉'; title.textContent = 'やったね！'; }
+    else if (score >= 400) { emoji.textContent = '😊'; title.textContent = 'がんばったね！'; }
+    else { emoji.textContent = '🎠'; title.textContent = 'おしまい！'; }
+
+    var detail_text = 'さいこうの たかさ: ' + Math.round(maxHeight);
+    if (pushCount > 0) detail_text += ' / ' + pushCount + ' かい おした';
+    detail.textContent = detail_text;
+
+    document.getElementById('result-screen').classList.add('show');
+  }, 500);
+}
+
+document.getElementById('btn-start').addEventListener('click', function() {
+  ensureAudio();
+  startGame();
+});
+document.getElementById('btn-retry').addEventListener('click', function() {
+  ensureAudio();
+  startGame();
+});
+document.addEventListener('dblclick', function(e) { e.preventDefault(); });
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+// Image preload and loading screen
+var loadingScreen = document.getElementById('loading-screen');
+var bgImg = new Image();
+var girlImg = new Image();
+var loaded = 0;
+function checkLoaded() {
+  loaded++;
+  if (loaded >= 2) {
+    loadingScreen.classList.add('hidden');
+    if (location.search.indexOf('from=osewa') !== -1) {
+      ensureAudio();
+      startGame();
+    }
+  }
+}
+bgImg.onload = checkLoaded;
+girlImg.onload = checkLoaded;
+bgImg.onerror = checkLoaded;
+girlImg.onerror = checkLoaded;
+bgImg.src = 'swing_bg.png';
+girlImg.src = 'swing_girl.png';
+
+var fromOsewa = location.search.indexOf('from=osewa') !== -1;
+
+function goBackToPark() {
+  if (fromOsewa) {
+    try {
+      if (window.parent !== window) {
+        window.parent.document.getElementById('swing-overlay').style.display = 'none';
+        window.parent.document.getElementById('swing-iframe').src = '';
+        return;
+      }
+    } catch(e) {
+      window.parent.postMessage('close-swing', '*');
+      return;
+    }
+  }
+  window.location.href = 'osewa.html';
+}
+
+document.getElementById('btn-back').addEventListener('click', function(e) {
+  e.preventDefault();
+  goBackToPark();
+});
+document.getElementById('btn-back-park').addEventListener('click', function() {
+  goBackToPark();
+});
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
