@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v78';
+const CACHE_NAME = 'ajuna-v79';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -18,6 +18,10 @@ const LOCAL_FILES = [
   './woodPuzzle.html',
   './manifest.json',
   './icon.png',
+  './icon_hiragana.png',
+  './icon_woodpuzzle.png',
+  './slide.html',
+  './slide_girl.png',
   './eawase.mp3',
   './kaimono_bgm.mp3',
   './carrace.html',
@@ -52,50 +56,19 @@ const LOCAL_FILES = [
   './item_fire.png',
   './kart_fox_front.png',
   './kart_fox_back.png',
-  './osewa.html',
-  './doll_base.png',
-  './doll_hair_1.png',
-  './doll_hair_2.png',
-  './doll_hair_3.png',
-  './doll_cloth_1.png',
-  './doll_cloth_2.png',
-  './doll_cloth_3.png',
-  './doll_cloth_4.png',
-  './doll_cloth_5.png',
-  './doll_food_1.png',
-  './doll_food_2.png',
-  './doll_food_3.png',
-  './doll_food_4.png',
-  './doll_pinkshoes.png',
-  './doll_sneakers.png',
-  './doll_boots.png',
-  './swing.html',
-  './swing_bg.png',
-  './swing_girl.png',
-  './icon_oekaki.png',
-  './icon_piano.png',
-  './icon_snow.png',
-  './icon_karuta.png',
-  './icon_puzzle.png',
-  './icon_kaimono.png',
-  './icon_hiragana.png',
-  './icon_eawase.png',
-  './osewa_room.png',
-  './osewa_park.png',
-  './osewa_shop.png',
-  './osewa_shop_bakery.png',
-  './osewa_shop_toy.png',
-  './osewa_shop_candy.png',
-  './osewa_shop_flower.png',
-  './doll_bath.png',
-  './doll_sleep.png',
 ];
 
-// インストール時：ローカルファイルを全部キャッシュ
+// インストール時：1つ失敗しても他はキャッシュする
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(LOCAL_FILES))
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(
+        LOCAL_FILES.map(url =>
+          cache.add(url).catch(() => {})
+        )
+      )
+    )
   );
 });
 
@@ -110,13 +83,12 @@ self.addEventListener('activate', event => {
   );
 });
 
-// フェッチ時：キャッシュ優先、なければネットワーク取得してキャッシュ保存
+// フェッチ時：ネットワーク優先（HTTPキャッシュをバイパス）
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const isExternal = url.origin !== self.location.origin;
 
   if (isExternal) {
-    // 外部リソース：ネットワーク優先、失敗時のみキャッシュ
     event.respondWith(
       fetch(event.request).then(response => {
         if (response.ok || response.type === 'opaque') {
@@ -132,9 +104,9 @@ self.addEventListener('fetch', event => {
       })
     );
   } else {
-    // ローカルリソース：ネットワーク優先、失敗時のみキャッシュ（オフライン対応）
+    // ローカルリソース：HTTPキャッシュをバイパスして常にサーバーから取得
     event.respondWith(
-      fetch(event.request).then(response => {
+      fetch(event.request, { cache: 'no-cache' }).then(response => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return response;

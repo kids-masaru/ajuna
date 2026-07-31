@@ -305,7 +305,7 @@ body {
 </style>
 </head>
 <body class="gp gp-pink">
-  <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
+  <a href="#" class="gp-home" id="btn-back" aria-label="もどる">🔙</a>
 
   <!-- Loading screen -->
   <div id="loading-screen">
@@ -356,7 +356,7 @@ body {
       <div class="result-score" id="r-score"></div>
       <div class="result-detail" id="r-detail"></div>
       <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px">もういっかい！</button>
-      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;display:none;background:#4CAF50">🌳 こうえんにもどる</button>
+      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;background:#4CAF50">🌳 こうえんにもどる</button>
     </div>
   </div>
 
@@ -720,31 +720,31 @@ girlImg.onerror = checkLoaded;
 bgImg.src = 'swing_bg.png';
 girlImg.src = 'swing_girl.png';
 
-// Auto-setup if opened from osewa
+var fromOsewa = location.search.indexOf('from=osewa') !== -1;
+
 function goBackToPark() {
-  try {
-    if (window.parent !== window) {
-      window.parent.document.getElementById('swing-overlay').style.display = 'none';
-      window.parent.document.getElementById('swing-iframe').src = '';
+  if (fromOsewa) {
+    try {
+      if (window.parent !== window) {
+        window.parent.document.getElementById('swing-overlay').style.display = 'none';
+        window.parent.document.getElementById('swing-iframe').src = '';
+        return;
+      }
+    } catch(e) {
+      window.parent.postMessage('close-swing', '*');
+      return;
     }
-  } catch(e) {
-    window.parent.postMessage('close-swing', '*');
   }
+  window.location.href = 'osewa.html';
 }
 
-if (location.search.indexOf('from=osewa') !== -1) {
-  var homeBtn = document.querySelector('.gp-home');
-  homeBtn.href = '#';
-  homeBtn.textContent = '🔙';
-  homeBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    goBackToPark();
-  });
-  document.getElementById('btn-back-park').style.display = '';
-  document.getElementById('btn-back-park').addEventListener('click', function() {
-    goBackToPark();
-  });
-}
+document.getElementById('btn-back').addEventListener('click', function(e) {
+  e.preventDefault();
+  goBackToPark();
+});
+document.getElementById('btn-back-park').addEventListener('click', function() {
+  goBackToPark();
+});
 
 requestAnimationFrame(gameLoop);
 </script>
