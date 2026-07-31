@@ -58,11 +58,17 @@ const LOCAL_FILES = [
   './kart_fox_back.png',
 ];
 
-// インストール時：ローカルファイルを全部キャッシュ
+// インストール時：1つ失敗しても他はキャッシュする
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(LOCAL_FILES))
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(
+        LOCAL_FILES.map(url =>
+          cache.add(url).catch(() => {})
+        )
+      )
+    )
   );
 });
 
@@ -77,13 +83,12 @@ self.addEventListener('activate', event => {
   );
 });
 
-// フェッチ時：キャッシュ優先、なければネットワーク取得してキャッシュ保存
+// フェッチ時：ネットワーク優先（HTTPキャッシュをバイパス）
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const isExternal = url.origin !== self.location.origin;
 
   if (isExternal) {
-    // 外部リソース：ネットワーク優先、失敗時のみキャッシュ
     event.respondWith(
       fetch(event.request).then(response => {
         if (response.ok || response.type === 'opaque') {
@@ -99,9 +104,9 @@ self.addEventListener('fetch', event => {
       })
     );
   } else {
-    // ローカルリソース：ネットワーク優先、失敗時のみキャッシュ（オフライン対応）
+    // ローカルリソース：HTTPキャッシュをバイパスして常にサーバーから取得
     event.respondWith(
-      fetch(event.request).then(response => {
+      fetch(event.request, { cache: 'no-cache' }).then(response => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return response;
