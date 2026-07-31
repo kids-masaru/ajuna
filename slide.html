@@ -25,10 +25,9 @@ body {
 /* Slide track */
 #slide-track {
   position: absolute;
-  left: 50%;
+  left: 0;
   top: 0;
-  transform: translateX(-50%);
-  width: 160px;
+  width: 100%;
   height: 100%;
   z-index: 2;
 }
@@ -37,7 +36,7 @@ body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 120px;
+  width: 90%;
   height: 4px;
   background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
   border-radius: 2px;
@@ -53,8 +52,8 @@ body {
   z-index: 5;
   transition: left 0.08s ease-out;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-  width: 56px;
-  height: 70px;
+  width: 140px;
+  height: 175px;
 }
 #player img {
   width: 100%;
@@ -107,20 +106,21 @@ body {
 .rail {
   position: absolute;
   top: 0;
-  width: 10px;
+  width: 12px;
   height: 100%;
   z-index: 6;
   box-shadow: 0 0 8px rgba(0,0,0,0.2);
 }
 .rail-left {
-  left: calc(50% - 85px);
+  left: 0;
   background: linear-gradient(180deg, #f44336 0%, #e91e63 50%, #9c27b0 100%);
-  border-radius: 5px;
+  border-radius: 0 5px 5px 0;
 }
 .rail-right {
-  left: calc(50% + 75px);
+  right: 0;
+  left: auto;
   background: linear-gradient(180deg, #ff9800 0%, #ff5722 50%, #e91e63 100%);
-  border-radius: 5px;
+  border-radius: 5px 0 0 5px;
 }
 
 /* Slide top */
@@ -129,10 +129,10 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 180px;
+  width: 100%;
   height: 50px;
   background: linear-gradient(180deg, #795548, #8d6e63);
-  border-radius: 0 0 20px 20px;
+  border-radius: 0;
   z-index: 6;
   display: flex;
   align-items: flex-end;
@@ -162,8 +162,8 @@ body {
 /* Slide surface stripes (scrolling) */
 .slide-stripe {
   position: absolute;
-  left: calc(50% - 80px);
-  width: 160px;
+  left: 12px;
+  width: calc(100% - 24px);
   height: 2px;
   background: rgba(255,255,255,0.15);
   z-index: 1;
@@ -292,7 +292,7 @@ body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 180px;
+  width: 100%;
   text-align: center;
   z-index: 4;
   font-size: 20px;
@@ -421,15 +421,13 @@ var lastSpawn = 0;
 var lastStripe = 0;
 var touchStartX = null;
 
-var RAIL_HALF_W = 75;
-var PLAYER_HALF_W = 28;
+var RAIL_W = 12;
+var PLAYER_HALF_W = 70;
 
 function getRailBounds() {
   var cw = window.innerWidth;
-  var railLeftPx = cw / 2 - RAIL_HALF_W + 10;
-  var railRightPx = cw / 2 + RAIL_HALF_W - 10;
-  var minPct = (railLeftPx + PLAYER_HALF_W) / cw * 100;
-  var maxPct = (railRightPx - PLAYER_HALF_W) / cw * 100;
+  var minPct = (RAIL_W + PLAYER_HALF_W) / cw * 100;
+  var maxPct = (cw - RAIL_W - PLAYER_HALF_W) / cw * 100;
   return { min: minPct, max: maxPct };
 }
 
