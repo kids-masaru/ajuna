@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v83';
+const CACHE_NAME = 'ajuna-v84';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -81,7 +81,7 @@ const LOCAL_FILES = [
   './yuki_atlas.png',
   './programming.html',
   './sushi.html',
-  './sushi_atlas.png',
+  './sushi_parts.png',
   './waniwani.html',
   './wani_head.png',
   './fishing.html',

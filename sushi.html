@@ -27,70 +27,68 @@ body {
 const { useState, useRef, useEffect } = React;
 
 // ===== スプライトアトラス =====
-const ATLAS_SRC = 'sushi_atlas.png';
-const ATLAS_W = 1400, ATLAS_H = 1010;
-const FRAMES = {"plate_red":[0,0,330,323],"btn_go":[334,0,169,172],"plate_green":[507,0,180,166],"plate_blue":[691,0,181,165],"plate_yellow":[876,0,179,165],"plate_soy":[1059,0,182,165],"plate_pink":[0,327,180,163],"plate_purple":[184,327,184,162],"shiso":[372,327,122,151],"tong":[498,327,193,139],"salmon_g":[695,327,135,139],"lane":[0,494,739,138],"lane_end":[743,494,201,138],"ikura":[948,494,137,134],"corn":[1089,494,139,134],"negitoro":[1232,494,140,133],"natto":[0,636,139,133],"uni":[143,636,137,132],"kappa":[284,636,124,129],"amaebi":[412,636,203,123],"btn_back":[619,636,119,120],"maguro":[742,636,204,119],"btn_clear":[950,636,121,119],"ebi":[1075,636,213,118],"hikari":[0,773,209,118],"hotate":[213,773,172,118],"anago":[389,773,193,116],"tako":[586,773,189,116],"ika":[779,773,191,115],"salmon":[974,773,193,114],"tamago":[1171,773,170,112],"salmon2":[0,895,197,111],"shiromi":[201,895,203,110],"baran":[408,895,123,102],"gari":[535,895,114,95],"wasabi":[653,895,66,70]};
+const ATLAS_SRC = 'sushi_parts.png';
+const ATLAS_W = 1400, ATLAS_H = 733;
+const FRAMES = {"plate_red":[0,0,330,323],"btn_go":[334,0,169,172],"plate_green":[507,0,180,166],"plate_blue":[691,0,181,165],"plate_yellow":[876,0,179,165],"plate_pink":[1059,0,180,163],"plate_purple":[0,327,184,162],"lane":[188,327,739,138],"full_ikura":[931,327,137,134],"btn_back":[1072,327,119,120],"maguro":[0,493,204,119],"full_maguro":[208,493,204,119],"btn_clear":[416,493,121,119],"ebi":[541,493,213,118],"full_ebi":[758,493,213,118],"full_salmon":[975,493,193,114],"gunkan":[1172,493,138,113],"salmon":[0,616,193,113],"tamago":[197,616,170,112],"full_tamago":[371,616,170,112],"nori":[545,616,60,109],"shari":[609,616,171,107],"wasabi":[784,616,66,70],"ikura":[854,616,72,53]};
 
-// 高さ h(px) にあわせてスプライトを表示する div のスタイルを返す
+// 高さ h(px) にあわせたスプライト表示スタイル
 function spriteStyle(name, h) {
   const f = FRAMES[name];
   if (!f) return {};
-  const scale = h / f[3];
+  const s = h / f[3];
   return {
-    width: f[2] * scale + 'px',
+    width: f[2] * s + 'px',
     height: h + 'px',
     backgroundImage: `url(${ATLAS_SRC})`,
-    backgroundSize: `${ATLAS_W * scale}px ${ATLAS_H * scale}px`,
-    backgroundPosition: `-${f[0] * scale}px -${f[1] * scale}px`,
+    backgroundSize: `${ATLAS_W * s}px ${ATLAS_H * s}px`,
+    backgroundPosition: `-${f[0] * s}px -${f[1] * s}px`,
     backgroundRepeat: 'no-repeat',
   };
 }
-function Sprite({ name, h, className, style }) {
+function Sprite({ name, h, style, className }) {
   return <div className={className} style={{ ...spriteStyle(name, h), ...(style || {}) }} />;
 }
+// 元の絵の比率をそのまま保つ共通スケール（部品どうしの大きさが正しくなる）
+const SCALE = 0.52;
+const partH = (name) => FRAMES[name][3] * SCALE;
 
-// ===== 寿司ネタ一覧 =====
-const SUSHI = [
-  { id: 'maguro',   name: 'まぐろ' },
-  { id: 'salmon',   name: 'サーモン' },
-  { id: 'ebi',      name: 'えび' },
-  { id: 'tamago',   name: 'たまご' },
-  { id: 'ika',      name: 'いか' },
-  { id: 'tako',     name: 'たこ' },
-  { id: 'shiromi',  name: 'しろみ' },
-  { id: 'hikari',   name: 'ひかりもの' },
-  { id: 'amaebi',   name: 'あまえび' },
-  { id: 'hotate',   name: 'ほたて' },
-  { id: 'anago',    name: 'あなご' },
-  { id: 'ikura',    name: 'いくら' },
-  { id: 'uni',      name: 'うに' },
-  { id: 'negitoro', name: 'ネギトロ' },
-  { id: 'salmon_g', name: 'サーモン軍艦' },
-  { id: 'corn',     name: 'コーン' },
-  { id: 'natto',    name: 'なっとう' },
-  { id: 'kappa',    name: 'かっぱ' },
+// ===== 部品（元のゲームと同じ9種） =====
+// dy: お皿の中心からの縦位置。重ねると本物のお寿司になるように調整してある
+const PARTS = [
+  { id: 'shari',  name: 'シャリ',   dy: 26 },
+  { id: 'gunkan', name: 'ぐんかん', dy: 24 },
+  { id: 'maguro', name: 'まぐろ',   dy: 3 },
+  { id: 'salmon', name: 'サーモン', dy: 3 },
+  { id: 'tamago', name: 'たまご',   dy: 2 },
+  { id: 'ebi',    name: 'えび',     dy: 3 },
+  { id: 'ikura',  name: 'いくら',   dy: 6 },
+  { id: 'nori',   name: 'のり',     dy: 14 },
+  { id: 'wasabi', name: 'わさび',   dy: 20, dx: -30 },
 ];
-const SUSHI_BY_ID = Object.fromEntries(SUSHI.map(s => [s.id, s]));
+const PART_BY_ID = Object.fromEntries(PARTS.map(p => [p.id, p]));
+// 重ね順（シャリが一番下、わさび→ネタ→のり の順で上へ）
+const LAYER = { shari: 1, gunkan: 1, wasabi: 2, maguro: 3, salmon: 3, tamago: 3, ebi: 3, ikura: 3, nori: 4 };
 
-// お皿の色（流したときの見た目のバリエーション）
-const PLATES = ['plate_red', 'plate_blue', 'plate_yellow', 'plate_green', 'plate_purple', 'plate_pink'];
-
-// ===== 注文の作りかた =====
-// ラウンドが進むほど品数が増える（1→3）
-function makeOrder(round) {
-  const maxItems = round < 3 ? 1 : (round < 6 ? 2 : 3);
-  const n = 1 + Math.floor(Math.random() * maxItems);
-  const pool = shuffleArray(SUSHI).slice(0, n);
-  const req = {};
-  pool.forEach(s => { req[s.id] = 1; });
-  // たまに同じネタ2貫
-  if (n <= 2 && Math.random() < 0.35) {
-    const k = pool[0].id;
-    req[k] = 2;
-  }
-  const totalPieces = Object.values(req).reduce((a, b) => a + b, 0);
-  return { requiredCounts: req, score: 100 * totalPieces };
-}
+// ===== 注文 =====
+// full: お手本に見せる「完成したお寿司」の絵
+const EASY_ORDERS = [
+  { req: { shari: 1, maguro: 1 },            full: ['full_maguro'], score: 100 },
+  { req: { shari: 1, salmon: 1 },            full: ['full_salmon'], score: 100 },
+  { req: { shari: 1, ebi: 1 },               full: ['full_ebi'],    score: 120 },
+  { req: { shari: 1, tamago: 1, nori: 1 },   full: ['full_tamago'], score: 150 },
+  { req: { gunkan: 1, ikura: 1 },            full: ['full_ikura'],  score: 180 },
+  { req: { shari: 1, wasabi: 1, maguro: 1 }, full: ['full_maguro'], score: 150 },
+  { req: { shari: 1, wasabi: 1, salmon: 1 }, full: ['full_salmon'], score: 150 },
+];
+const HARD_ORDERS = [
+  { req: { shari: 2, maguro: 2 },                 full: ['full_maguro', 'full_maguro'], score: 220 },
+  { req: { shari: 2, salmon: 2 },                 full: ['full_salmon', 'full_salmon'], score: 220 },
+  { req: { shari: 2, ebi: 2 },                    full: ['full_ebi', 'full_ebi'],       score: 250 },
+  { req: { shari: 2, maguro: 1, salmon: 1 },      full: ['full_maguro', 'full_salmon'], score: 240 },
+  { req: { shari: 2, tamago: 2, nori: 2 },        full: ['full_tamago', 'full_tamago'], score: 320 },
+  { req: { gunkan: 2, ikura: 2 },                 full: ['full_ikura', 'full_ikura'],   score: 340 },
+  { req: { shari: 2, wasabi: 2, maguro: 2 },      full: ['full_maguro', 'full_maguro'], score: 330 },
+];
 
 function shuffleArray(arr) {
   const a = [...arr];
@@ -100,10 +98,21 @@ function shuffleArray(arr) {
   }
   return a;
 }
+const ROUND_COUNT = 8;
+// はじめはかんたんな1貫、あとから2貫が混ざる
+function buildRounds() {
+  const easy = shuffleArray(EASY_ORDERS);
+  const hard = shuffleArray(HARD_ORDERS);
+  const rounds = [];
+  for (let i = 0; i < ROUND_COUNT; i++) {
+    if (i < 4) rounds.push(easy[i % easy.length]);
+    else rounds.push(hard[(i - 4) % hard.length]);
+  }
+  return rounds;
+}
 
 let audioCtx = null;
 const initAudio = () => { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); };
-
 const playSound = (type) => {
   if (!audioCtx) return;
   const o = audioCtx.createOscillator(), g = audioCtx.createGain();
@@ -144,177 +153,164 @@ const playSound = (type) => {
   }
 };
 
-const ROUND_COUNT = 8;
-const PLATE_SIZE = 210;   // お皿の直径(px)
+const PLATE = 210;                    // お皿の大きさ(px)
+const PLATES = ['plate_red','plate_blue','plate_yellow','plate_green','plate_purple','plate_pink'];
 
 function App() {
   const [gameState, setGameState] = useState('title');
-  const [orders, setOrders] = useState([]);
-  const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
+  const [rounds, setRounds] = useState([]);
+  const [roundIndex, setRoundIndex] = useState(0);
   const [selectedId, setSelectedId] = useState(null);
-  const maxZRef = useRef(10);
-  const dragInfoRef = useRef(null);
-  const itemsRef = useRef([]);
-  const [, setRenderTick] = useState(0);
   const [score, setScore] = useState(0);
   const [resultStatus, setResultStatus] = useState(null);
   const [isConveying, setIsConveying] = useState(false);
   const [plateColor, setPlateColor] = useState('plate_red');
   const [ready, setReady] = useState(false);
+  const [, setTick] = useState(0);
 
-  const workspaceRef = useRef(null);
-  const currentOrder = orders[currentOrderIndex];
+  const itemsRef = useRef([]);
+  const maxZRef = useRef(10);
+  const dragRef = useRef(null);
+
+  const order = rounds[roundIndex];
   const items = itemsRef.current;
+  const bump = () => setTick(n => n + 1);
 
   useEffect(() => {
     const img = new Image();
     img.onload = () => setReady(true);
+    img.onerror = () => setReady(true);
     img.src = ATLAS_SRC;
   }, []);
-
-  const bump = () => setRenderTick(n => n + 1);
-  const updateItems = (updater) => {
-    itemsRef.current = typeof updater === 'function' ? updater(itemsRef.current) : updater;
-    bump();
-  };
 
   const startGame = () => {
     initAudio();
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    const os = [];
-    for (let i = 0; i < ROUND_COUNT; i++) os.push(makeOrder(i));
-    setOrders(os);
-    setGameState('playing');
+    setRounds(buildRounds());
+    setRoundIndex(0);
     setScore(0);
-    setCurrentOrderIndex(0);
-    resetOrder();
+    setGameState('playing');
+    resetPlate();
   };
 
-  const resetOrder = () => {
+  const resetPlate = () => {
     itemsRef.current = [];
-    bump();
+    maxZRef.current = 10;
     setSelectedId(null);
     setResultStatus(null);
     setIsConveying(false);
-    maxZRef.current = 10;
     setPlateColor(PLATES[Math.floor(Math.random() * PLATES.length)]);
-  };
-
-  const handlePointerDown = (e, id, item) => {
-    if (isConveying || gameState !== 'playing' || resultStatus !== null) return;
-    e.stopPropagation();
-    e.target.setPointerCapture(e.pointerId);
-    initAudio(); playSound('grab');
-    const nz = ++maxZRef.current;
-    updateItems(prev => prev.map(i => i.id === id ? { ...i, zIndex: nz } : i));
-    setSelectedId(id);
-    dragInfoRef.current = { id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY, moved: false };
-  };
-
-  const handlePointerMove = (e) => {
-    const di = dragInfoRef.current;
-    if (!di) return;
-    di.moved = true;
-    const nx = di.startX + (e.clientX - di.pointerX);
-    const ny = di.startY + (e.clientY - di.pointerY);
-    itemsRef.current = itemsRef.current.map(i => i.id === di.id ? { ...i, x: nx, y: ny } : i);
     bump();
   };
 
-  const handlePointerUp = () => { if (dragInfoRef.current) { if (dragInfoRef.current.moved) playSound('put'); dragInfoRef.current = null; } };
-  const handleWorkspaceClick = () => { if (!isConveying) setSelectedId(null); };
+  // 2貫の注文なら左右2か所に自動で並ぶ
+  const slotsFor = (o) => {
+    if (!o) return [0];
+    const bases = (o.req.shari || 0) + (o.req.gunkan || 0);
+    return bases >= 2 ? [-42, 42] : [0];
+  };
 
-  const addSushi = (sushi) => {
+  const addPart = (part) => {
     if (isConveying || gameState !== 'playing' || resultStatus !== null) return;
     initAudio(); playSound('put');
-    const ox = Math.random() * 30 - 15, oy = Math.random() * 24 - 12;
-    const newId = `item-${Date.now()}-${Math.floor(Math.random()*1000)}`;
-    const nz = ++maxZRef.current;
+    const slots = slotsFor(order);
+    const nth = itemsRef.current.filter(i => i.baseId === part.id).length;
+    const sx = slots[nth % slots.length];
     itemsRef.current = [...itemsRef.current, {
-      id: newId, baseId: sushi.id, x: PLATE_SIZE/2 + ox, y: PLATE_SIZE/2 + oy, rotation: 0, zIndex: nz,
+      id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      baseId: part.id,
+      x: PLATE / 2 + sx + (part.dx || 0),
+      y: PLATE / 2 + part.dy,
+      rotation: 0,
+      zIndex: (LAYER[part.id] || 1) * 100 + nth,
     }];
     bump();
-    setSelectedId(newId);
   };
 
-  const deleteSelectedItem = () => {
-    if (!selectedId || isConveying) return;
-    playSound('grab'); updateItems(prev => prev.filter(i => i.id !== selectedId)); setSelectedId(null);
-  };
-
-  const clearAllItems = () => {
+  const onPointerDown = (e, item) => {
     if (isConveying || resultStatus !== null) return;
-    playSound('grab'); itemsRef.current = []; bump(); setSelectedId(null);
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    initAudio(); playSound('grab');
+    setSelectedId(item.id);
+    dragRef.current = { id: item.id, sx: item.x, sy: item.y, px: e.clientX, py: e.clientY, moved: false };
+  };
+  const onPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d) return;
+    d.moved = true;
+    itemsRef.current = itemsRef.current.map(i =>
+      i.id === d.id ? { ...i, x: d.sx + (e.clientX - d.px), y: d.sy + (e.clientY - d.py) } : i);
+    bump();
+  };
+  const onPointerUp = () => {
+    if (dragRef.current && dragRef.current.moved) playSound('put');
+    dragRef.current = null;
   };
 
-  const undoLastItem = () => {
+  const undo = () => {
     if (isConveying || resultStatus !== null || itemsRef.current.length === 0) return;
     playSound('grab');
-    const removed = itemsRef.current[itemsRef.current.length - 1];
     itemsRef.current = itemsRef.current.slice(0, -1);
-    bump();
-    if (selectedId === removed.id) setSelectedId(null);
+    setSelectedId(null); bump();
+  };
+  const clearAll = () => {
+    if (isConveying || resultStatus !== null || itemsRef.current.length === 0) return;
+    playSound('grab');
+    itemsRef.current = []; setSelectedId(null); bump();
   };
 
-  // お皿の上にあるか（中心からの楕円距離）
+  // お皿の上にあるか（やさしめの楕円判定）
   const isOnPlate = (item) => {
-    const dx = (item.x - PLATE_SIZE/2) / (PLATE_SIZE*0.46);
-    const dy = (item.y - PLATE_SIZE/2) / (PLATE_SIZE*0.40);
-    return dx*dx + dy*dy <= 1;
+    const dx = (item.x - PLATE / 2) / (PLATE * 0.52);
+    const dy = (item.y - PLATE / 2) / (PLATE * 0.50);
+    return dx * dx + dy * dy <= 1;
   };
 
-  const submitSushi = () => {
-    if (isConveying || resultStatus !== null || !currentOrder) return;
+  // 今お皿に乗っている部品の数
+  const counts = {};
+  items.forEach(i => { if (isOnPlate(i)) counts[i.baseId] = (counts[i.baseId] || 0) + 1; });
+  const req = order ? order.req : {};
+  const isPerfect = order &&
+    Object.keys(req).length === Object.keys(counts).length &&
+    Object.keys(req).every(k => counts[k] === req[k]);
+  // 注文にない部品が乗っている？
+  const extras = Object.keys(counts).filter(k => !req[k]);
+
+  const submit = () => {
+    if (isConveying || resultStatus !== null || !order) return;
     setSelectedId(null);
-    const cc = {};
-    itemsRef.current.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
-    const req = currentOrder.requiredCounts;
-    const reqKeys = Object.keys(req);
-    let ok = reqKeys.length === Object.keys(cc).length;
-    if (ok) { for (const k of reqKeys) { if (cc[k] !== req[k]) { ok = false; break; } } }
-    if (ok) {
-      playSound('success'); setTimeout(() => playSound('slide'), 500);
+    if (isPerfect) {
+      playSound('success'); setTimeout(() => playSound('slide'), 450);
       setResultStatus('success'); setIsConveying(true);
-      setScore(prev => prev + currentOrder.score);
+      setScore(s => s + order.score);
       setTimeout(() => {
-        const next = currentOrderIndex + 1;
-        if (next >= orders.length) setGameState('result');
-        else { setCurrentOrderIndex(next); resetOrder(); }
-      }, 2200);
+        const next = roundIndex + 1;
+        if (next >= rounds.length) setGameState('result');
+        else { setRoundIndex(next); resetPlate(); }
+      }, 2100);
     } else {
       playSound('fail'); setResultStatus('fail');
-      setTimeout(() => setResultStatus(null), 1300);
+      setTimeout(() => setResultStatus(null), 1200);
     }
   };
 
-  // お手本プレビュー用に、注文の寿司を皿に並べた配置を作る
-  const previewItems = currentOrder ? (() => {
-    const list = [];
-    Object.entries(currentOrder.requiredCounts).forEach(([id, cnt]) => {
-      for (let i = 0; i < cnt; i++) list.push(id);
-    });
-    return list;
-  })() : [];
-
-  const selectedItemData = items.find(i => i.id === selectedId);
-  const onPlateCount = items.filter(isOnPlate).length;
-
-  // 皿の上に置かれた寿司スプライト
-  const renderSushi = (item) => {
-    const s = SUSHI_BY_ID[item.baseId];
-    if (!s) return null;
-    const isSel = item.id === selectedId;
-    const h = 66;
+  const renderPart = (item) => {
+    const p = PART_BY_ID[item.baseId];
+    if (!p) return null;
+    const sel = item.id === selectedId;
     return (
       <div key={item.id}
-        onPointerDown={(e) => handlePointerDown(e, item.id, item)}
+        onPointerDown={(e) => onPointerDown(e, item)}
         className="absolute origin-center cursor-grab active:cursor-grabbing"
         style={{
+          left: 0, top: 0,
           transform: `translate(${item.x}px, ${item.y}px) rotate(${item.rotation}deg) translate(-50%, -50%)`,
           zIndex: item.zIndex, touchAction: 'none',
-          filter: isSel ? 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 6px #3b82f6)' : 'drop-shadow(0 3px 3px rgba(0,0,0,0.25))',
+          filter: sel ? 'drop-shadow(0 0 5px #2563eb) drop-shadow(0 0 5px #2563eb)'
+                      : 'drop-shadow(0 2px 2px rgba(0,0,0,0.22))',
         }}>
-        <Sprite name={item.baseId} h={h} />
+        <Sprite name={item.baseId} h={partH(item.baseId)} />
       </div>
     );
   };
@@ -322,8 +318,8 @@ function App() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#f0e6d2] overflow-hidden font-sans">
       <style>{`
-        @keyframes laneScroll { from { background-position-x: 0; } to { background-position-x: -160px; } }
-        .conveying-plate { transition: transform 2s ease-in; transform: translateX(120vw) rotate(8deg); }
+        @keyframes laneScroll { from { background-position-x: 0; } to { background-position-x: -180px; } }
+        .conveying-plate { transition: transform 1.9s ease-in; transform: translateX(120vw) rotate(6deg); }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes shakeIcon { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-15px) rotate(-10deg); } 50% { transform: translateX(15px) rotate(10deg); } 75% { transform: translateX(-15px) rotate(-10deg); } }
         .animate-pop-in { animation: popIn 0.4s ease-out forwards; }
@@ -335,10 +331,10 @@ function App() {
           <a href="index.html" className="gp-home">🏠</a>
           <div className="gp-hero gp-float mb-6">🍣</div>
           <h1 className="gp-title mb-4 text-center text-white">オーダー回転寿司</h1>
-          <p className="mb-6 text-center text-sm text-white/80 leading-relaxed">
-            おきゃくさんの ちゅうもんの おすしを<br/>
-            したから えらんで おさらに のせて<br/>
-            「レーンに ながす」で かんせい！
+          <p className="mb-6 text-center text-sm text-white/85 leading-relaxed">
+            おてほんと おなじ おすしを つくろう！<br/>
+            したの ざいりょうを タップして<br/>
+            シャリに ネタを のせてね
           </p>
           <button onClick={startGame} disabled={!ready} className="gp-btn gp-btn--lg mt-2 disabled:opacity-50">
             {ready ? 'スタート' : 'よみこみちゅう…'}
@@ -359,68 +355,69 @@ function App() {
         </div>
       )}
 
-      {gameState === 'playing' && currentOrder && (
+      {gameState === 'playing' && order && (
         <>
-          {/* ヘッダー */}
           <header className="bg-slate-800 text-white px-3 py-2 flex justify-between items-center shadow-md z-20 shrink-0">
             <a href="index.html" className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg no-underline">🏠</a>
             <div className="font-bold text-lg">スコア: <span className="text-yellow-400">{score}</span></div>
-            <div className="text-xs text-gray-400">{currentOrderIndex + 1}/{orders.length}</div>
+            <div className="text-xs text-gray-400">{roundIndex + 1}/{rounds.length}</div>
           </header>
 
-          {/* お手本エリア（お客さんの注文） */}
+          {/* お手本＋いま乗っているものの数 */}
           <div className="bg-white border-b-4 border-red-500 px-3 py-2 z-10 shadow-sm shrink-0">
             <div className="flex items-center gap-3">
-              <div className="shrink-0 flex flex-col items-center">
-                <div className="text-[10px] font-black text-red-600 mb-1 bg-red-100 px-2 py-0.5 rounded-full">ちゅうもん</div>
-                <div className="text-2xl">🧑‍🍼</div>
-              </div>
-              {/* 注文された寿司を皿にのせた見本 */}
-              <div className="relative shrink-0 flex justify-center items-center" style={{ width: 96, height: 72 }}>
-                <Sprite name={plateColor} h={64} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }} />
-                <div className="absolute inset-0 flex justify-center items-center gap-0.5">
-                  {previewItems.map((id, i) => (
-                    <Sprite key={i} name={id} h={34} style={{ marginLeft: i > 0 ? -10 : 0, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }} />
+              <div className="shrink-0 text-center">
+                <div className="text-[10px] font-black text-red-600 mb-1 bg-red-100 px-2 py-0.5 rounded-full">おてほん</div>
+                <div className="flex items-end justify-center gap-0.5 h-[52px]">
+                  {order.full.map((fn, i) => (
+                    <Sprite key={i} name={fn} h={46} style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.25))' }} />
                   ))}
+                  {req.wasabi ? <Sprite name="wasabi" h={22} style={{ marginBottom: 2 }} /> : null}
                 </div>
               </div>
-              {/* 材料リスト */}
+              {/* いくつ乗せたか、ひと目でわかるカウンター */}
               <div className="flex flex-wrap gap-1.5 flex-1">
-                {Object.entries(currentOrder.requiredCounts).map(([id, count]) => (
-                  <div key={id} className="flex items-center bg-gray-50 rounded-full pl-1 pr-2.5 py-0.5 border border-gray-200 gap-1">
-                    <Sprite name={id} h={26} />
-                    <span className="text-sm font-black text-gray-700">×{count}</span>
+                {Object.entries(req).map(([id, need]) => {
+                  const have = counts[id] || 0;
+                  const ok = have === need;
+                  return (
+                    <div key={id}
+                      className={`flex items-center rounded-full pl-1 pr-2 py-0.5 border-2 gap-1 ${ok ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-200'}`}>
+                      <Sprite name={id} h={24} />
+                      <span className={`text-sm font-black ${ok ? 'text-green-600' : 'text-gray-600'}`}>{have}/{need}</span>
+                    </div>
+                  );
+                })}
+                {extras.length > 0 && (
+                  <div className="flex items-center rounded-full px-2 py-0.5 border-2 border-red-300 bg-red-50 gap-1">
+                    <span className="text-xs font-black text-red-500">よぶんなざいりょう</span>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
 
-          {/* ワークスペース */}
+          {/* 作業スペース */}
           <main className="flex-1 relative overflow-hidden bg-[#e9edf2] flex flex-col min-h-0"
-            onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onClick={handleWorkspaceClick}>
-            {/* レーン背景 */}
+            onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}
+            onClick={() => { if (!isConveying) setSelectedId(null); }}>
             <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 pointer-events-none"
               style={{
-                height: 120,
+                height: 124,
                 backgroundImage: `url(${ATLAS_SRC})`,
-                ...(() => { const f = FRAMES['lane']; const scale = 120 / f[3];
-                  return { backgroundSize: `${f[2]*scale}px ${ATLAS_H*scale}px`, backgroundPositionY: `-${f[1]*scale}px` }; })(),
+                ...(() => { const f = FRAMES['lane']; const s = 124 / f[3];
+                  return { backgroundSize: `${f[2]*s}px ${ATLAS_H*s}px`, backgroundPositionY: `-${f[1]*s}px` }; })(),
                 backgroundRepeat: 'repeat-x',
-                animation: 'laneScroll 3s linear infinite',
-                opacity: 0.95,
+                animation: 'laneScroll 3.2s linear infinite',
               }} />
 
             <div className="flex-1 relative flex justify-center items-center">
-              <div ref={workspaceRef}
-                className={`relative flex justify-center items-center ${isConveying ? 'conveying-plate' : ''}`}
-                style={{ width: PLATE_SIZE, height: PLATE_SIZE, touchAction: 'none' }}>
-                {/* お皿 */}
-                <Sprite name={plateColor} h={PLATE_SIZE} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.25))', pointerEvents: 'none' }} />
-                {items.map(renderSushi)}
-                {items.length > 0 && (
-                  <div className="absolute -top-1 -left-1 bg-blue-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow z-50">{onPlateCount}</div>
-                )}
+              <div className={`relative flex justify-center items-center ${isConveying ? 'conveying-plate' : ''}`}
+                style={{ width: PLATE, height: PLATE, touchAction: 'none' }}>
+                <Sprite name={plateColor} h={PLATE}
+                  style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+                           filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.25))', pointerEvents: 'none' }} />
+                {items.map(renderPart)}
               </div>
             </div>
 
@@ -435,55 +432,44 @@ function App() {
               </div>
             )}
 
-            {/* 戻す・全消し */}
             <div className="absolute bottom-2 left-3 z-10 flex gap-2">
-              <button onClick={undoLastItem} disabled={isConveying || resultStatus !== null || items.length === 0}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform active:scale-95 ${(isConveying || resultStatus !== null || items.length === 0) ? 'opacity-40' : ''}`}
+              <button onClick={undo} disabled={isConveying || resultStatus !== null || items.length === 0}
+                className={`w-14 h-14 flex items-center justify-center active:scale-95 transition-transform ${(isConveying || resultStatus !== null || items.length === 0) ? 'opacity-40' : ''}`}
                 style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.3))' }}>
                 <Sprite name="btn_back" h={54} />
               </button>
-              <button onClick={clearAllItems} disabled={isConveying || resultStatus !== null || items.length === 0}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform active:scale-95 ${(isConveying || resultStatus !== null || items.length === 0) ? 'opacity-40' : ''}`}
+              <button onClick={clearAll} disabled={isConveying || resultStatus !== null || items.length === 0}
+                className={`w-14 h-14 flex items-center justify-center active:scale-95 transition-transform ${(isConveying || resultStatus !== null || items.length === 0) ? 'opacity-40' : ''}`}
                 style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.3))' }}>
                 <Sprite name="btn_clear" h={54} />
               </button>
             </div>
-            {/* レーンに流す */}
             <div className="absolute bottom-2 right-3 z-10">
-              <button onClick={submitSushi} disabled={isConveying || resultStatus !== null}
-                className={`w-20 h-20 rounded-full flex items-center justify-center transition-transform active:scale-95 ${(isConveying || resultStatus !== null) ? 'opacity-40' : ''}`}
+              <button onClick={submit} disabled={isConveying || resultStatus !== null}
+                className={`w-20 h-20 flex items-center justify-center active:scale-95 transition-transform ${(isConveying || resultStatus !== null) ? 'opacity-40' : (isPerfect ? 'animate-pulse' : '')}`}
                 style={{ filter: 'drop-shadow(0 4px 5px rgba(0,0,0,0.35))' }}>
                 <Sprite name="btn_go" h={80} />
               </button>
             </div>
           </main>
 
-          {/* コントロールパネル（選択中の寿司の回転・削除） */}
-          {!isConveying && selectedItemData && resultStatus === null && (
-            <div className="bg-white px-3 py-1.5 border-t border-gray-200 flex gap-3 justify-between items-center z-10 shadow-lg shrink-0">
-              <div className="flex flex-col flex-1 max-w-[180px]">
-                <label className="text-[10px] text-gray-500 font-bold">かいてん</label>
-                <input type="range" min="0" max="360" value={selectedItemData.rotation}
-                  onChange={(e) => updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, rotation: Number(e.target.value) } : i))}
-                  className="w-full accent-red-500" />
-              </div>
-              <button onClick={deleteSelectedItem} className="px-3 py-2 bg-red-100 text-red-600 rounded-lg font-bold text-sm">🗑 けす</button>
-            </div>
-          )}
-
-          {/* 寿司パレット */}
+          {/* 材料パレット */}
           <div className="bg-gray-200 px-2 py-2 shrink-0" style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
             <div className={`bg-white p-2 rounded-xl border border-gray-200 overflow-x-auto whitespace-nowrap shadow-lg ${isConveying || resultStatus !== null ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="flex gap-1.5 px-0.5">
-                {SUSHI.map((s) => (
-                  <button key={s.id} onClick={() => addSushi(s)}
-                    className="flex flex-col items-center min-w-[64px] bg-gray-50 p-1 rounded-lg shadow-sm border border-gray-200 active:bg-red-50 active:scale-95 transition-all">
-                    <div className="h-11 flex items-center justify-center pointer-events-none">
-                      <Sprite name={s.id} h={42} />
-                    </div>
-                    <span className="text-[9px] text-gray-600 font-bold leading-none mt-0.5">{s.name}</span>
-                  </button>
-                ))}
+                {PARTS.map(p => {
+                  const needed = !!req[p.id];
+                  return (
+                    <button key={p.id} onClick={() => addPart(p)}
+                      className={`flex flex-col items-center min-w-[62px] p-1 rounded-lg shadow-sm border-2 active:scale-95 transition-all
+                        ${needed ? 'bg-yellow-50 border-yellow-400' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="h-11 flex items-end justify-center pointer-events-none">
+                        <Sprite name={p.id} h={Math.min(40, partH(p.id) * 0.8)} />
+                      </div>
+                      <span className="text-[9px] text-gray-600 font-bold leading-none mt-0.5">{p.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
