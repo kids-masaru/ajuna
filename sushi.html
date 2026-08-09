@@ -28,8 +28,8 @@ const { useState, useRef, useEffect } = React;
 
 // ===== スプライトアトラス =====
 const ATLAS_SRC = 'sushi_parts.png';
-const ATLAS_W = 1100, ATLAS_H = 471;
-const FRAMES = {"plate_red":[0,0,221,192],"btn_go":[225,0,169,172],"plate_blue":[398,0,178,155],"plate_yellow":[580,0,172,153],"plate_purple":[756,0,165,152],"plate_green":[925,0,168,151],"plate_pink":[0,196,160,148],"gunkan":[164,196,127,130],"maguro":[295,196,187,124],"salmon":[486,196,196,122],"ebi":[686,196,214,120],"btn_back":[904,196,119,120],"btn_clear":[0,348,121,119],"shari":[125,348,163,115],"tamago":[292,348,151,97],"ikura":[447,348,144,97],"nori":[595,348,59,90],"wasabi":[658,348,69,76]};
+const ATLAS_W = 1400, ATLAS_H = 560;
+const FRAMES = {"plate_red":[0,0,221,192],"btn_go":[225,0,169,172],"plate_blue":[398,0,178,155],"plate_yellow":[580,0,172,153],"plate_purple":[756,0,165,152],"plate_green":[925,0,168,151],"plate_pink":[1097,0,160,148],"iwashi":[0,196,209,131],"gunkan":[213,196,127,130],"tako":[344,196,191,130],"hotate":[539,196,189,129],"ika":[732,196,190,128],"amaebi":[926,196,222,126],"shiromi":[1152,196,193,125],"maguro":[0,331,187,124],"salmon":[191,331,196,122],"ebi":[391,331,214,120],"anago":[609,331,199,120],"btn_back":[812,331,119,120],"btn_clear":[935,331,121,119],"shari":[1060,331,163,115],"tamago":[1227,331,151,97],"ikura":[0,459,144,97],"uni":[148,459,135,96],"negitoro":[287,459,135,95],"salmon_g":[426,459,130,91],"nori":[560,459,59,90],"corn":[623,459,132,84],"natto":[759,459,134,83],"wasabi":[897,459,69,76],"kyuri":[970,459,92,70]};
 // レーンは繰り返し表示するので別画像（アトラスだと隣の絵まで一緒に流れてしまう）
 const LANE_SRC = 'sushi_lane.png';
 const LANE_W = 116, LANE_H = 127;
@@ -59,22 +59,49 @@ const partH = (name) => FRAMES[name][3] * SCALE * (SIZE_ADJ[name] || 1);
 
 // ===== 部品（元のゲームと同じ9種） =====
 // dy: お皿の中心からの縦位置。重ねると本物のお寿司になるように調整してある
-const PARTS = [
+// にぎりのネタ（シャリの上にのせる）
+const NIGIRI_NETA = [
+  { id: 'maguro',  name: 'まぐろ' },
+  { id: 'salmon',  name: 'サーモン' },
+  { id: 'shiromi', name: 'しろみ' },
+  { id: 'ebi',     name: 'えび' },
+  { id: 'amaebi',  name: 'あまえび' },
+  { id: 'ika',     name: 'いか' },
+  { id: 'tako',    name: 'たこ' },
+  { id: 'iwashi',  name: 'いわし' },
+  { id: 'hotate',  name: 'ほたて' },
+  { id: 'anago',   name: 'あなご' },
+  { id: 'tamago',  name: 'たまご', dy: 20 },   // たまごは箱型なので少し低め
+];
+// 軍艦のネタ（ぐんかんの上にのせる）
+const GUNKAN_NETA = [
+  { id: 'ikura',    name: 'いくら' },
+  { id: 'negitoro', name: 'ねぎとろ' },
+  { id: 'uni',      name: 'うに' },
+  { id: 'salmon_g', name: 'サーモン軍艦' },
+  { id: 'corn',     name: 'コーン' },
+  { id: 'natto',    name: 'なっとう' },
+  { id: 'kyuri',    name: 'きゅうり' },
+];
+const BASE_PARTS = [
   { id: 'shari',  name: 'シャリ',   dy: 26 },
   { id: 'gunkan', name: 'ぐんかん', dy: 22 },
-  { id: 'maguro', name: 'まぐろ',   dy: 14, dx: 8 },
-  { id: 'salmon', name: 'サーモン', dy: 14, dx: 8 },
-  { id: 'tamago', name: 'たまご',   dy: 20, dx: 8 },
-  { id: 'ebi',    name: 'えび',     dy: 14, dx: 8 },
-  { id: 'ikura',  name: 'いくら',   dy: 6 },
   { id: 'nori',   name: 'のり',     dy: 20, dx: 8 },
   // わさびはシャリとネタの間。本物と同じで見た目には隠れる
   // （乗せたかどうかは上の「1/1」カウンターで確認できる）
   { id: 'wasabi', name: 'わさび',   dy: 16, dx: -4 },
 ];
+const PARTS = [
+  ...BASE_PARTS,
+  ...NIGIRI_NETA.map(n => ({ dy: 14, dx: 8, ...n })),
+  ...GUNKAN_NETA.map(n => ({ dy: 6, dx: 0, ...n })),
+];
 const PART_BY_ID = Object.fromEntries(PARTS.map(p => [p.id, p]));
+const NIGIRI_IDS = NIGIRI_NETA.map(n => n.id);
+const GUNKAN_IDS = GUNKAN_NETA.map(n => n.id);
 // 重ね順（シャリが一番下、わさび→ネタ→のり の順で上へ）
-const LAYER = { shari: 1, gunkan: 1, wasabi: 2, maguro: 3, salmon: 3, tamago: 3, ebi: 3, ikura: 3, nori: 4 };
+const LAYER = { shari: 1, gunkan: 1, wasabi: 2, nori: 4 };
+[...NIGIRI_IDS, ...GUNKAN_IDS].forEach(id => { LAYER[id] = 3; });
 
 // お手本：注文されたパーツを実際と同じ重ね方で組み立てて見せる
 function SushiPreview({ req, scale, box }) {
@@ -100,23 +127,29 @@ function SushiPreview({ req, scale, box }) {
 
 // ===== 注文 =====
 // お手本は req のパーツから自動で組み立てて表示する
+const PLAIN_NIGIRI = NIGIRI_IDS.filter(id => id !== 'tamago');   // たまごは のり付き専用
 const EASY_ORDERS = [
-  { req: { shari: 1, maguro: 1 },            score: 100 },
-  { req: { shari: 1, salmon: 1 },            score: 100 },
-  { req: { shari: 1, ebi: 1 },               score: 120 },
-  { req: { shari: 1, tamago: 1, nori: 1 },   score: 150 },
-  { req: { gunkan: 1, ikura: 1 },            score: 180 },
-  { req: { shari: 1, wasabi: 1, maguro: 1 }, score: 150 },
-  { req: { shari: 1, wasabi: 1, salmon: 1 }, score: 150 },
+  // にぎり1貫（ネタの数だけ種類がある）
+  ...PLAIN_NIGIRI.map(id => ({ req: { shari: 1, [id]: 1 }, score: 100 })),
+  // ぐんかん1貫
+  ...GUNKAN_IDS.map(id => ({ req: { gunkan: 1, [id]: 1 }, score: 140 })),
+  // たまご（のり巻き）
+  { req: { shari: 1, tamago: 1, nori: 1 }, score: 150 },
+  // わさび入り
+  ...['maguro', 'salmon', 'tako', 'ika'].map(id => ({ req: { shari: 1, wasabi: 1, [id]: 1 }, score: 160 })),
 ];
 const HARD_ORDERS = [
-  { req: { shari: 2, maguro: 2 },            score: 220 },
-  { req: { shari: 2, salmon: 2 },            score: 220 },
-  { req: { shari: 2, ebi: 2 },               score: 250 },
-  { req: { shari: 2, maguro: 1, salmon: 1 }, score: 240 },
-  { req: { shari: 2, tamago: 2, nori: 2 },   score: 320 },
-  { req: { gunkan: 2, ikura: 2 },            score: 340 },
-  { req: { shari: 2, wasabi: 2, maguro: 2 }, score: 330 },
+  // 同じネタで2貫
+  ...['maguro', 'salmon', 'ebi', 'tako', 'ika', 'hotate', 'iwashi', 'amaebi'].map(
+    id => ({ req: { shari: 2, [id]: 2 }, score: 240 })),
+  // ちがうネタを1貫ずつ
+  ...[['maguro', 'salmon'], ['ebi', 'ika'], ['tako', 'hotate'], ['iwashi', 'anago'], ['shiromi', 'amaebi']].map(
+    ([a, b]) => ({ req: { shari: 2, [a]: 1, [b]: 1 }, score: 260 })),
+  // ぐんかん2貫
+  ...[['ikura', 'ikura'], ['uni', 'uni'], ['negitoro', 'corn'], ['natto', 'kyuri']].map(
+    ([a, b]) => ({ req: a === b ? { gunkan: 2, [a]: 2 } : { gunkan: 2, [a]: 1, [b]: 1 }, score: 320 })),
+  { req: { shari: 2, tamago: 2, nori: 2 },   score: 340 },
+  { req: { shari: 2, wasabi: 2, maguro: 2 }, score: 350 },
 ];
 
 function shuffleArray(arr) {
@@ -196,6 +229,7 @@ function App() {
   const [resultStatus, setResultStatus] = useState(null);
   const [isConveying, setIsConveying] = useState(false);
   const [plateColor, setPlateColor] = useState('plate_red');
+  const [palette, setPalette] = useState([]);
   const [ready, setReady] = useState(false);
   const [, setTick] = useState(0);
 
@@ -213,6 +247,18 @@ function App() {
     img.onerror = () => setReady(true);
     img.src = ATLAS_SRC;
   }, []);
+
+  // 材料は毎回「その注文に必要なもの＋おじゃまのネタ」だけ並べる
+  // （全種類ならべると多すぎて探せないため）
+  useEffect(() => {
+    const o = rounds[roundIndex];
+    if (!o) return;
+    const base = BASE_PARTS.map(p => p.id);
+    const needNeta = Object.keys(o.req).filter(id => !base.includes(id));
+    const pool = [...NIGIRI_IDS, ...GUNKAN_IDS].filter(id => !needNeta.includes(id));
+    const decoys = shuffleArray(pool).slice(0, Math.max(0, 6 - needNeta.length));
+    setPalette([...base, ...shuffleArray([...needNeta, ...decoys])]);
+  }, [rounds, roundIndex]);
 
   const startGame = () => {
     initAudio();
@@ -488,7 +534,9 @@ function App() {
           <div className="bg-gray-200 px-2 py-2 shrink-0" style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
             <div className={`bg-white p-2 rounded-xl border border-gray-200 overflow-x-auto whitespace-nowrap shadow-lg ${isConveying || resultStatus !== null ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="flex gap-1.5 px-0.5">
-                {PARTS.map(p => {
+                {palette.map(id => {
+                  const p = PART_BY_ID[id];
+                  if (!p) return null;
                   const needed = !!req[p.id];
                   return (
                     <button key={p.id} onClick={() => addPart(p)}
