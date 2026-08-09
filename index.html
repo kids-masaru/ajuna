@@ -60,7 +60,7 @@
         <h1 class="text-4xl text-rose-500 font-bold drop-shadow-sm">
             🎮 げーむのおへや
         </h1>
-        <p class="text-[10px] text-rose-300 mt-1">v5.5</p>
+        <p class="text-[10px] text-rose-300 mt-1">v5.6</p>
     </div>
 
     <div class="w-full max-w-md grid grid-cols-3 gap-2 pb-10">
@@ -147,11 +147,7 @@
 
         <a href="fishing.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-cyan-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-cyan-100 w-14 h-14 rounded-xl flex items-center justify-center text-3xl border-2 border-cyan-200 mb-3">
-🎣
-            </div>
-            <h2 class="text-[11px] mt-1 font-bold text-cyan-500 leading-tight whitespace-nowrap">さかなつり</h2>
+            <img src="icon_fishing.png" class="w-20 h-20 rounded-xl" alt="さかなつり">
         </a>
 
         <a href="kart.html?v=60"
@@ -178,7 +174,7 @@
                 }).then(() => {
                     caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
                 }).then(() => {
-                    navigator.serviceWorker.register('./sw.js?v=90');
+                    navigator.serviceWorker.register('./sw.js?v=91');
                 });
             });
         }
