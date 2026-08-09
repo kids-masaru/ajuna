@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v96';
+const CACHE_NAME = 'ajuna-v97';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -79,6 +79,7 @@ const LOCAL_FILES = [
   './carraceBGM.mp3',
   './graingame.html',
   './graingameBGM.mp3',
+  './crane_atlas.png',
   './yukinokuni.html',
   './suno.mp3',
   './yuki_atlas.png',

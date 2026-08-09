@@ -1,710 +1,479 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>クレーンゲーム</title>
-    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
-    <style>
-        body { margin: 0; padding: 0; overflow: hidden; }
-    </style>
-    <link rel="stylesheet" href="assets/kit.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>クレーンゲーム</title>
+<link rel="stylesheet" href="assets/kit.css">
+<style>
+body {
+  margin: 0; padding: 0; overflow: hidden;
+  user-select: none; touch-action: none; overscroll-behavior: none;
+  width: 100vw; height: 100dvh;
+  background: linear-gradient(180deg, #ffd7ea 0%, #ffb3d9 45%, #ff8fc7 100%);
+}
+#wrap { width: 100vw; height: 100dvh; position: relative; }
+#cv { display: block; width: 100%; height: 100%; }
+
+#hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: max(12px, env(safe-area-inset-top)) 12px 4px 70px;
+  pointer-events: none;
+}
+.hud-box {
+  background: rgba(255,255,255,0.94); border-radius: 999px;
+  padding: 5px 14px; font-weight: 800; font-size: 0.95rem; color: #b83280;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18); white-space: nowrap;
+}
+
+#btn-grab {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 12; width: 116px; height: 116px; border-radius: 50%;
+  border: 6px solid #d6336c; background: radial-gradient(circle at 35% 30%, #ff8fc7, #f0518f);
+  color: #fff; font-weight: 900; font-size: 1.25rem; line-height: 1.2;
+  box-shadow: 0 6px 0 #b02a5b, 0 10px 18px rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+}
+#btn-grab:active { transform: translateX(-50%) translateY(5px); box-shadow: 0 1px 0 #b02a5b, 0 4px 10px rgba(0,0,0,0.3); }
+#btn-grab:disabled { opacity: 0.45; }
+
+.screen {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 24px; text-align: center;
+  background: linear-gradient(180deg, rgba(255,143,199,0.95), rgba(214,51,108,0.96)); color: #fff;
+}
+.big-title { font-size: clamp(2rem, 9vw, 2.9rem); font-weight: 900; text-shadow: 0 3px 12px rgba(0,0,0,0.35); }
+#prize-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 14px 0 18px; max-width: 330px; }
+.prize-item { height: 46px; background-repeat: no-repeat; animation: pop 0.35s ease-out; }
+@keyframes pop { 0% { transform: scale(0.2); opacity: 0; } 70% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
+.screen .gp-btn { white-space: nowrap; }
+</style>
 </head>
+<body class="gp gp-pink gp-dark">
 
-<body class="gp gp-amber">
-    <div id="root"></div>
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <a href="index.html" class="gp-home" aria-label="ホーム">🏠</a>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback } = React;
+  <div id="hud">
+    <div class="hud-box" id="prize-count">🧸 0こ</div>
+    <div class="hud-box" id="try-count">のこり 10かい</div>
+  </div>
 
-const DEFAULT_PRIZES = ["🐻", "🐰", "🐱", "🐶", "🦊", "🐼", "🐨", "🐸", "🦄", "🐙", "🦁", "🐯"];
+  <button id="btn-grab">とめる！</button>
 
-const GAME_WIDTH = 380;
-const GAME_HEIGHT = 320;
-const CLAW_WIDTH = 60;
-const PRIZE_SIZE = 42; // 52から約20%小さくしました
+  <div id="result" class="screen" style="display:none;">
+    <div class="gp-hero gp-float">🎉</div>
+    <h2 class="big-title" id="result-title">おしまい！</h2>
+    <div style="font-size:1.05rem;font-weight:800;">とれた ぬいぐるみ</div>
+    <div id="final-count" style="font-size:3rem;font-weight:900;color:#fff59d;line-height:1.1;">0</div>
+    <div id="prize-row"></div>
+    <div style="display:flex;gap:12px;">
+      <a href="index.html" class="gp-btn gp-btn--ghost">🏠 もどる</a>
+      <button id="retry" class="gp-btn">もういっかい</button>
+    </div>
+  </div>
+</div>
 
-// スピード（低速設定）
-const CLAW_SPEED = 1.6; 
-const DROP_SPEED = 2.0;
+<audio id="bgm" src="graingameBGM.mp3" loop></audio>
 
-const PRIZE_COUNT = 6;
-const GOAL_X = 10; 
-const HOLE_WIDTH = 80;
+<script>
+// ===== スプライト =====
+const ATLAS_SRC = 'crane_atlas.png';
+const ATLAS_W = 1500, ATLAS_H = 784;
+const FRAMES = {"roof":[0,0,160,193],"plush1":[164,0,117,190],"plush5":[285,0,143,185],"plush28":[432,0,124,183],"plush4":[560,0,137,178],"plush0":[701,0,142,176],"plush19":[847,0,136,176],"plush6":[987,0,130,174],"plush3":[1121,0,133,173],"plush26":[1258,0,119,173],"plush20":[0,197,134,172],"plush12":[138,197,151,170],"plush7":[293,197,131,167],"plush13":[428,197,140,167],"plush9":[572,197,150,166],"plush29":[726,197,118,166],"plush27":[848,197,160,164],"plush2":[1012,197,133,163],"plush21":[1149,197,146,162],"plush22":[1299,197,164,161],"plush25":[0,373,161,158],"plush23":[165,373,131,155],"plush11":[300,373,144,153],"plush10":[448,373,133,152],"plush18":[585,373,131,152],"plush17":[720,373,145,150],"plush8":[869,373,161,145],"plush14":[1034,373,140,145],"plush16":[1178,373,153,144],"plush24":[0,535,162,139],"plush15":[166,535,152,133],"case":[322,535,203,130],"arm_closed":[529,535,120,116],"arm_mid":[653,535,180,109],"congrats":[837,535,203,106],"gift_b":[1044,535,92,105],"arm_open":[1140,535,171,102],"gift_p":[1315,535,94,102],"capsule2":[0,678,98,102],"capsule4":[102,678,97,102],"capsule0":[203,678,97,101],"capsule1":[304,678,97,101],"capsule3":[405,678,96,101],"get":[505,678,172,98],"gift_o":[681,678,93,97],"cushion_p":[778,678,145,89],"cushion_g":[927,678,124,76],"star":[1055,678,52,54],"heart":[1111,678,56,50],"drop":[1171,678,35,41],"sparkle":[1210,678,50,32]};
+const PLUSH_IDS = Array.from({length: 30}, (_, i) => 'plush' + i);
 
-// --- Web Audio API を使った効果音ジェネレーター ---
-let audioCtx = null;
+const sheet = new Image();
+let ready = false;
+sheet.onload = () => { ready = true; };
+sheet.onerror = () => { ready = true; };
+sheet.src = ATLAS_SRC;
 
-const initAudio = () => {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function draw(name, cx, cy, h, opt) {
+  const f = FRAMES[name]; if (!f) return;
+  opt = opt || {};
+  const w = f[2] * (h / f[3]);
+  ctx.save();
+  if (opt.alpha !== undefined) ctx.globalAlpha = opt.alpha;
+  ctx.translate(cx, cy);
+  if (opt.rot) ctx.rotate(opt.rot);
+  ctx.drawImage(sheet, f[0], f[1], f[2], f[3], -w / 2, -h / 2, w, h);
+  ctx.restore();
+}
+function spriteCss(name, h) {
+  const f = FRAMES[name], s = h / f[3];
+  return `width:${(f[2]*s).toFixed(1)}px;height:${h}px;background-image:url(${ATLAS_SRC});`
+       + `background-size:${(ATLAS_W*s).toFixed(1)}px ${(ATLAS_H*s).toFixed(1)}px;`
+       + `background-position:-${(f[0]*s).toFixed(1)}px -${(f[1]*s).toFixed(1)}px;background-repeat:no-repeat;`;
+}
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const btn = document.getElementById('btn-grab');
+const prizeCountEl = document.getElementById('prize-count');
+const tryCountEl = document.getElementById('try-count');
+const resultScreen = document.getElementById('result');
+const bgm = document.getElementById('bgm');
+
+// ===== 音 =====
+let ac = null;
+function ensureAudio() {
+  if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (ac.state === 'suspended') ac.resume();
+}
+function tone(f0, dur, type, vol, f1) {
+  if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.connect(g); g.connect(ac.destination);
+  const t = ac.currentTime;
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t);
+  if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol || 0.14, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.start(t); o.stop(t + dur);
+}
+const sMove  = () => tone(520, 0.07, 'square', 0.05);
+const sDown  = () => tone(300, 0.5, 'sawtooth', 0.05, 160);
+const sGrip  = () => { tone(180, 0.1, 'square', 0.12); setTimeout(() => tone(140, 0.1, 'square', 0.1), 90); };
+const sUp    = () => tone(220, 0.45, 'sawtooth', 0.05, 420);
+const sWin   = () => [660, 880, 1100, 1320].forEach((f, i) => setTimeout(() => tone(f, 0.18, 'sine', 0.2), i * 90));
+const sSlip  = () => tone(320, 0.3, 'sine', 0.12, 120);
+const sEnd   = () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.3, 'sine', 0.2), i * 150));
+
+// ===== レイアウト =====
+let W = 0, H = 0;
+let box = {};   // 筐体の内側
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const top = Math.max(64, H * 0.10);
+  const bottom = H - 150;
+  box = { l: 14, r: W - 14, t: top, b: bottom };
+  box.railY = box.t + 34;
+  box.floorY = box.b - 30;
+  box.shelfY = box.floorY - 62;     // 奥のかざり棚
+  box.chuteX = box.l + 56;          // 取り出し口の中心
+  layoutPlushes();
+  layoutDecor();
+}
+
+// 奥に見えるかざり（プレゼント箱・カプセル）。つかむ対象ではない
+let decor = [];
+function layoutDecor() {
+  decor = [];
+  const names = ['gift_p', 'capsule0', 'gift_b', 'capsule2', 'gift_o', 'capsule4', 'capsule1'];
+  const n = Math.max(4, Math.min(7, Math.round((box.r - box.l) / 62)));
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    decor.push({ name: names[i % names.length], x: box.l + 26 + t * (box.r - box.l - 52), h: 34 + (i % 3) * 5 });
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+}
+window.addEventListener('resize', resize);
+
+// ===== 状態 =====
+const TRIES = 10;
+let state = 'move';     // move / down / grip / up / carry / drop / done
+let armX = 0, armDir = 1, armY = 0;
+let armOpen = 1;        // 1=ひらく 0=とじる
+let held = null;        // つかんでいるぬいぐるみ
+let plushes = [], fx = [], banner = null;
+let triesLeft = TRIES, got = [];
+let tRun = 0, lastT = 0, phase = 0;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+function layoutPlushes() {
+  if (!plushes.length) return;
+  plushes.forEach(p => { p.y = (p.layer ? box.floorY - 34 : box.floorY) - p.h * 0.42; });
+}
+// layer 0 = 手前の段 / 1 = うしろに積まれた段（山づみに見せる）
+function makePlush(x, layer) {
+  const lay = layer === undefined ? (Math.random() < 0.4 ? 1 : 0) : layer;
+  const h = lay ? rnd(56, 68) : rnd(66, 84);
+  return {
+    id: pick(PLUSH_IDS), h, layer: lay,
+    x: x !== undefined ? x : rnd(box.l + 118, box.r - 46),
+    y: (lay ? box.floorY - 34 : box.floorY) - h * 0.42,
+    rot: rnd(-0.18, 0.18),
+    vy: 0, falling: false, gone: false,
+    bob: Math.random() * 6.28,
+  };
+}
+function fillFloor() {
+  while (plushes.length < 9) {
+    const lay = plushes.filter(p => p.layer === 1).length < 3 ? 1 : 0;
+    // 同じ段のなかで なるべく重ならない位置に置く
+    let bx = 0, best = -1;
+    const same = plushes.filter(p => p.layer === lay);
+    for (let k = 0; k < 14; k++) {
+      const cand = rnd(box.l + 118, box.r - 46);
+      const d = same.length ? Math.min(...same.map(p => Math.abs(p.x - cand))) : 999;
+      if (d > best) { best = d; bx = cand; }
+    }
+    plushes.push(makePlush(bx, lay));
   }
-};
+}
 
-const playTone = (freqStart, freqEnd, type, duration, vol = 0.05, isMuted = false) => {
-  if (!audioCtx || isMuted) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
-  if (freqStart !== freqEnd) {
-    osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
-  }
-  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration);
-};
-
-// ---------------------------------------------
-
-function generatePrizes() {
-  const prizes = [];
-  const usedPositions = [];
-  
-  // 必ずユニコーン(🦄)を1つ入れる
-  const prizeItems = ["🦄"];
-  for (let i = 0; i < PRIZE_COUNT - 1; i++) {
-    prizeItems.push(DEFAULT_PRIZES[Math.floor(Math.random() * DEFAULT_PRIZES.length)]);
-  }
-  // 配置位置と紐づくアイテムが毎回変わるようにシャッフル
-  prizeItems.sort(() => Math.random() - 0.5);
-
-  for (let i = 0; i < PRIZE_COUNT; i++) {
-    let x, y, tries = 0;
-    do {
-      // はみ出さないように配置範囲を厳密に制限
-      const minX = HOLE_WIDTH + 15;
-      const maxX = GAME_WIDTH - PRIZE_SIZE - 15;
-      x = minX + Math.random() * (maxX - minX);
-      
-      // 重ならないようにするためには横幅が足りないので、Y軸（縦）のばらつきを少し大きくして山積みにする
-      y = GAME_HEIGHT - 16 - PRIZE_SIZE - (Math.random() * 60);
-      tries++;
-    } while (
-      tries < 150 &&
-      // 景品サイズが42pxに対し、中心同士の距離を38px以上離すことで重なりを調整
-      usedPositions.some(p => Math.hypot(p.x - x, p.y - y) < 38)
-    );
-    usedPositions.push({ x, y });
-    prizes.push({
-      id: i,
-      x, y,
-      item: prizeItems[i],
-      caught: false,
+// ===== エフェクト =====
+function burst(x, y) {
+  for (let i = 0; i < 18; i++) {
+    fx.push({
+      name: pick(['star', 'heart', 'sparkle']),
+      x, y, h: rnd(16, 30),
+      vx: rnd(-190, 190), vy: rnd(-320, -90),
+      rot: rnd(0, 6.28), vr: rnd(-6, 6), life: rnd(0.7, 1.3), max: 1.3,
     });
   }
-  return prizes;
+}
+function sweat(x, y) {
+  for (let i = 0; i < 4; i++) {
+    fx.push({ name: 'drop', x: x + rnd(-18, 18), y, h: 16, vx: rnd(-40, 40), vy: rnd(-120, -50),
+              rot: 0, vr: 0, life: 0.5, max: 0.5 });
+  }
+}
+function showBanner(name) { banner = { name, t: 0 }; }
+
+// ===== 進行 =====
+function beginRound() {
+  state = 'move'; armY = box.railY + 26; armOpen = 1; held = null;
+  btn.disabled = false; btn.textContent = 'とめる！';
+}
+function pressButton() {
+  ensureAudio();
+  if (bgm.paused) { bgm.volume = 0.3; bgm.play().catch(() => {}); }
+  if (state !== 'move') return;
+  state = 'down'; btn.disabled = true; sDown();
+}
+btn.addEventListener('click', pressButton);
+cv.addEventListener('pointerdown', (e) => { e.preventDefault(); pressButton(); });
+
+function tryGrab() {
+  // アームの真下に近いぬいぐるみをさがす
+  let target = null, best = 1e9;
+  for (const p of plushes) {
+    if (p.gone) continue;
+    const d = Math.abs(p.x - armX);
+    if (d < best) { best = d; target = p; }
+  }
+  const reach = 46;
+  if (!target || best > reach) return null;
+  // ずれが大きいほど すべりやすい
+  const ratio = best / reach;
+  target.slip = Math.random() < ratio * ratio * 0.85;
+  return target;
 }
 
-function App() {
-  const [clawX, setClawX] = useState(GAME_WIDTH / 2 - CLAW_WIDTH / 2);
-  const [clawY, setClawY] = useState(40);
-  const [prizes, setPrizes] = useState(() => generatePrizes());
-  const [collectedPrizes, setCollectedPrizes] = useState([]);
-  const [clawOpen, setClawOpen] = useState(true);
-  const [moving, setMoving] = useState(null);
-  const [disabled, setDisabled] = useState(false);
-  const [caughtPrize, setCaughtPrize] = useState(null);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [showComplete, setShowComplete] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  
-  const [scale, setScale] = useState(1);
-
-  const animRef = useRef();
-  const clawXRef = useRef(clawX);
-  const clawYRef = useRef(clawY);
-  const droppingRef = useRef(false);
-  const risingRef = useRef(false);
-  const returningToGoalRef = useRef(false);
-  const releasingRef = useRef(false);
-  const caughtRef = useRef(null);
-  const movingRef = useRef(null);
-  const prizesRef = useRef(prizes);
-  const isMutedRef = useRef(isMuted);
-  const bgmRef = useRef(null); 
-
-  useEffect(() => {
-    const handleResize = () => {
-      const availableWidth = window.innerWidth - 32;
-      if (availableWidth < GAME_WIDTH) {
-        setScale(availableWidth / GAME_WIDTH);
-      } else {
-        setScale(1);
-      }
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => { clawXRef.current = clawX; }, [clawX]);
-  useEffect(() => { clawYRef.current = clawY; }, [clawY]);
-  useEffect(() => { caughtRef.current = caughtPrize; }, [caughtPrize]);
-  useEffect(() => { movingRef.current = moving; }, [moving]);
-  useEffect(() => { prizesRef.current = prizes; }, [prizes]);
-  useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
-
-  useEffect(() => {
-    if (bgmRef.current) {
-      bgmRef.current.muted = isMuted;
+function update(dt) {
+  tRun += dt; phase += dt;
+  if (state === 'move') {
+    const speed = 190;
+    armX += armDir * speed * dt;
+    if (armX > box.r - 46) { armX = box.r - 46; armDir = -1; }
+    if (armX < box.l + 46) { armX = box.l + 46; armDir = 1; }
+  } else if (state === 'down') {
+    armY += 300 * dt;
+    const stop = box.floorY - 34;
+    if (armY >= stop) { armY = stop; state = 'grip'; phase = 0; sGrip(); held = tryGrab(); }
+  } else if (state === 'grip') {
+    armOpen = Math.max(0, 1 - phase / 0.45);
+    if (phase > 0.6) { state = 'up'; phase = 0; sUp(); }
+  } else if (state === 'up') {
+    armY -= 260 * dt;
+    if (held) { held.x = armX; held.y = armY + 34; }
+    // すべる演出：少し上がったところで落とす
+    if (held && held.slip && armY < box.floorY - 96) {
+      sweat(armX, armY - 20); sSlip();
+      held.falling = true; held.vy = 0; held.slip = false; held = null;
+      armOpen = 1;
     }
-  }, [isMuted]);
-
-  const handleInteraction = useCallback(() => {
-    initAudio();
-    if (bgmRef.current && bgmRef.current.paused) {
-      bgmRef.current.volume = 0.3; 
-      bgmRef.current.play().catch(err => console.log("BGM自動再生ブロック:", err));
+    if (armY <= box.railY + 26) { armY = box.railY + 26; state = 'carry'; }
+  } else if (state === 'carry') {
+    const dx = box.chuteX - armX;
+    armX += Math.sign(dx) * Math.min(Math.abs(dx), 230 * dt);
+    if (held) { held.x = armX; held.y = armY + 34; }
+    if (Math.abs(dx) < 2) { state = 'drop'; phase = 0; }
+  } else if (state === 'drop') {
+    armOpen = Math.min(1, phase / 0.3);
+    if (held && phase > 0.25) { held.falling = true; held.vy = 0; held.toChute = true; held = null; }
+    if (phase > 0.9) {
+      triesLeft--; updateHUD();
+      if (triesLeft <= 0) { endGame(); } else { armDir = 1; beginRound(); }
     }
-  }, []);
+  }
 
-  const sfx = useRef({
-    motor: () => playTone(200, 200, 'sine', 0.1, 0.03, isMutedRef.current),
-    drop: () => playTone(600, 300, 'sine', 0.8, 0.05, isMutedRef.current),
-    clack: () => playTone(300, 300, 'square', 0.1, 0.05, isMutedRef.current),
-    catch: () => {
-      playTone(800, 1200, 'sine', 0.15, 0.05, isMutedRef.current);
-      setTimeout(() => playTone(1200, 1600, 'sine', 0.15, 0.05, isMutedRef.current), 150);
-    },
-    rise: () => playTone(300, 600, 'sine', 0.8, 0.05, isMutedRef.current),
-    release: () => playTone(1200, 800, 'sine', 0.1, 0.05, isMutedRef.current),
-    fanfare: () => {
-      if (isMutedRef.current) return;
-      const notes = [523.25, 659.25, 783.99, 1046.50]; 
-      notes.forEach((freq, i) => {
-        setTimeout(() => playTone(freq, freq, 'square', 0.2, 0.05, false), i * 150);
-      });
+  // ぬいぐるみの落下
+  for (const p of plushes) {
+    if (!p.falling) { p.bob += dt; continue; }
+    p.vy += 1500 * dt; p.y += p.vy * dt;
+    if (p.toChute) {
+      // 取り出し口へ吸い込まれる
+      p.x += (box.chuteX - p.x) * Math.min(1, dt * 8);
+      if (p.y > box.floorY + 30) {
+        p.gone = true;
+        got.push(p.id); updateHUD();
+        burst(box.chuteX, box.floorY - 10); showBanner('get'); sWin();
+      }
+    } else if (p.y >= box.floorY - p.h * 0.42) {
+      p.y = box.floorY - p.h * 0.42; p.falling = false; p.vy = 0; p.layer = 0;
     }
-  }).current;
+  }
+  plushes = plushes.filter(p => !p.gone);
+  fillFloor();
 
-  const startDrop = useCallback(() => {
-    handleInteraction();
-    if (disabled || showComplete) return;
-    setClawOpen(false);
-    droppingRef.current = true;
-    setDisabled(true);
-    setShowCelebration(false);
-    sfx.drop();
-  }, [disabled, showComplete, sfx, handleInteraction]);
-
-  useEffect(() => {
-    let lastMotorTime = 0;
-
-    const loop = () => {
-      const now = Date.now();
-
-      if ((movingRef.current || returningToGoalRef.current) && now - lastMotorTime > 150) {
-        sfx.motor();
-        lastMotorTime = now;
-      }
-
-      // 1. 手動移動
-      if (!droppingRef.current && !risingRef.current && !returningToGoalRef.current && !releasingRef.current) {
-        if (movingRef.current === "left") {
-          const nx = Math.max(HOLE_WIDTH, clawXRef.current - CLAW_SPEED);
-          clawXRef.current = nx;
-          setClawX(nx);
-        } else if (movingRef.current === "right") {
-          const nx = Math.min(GAME_WIDTH - CLAW_WIDTH, clawXRef.current + CLAW_SPEED);
-          clawXRef.current = nx;
-          setClawX(nx);
-        }
-      }
-
-      // 2. 下降
-      if (droppingRef.current) {
-        const ny = clawYRef.current + DROP_SPEED;
-        clawYRef.current = ny;
-        setClawY(ny);
-
-        const cx = clawXRef.current + CLAW_WIDTH / 2;
-        const cy = ny + 30; // アームの爪付近の高さ
-        
-        let caughtId = null;
-        let hitBottom = ny >= GAME_HEIGHT - 65;
-
-        // 毎フレーム「アームが人形に触れたか」をチェックする
-        for (let i = prizesRef.current.length - 1; i >= 0; i--) {
-          const p = prizesRef.current[i];
-          // X軸がしっかり合っており、かつアームが人形の高さまで降りてきた瞬間にヒット！
-          if (!p.caught && Math.abs(p.x + PRIZE_SIZE / 2 - cx) < 14 && Math.abs(p.y + PRIZE_SIZE / 2 - cy) < 12) {
-            caughtId = p.id;
-            break;
-          }
-        }
-
-        // 人形に触れた、または底についた時に下降をストップ
-        if (caughtId !== null || hitBottom) {
-          sfx.clack();
-          
-          let caught = null;
-          if (caughtId !== null) {
-            const updated = prizesRef.current.map(p => {
-              if (p.id === caughtId) {
-                caught = { ...p, caught: true };
-                return caught;
-              }
-              return p;
-            });
-            prizesRef.current = updated;
-            setPrizes(updated);
-            caughtRef.current = caught;
-            setCaughtPrize(caught);
-            setTimeout(() => sfx.catch(), 100);
-          }
-          
-          droppingRef.current = false;
-          risingRef.current = true;
-          sfx.rise();
-        }
-      }
-
-      // 3. 上昇
-      if (risingRef.current) {
-        const ny = clawYRef.current - DROP_SPEED;
-        if (ny <= 40) {
-          clawYRef.current = 40;
-          setClawY(40);
-          risingRef.current = false;
-          if (caughtRef.current) {
-            returningToGoalRef.current = true;
-          } else {
-            setClawOpen(true);
-            setDisabled(false);
-          }
-        } else {
-          clawYRef.current = ny;
-          setClawY(ny);
-        }
-      }
-
-      // 4. 自動ゴール移動
-      if (returningToGoalRef.current) {
-        const nx = clawXRef.current - CLAW_SPEED;
-        if (nx <= GOAL_X) {
-          clawXRef.current = GOAL_X;
-          setClawX(GOAL_X);
-          returningToGoalRef.current = false;
-          releasingRef.current = true;
-          setCaughtPrize(prev => prev ? { ...prev, x: GOAL_X + CLAW_WIDTH / 2 - PRIZE_SIZE / 2 } : null);
-        } else {
-          clawXRef.current = nx;
-          setClawX(nx);
-        }
-      }
-
-      // 5. 景品リリース (落下)
-      if (releasingRef.current) {
-        if (!clawOpen) {
-          setClawOpen(true);
-          sfx.release();
-        }
-        
-        if (caughtRef.current) {
-          setCaughtPrize(prev => {
-            if (!prev) return null;
-            const nextY = prev.y + 5.0; 
-            if (nextY > GAME_HEIGHT) {
-              const p = { ...prev };
-              setCollectedPrizes(old => {
-                const newCollected = [...old, p];
-                // コンプリート判定
-                if (newCollected.length >= PRIZE_COUNT) {
-                  setShowComplete(true);
-                  sfx.fanfare();
-                } else {
-                  setShowCelebration(true); 
-                  sfx.fanfare(); 
-                  setTimeout(() => setShowCelebration(false), 800);
-                }
-                return newCollected;
-              });
-              
-              releasingRef.current = false;
-              setCaughtPrize(null);
-              caughtRef.current = null;
-              setDisabled(false);
-              return null;
-            }
-            return { ...prev, y: nextY };
-          });
-        } else {
-          releasingRef.current = false;
-          setDisabled(false);
-        }
-      }
-
-      animRef.current = requestAnimationFrame(loop);
-    };
-    animRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [clawOpen, sfx]);
-
-  const resetGame = () => {
-    handleInteraction();
-    const newPrizes = generatePrizes();
-    prizesRef.current = newPrizes;
-    setPrizes(newPrizes);
-    setCollectedPrizes([]);
-    setClawX(GAME_WIDTH / 2 - CLAW_WIDTH / 2);
-    setClawY(40);
-    setCaughtPrize(null);
-    setClawOpen(true);
-    setDisabled(false);
-    droppingRef.current = false;
-    risingRef.current = false;
-    returningToGoalRef.current = false;
-    releasingRef.current = false;
-    caughtRef.current = null;
-    setShowCelebration(false);
-    setShowComplete(false);
-  };
-
-  const startMove = (dir) => {
-    handleInteraction();
-    if (disabled || showComplete) return;
-    setMoving(dir);
-  };
-  const stopMove = () => setMoving(null);
-
-  const toggleMute = () => {
-    handleInteraction();
-    setIsMuted(!isMuted);
-  };
-
-  const currentPrizeX = releasingRef.current && caughtPrize 
-    ? caughtPrize.x 
-    : (clawX + CLAW_WIDTH / 2 - PRIZE_SIZE / 2);
-  
-  const currentPrizeY = releasingRef.current && caughtPrize 
-    ? caughtPrize.y 
-    : (clawY + 20);
-
-    return (
-      <div style={{
-        minHeight: "100vh",
-        background: "#fff0f5",
-        backgroundImage: "radial-gradient(#ffb6c1 20%, transparent 20%)",
-        backgroundSize: "20px 20px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "inherit",
-        padding: "6px",
-        boxSizing: "border-box",
-        userSelect: "none",
-        overflowX: "hidden",
-      }}>
-        {/* ホームボタン */}
-        <a href="index.html" className="gp-home">🏠</a>
-
-        <audio ref={bgmRef} src="graingameBGM.mp3" loop />
-
-      <div style={{
-        transform: `scale(${scale})`,
-        transformOrigin: "center",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: GAME_WIDTH,
-      }}>
-
-        {/* Title & Sound Toggle */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: GAME_WIDTH, marginBottom: 12 }}>
-          <div style={{ width: 40 }}></div>
-          <div style={{
-            fontSize: 26, fontWeight: "bold", color: "#ff69b4",
-            textShadow: "0 2px 4px rgba(255,105,180,0.3), 0 2px 0 #ff1493",
-            letterSpacing: 1,
-            animation: "pulse 2s ease-in-out infinite",
-            textAlign: "center"
-          }}>
-            🎪 クレーンゲーム 🎪
-          </div>
-          <button 
-            onClick={toggleMute}
-            style={{
-              background: "#fff", border: "2px solid #ff99cc",
-              borderRadius: "50%", width: 40, height: 40, fontSize: 20,
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#ff66aa", transition: "all 0.2s", boxShadow: "0 2px 5px rgba(255,105,180,0.2)"
-            }}
-          >
-            {isMuted ? "🔇" : "🔊"}
-          </button>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", width: GAME_WIDTH }}>
-          {/* Machine outer */}
-          <div style={{
-            background: "linear-gradient(180deg, #ffb3d9 0%, #ff66aa 100%)",
-            borderRadius: 24, padding: "6px 6px 12px",
-            boxShadow: "0 8px 40px rgba(255, 105, 180, 0.4), inset 0 2px 0 #ffe6f2",
-            border: "3px solid #ff99cc",
-            width: "100%", boxSizing: "border-box"
-          }}>
-            {/* Glass window */}
-            <div style={{
-              width: "100%", height: GAME_HEIGHT,
-              background: "linear-gradient(180deg, #ffffff 0%, #fff0f5 70%, #ffe6f2 100%)",
-              borderRadius: 16, position: "relative", overflow: "hidden",
-              boxShadow: "inset 0 0 20px rgba(255, 182, 193, 0.5)",
-              border: "2px solid #ffb3d9", boxSizing: "border-box"
-            }}>
-              {/* Cute Dots bg */}
-              {[...Array(12)].map((_, i) => (
-                <div key={i} style={{
-                  position: "absolute", left: `${(i * 37 + 11) % 100}%`, top: `${(i * 53 + 7) % 70}%`,
-                  width: 6, height: 6, borderRadius: "50%", background: "#ffb6c1", opacity: 0.5,
-                }} />
-              ))}
-
-              {/* Goal Hole */}
-              <div style={{
-                position: "absolute", bottom: 0, left: 0, width: HOLE_WIDTH, height: 110,
-                background: "linear-gradient(180deg, #ffe6f2, #ffb3d9)",
-                borderTopRightRadius: 24,
-                boxShadow: "inset -5px 5px 15px rgba(255, 105, 180, 0.1), 5px 0 10px rgba(0,0,0,0.05)",
-                zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-                border: "2px solid #fff", borderLeft: "none", borderBottom: "none"
-              }}>
-                 <div style={{ 
-                   background: "#fff", color: "#ff66aa", fontSize: 12, padding: "2px 8px", 
-                   borderRadius: 10, fontWeight: "bold", marginTop: 15,
-                   boxShadow: "0 2px 4px rgba(255,105,180,0.2)"
-                 }}>GET!</div>
-                 <div style={{ width: "100%", height: "4px", background: "rgba(255,255,255,0.8)", marginTop: "auto", marginBottom: 20 }}></div>
-              </div>
-
-              {/* Celebration Effect (1個取った時) */}
-              {showCelebration && !showComplete && (
-                <div style={{
-                  position: "absolute", top: "40%", left: "50%", transform: "translate(-50%, -50%)",
-                  zIndex: 10, textAlign: "center", pointerEvents: "none",
-                  animation: "celebratePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
-                }}>
-                  <div style={{
-                    fontSize: 32, color: "#ff66aa", fontWeight: "bold",
-                    textShadow: "0 2px 4px rgba(255,105,180,0.3), 0 2px 0 #fff", whiteSpace: "nowrap"
-                  }}>✨ やったね！ ✨</div>
-                </div>
-              )}
-
-              {/* Complete Effect (全部取った時) */}
-              {showComplete && (
-                <div style={{
-                  position: "absolute", inset: 0, background: "rgba(255, 255, 255, 0.85)",
-                  zIndex: 20, display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center",
-                  animation: "fadeIn 0.5s ease forwards", borderRadius: 16
-                }}>
-                  <div className="gp-hero gp-float" style={{ marginBottom: 16 }}>🎉</div>
-                  <div style={{
-                    fontSize: 36, color: "#ff66aa", fontWeight: "bold",
-                    textShadow: "0 2px 4px rgba(255,105,180,0.3)",
-                    textAlign: "center", lineHeight: 1.2,
-                    animation: "scalePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
-                  }}>
-                    PERFECT!<br/>
-                    <span style={{ fontSize: 18, color: "#ff99cc", textShadow: "none" }}>ぜんぶとれたよ！</span>
-                  </div>
-                  <button className="gp-btn" onClick={resetGame} style={{ marginTop: 24 }}>
-                    🔄 もう１かいあそぶ
-                  </button>
-                </div>
-              )}
-
-              {/* Rail */}
-              <div style={{
-                position: "absolute", top: 36, left: 0, right: 0, height: 6,
-                background: "linear-gradient(90deg, #ffe6f2, #fff, #ffe6f2)",
-                borderRadius: 3, boxShadow: "0 2px 4px rgba(255,105,180,0.2)",
-              }} />
-
-              {/* Wire */}
-              <div style={{
-                position: "absolute", left: clawX + CLAW_WIDTH / 2 - 1.5, top: 36,
-                width: 3, height: clawY - 36,
-                background: "linear-gradient(180deg, #ddd, #bbb)", borderRadius: 2,
-              }} />
-
-              {/* Claw */}
-              <div style={{
-                position: "absolute", left: clawX, top: clawY,
-                width: CLAW_WIDTH, height: 36, zIndex: 5,
-              }}>
-                <div style={{
-                  position: "absolute", left: "50%", transform: "translateX(-50%)",
-                  top: 0, width: 14, height: 16,
-                  background: "linear-gradient(180deg, #ff99cc, #ff66aa)", borderRadius: "4px 4px 0 0",
-                }} />
-                <div style={{
-                  position: "absolute", left: clawOpen ? 4 : 14, top: 14,
-                  width: 5, height: 22, background: "#ffb3d9", borderRadius: 3,
-                  transform: `rotate(${clawOpen ? -25 : -5}deg)`, transformOrigin: "top center", transition: "all 0.2s",
-                  boxShadow: "1px 0 4px rgba(255,105,180,0.3)",
-                }} />
-                <div style={{
-                  position: "absolute", right: clawOpen ? 4 : 14, top: 14,
-                  width: 5, height: 22, background: "#ffb3d9", borderRadius: 3,
-                  transform: `rotate(${clawOpen ? 25 : 5}deg)`, transformOrigin: "top center", transition: "all 0.2s",
-                  boxShadow: "-1px 0 4px rgba(255,105,180,0.3)",
-                }} />
-              </div>
-
-              {/* Caught prize */}
-              {caughtPrize && (
-                <div style={{
-                  position: "absolute", left: currentPrizeX, top: currentPrizeY,
-                  fontSize: PRIZE_SIZE, lineHeight: 1, filter: "drop-shadow(0 0 10px #FFE566)", zIndex: 4,
-                }}>
-                  {caughtPrize.item}
-                </div>
-              )}
-
-              {/* Floor Prizes */}
-              {prizes.filter(p => !p.caught).map(p => (
-                <div key={p.id} style={{
-                  position: "absolute", left: p.x, top: p.y,
-                  fontSize: PRIZE_SIZE, lineHeight: 1, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))",
-                  animation: `wobble ${2 + (p.id % 3) * 0.4}s ease-in-out infinite`, animationDelay: `${p.id * 0.25}s`,
-                }}>
-                  {p.item}
-                </div>
-              ))}
-
-              {/* Floor */}
-              <div style={{
-                position: "absolute", bottom: 0, left: HOLE_WIDTH, right: 0, height: 16,
-                background: "linear-gradient(180deg, #99ffcc, #66cc99)", borderTop: "2px solid #b3ffe6",
-              }} />
-            </div>
-
-            {/* Controls */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 12 }}>
-              <button
-                className="game-btn"
-                onPointerDown={() => startMove("left")}
-                onPointerUp={stopMove} onPointerLeave={stopMove}
-                disabled={disabled || showComplete} style={btnStyle("#ff99cc", "#ff66aa")}
-              >⬅️</button>
-
-              <button
-                className="game-btn"
-                onPointerDown={startDrop} disabled={disabled || showComplete}
-                style={{ ...btnStyle("#ff66aa", "#ff3388"), fontSize: 18, padding: "12px 18px" }}
-              >
-                ⬇️<br/><span style={{ fontSize: 12 }}>キャッチ！</span>
-              </button>
-
-              <button
-                className="game-btn"
-                onPointerDown={() => startMove("right")}
-                onPointerUp={stopMove} onPointerLeave={stopMove}
-                disabled={disabled || showComplete} style={btnStyle("#ff99cc", "#ff66aa")}
-              >➡️</button>
-            </div>
-          </div>
-
-          {/* Footer Area */}
-          <div style={{ width: "100%", display: "flex", gap: "10px", alignItems: "stretch" }}>
-            <div style={{
-              flex: 1, background: "rgba(255, 255, 255, 0.7)", borderRadius: 16, padding: "8px 12px",
-              border: "2px solid #ffb3d9", minHeight: "50px", display: "flex", flexDirection: "column"
-            }}>
-              <div style={{ color: "#ff69b4", fontSize: 11, marginBottom: 4, fontWeight: "bold" }}>🏆 ゲットした景品 ({collectedPrizes.length}/{PRIZE_COUNT})</div>
-              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                {collectedPrizes.length === 0 && <span style={{ color: "#aaa", fontSize: 13 }}>あなに おとして ゲット！</span>}
-                {collectedPrizes.map((p, i) => (
-                  <div key={i} style={{ 
-                    fontSize: 22, background: "#fff", borderRadius: "50%", 
-                    width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 2px 4px rgba(255,105,180,0.2)", border: "1px solid #ffe6f2"
-                  }}>{p.item}</div>
-                ))}
-              </div>
-            </div>
-
-            <button 
-              className="game-btn" onClick={resetGame} 
-              style={{ ...btnStyle("#ff99cc", "#ff66aa"), fontSize: 12, padding: "0 12px", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              🔄<br/>はじめから
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <style>{`
-        @keyframes wobble {
-          0%, 100% { transform: rotate(-4deg) scale(1); }
-          50% { transform: rotate(4deg) scale(1.02); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(0.95); }
-        }
-        @keyframes celebratePop {
-          0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-          70% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-        @keyframes scalePop {
-          0% { transform: scale(0.5); opacity: 0; }
-          70% { transform: scale(1.2); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .game-btn:active:not(:disabled) {
-          transform: translateY(4px) !important;
-          box-shadow: 0 2px 0 var(--shadow-color, #000) !important;
-        }
-        .game-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          filter: grayscale(0.5);
-        }
-      `}</style>
-    </div>
-  );
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const e = fx[i];
+    e.x += e.vx * dt; e.y += e.vy * dt; e.vy += 620 * dt;
+    e.rot += e.vr * dt; e.life -= dt;
+    if (e.life <= 0) fx.splice(i, 1);
+  }
+  if (banner) { banner.t += dt; if (banner.t > 1.3) banner = null; }
 }
 
-function btnStyle(bg, shadow) {
-  return {
-    "--shadow-color": shadow,
-    background: `linear-gradient(180deg, ${bg}, ${shadow})`,
-    border: `2px solid ${bg}`,
-    borderRadius: 16,
-    color: "white",
-    fontSize: 24,
-    padding: "12px 16px",
-    cursor: "pointer",
-    boxShadow: `0 5px 0 ${shadow}, 0 6px 15px rgba(255,105,180,0.2)`,
-    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-    fontFamily: "inherit",
-    WebkitTapHighlightColor: "transparent",
-    transition: "transform 0.1s, box-shadow 0.1s",
-  };
+// ===== 描画 =====
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  // 背景の光
+  const bg = ctx.createRadialGradient(W / 2, box.t, 20, W / 2, box.t, H);
+  bg.addColorStop(0, 'rgba(255,255,255,0.55)'); bg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  // 筐体の外わく
+  const r = 18;
+  ctx.save();
+  ctx.fillStyle = '#ff8fc7';
+  roundRect(box.l - 10, box.t - 10, (box.r - box.l) + 20, (box.b - box.t) + 20, r + 6); ctx.fill();
+  // ガラスの中
+  const gl = ctx.createLinearGradient(0, box.t, 0, box.b);
+  gl.addColorStop(0, 'rgba(224,247,255,0.95)'); gl.addColorStop(1, 'rgba(186,230,253,0.95)');
+  ctx.fillStyle = gl;
+  roundRect(box.l, box.t, box.r - box.l, box.b - box.t, r); ctx.fill();
+  ctx.restore();
+
+  // レール
+  ctx.fillStyle = '#e9a8c9';
+  ctx.fillRect(box.l + 8, box.railY - 5, (box.r - box.l) - 16, 8);
+
+  // 奥のたな（かざりのプレゼント箱とカプセル）
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(box.l + 10, box.shelfY + 14, (box.r - box.l) - 20, 8);
+  ctx.globalAlpha = 0.75;
+  for (const d of decor) draw(d.name, d.x, box.shelfY, d.h);
+  ctx.restore();
+
+  // 床のクッション
+  draw('cushion_g', box.l + (box.r - box.l) * 0.34, box.floorY + 14, 36, { alpha: 0.92 });
+  draw('cushion_p', box.l + (box.r - box.l) * 0.68, box.floorY + 14, 40, { alpha: 0.92 });
+
+  // 取り出し口（ケースの内がわ左下）
+  ctx.save();
+  ctx.fillStyle = '#4b2036';
+  roundRect(box.chuteX - 38, box.floorY - 4, 76, box.b - box.floorY + 4, 10); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  roundRect(box.chuteX - 30, box.floorY, 60, box.b - box.floorY - 6, 8); ctx.fill();
+  ctx.restore();
+
+  // ぬいぐるみ（うしろの段から先に描く）
+  for (const p of [...plushes].sort((a, b) => (b.layer || 0) - (a.layer || 0))) {
+    const bobY = p.falling ? 0 : Math.sin(p.bob * 1.6) * 1.6;
+    draw(p.id, p.x, p.y + bobY, p.h, { rot: p.rot });
+  }
+
+  // 取り出し口の手前のふち（ぬいぐるみが吸い込まれて見えるように）
+  ctx.save();
+  ctx.fillStyle = '#d6337c';
+  roundRect(box.chuteX - 42, box.b - 22, 84, 20, 8); ctx.fill();
+  ctx.restore();
+
+  // ワイヤーとアーム
+  ctx.strokeStyle = '#9aa3ad'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(armX, box.railY); ctx.lineTo(armX, armY - 22); ctx.stroke();
+  // キャリッジ
+  ctx.fillStyle = '#f0518f';
+  roundRect(armX - 20, box.railY - 12, 40, 18, 6); ctx.fill();
+  const armSprite = armOpen > 0.66 ? 'arm_open' : (armOpen > 0.3 ? 'arm_mid' : 'arm_closed');
+  draw(armSprite, armX, armY, 52);
+
+  // つかんでいるぬいぐるみ（アームの手前に描く）
+  if (held) draw(held.id, held.x, held.y, held.h, { rot: held.rot });
+
+  // ガラスの反射
+  ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(box.l + 16, box.b); ctx.lineTo(box.l + (box.r - box.l) * 0.36, box.t);
+  ctx.lineTo(box.l + (box.r - box.l) * 0.52, box.t); ctx.lineTo(box.l + 90, box.b);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+
+  // 筐体の屋根
+  draw('roof', W / 2, box.t - 34, 62);
+
+  // エフェクト
+  for (const e of fx) draw(e.name, e.x, e.y, e.h, { rot: e.rot, alpha: Math.min(1, e.life / 0.4) });
+  if (banner) {
+    const k = Math.min(1, banner.t / 0.25);
+    const s = k < 1 ? 0.5 + k * 0.7 : 1 + Math.sin((banner.t - 0.25) * 8) * 0.04;
+    draw(banner.name, W / 2, box.t + 70, 70 * s, { alpha: Math.min(1, (1.3 - banner.t) * 3) });
+  }
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+function updateHUD() {
+  prizeCountEl.textContent = '🧸 ' + got.length + 'こ';
+  tryCountEl.textContent = 'のこり ' + Math.max(0, triesLeft) + 'かい';
+}
+
+function loop(ts) {
+  if (!lastT) lastT = ts;
+  const dt = Math.min((ts - lastT) / 1000, 0.05);
+  lastT = ts;
+  if (ready && state !== 'done') update(dt);
+  if (ready) render();
+  requestAnimationFrame(loop);
+}
+
+function startGame() {
+  triesLeft = TRIES; got = []; plushes = []; fx = []; banner = null;
+  armX = box.l + 60; armDir = 1;
+  fillFloor(); updateHUD();
+  resultScreen.style.display = 'none';
+  beginRound();
+}
+function endGame() {
+  state = 'done'; btn.disabled = true;
+  document.getElementById('final-count').textContent = got.length;
+  document.getElementById('result-title').textContent =
+    got.length >= 7 ? 'クレーンめいじん！' : got.length >= 4 ? 'じょうず！' : 'おしまい！';
+  const row = document.getElementById('prize-row');
+  row.innerHTML = '';
+  got.slice(0, 20).forEach(id => {
+    const d = document.createElement('div');
+    d.className = 'prize-item'; d.style.cssText += spriteCss(id, 46);
+    row.appendChild(d);
+  });
+  resultScreen.style.display = 'flex';
+  sEnd();
+}
+document.getElementById('retry').addEventListener('click', () => { ensureAudio(); startGame(); });
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+resize();
+const wait = setInterval(() => { if (ready) { clearInterval(wait); startGame(); } }, 60);
+requestAnimationFrame(loop);
+</script>
 </body>
-
 </html>
