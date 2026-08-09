@@ -74,6 +74,20 @@ body {
   height: min(340px, 48vh);
 }
 
+/* 歩きまわる女の子を描くキャンバス。おへやの中だけに出す */
+#girl-cv {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 96px;              /* 下のメニューにかぶらない位置 */
+  width: 100%;
+  height: 240px;
+  z-index: 6;
+  display: block;
+}
+/* 歩いているあいだは、これまでの立ち絵はかくす */
+#room.walking #doll-area { visibility: hidden; }
+#room:not(.walking) #girl-cv { display: none; }
+
 /* ===== Image Layers ===== */
 .doll-img {
   position: absolute;
@@ -1045,6 +1059,9 @@ body {
   <div id="room">
     <div id="mood-bar"></div>
 
+    <!-- 歩きまわる女の子（タッチすると正面をむいて止まる） -->
+    <canvas id="girl-cv"></canvas>
+
     <div id="doll-area">
       <div id="doll-wrapper">
         <!-- Image layers (shown when images available) -->
@@ -1584,6 +1601,8 @@ function closeMenu() {
 // ============================================================
 function changeCloth(idx) {
   state.clothIdx = idx;
+  // 歩いている姿にも反映（今は2着ぶんの歩行アニメがある）
+  if (window.setWalkOutfit) window.setWalkOutfit(idx <= 1 ? 0 : 1);
   if (useImages) {
     updateImageLayers();
   } else {
@@ -1743,6 +1762,7 @@ function finishBath() {
 function exitBath() {
   bathOverlay.classList.remove('show');
   state.scene = 'main';
+  setTimeout(function(){ if (window.startWalking) window.startWalking(); }, 400);
   showSpeech('きれいになったよ！ 🛁', 2000);
   spawnSparkles(8);
   dollBounce();
@@ -1794,6 +1814,7 @@ function wakeUp() {
   sleepOverlay.querySelectorAll('.star').forEach(function(s) { s.remove(); });
   sleepOverlay.classList.remove('show');
   state.scene = 'main';
+  setTimeout(function(){ if (window.startWalking) window.startWalking(); }, 400);
 
   state.mood = 3;
   updateMood();
@@ -2042,6 +2063,7 @@ function enterGame(withSound) {
   if (withSound) { ensureAudio(); playSparkle(); }
   document.getElementById('title-screen').classList.add('hidden');
   state.scene = 'main';
+  setTimeout(function(){ if (window.startWalking) window.startWalking(); }, 400);
   updateMood();
   if (useImages) updateImageLayers();
   else updateCssDoll();
@@ -2052,10 +2074,112 @@ document.getElementById('btn-start').addEventListener('click', function() { ente
 document.addEventListener('dblclick', function(e) { e.preventDefault(); });
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
+// ============================================================
+// おへやを歩きまわる女の子
+//  ・左右に歩く（横向きの歩行アニメ）
+//  ・はしに着くと くるっと向きを変える
+//  ・タッチすると正面をむいて止まり、おきがえができる
+// ============================================================
+(function () {
+  var ATLAS_SRC = 'girl_atlas.png';
+  var AW = 1300, AH = 542;
+  var FR = {"pink_front2":[0,0,106,211],"pink_front1":[110,0,108,208],"pink_front3":[222,0,106,208],"pink_front0":[332,0,107,204],"pink_back2":[443,0,103,197],"pink_back1":[550,0,102,196],"pink_back0":[656,0,102,189],"yb_front2":[762,0,128,187],"yb_front1":[894,0,130,185],"yb_front3":[1028,0,130,185],"pink_side5":[1162,0,103,183],"yb_front0":[0,215,126,183],"pink_side3":[130,215,104,182],"pink_side4":[238,215,103,181],"pink_side0":[345,215,100,180],"pink_side1":[449,215,98,180],"pink_side2":[551,215,98,176],"yb_back1":[653,215,110,157],"yb_back2":[767,215,110,156],"yb_back0":[881,215,109,155],"yb_side3":[994,215,98,137],"yb_side0":[1096,215,99,136],"yb_side5":[0,402,99,136],"yb_side2":[103,402,101,135],"yb_side1":[208,402,90,134],"yb_side4":[302,402,96,134]};
+  // どのふくを着ているか（0=ピンクのワンピ / 1=きいろ＋あお）
+  var OUTFITS = ['pink', 'yb'];
+  var outfit = 0;
+
+  var cv = document.getElementById('girl-cv');
+  if (!cv) return;
+  var g = cv.getContext('2d');
+  var room = document.getElementById('room');
+  var img = new Image(); var imgOK = false;
+  img.onload = function () { imgOK = true; };
+  img.src = ATLAS_SRC;
+
+  var W = 0, Hc = 0, dpr = 1;
+  function fit() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; Hc = cv.clientHeight;
+    cv.width = W * dpr; cv.height = Hc * dpr;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', fit);
+
+  var girl = { x: 0.5, dir: 1, mode: 'walk', t: 0, turn: 0, faceT: 0 };
+  var GH = 0;   // 表示する高さ
+
+  function frameName() {
+    var o = OUTFITS[outfit];
+    if (girl.mode === 'stand') return o + '_front0';
+    if (girl.mode === 'turn') return o + '_back' + (Math.floor(girl.t * 6) % 3);
+    var n = (o === 'pink') ? 6 : 6;
+    return o + '_side' + (Math.floor(girl.t * 8) % n);
+  }
+  function drawFrame(name, cx, bottomY, h, flip) {
+    var f = FR[name]; if (!f || !imgOK) return;
+    var w = f[2] * (h / f[3]);
+    g.save();
+    g.translate(cx, bottomY);
+    if (flip) g.scale(-1, 1);
+    g.drawImage(img, f[0], f[1], f[2], f[3], -w / 2, -h, w, h);
+    g.restore();
+  }
+
+  var last = 0;
+  function tick(ts) {
+    requestAnimationFrame(tick);
+    if (!imgOK) return;
+    if (!room.classList.contains('walking')) { last = 0; return; }
+    if (!W) fit();
+    var dt = last ? Math.min((ts - last) / 1000, 0.05) : 0;
+    last = ts;
+    girl.t += dt;
+    // おへやの床におさまる大きさ（画面のせまい方に合わせる）
+    GH = Math.max(120, Math.min(Hc * 0.42, W * 0.42, 210));
+
+    if (girl.mode === 'walk') {
+      girl.x += girl.dir * 0.11 * dt;
+      if (girl.x > 0.86) { girl.x = 0.86; girl.mode = 'turn'; girl.t = 0; }
+      if (girl.x < 0.14) { girl.x = 0.14; girl.mode = 'turn'; girl.t = 0; }
+    } else if (girl.mode === 'turn') {
+      if (girl.t > 0.5) { girl.dir *= -1; girl.mode = 'walk'; girl.t = 0; }
+    }
+
+    g.clearRect(0, 0, W, Hc);
+    var cx = girl.x * W;
+    var bob = girl.mode === 'walk' ? Math.abs(Math.sin(girl.t * 8)) * 3 : 0;
+    drawFrame(frameName(), cx, Hc - 6 - bob, GH, girl.mode === 'walk' && girl.dir > 0);
+  }
+  requestAnimationFrame(tick);
+
+  // タッチすると止まって、おきがえ画面へ
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    ensureAudio(); playSparkle();
+    stopWalking();
+  });
+
+  window.startWalking = function () {
+    if (state.scene !== 'main') return;
+    fit();
+    girl.mode = 'walk'; girl.t = 0;
+    room.classList.add('walking');
+    last = 0;
+  };
+  window.stopWalking = function () {
+    room.classList.remove('walking');
+    showSpeech('おきがえ しよ！ 💕', 2000);
+  };
+  // ふくを変えたら、歩く姿にも反映する
+  window.setWalkOutfit = function (i) { outfit = i % OUTFITS.length; };
+})();
+
 checkImages();
 updateMood();
 // タイトル画面を出さずに、そのままゲームを始める（音は最初のタップで鳴りだす）
 enterGame(false);
+// おへやに入ったら、まずは歩きまわる
+setTimeout(function () { if (window.startWalking) window.startWalking(); }, 600);
 </script>
 </body>
 </html>
