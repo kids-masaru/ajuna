@@ -74,19 +74,6 @@ body {
   height: min(340px, 48vh);
 }
 
-/* 歩きまわる女の子を描くキャンバス。おへやの中だけに出す */
-#girl-cv {
-  position: absolute;
-  left: 0; right: 0;
-  bottom: 92px;              /* 下のメニューにかぶらない位置 */
-  width: 100%;
-  height: min(46vh, 360px);  /* しっかり大きく見せる */
-  z-index: 6;
-  display: block;
-}
-/* おへやの女の子は canvas に一本化（旧・立ち絵は使わない） */
-#doll-area { visibility: hidden; pointer-events: none; }
-
 /* ===== Image Layers ===== */
 .doll-img {
   position: absolute;
@@ -1058,9 +1045,6 @@ body {
   <div id="room">
     <div id="mood-bar"></div>
 
-    <!-- 歩きまわる女の子（タッチすると正面をむいて止まる） -->
-    <canvas id="girl-cv"></canvas>
-
     <div id="doll-area">
       <div id="doll-wrapper">
         <!-- Image layers (shown when images available) -->
@@ -1218,17 +1202,17 @@ window.onerror = function(msg, src, line) {
 // Data
 // ============================================================
 var CLOTHES = [
-  { name: 'ピンクのワンピ', img: 'doll_cloth_1.png?v=9', color: '#f9a8d4', shape: 'dress' },
-  { name: 'サロペット',     img: 'doll_cloth_3.png?v=26', color: '#5b8dbf', shape: 'overalls' },
-  { name: 'きいろ＋あお',   img: 'doll_cloth_2.png?v=7', color: '#facc15', shape: 'dress' },
-  { name: 'ピンクカーデ',   img: 'doll_cloth_5.png?v=7', color: '#f472b6', shape: 'dress' },
+  { name: 'ピンクドレス', img: 'doll_cloth_1.png?v=9', color: '#f9a8d4', shape: 'dress' },
+  { name: 'みずいろドレス', img: 'doll_cloth_2.png?v=7', color: '#93c5fd', shape: 'dress' },
+  { name: 'オーバーオール', img: 'doll_cloth_3.png?v=26', color: '#5b8dbf', shape: 'overalls' },
+  { name: 'パジャマ', img: 'doll_cloth_4.png?v=25', color: '#f9c5d1', shape: 'pajama' },
+  { name: 'キラキラドレス', img: 'doll_cloth_5.png?v=7', color: '#f472b6', shape: 'dress' },
 ];
 
 var HAIRS = [
-  { name: 'ボブ', img: 'doll_hair_1.png?v=12', color: '#8B5E3C', style: 'long' },
-  { name: 'ツインテール', img: 'doll_hair_3.png?v=8', color: '#6B3A2A', style: 'twin' },
-  { name: 'ポニーテール', img: 'doll_hair_2.png?v=7', color: '#4A2512', style: 'pony' },
-  { name: 'ロングヘア', img: 'doll_hair_1.png?v=12', color: '#7a4a2f', style: 'long' },
+  { name: 'ロングヘア', img: 'doll_hair_1.png?v=12', color: '#8B5E3C', style: 'long' },
+  { name: 'ポニーテール', img: 'doll_hair_2.png?v=7', color: '#6B3A2A', style: 'pony' },
+  { name: 'ツインテール', img: 'doll_hair_3.png?v=8', color: '#4A2512', style: 'twin' },
 ];
 
 var SHOES = [
@@ -1588,7 +1572,6 @@ function openMenu(menu) {
 }
 
 function closeMenu() {
-  if (window.GIRL) setTimeout(function(){ if (GIRL.isStanding()) GIRL.walk(); }, 1500);
   state.activeMenu = null;
   selectPanel.classList.remove('open');
   document.querySelectorAll('.menu-btn').forEach(function(btn) {
@@ -1601,8 +1584,6 @@ function closeMenu() {
 // ============================================================
 function changeCloth(idx) {
   state.clothIdx = idx;
-  // 歩いている姿にも反映（今は2着ぶんの歩行アニメがある）
-  if (window.GIRL) { GIRL.setOutfit(idx); GIRL.stand(); }
   if (useImages) {
     updateImageLayers();
   } else {
@@ -1617,7 +1598,6 @@ function changeCloth(idx) {
 
 function changeHair(idx) {
   state.hairIdx = idx;
-  if (window.GIRL) { GIRL.setHair(idx); GIRL.stand(); }
   if (useImages) {
     updateImageLayers();
   } else {
@@ -1763,7 +1743,6 @@ function finishBath() {
 function exitBath() {
   bathOverlay.classList.remove('show');
   state.scene = 'main';
-  setTimeout(function(){ if (window.GIRL) GIRL.walk(); }, 400);
   showSpeech('きれいになったよ！ 🛁', 2000);
   spawnSparkles(8);
   dollBounce();
@@ -1815,7 +1794,6 @@ function wakeUp() {
   sleepOverlay.querySelectorAll('.star').forEach(function(s) { s.remove(); });
   sleepOverlay.classList.remove('show');
   state.scene = 'main';
-  setTimeout(function(){ if (window.GIRL) GIRL.walk(); }, 400);
 
   state.mood = 3;
   updateMood();
@@ -2064,7 +2042,6 @@ function enterGame(withSound) {
   if (withSound) { ensureAudio(); playSparkle(); }
   document.getElementById('title-screen').classList.add('hidden');
   state.scene = 'main';
-  setTimeout(function(){ if (window.GIRL) GIRL.walk(); }, 400);
   updateMood();
   if (useImages) updateImageLayers();
   else updateCssDoll();
@@ -2075,149 +2052,10 @@ document.getElementById('btn-start').addEventListener('click', function() { ente
 document.addEventListener('dblclick', function(e) { e.preventDefault(); });
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-// ============================================================
-// おへやの女の子
-//  焼き込み済みの「体＋ふく」コマに、かみがたを重ねて描く。
-//  すべてのコマは同じ台紙(260x440・足元y=420)に合わせてあるので
-//  切り替えてもガタつかない。
-// ============================================================
-var GIRL = (function () {
-  var ATLAS = 'girl_atlas.png';
-  var FRA = {"g0_s":[0,0,174,384,43,36,130.8,36],"g0_w0":[525,388,167,327,46,93,132.3,93],"g0_w1":[1442,0,162,328,49,92,128.5,92],"g0_w2":[728,0,169,329,45,91,130.3,91],"g1_s":[178,0,174,384,43,36,130.8,36],"g1_w0":[696,388,167,327,46,93,132.3,93],"g1_w1":[0,388,162,328,49,92,128.5,92],"g1_w2":[901,0,169,329,45,91,130.3,91],"g2_s":[356,0,180,384,40,36,130.8,36],"g2_w0":[867,388,176,327,42,93,132.3,93],"g2_w1":[166,388,172,328,44,92,128.5,92],"g2_w2":[1074,0,177,329,41,91,130.3,91],"g3_s":[540,0,184,384,38,36,130.8,36],"g3_w0":[1047,388,186,327,37,93,132.3,93],"g3_w1":[342,388,179,328,40,92,128.5,92],"g3_w2":[1255,0,183,329,38,91,130.3,91]};
-  var HAIR = {"h0_front":[728,720,185,156,-93.0,-15.6],"h0_side":[557,720,167,157,-78.5,-15.7],"h1_front":[917,720,219,155,-110.3,-15.5],"h1_side":[379,720,174,178,-79.2,-17.8],"h2_front":[179,720,196,184,-83.6,-18.4],"h2_side":[0,720,175,192,-78.6,-19.2],"h3_front":[1413,388,203,216,-99.7,-21.6],"h3_side":[1237,388,172,233,-73.3,-23.3]};
-  var CANW = 260, BASE = 420, CCX = 130;
-
-  var cv = document.getElementById('girl-cv');
-  if (!cv) return null;
-  var g = cv.getContext('2d');
-  var img = new Image(); var ok = false;
-  img.onload = function () { ok = true; makeThumbs(); };
-  img.src = ATLAS;
-
-  var W = 0, Hc = 0;
-  function fit() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = cv.clientWidth; Hc = cv.clientHeight;
-    cv.width = W * dpr; cv.height = Hc * dpr;
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.imageSmoothingEnabled = true;
-    if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'high';
-  }
-  window.addEventListener('resize', fit);
-
-  // mode: walk（あるく）/ pause（はしで一息）/ stand（とまって正面）
-  var st = { x: 120, dir: 1, mode: 'walk', t: 0, phase: 0, outfit: 0, hair: 0 };
-  var CYCLE = [0, 1, 2, 1];          // 接地→通過→接地→通過 のくりかえし
-
-  function drawFrame(name, k, cx, baseY, flip) {
-    var f = FRA[name]; if (!f) return null;
-    g.save(); g.translate(cx, baseY);
-    if (flip) g.scale(-1, 1);
-    g.drawImage(img, f[0], f[1], f[2], f[3],
-      (f[4] - CCX) * k, (f[5] - BASE) * k, f[2] * k, f[3] * k);
-    var anchor = { hx: f[6], hy: f[7] };
-    return anchor;   // 髪はこのあと同じ変換の中で描く
-  }
-  function drawHair(view, anchor, k) {
-    var h = HAIR['h' + st.hair + '_' + view]; if (!h || !anchor) { g.restore(); return; }
-    g.drawImage(img, h[0], h[1], h[2], h[3],
-      (anchor.hx + h[4] - CCX) * k, (anchor.hy + h[5] - BASE) * k, h[2] * k, h[3] * k);
-    g.restore();
-  }
-
-  var last = 0;
-  function tick(ts) {
-    requestAnimationFrame(tick);
-    if (!ok) return;
-    if (!W) fit();
-    var dt = last ? Math.min((ts - last) / 1000, 0.05) : 0;
-    last = ts;
-    st.t += dt;
-
-    var bodyH = Math.min(Hc * 0.94, W * 0.72, 330);
-    var k = bodyH / 384;
-    var margin = bodyH * 0.30;
-
-    if (st.mode === 'walk') {
-      st.phase += dt * 5;                        // 歩調（おだやか）
-      st.x += st.dir * 46 * dt;                  // 進むはやさ（ゆっくり）
-      if (st.x > W - margin) { st.x = W - margin; st.mode = 'pause'; st.t = 0; }
-      if (st.x < margin)     { st.x = margin;     st.mode = 'pause'; st.t = 0; }
-    } else if (st.mode === 'pause') {
-      if (st.t > 0.9) { st.dir *= -1; st.mode = 'walk'; st.t = 0; st.phase = 0; }
-    }
-
-    g.clearRect(0, 0, W, Hc);
-    var baseY = Hc - 4;
-    if (st.mode === 'stand') {
-      // 立ち止まったら、まんなかへ すーっと寄る
-      st.x += (W / 2 - st.x) * Math.min(1, dt * 3);
-    }
-    if (st.mode === 'walk') {
-      var fi = CYCLE[Math.floor(st.phase) % 4];
-      // 素材は左向き。右へ歩くときは反転する
-      var flip = st.dir > 0;
-      var a = drawFrame('g' + st.outfit + '_w' + fi, k, st.x, baseY, flip);
-      drawHair('side', a, k);
-    } else {
-      // とまっているとき・はしで一息のときは 正面でしずかに立つ
-      var a2 = drawFrame('g' + st.outfit + '_s', k, st.x, baseY, false);
-      drawHair('front', a2, k);
-    }
-  }
-  requestAnimationFrame(tick);
-
-  // タッチしたら とまって正面をむく
-  cv.addEventListener('pointerdown', function (e) {
-    e.preventDefault();
-    if (st.mode === 'stand') return;
-    ensureAudio(); playSparkle();
-    st.mode = 'stand'; st.t = 0;
-    showSpeech('おきがえ しよ！ 💕', 2000);
-  });
-
-  // おきがえメニューのサムネイルを、実物の絵から作る
-  function makeThumbs() {
-    try {
-      for (var i = 0; i < 4; i++) {
-        var f = FRA['g' + i + '_s'];
-        var c = document.createElement('canvas');
-        c.width = 80; c.height = 110;
-        var cg = c.getContext('2d');
-        var kk = 100 / f[3];
-        cg.drawImage(img, f[0], f[1], f[2], f[3], (80 - f[2] * kk) / 2, 5, f[2] * kk, f[3] * kk);
-        if (window.CLOTHES && CLOTHES[i]) CLOTHES[i].img = c.toDataURL();
-      }
-      for (var s2 = 0; s2 < 4; s2++) {
-        var h = HAIR['h' + s2 + '_front'];
-        var c2 = document.createElement('canvas');
-        c2.width = 80; c2.height = 80;
-        var cg2 = c2.getContext('2d');
-        var k2 = Math.min(70 / h[2], 70 / h[3]);
-        cg2.drawImage(img, h[0], h[1], h[2], h[3], (80 - h[2] * k2) / 2, (80 - h[3] * k2) / 2, h[2] * k2, h[3] * k2);
-        if (window.HAIRS && HAIRS[s2]) HAIRS[s2].img = c2.toDataURL();
-      }
-    } catch (err) {}
-  }
-
-  return {
-    walk: function () { if (st.mode === 'stand') { st.mode = 'walk'; st.t = 0; st.phase = 0; } fit(); },
-    stand: function () { st.mode = 'stand'; st.t = 0; },
-    setOutfit: function (i) { st.outfit = ((i % 4) + 4) % 4; },
-    setHair: function (i) { st.hair = ((i % 4) + 4) % 4; },
-    isStanding: function () { return st.mode === 'stand'; }
-  };
-})();
-
-// くつは ふくの絵にふくまれているので、くつメニューはかくす
-(function(){ var b=document.querySelector('.menu-btn[data-menu="shoes"]'); if(b) b.style.display='none'; })();
-
 checkImages();
 updateMood();
 // タイトル画面を出さずに、そのままゲームを始める（音は最初のタップで鳴りだす）
 enterGame(false);
-// おへやに入ったら、まずは歩きまわる
-setTimeout(function () { if (window.GIRL) GIRL.walk(); }, 600);
 </script>
 </body>
 </html>
