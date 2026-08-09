@@ -28,8 +28,6 @@
 
         #gameCanvas {
             display: block;
-            image-rendering: pixelated; 
-            image-rendering: crisp-edges;
         }
 
         .title-text {
@@ -87,9 +85,10 @@
             <h1 class="gp-title title-text mb-4 text-white">ICE BEAM SHOOTER</h1>
             <p class="mb-12 text-gray-200 text-sm md:text-lg drop-shadow-md leading-relaxed">
                 画面をタッチして指を動かすと移動<br>
-                （タッチしている間、冷凍ビームが出ます）<br>
-                <span class="text-green-400">緑のアイテムでHP回復！</span><br>
-                <span class="text-yellow-300">敵をたくさん倒すとビームが進化！（最大3本）</span>
+                （タッチしている間、こおりのビームが出ます）<br>
+                <span class="text-pink-300">💗ハートでHPかいふく！</span><br>
+                <span class="text-yellow-300">⭐ほしでとくてんアップ！</span><br>
+                <span class="text-sky-300">💎ジェムでビームがつよくなる！（さいだい3本）</span>
             </p>
             <button id="startBtn" class="gp-btn gp-btn--lg">スタート</button>
         </div>
@@ -116,21 +115,43 @@
     // ==========================================
     // 1. 画像の読み込み
     // ==========================================
-    let imagesLoaded = 0;
-    const TOTAL_IMAGES = 5;
-    function onImageLoad() {
-        imagesLoaded++;
-        if (imagesLoaded === TOTAL_IMAGES) {
-            startBtn.disabled = false;
-        }
-    }
     startBtn.disabled = true;
 
-    const imgPlayer = new Image(); imgPlayer.onload = onImageLoad; imgPlayer.src = 'yuki.png';
-    const imgEnemy1 = new Image(); imgEnemy1.onload = onImageLoad; imgEnemy1.src = 'teki1.png';
-    const imgEnemy2 = new Image(); imgEnemy2.onload = onImageLoad; imgEnemy2.src = 'teki2.png';
-    const imgBoss   = new Image(); imgBoss.onload   = onImageLoad; imgBoss.src   = 'boss.png';
-    const imgBg     = new Image(); imgBg.onload     = onImageLoad; imgBg.src     = 'haikei.png';
+    // スプライトアトラス（1枚の画像に全素材をまとめてある）
+    const ATLAS = {"castle":[[0,0,349,320]],"special":[[353,0,209,256]],"treeL":[[566,0,142,254]],"run":[[1096,0,179,194],[1279,0,166,193],[712,0,177,196],[1449,0,158,193],[893,0,199,195],[1693,0,191,190],[0,324,196,187]],"lamp":[[1611,0,78,192]],"treeM":[[200,324,93,166]],"flag":[[297,324,108,163]],"boss":[[569,324,177,152],[409,324,156,159]],"snowman":[[750,324,157,148],[1091,324,163,146],[1258,324,167,146]],"burst":[[911,324,176,147]],"sign":[[1429,324,102,134]],"treeS":[[1535,324,77,132]],"snowmanDead":[[1616,324,160,131]],"deadTree":[[1780,324,142,125]],"chest":[[0,515,131,121]],"ghostDead":[[135,515,100,119]],"statue":[[239,515,186,119]],"snow":[[429,515,91,106],[102,640,70,81],[595,640,61,72],[1359,640,32,35],[1395,640,22,23]],"ghost":[[788,515,112,96],[524,515,141,102],[1060,515,135,95],[669,515,115,98],[1199,515,115,91],[1318,515,116,90]],"icicle":[[904,515,152,96]],"heart":[[1438,515,61,90]],"gem":[[1503,515,54,88]],"ice":[[1274,640,81,49],[466,640,125,74],[1561,515,129,87]],"star":[[384,640,78,75],[1883,515,83,83],[1694,515,88,87]],"iceBlock":[[176,640,84,80],[1786,515,93,86]],"platS":[[940,640,78,63],[0,640,98,82]],"iceDrip":[[264,640,116,77]],"platM":[[660,640,189,69]],"cloud":[[853,640,83,67]],"platL":[[1022,640,248,59]]};
+
+    const sheet = new Image();
+    sheet.onload = () => { startBtn.disabled = false; };
+    sheet.src = 'yuki_atlas.png';
+
+    // 高さ h に合わせて (cx, cy) を中心に描く（アスペクト比は保持）
+    function drawSprite(name, k, cx, cy, h, opt) {
+        const list = ATLAS[name];
+        const f = list[((k % list.length) + list.length) % list.length];
+        const w = f[2] * (h / f[3]);
+        opt = opt || {};
+        const a = opt.alpha === undefined ? 1 : opt.alpha;
+        const rot = opt.rot || 0;
+        if (a !== 1 || rot) {
+            ctx.save();
+            if (a !== 1) ctx.globalAlpha = a;
+            if (rot) { ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(-cx, -cy); }
+            ctx.drawImage(sheet, f[0], f[1], f[2], f[3], cx - w / 2, cy - h / 2, w, h);
+            ctx.restore();
+        } else {
+            ctx.drawImage(sheet, f[0], f[1], f[2], f[3], cx - w / 2, cy - h / 2, w, h);
+        }
+        return w;
+    }
+    // 左上基準で高さ h に合わせて描く（地面に置く背景物向け）
+    function drawSpriteBottom(name, k, cx, bottomY, h, alpha) {
+        drawSprite(name, k, cx, bottomY - h / 2, h, { alpha: alpha });
+    }
+    function spriteWidth(name, k, h) {
+        const list = ATLAS[name];
+        const f = list[((k % list.length) + list.length) % list.length];
+        return f[2] * (h / f[3]);
+    }
 
     // ==========================================
     // 2. 効果音 (Web Audio API)
@@ -244,6 +265,9 @@
     let bgScrollX = 0;
 
     let powerLevel = 1;
+    let powerBonus = 0;   // ジェムで増えるパワー
+    let corpses = [];     // 倒された敵の演出
+    let snowFlakes = [];  // 背景に降る雪
     let isBossActive = false;
     let boss = null;
     let warningTimer = 0;
@@ -304,22 +328,32 @@
     // ==========================================
     class Player {
         constructor() {
-            this.width = 72;
-            this.height = 54;
+            this.height = 86;
+            this.width = this.height * 0.62;   // 当たり判定は体の幅だけ（髪や杖は含めない）
             this.x = 60;
             this.y = canvas.height / 2 - this.height / 2;
             this.cooldown = 0;
             this.hp = 5;       // ★自機の体力
             this.maxHp = 5;
             this.invincible = 0; // 無敵時間（被弾後）
+            this.animT = 0;
         }
         draw() {
             // 無敵時間中は点滅させる
             if (this.invincible > 0 && Math.floor(this.invincible / 5) % 2 === 0) return;
-            ctx.drawImage(imgPlayer, this.x, this.y, this.width, this.height);
+            const cx = this.x + this.width / 2;
+            const cy = this.y + this.height / 2;
+            const bob = Math.sin(this.animT * 0.18) * 3;   // ふわふわ浮遊
+            if (this.invincible > 0) {
+                // 被弾直後は必殺技ポーズ（雪の輪に包まれる）
+                drawSprite('special', 0, cx, cy + bob, this.height * 1.25);
+            } else {
+                drawSprite('run', Math.floor(this.animT / 6), cx, cy + bob, this.height);
+            }
         }
         update(dt) {
             if (this.invincible > 0) this.invincible -= dt;
+            this.animT += dt;
 
             if (touchState.active) {
                 this.x += (touchState.x - touchState.lastX);
@@ -370,16 +404,18 @@
     }
 
     class Bullet {
-        constructor(x, y, vy, size) { 
-            this.x = x; this.y = y; this.w = size; this.vx = 5; this.vy = vy; 
+        constructor(x, y, vy, size) {
+            this.x = x; this.y = y; this.w = size; this.vx = 5; this.vy = vy; this.age = 0;
         }
         draw() {
-            ctx.fillStyle = 'rgba(135, 206, 250, 0.7)'; 
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.w, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(this.x, this.y, this.w/2, 0, Math.PI*2); ctx.fill();
+            // パワーレベルが上がるほど大きい氷弾になる
+            const k = powerLevel >= 3 ? 2 : (powerLevel === 2 ? 1 : 0);
+            const h = Math.min(22 + this.age * 0.25, 34);   // 飛ぶほど少しだけ伸びる（伸びすぎ防止）
+            drawSprite('ice', k, this.x, this.y, h, { rot: Math.atan2(this.vy, this.vx) });
         }
         update(dt) {
-            this.x += this.vx * dt; this.y += this.vy * dt; this.w += 0.1 * dt;
+            this.x += this.vx * dt; this.y += this.vy * dt; this.age += dt;
+            this.w = Math.min(this.w + 0.05 * dt, 11);      // 当たり判定の上限
             if (this.x > canvas.width) this.del = true;
         }
     }
@@ -405,22 +441,56 @@
 
     class Enemy {
         constructor() {
-            this.type = Math.random() < 0.5 ? 1 : 2;
-            this.w = 45;
-            this.h = 45;
+            this.type = Math.random() < 0.5 ? 1 : 2;   // 1=そらとぶオバケ / 2=ゆきだるま
+            if (this.type === 1) {
+                this.h = 54; this.w = 58; this.speed = 3.0; this.hp = 2;
+            } else {
+                this.h = 66; this.w = 62; this.speed = 2.1; this.hp = 4;
+            }
             this.x = canvas.width;
             this.y = Math.random() * (canvas.height - this.h);
-            this.speed = 2.5;
-            this.hp = 3;
+            this.baseY = this.y;
+            this.animT = Math.random() * 60;
             this.del = false;
         }
         draw() {
-            const img = this.type === 1 ? imgEnemy1 : imgEnemy2;
-            ctx.drawImage(img, this.x, this.y, this.w, this.h);
+            const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
+            if (this.type === 1) {
+                // 前を向いた4コマだけでパタパタさせる
+                drawSprite('ghost', Math.floor(this.animT / 7) % 4, cx, cy, this.h);
+            } else {
+                drawSprite('snowman', Math.floor(this.animT / 12), cx, cy, this.h);
+            }
         }
         update(dt) {
             this.x -= this.speed * dt;
+            this.animT += dt;
+            // オバケはふわふわ上下に揺れながら飛ぶ
+            if (this.type === 1) {
+                this.y = this.baseY + Math.sin(this.animT * 0.06) * 26;
+            }
             if (this.x < -this.w) this.del = true;
+        }
+        // 倒されたときの死にスプライト
+        corpse() {
+            return new Corpse(this.type === 1 ? 'ghostDead' : 'snowmanDead',
+                              this.x + this.w / 2, this.y + this.h / 2, this.h * 1.15);
+        }
+    }
+
+    // 倒された敵がくるっと落ちて消える演出
+    class Corpse {
+        constructor(name, x, y, h) {
+            this.name = name; this.x = x; this.y = y; this.h = h;
+            this.vx = -1.5; this.vy = -2.5; this.rot = 0; this.life = 45;
+        }
+        draw() {
+            drawSprite(this.name, 0, this.x, this.y, this.h,
+                       { alpha: Math.min(1, this.life / 25), rot: this.rot });
+        }
+        update(dt) {
+            this.x += this.vx * dt; this.y += this.vy * dt;
+            this.vy += 0.22 * dt; this.rot += 0.05 * dt; this.life -= dt;
         }
     }
 
@@ -438,7 +508,13 @@
             this.attackTimer = 60; // ★攻撃タイマー
         }
         draw() {
-            ctx.drawImage(imgBoss, this.x, this.y, this.w, this.h);
+            const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
+            // 足元に氷の渦を描いて「ボスらしさ」を出す
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            drawSprite('burst', 0, cx, cy, this.h * 1.5, { rot: this.angle * 1.5 });
+            ctx.restore();
+            drawSprite('boss', Math.floor(this.angle * 4), cx, cy, this.h);
 
             // HPバー
             ctx.fillStyle = 'red';
@@ -481,22 +557,31 @@
     // ★回復アイテム
     class Item {
         constructor() {
-            this.w = 20; 
-            this.h = 20;
+            const r = Math.random();
+            // ハート=かいふく / ほし=とくてん / ジェム=パワーアップ
+            this.kind = r < 0.50 ? 'heart' : (r < 0.85 ? 'star' : 'gem');
+            this.w = 38;
+            this.h = 38;
             this.x = canvas.width;
             this.y = Math.random() * (canvas.height - this.h);
             this.speed = 2;
+            this.animT = 0;
             this.del = false;
         }
         draw() {
-            ctx.fillStyle = '#22c55e'; // 緑の四角
-            ctx.fillRect(this.x, this.y, this.w, this.h);
-            ctx.fillStyle = '#ffffff'; // 十字マーク
-            ctx.fillRect(this.x + 8, this.y + 4, 4, 12);
-            ctx.fillRect(this.x + 4, this.y + 8, 12, 4);
+            const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
+            const pulse = 1 + Math.sin(this.animT * 0.12) * 0.12;
+            if (this.kind === 'star') {
+                drawSprite('star', Math.floor(this.animT / 10), cx, cy, this.h * pulse);
+            } else if (this.kind === 'gem') {
+                drawSprite('gem', 0, cx, cy, this.h * 1.1 * pulse);
+            } else {
+                drawSprite('heart', 0, cx, cy, this.h * pulse);
+            }
         }
         update(dt) {
             this.x -= this.speed * dt;
+            this.animT += dt;
             this.y += Math.sin(frameCount * 0.05) * 1;
             if (this.x < -this.w) this.del = true;
         }
@@ -515,6 +600,94 @@
     }
 
     // ==========================================
+    // 背景（そら・氷の城・木・地面・ふる雪）
+    // ==========================================
+    // 同じ i なら毎回おなじ値を返す疑似乱数（背景がチラつかないように）
+    function frand(i, salt) {
+        const v = Math.sin(i * 127.1 + (salt || 0) * 311.7) * 43758.5453;
+        return v - Math.floor(v);
+    }
+
+    // factor ぶんだけゆっくり流れる背景レイヤーを敷き詰める
+    function tileLayer(factor, spacing, cb) {
+        const worldX = bgScrollX * factor;
+        const first = Math.floor(worldX / spacing) - 1;
+        for (let i = first; ; i++) {
+            const sx = i * spacing - worldX;
+            if (sx > canvas.width + spacing) break;
+            cb(sx, i);
+        }
+    }
+
+    function drawBackground(dt) {
+        const H = canvas.height, W = canvas.width;
+        const groundY = H * 0.94;
+
+        // そら
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#0e2a55');
+        sky.addColorStop(0.45, '#2f6fae');
+        sky.addColorStop(0.78, '#7fb8e0');
+        sky.addColorStop(1, '#cfe9fa');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        // くも（いちばん奥）
+        tileLayer(0.10, 340, (sx, i) => {
+            const h = H * (0.05 + frand(i, 1) * 0.04);
+            drawSprite('cloud', 0, sx, H * (0.08 + frand(i, 2) * 0.32), h, { alpha: 0.92 });
+        });
+
+        // 氷のお城
+        tileLayer(0.22, 980, (sx, i) => {
+            const h = H * 0.40;
+            drawSpriteBottom('castle', 0, sx, groundY, h, 0.85);
+        });
+
+        // 奥の木
+        tileLayer(0.42, 250, (sx, i) => {
+            const r = frand(i, 3);
+            const name = r < 0.5 ? 'treeL' : (r < 0.8 ? 'treeM' : 'deadTree');
+            drawSpriteBottom(name, 0, sx, groundY + 4, H * (0.20 + frand(i, 4) * 0.09), 0.8);
+        });
+
+        // 地面（氷の足場をならべる）
+        const gh = H * 0.085;
+        const plW = spriteWidth('platL', 0, gh);
+        tileLayer(1.0, plW, (sx) => {
+            drawSpriteBottom('platL', 0, sx + plW / 2, H + gh * 0.30, gh);
+        });
+
+        // 手前のかざり（木・街灯・はた・かんばん・雪だるまの像など）
+        const DECOR = ['treeS', 'lamp', 'flag', 'sign', 'statue', 'iceBlock', 'icicle', 'chest'];
+        tileLayer(1.0, 210, (sx, i) => {
+            const r = frand(i, 5);
+            if (r > 0.62) return;                       // すきまを作る
+            const name = DECOR[Math.floor(frand(i, 6) * DECOR.length) % DECOR.length];
+            drawSpriteBottom(name, 0, sx, groundY + gh * 0.35, H * (0.09 + frand(i, 7) * 0.05), 0.95);
+        });
+
+        // ふる雪
+        if (snowFlakes.length === 0) {
+            for (let i = 0; i < 34; i++) {
+                snowFlakes.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    h: 6 + Math.random() * 16, k: Math.floor(Math.random() * 5),
+                    vx: -(0.8 + Math.random() * 1.6), vy: 0.3 + Math.random() * 0.8,
+                    rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.04,
+                    a: 0.35 + Math.random() * 0.5
+                });
+            }
+        }
+        for (const s of snowFlakes) {
+            s.x += s.vx * dt; s.y += s.vy * dt; s.rot += s.vr * dt;
+            if (s.x < -20) { s.x = W + 20; s.y = Math.random() * H; }
+            if (s.y > H + 20) { s.y = -20; s.x = Math.random() * W; }
+            drawSprite('snow', s.k, s.x, s.y, s.h, { alpha: s.a, rot: s.rot });
+        }
+    }
+
+    // ==========================================
     // 3. メインゲームループ
     // ==========================================
     function gameLoop(timestamp) {
@@ -525,21 +698,14 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 背景
-        bgScrollX -= 0.6 * dt;
-        const bgW = imgBg.naturalWidth;
-        const bgH = imgBg.naturalHeight;
-        const scale = canvas.height / bgH;
-        const dw = bgW * scale;
-        if (bgScrollX <= -dw) bgScrollX += dw;
+        // 背景（多層パララックス）
+        bgScrollX += 0.9 * dt;
         ctx.imageSmoothingEnabled = true;
-        for (let x = bgScrollX; x < canvas.width; x += dw) {
-            ctx.drawImage(imgBg, x, 0, dw, canvas.height);
-        }
+        drawBackground(dt);
 
-        // パワーアップ条件（最大3方向）
-        if (score >= 300) powerLevel = 3;
-        else if (score >= 100) powerLevel = 2;
+        // パワーアップ条件（スコア＋ジェム取得ぶん、最大3方向）
+        const basePower = score >= 300 ? 3 : (score >= 100 ? 2 : 1);
+        powerLevel = Math.min(3, basePower + powerBonus);
 
         // ボス出現条件
         if (score >= 1500 && !isBossActive && !boss) {
@@ -584,10 +750,21 @@
             if (player.x < item.x + item.w && player.x + player.width > item.x &&
                 player.y < item.y + item.h && player.y + player.height > item.y) {
                 playItemPickup();
-                player.hp = Math.min(player.maxHp, player.hp + 1);
-                score += 50;
+                let col = '#22c55e';
+                if (item.kind === 'heart') {
+                    player.hp = Math.min(player.maxHp, player.hp + 1);
+                    score += 50;
+                    col = '#f472b6';
+                } else if (item.kind === 'star') {
+                    score += 150;
+                    col = '#facc15';
+                } else {
+                    powerBonus = Math.min(2, powerBonus + 1);
+                    score += 100;
+                    col = '#38bdf8';
+                }
                 item.del = true;
-                for(let k=0; k<15; k++) particles.push(new Particle(item.x+item.w/2, item.y+item.h/2, '#22c55e'));
+                for(let k=0; k<15; k++) particles.push(new Particle(item.x+item.w/2, item.y+item.h/2, col));
             }
             if (item.del) items.splice(i, 1);
         });
@@ -661,9 +838,10 @@
                         bullets.splice(j, 1);
                         e.hp--;
                         if (e.hp <= 0) {
+                            corpses.push(e.corpse());
                             enemies.splice(i, 1);
                             score += 10;
-                            for(let k=0; k<8; k++) particles.push(new Particle(e.x+e.w/2, e.y+e.h/2, '#ef4444'));
+                            for(let k=0; k<8; k++) particles.push(new Particle(e.x+e.w/2, e.y+e.h/2, '#bae6fd'));
                         } else {
                             for(let k=0; k<3; k++) particles.push(new Particle(b.x, b.y, '#fbbf24'));
                         }
@@ -671,6 +849,13 @@
                 });
                 if (e.del) enemies.splice(i, 1);
             });
+        }
+
+        // 倒された敵の演出
+        for (let i = corpses.length - 1; i >= 0; i--) {
+            const c = corpses[i];
+            c.update(dt); c.draw();
+            if (c.life <= 0) corpses.splice(i, 1);
         }
 
         particles.forEach((p, i) => {
@@ -715,8 +900,9 @@
         isGameStarted = true; applyOrientation();
         player = new Player();
         bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
-        score = 0; frameCount = 0; powerLevel = 1; isBossActive = false; boss = null;
-        lastTime = 0; enemySpawnTimer = 0; itemSpawnTimer = 0;
+        corpses = []; snowFlakes = [];
+        score = 0; frameCount = 0; powerLevel = 1; powerBonus = 0; isBossActive = false; boss = null;
+        lastTime = 0; enemySpawnTimer = 0; itemSpawnTimer = 0; bgScrollX = 0;
         resultTitle.innerText = "GAME OVER";
         resultTitle.className = "text-6xl md:text-8xl font-bold mb-4 text-red-500";
         
@@ -728,8 +914,9 @@
     restartBtn.addEventListener('click', () => {
         player = new Player();
         bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
-        score = 0; frameCount = 0; powerLevel = 1; isBossActive = false; boss = null;
-        lastTime = 0; enemySpawnTimer = 0; itemSpawnTimer = 0;
+        corpses = []; snowFlakes = [];
+        score = 0; frameCount = 0; powerLevel = 1; powerBonus = 0; isBossActive = false; boss = null;
+        lastTime = 0; enemySpawnTimer = 0; itemSpawnTimer = 0; bgScrollX = 0;
         resultTitle.innerText = "GAME OVER";
         resultTitle.className = "text-6xl md:text-8xl font-bold mb-4 text-red-500";
 
