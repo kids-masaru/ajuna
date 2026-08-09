@@ -60,7 +60,7 @@
         <h1 class="text-4xl text-rose-500 font-bold drop-shadow-sm">
             🎮 げーむのおへや
         </h1>
-        <p class="text-[10px] text-rose-300 mt-1">v5.9</p>
+        <p class="text-[10px] text-rose-300 mt-1">v6.0</p>
     </div>
 
     <div class="w-full max-w-md grid grid-cols-3 gap-2 pb-10">
@@ -157,11 +157,7 @@
 
         <a href="osewa.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-pink-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-pink-100 w-14 h-14 rounded-xl flex items-center justify-center text-3xl border-2 border-pink-200 mb-3">
-👧
-            </div>
-            <h2 class="text-[11px] mt-1 font-bold text-pink-500 leading-tight whitespace-nowrap">おせわごっこ</h2>
+            <img src="icon_osewa.png" class="w-20 h-20 rounded-xl" alt="おせわごっこ">
         </a>
 
     </div>
@@ -174,7 +170,7 @@
                 }).then(() => {
                     caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
                 }).then(() => {
-                    navigator.serviceWorker.register('./sw.js?v=94');
+                    navigator.serviceWorker.register('./sw.js?v=95');
                 });
             });
         }
