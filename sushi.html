@@ -28,8 +28,11 @@ const { useState, useRef, useEffect } = React;
 
 // ===== スプライトアトラス =====
 const ATLAS_SRC = 'sushi_parts.png';
-const ATLAS_W = 1400, ATLAS_H = 733;
-const FRAMES = {"plate_red":[0,0,330,323],"btn_go":[334,0,169,172],"plate_green":[507,0,180,166],"plate_blue":[691,0,181,165],"plate_yellow":[876,0,179,165],"plate_pink":[1059,0,180,163],"plate_purple":[0,327,184,162],"lane":[188,327,739,138],"full_ikura":[931,327,137,134],"btn_back":[1072,327,119,120],"maguro":[0,493,204,119],"full_maguro":[208,493,204,119],"btn_clear":[416,493,121,119],"ebi":[541,493,213,118],"full_ebi":[758,493,213,118],"full_salmon":[975,493,193,114],"gunkan":[1172,493,138,113],"salmon":[0,616,193,113],"tamago":[197,616,170,112],"full_tamago":[371,616,170,112],"nori":[545,616,60,109],"shari":[609,616,171,107],"wasabi":[784,616,66,70],"ikura":[854,616,72,53]};
+const ATLAS_W = 1200, ATLAS_H = 724;
+const FRAMES = {"plate_red":[0,0,330,323],"btn_go":[334,0,169,172],"plate_green":[507,0,180,166],"plate_blue":[691,0,181,165],"plate_yellow":[876,0,179,165],"plate_pink":[0,327,180,163],"plate_purple":[184,327,184,162],"full_ikura":[372,327,137,134],"btn_back":[513,327,119,120],"full_maguro":[636,327,204,119],"btn_clear":[844,327,121,119],"full_ebi":[969,327,213,118],"maguro":[0,494,204,115],"full_salmon":[208,494,193,114],"gunkan":[405,494,138,113],"full_tamago":[547,494,170,112],"tamago":[721,494,170,111],"ebi":[895,494,201,111],"nori":[1100,494,60,109],"shari":[0,613,171,107],"salmon":[175,613,193,106],"wasabi":[372,613,66,70],"ikura":[442,613,72,53]};
+// レーンは繰り返し表示するので別画像（アトラスだと隣の絵まで一緒に流れてしまう）
+const LANE_SRC = 'sushi_lane.png';
+const LANE_W = 198, LANE_H = 138;
 
 // 高さ h(px) にあわせたスプライト表示スタイル
 function spriteStyle(name, h) {
@@ -154,6 +157,8 @@ const playSound = (type) => {
 };
 
 const PLATE = 210;                    // お皿の大きさ(px)
+const LANE_HEIGHT = 124;                                              // レーンの見た目の高さ
+const LANE_TILE_W = Math.round(LANE_W * (LANE_HEIGHT / LANE_H));      // タイル1枚ぶんの幅
 const PLATES = ['plate_red','plate_blue','plate_yellow','plate_green','plate_purple','plate_pink'];
 
 function App() {
@@ -318,7 +323,7 @@ function App() {
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#f0e6d2] overflow-hidden font-sans">
       <style>{`
-        @keyframes laneScroll { from { background-position-x: 0; } to { background-position-x: -180px; } }
+        @keyframes laneScroll { from { background-position-x: 0; } to { background-position-x: -${LANE_TILE_W}px; } }
         .conveying-plate { transition: transform 1.9s ease-in; transform: translateX(120vw) rotate(6deg); }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes shakeIcon { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-15px) rotate(-10deg); } 50% { transform: translateX(15px) rotate(10deg); } 75% { transform: translateX(-15px) rotate(-10deg); } }
@@ -403,10 +408,9 @@ function App() {
             onClick={() => { if (!isConveying) setSelectedId(null); }}>
             <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 pointer-events-none"
               style={{
-                height: 124,
-                backgroundImage: `url(${ATLAS_SRC})`,
-                ...(() => { const f = FRAMES['lane']; const s = 124 / f[3];
-                  return { backgroundSize: `${f[2]*s}px ${ATLAS_H*s}px`, backgroundPositionY: `-${f[1]*s}px` }; })(),
+                height: LANE_HEIGHT,
+                backgroundImage: `url(${LANE_SRC})`,
+                backgroundSize: `${LANE_TILE_W}px ${LANE_HEIGHT}px`,
                 backgroundRepeat: 'repeat-x',
                 animation: 'laneScroll 3.2s linear infinite',
               }} />
