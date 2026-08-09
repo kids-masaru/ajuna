@@ -26,72 +26,70 @@ body {
 <script type="text/babel">
 const { useState, useRef, useEffect } = React;
 
-const INGREDIENTS = [
-  { id: 'shari', name: 'シャリ', type: 'css' },
-  { id: 'gunkan', name: '軍艦', type: 'css' },
-  { id: 'maguro', name: 'マグロ', type: 'css' },
-  { id: 'salmon', name: 'サーモン', type: 'css' },
-  { id: 'tamago', name: 'たまご', type: 'css' },
-  { id: 'ebi', name: 'えび', type: 'css' },
-  { id: 'ikura', name: 'いくら', type: 'css' },
-  { id: 'nori', name: '海苔', type: 'css' },
-  { id: 'wasabi', name: 'わさび', type: 'css' },
-];
+// ===== スプライトアトラス =====
+const ATLAS_SRC = 'sushi_atlas.png';
+const ATLAS_W = 1400, ATLAS_H = 1010;
+const FRAMES = {"plate_red":[0,0,330,323],"btn_go":[334,0,169,172],"plate_green":[507,0,180,166],"plate_blue":[691,0,181,165],"plate_yellow":[876,0,179,165],"plate_soy":[1059,0,182,165],"plate_pink":[0,327,180,163],"plate_purple":[184,327,184,162],"shiso":[372,327,122,151],"tong":[498,327,193,139],"salmon_g":[695,327,135,139],"lane":[0,494,739,138],"lane_end":[743,494,201,138],"ikura":[948,494,137,134],"corn":[1089,494,139,134],"negitoro":[1232,494,140,133],"natto":[0,636,139,133],"uni":[143,636,137,132],"kappa":[284,636,124,129],"amaebi":[412,636,203,123],"btn_back":[619,636,119,120],"maguro":[742,636,204,119],"btn_clear":[950,636,121,119],"ebi":[1075,636,213,118],"hikari":[0,773,209,118],"hotate":[213,773,172,118],"anago":[389,773,193,116],"tako":[586,773,189,116],"ika":[779,773,191,115],"salmon":[974,773,193,114],"tamago":[1171,773,170,112],"salmon2":[0,895,197,111],"shiromi":[201,895,203,110],"baran":[408,895,123,102],"gari":[535,895,114,95],"wasabi":[653,895,66,70]};
 
-const ORDER_POOL = [
-  { requiredCounts: { shari: 1, maguro: 1 }, score: 100 },
-  { requiredCounts: { shari: 1, salmon: 1 }, score: 100 },
-  { requiredCounts: { shari: 1, tamago: 1 }, score: 100 },
-  { requiredCounts: { shari: 1, ebi: 1 }, score: 120 },
-  { requiredCounts: { shari: 1, wasabi: 1, maguro: 1 }, score: 150 },
-  { requiredCounts: { shari: 1, wasabi: 1, salmon: 1 }, score: 150 },
-  { requiredCounts: { shari: 1, tamago: 1, nori: 1 }, score: 180 },
-  { requiredCounts: { gunkan: 1, ikura: 1 }, score: 200 },
-  { requiredCounts: { shari: 2, maguro: 2 }, score: 200 },
-  { requiredCounts: { shari: 2, salmon: 2 }, score: 200 },
-  { requiredCounts: { shari: 2, ebi: 2 }, score: 240 },
-  { requiredCounts: { shari: 2, tamago: 2 }, score: 200 },
-  { requiredCounts: { shari: 2, maguro: 1, salmon: 1 }, score: 220 },
-  { requiredCounts: { shari: 2, wasabi: 2, maguro: 2 }, score: 300 },
-  { requiredCounts: { shari: 2, tamago: 2, nori: 2 }, score: 360 },
-];
+// 高さ h(px) にあわせてスプライトを表示する div のスタイルを返す
+function spriteStyle(name, h) {
+  const f = FRAMES[name];
+  if (!f) return {};
+  const scale = h / f[3];
+  return {
+    width: f[2] * scale + 'px',
+    height: h + 'px',
+    backgroundImage: `url(${ATLAS_SRC})`,
+    backgroundSize: `${ATLAS_W * scale}px ${ATLAS_H * scale}px`,
+    backgroundPosition: `-${f[0] * scale}px -${f[1] * scale}px`,
+    backgroundRepeat: 'no-repeat',
+  };
+}
+function Sprite({ name, h, className, style }) {
+  return <div className={className} style={{ ...spriteStyle(name, h), ...(style || {}) }} />;
+}
 
-function generatePreviewItems(req) {
-  const items = [];
-  const baseCount = (req.shari || 0) + (req.gunkan || 0);
-  const is2 = baseCount >= 2;
-  const neta = Object.entries(req).filter(([k]) => !['shari','gunkan','wasabi','nori'].includes(k));
-  const hasWasabi = (req.wasabi || 0) > 0;
-  const hasNori = (req.nori || 0) > 0;
-  const hasGunkan = (req.gunkan || 0) > 0;
-  let id = 0;
-  if (is2) {
-    const yOffsets = [-28, 28];
-    for (let i = 0; i < 2; i++) {
-      const cy = 115 + yOffsets[i];
-      let z = i * 10 + 1;
-      const base = (hasGunkan && i === 0) ? 'gunkan' : 'shari';
-      items.push({ id: `pv${id++}`, baseId: base, type: 'css', x: 120, y: cy + 10, rotation: 0, zIndex: z++ });
-      if (hasWasabi) items.push({ id: `pv${id++}`, baseId: 'wasabi', type: 'css', x: 108, y: cy + 5, rotation: 0, zIndex: z++ });
-      const n = neta[i] || neta[0];
-      if (n) {
-        const ing = INGREDIENTS.find(x => x.id === n[0]);
-        items.push({ id: `pv${id++}`, baseId: n[0], type: ing?.type || 'css', emoji: ing?.emoji, x: 120, y: cy - 5, rotation: 0, zIndex: z++ });
-      }
-      if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: 120, y: cy + 2, rotation: 0, zIndex: z++ });
-    }
-  } else {
-    let z = 1;
-    const base = hasGunkan ? 'gunkan' : 'shari';
-    items.push({ id: `pv${id++}`, baseId: base, type: 'css', x: 120, y: 130, rotation: 0, zIndex: z++ });
-    if (hasWasabi) items.push({ id: `pv${id++}`, baseId: 'wasabi', type: 'css', x: 100, y: 123, rotation: 0, zIndex: z++ });
-    if (neta[0]) {
-      const ing = INGREDIENTS.find(x => x.id === neta[0][0]);
-      items.push({ id: `pv${id++}`, baseId: neta[0][0], type: ing?.type || 'css', emoji: ing?.emoji, x: 120, y: hasGunkan ? 100 : 110, rotation: 0, zIndex: z++ });
-    }
-    if (hasNori) items.push({ id: `pv${id++}`, baseId: 'nori', type: 'css', x: 120, y: 120, rotation: 0, zIndex: z++ });
+// ===== 寿司ネタ一覧 =====
+const SUSHI = [
+  { id: 'maguro',   name: 'まぐろ' },
+  { id: 'salmon',   name: 'サーモン' },
+  { id: 'ebi',      name: 'えび' },
+  { id: 'tamago',   name: 'たまご' },
+  { id: 'ika',      name: 'いか' },
+  { id: 'tako',     name: 'たこ' },
+  { id: 'shiromi',  name: 'しろみ' },
+  { id: 'hikari',   name: 'ひかりもの' },
+  { id: 'amaebi',   name: 'あまえび' },
+  { id: 'hotate',   name: 'ほたて' },
+  { id: 'anago',    name: 'あなご' },
+  { id: 'ikura',    name: 'いくら' },
+  { id: 'uni',      name: 'うに' },
+  { id: 'negitoro', name: 'ネギトロ' },
+  { id: 'salmon_g', name: 'サーモン軍艦' },
+  { id: 'corn',     name: 'コーン' },
+  { id: 'natto',    name: 'なっとう' },
+  { id: 'kappa',    name: 'かっぱ' },
+];
+const SUSHI_BY_ID = Object.fromEntries(SUSHI.map(s => [s.id, s]));
+
+// お皿の色（流したときの見た目のバリエーション）
+const PLATES = ['plate_red', 'plate_blue', 'plate_yellow', 'plate_green', 'plate_purple', 'plate_pink'];
+
+// ===== 注文の作りかた =====
+// ラウンドが進むほど品数が増える（1→3）
+function makeOrder(round) {
+  const maxItems = round < 3 ? 1 : (round < 6 ? 2 : 3);
+  const n = 1 + Math.floor(Math.random() * maxItems);
+  const pool = shuffleArray(SUSHI).slice(0, n);
+  const req = {};
+  pool.forEach(s => { req[s.id] = 1; });
+  // たまに同じネタ2貫
+  if (n <= 2 && Math.random() < 0.35) {
+    const k = pool[0].id;
+    req[k] = 2;
   }
-  return items;
+  const totalPieces = Object.values(req).reduce((a, b) => a + b, 0);
+  return { requiredCounts: req, score: 100 * totalPieces };
 }
 
 function shuffleArray(arr) {
@@ -103,10 +101,6 @@ function shuffleArray(arr) {
   return a;
 }
 
-const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
-const IconArrowUp = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>;
-const IconArrowDown = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>;
-
 let audioCtx = null;
 const initAudio = () => { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); };
 
@@ -117,11 +111,11 @@ const playSound = (type) => {
   const now = audioCtx.currentTime;
   switch (type) {
     case 'put':
-      o.type='sine'; o.frequency.setValueAtTime(400,now); o.frequency.exponentialRampToValueAtTime(100,now+0.1);
-      g.gain.setValueAtTime(0.5,now); g.gain.exponentialRampToValueAtTime(0.01,now+0.1);
+      o.type='sine'; o.frequency.setValueAtTime(400,now); o.frequency.exponentialRampToValueAtTime(120,now+0.1);
+      g.gain.setValueAtTime(0.4,now); g.gain.exponentialRampToValueAtTime(0.01,now+0.1);
       o.start(now); o.stop(now+0.1); break;
     case 'grab':
-      o.type='triangle'; o.frequency.setValueAtTime(300,now); o.frequency.linearRampToValueAtTime(500,now+0.05);
+      o.type='triangle'; o.frequency.setValueAtTime(300,now); o.frequency.linearRampToValueAtTime(520,now+0.05);
       g.gain.setValueAtTime(0.2,now); g.gain.linearRampToValueAtTime(0.01,now+0.05);
       o.start(now); o.stop(now+0.05); break;
     case 'slide': {
@@ -151,6 +145,7 @@ const playSound = (type) => {
 };
 
 const ROUND_COUNT = 8;
+const PLATE_SIZE = 210;   // お皿の直径(px)
 
 function App() {
   const [gameState, setGameState] = useState('title');
@@ -160,25 +155,35 @@ function App() {
   const maxZRef = useRef(10);
   const dragInfoRef = useRef(null);
   const itemsRef = useRef([]);
-  const [renderTick, setRenderTick] = useState(0);
+  const [, setRenderTick] = useState(0);
   const [score, setScore] = useState(0);
   const [resultStatus, setResultStatus] = useState(null);
   const [isConveying, setIsConveying] = useState(false);
+  const [plateColor, setPlateColor] = useState('plate_red');
+  const [ready, setReady] = useState(false);
 
   const workspaceRef = useRef(null);
   const currentOrder = orders[currentOrderIndex];
   const items = itemsRef.current;
 
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setReady(true);
+    img.src = ATLAS_SRC;
+  }, []);
+
+  const bump = () => setRenderTick(n => n + 1);
   const updateItems = (updater) => {
     itemsRef.current = typeof updater === 'function' ? updater(itemsRef.current) : updater;
-    setRenderTick(n => n + 1);
+    bump();
   };
 
   const startGame = () => {
     initAudio();
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    const shuffled = shuffleArray(ORDER_POOL).slice(0, ROUND_COUNT);
-    setOrders(shuffled);
+    const os = [];
+    for (let i = 0; i < ROUND_COUNT; i++) os.push(makeOrder(i));
+    setOrders(os);
     setGameState('playing');
     setScore(0);
     setCurrentOrderIndex(0);
@@ -187,11 +192,12 @@ function App() {
 
   const resetOrder = () => {
     itemsRef.current = [];
-    setRenderTick(n => n + 1);
+    bump();
     setSelectedId(null);
     setResultStatus(null);
     setIsConveying(false);
     maxZRef.current = 10;
+    setPlateColor(PLATES[Math.floor(Math.random() * PLATES.length)]);
   };
 
   const handlePointerDown = (e, id, item) => {
@@ -202,38 +208,33 @@ function App() {
     const nz = ++maxZRef.current;
     updateItems(prev => prev.map(i => i.id === id ? { ...i, zIndex: nz } : i));
     setSelectedId(id);
-    dragInfoRef.current = { id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY };
+    dragInfoRef.current = { id, startX: item.x, startY: item.y, pointerX: e.clientX, pointerY: e.clientY, moved: false };
   };
 
   const handlePointerMove = (e) => {
     const di = dragInfoRef.current;
     if (!di) return;
+    di.moved = true;
     const nx = di.startX + (e.clientX - di.pointerX);
     const ny = di.startY + (e.clientY - di.pointerY);
     itemsRef.current = itemsRef.current.map(i => i.id === di.id ? { ...i, x: nx, y: ny } : i);
-    setRenderTick(n => n + 1);
+    bump();
   };
 
-  const handlePointerUp = () => { if (dragInfoRef.current) { playSound('put'); dragInfoRef.current = null; } };
+  const handlePointerUp = () => { if (dragInfoRef.current) { if (dragInfoRef.current.moved) playSound('put'); dragInfoRef.current = null; } };
   const handleWorkspaceClick = () => { if (!isConveying) setSelectedId(null); };
 
-  const addItem = (baseItem) => {
+  const addSushi = (sushi) => {
     if (isConveying || gameState !== 'playing' || resultStatus !== null) return;
     initAudio(); playSound('put');
-    const ox = Math.random() * 20 - 10, oy = Math.random() * 20 - 10;
+    const ox = Math.random() * 30 - 15, oy = Math.random() * 24 - 12;
     const newId = `item-${Date.now()}-${Math.floor(Math.random()*1000)}`;
     const nz = ++maxZRef.current;
     itemsRef.current = [...itemsRef.current, {
-      id: newId, baseId: baseItem.id, type: baseItem.type, emoji: baseItem.emoji,
-      x: 90 + ox, y: 90 + oy, rotation: 0, zIndex: nz,
+      id: newId, baseId: sushi.id, x: PLATE_SIZE/2 + ox, y: PLATE_SIZE/2 + oy, rotation: 0, zIndex: nz,
     }];
-    setRenderTick(n => n + 1);
+    bump();
     setSelectedId(newId);
-  };
-
-  const updateSelectedItem = (changes) => {
-    if (!selectedId || isConveying) return;
-    updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, ...changes } : i));
   };
 
   const deleteSelectedItem = () => {
@@ -241,47 +242,35 @@ function App() {
     playSound('grab'); updateItems(prev => prev.filter(i => i.id !== selectedId)); setSelectedId(null);
   };
 
-  const moveZ = (dir) => {
-    if (!selectedId || isConveying) return;
-    playSound('grab');
-    if (dir === 'up') {
-      const nz = ++maxZRef.current;
-      updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: nz } : i));
-    } else {
-      updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, zIndex: Math.max(1, i.zIndex - 1) } : i));
-    }
-  };
-
   const clearAllItems = () => {
     if (isConveying || resultStatus !== null) return;
-    playSound('grab'); itemsRef.current = []; setRenderTick(n => n + 1); setSelectedId(null);
+    playSound('grab'); itemsRef.current = []; bump(); setSelectedId(null);
   };
 
   const undoLastItem = () => {
-    if (isConveying || resultStatus !== null) return;
-    if (itemsRef.current.length === 0) return;
+    if (isConveying || resultStatus !== null || itemsRef.current.length === 0) return;
     playSound('grab');
     const removed = itemsRef.current[itemsRef.current.length - 1];
     itemsRef.current = itemsRef.current.slice(0, -1);
-    setRenderTick(n => n + 1);
+    bump();
     if (selectedId === removed.id) setSelectedId(null);
   };
 
+  // お皿の上にあるか（中心からの楕円距離）
   const isOnPlate = (item) => {
-    const dx = item.x - 90, dy = (item.y - 70) / 1.5;
-    return Math.sqrt(dx * dx + dy * dy) <= 95;
+    const dx = (item.x - PLATE_SIZE/2) / (PLATE_SIZE*0.46);
+    const dy = (item.y - PLATE_SIZE/2) / (PLATE_SIZE*0.40);
+    return dx*dx + dy*dy <= 1;
   };
 
   const submitSushi = () => {
     if (isConveying || resultStatus !== null || !currentOrder) return;
     setSelectedId(null);
-    const currentItems = itemsRef.current;
     const cc = {};
-    currentItems.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
+    itemsRef.current.forEach(item => { if (isOnPlate(item)) cc[item.baseId] = (cc[item.baseId] || 0) + 1; });
     const req = currentOrder.requiredCounts;
-    const reqKeys = new Set(Object.keys(req));
-    const ccKeys = new Set(Object.keys(cc));
-    let ok = reqKeys.size === ccKeys.size;
+    const reqKeys = Object.keys(req);
+    let ok = reqKeys.length === Object.keys(cc).length;
     if (ok) { for (const k of reqKeys) { if (cc[k] !== req[k]) { ok = false; break; } } }
     if (ok) {
       playSound('success'); setTimeout(() => playSound('slide'), 500);
@@ -289,56 +278,52 @@ function App() {
       setScore(prev => prev + currentOrder.score);
       setTimeout(() => {
         const next = currentOrderIndex + 1;
-        if (next >= orders.length) { setGameState('result'); }
+        if (next >= orders.length) setGameState('result');
         else { setCurrentOrderIndex(next); resetOrder(); }
-      }, 2500);
+      }, 2200);
     } else {
       playSound('fail'); setResultStatus('fail');
-      setTimeout(() => setResultStatus(null), 1500);
+      setTimeout(() => setResultStatus(null), 1300);
     }
   };
 
-  const renderShape = (item, isPreview = false) => {
-    const isSelected = !isPreview && item.id === selectedId;
-    const baseClass = "absolute select-none transform-gpu origin-center " + (isConveying || isPreview ? "" : "cursor-grab active:cursor-grabbing");
-    const sel = isSelected ? "ring-4 ring-blue-500 ring-offset-2 ring-offset-transparent" : "";
-    let content = null;
-    switch (item.baseId) {
-      case 'shari': content = <div className={`w-24 h-12 bg-[#fffff8] rounded-[60px] shadow-md border border-gray-100 ${sel}`} style={{ boxShadow: 'inset -2px -5px 10px rgba(0,0,0,0.05), 2px 5px 5px rgba(0,0,0,0.1)' }}></div>; break;
-      case 'gunkan': content = (<div className={`w-24 h-12 relative ${sel}`}><div className="absolute inset-0 bg-[#fffff8] rounded-[60px] shadow-md border border-gray-100" style={{ boxShadow: 'inset -2px -5px 10px rgba(0,0,0,0.05), 2px 5px 5px rgba(0,0,0,0.1)' }}></div><div className="absolute left-0 right-0 top-1/2 h-8 bg-[#1a1c18] rounded-[8px] border border-gray-800" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px)' }}></div></div>); break;
-      case 'maguro': content = <div className={`w-28 h-14 bg-red-600 rounded-[60px] opacity-95 ${sel}`} style={{ boxShadow: 'inset -5px -5px 15px rgba(0,0,0,0.2), inset 2px 2px 5px rgba(255,255,255,0.3)' }}></div>; break;
-      case 'salmon': content = (<div className={`w-28 h-14 bg-orange-400 rounded-[60px] opacity-95 overflow-hidden relative ${sel}`} style={{ boxShadow: 'inset -5px -5px 15px rgba(0,0,0,0.1)' }}><div className="w-[150%] h-1 bg-white opacity-40 -rotate-12 absolute -left-2 top-3"></div><div className="w-[150%] h-1 bg-white opacity-40 -rotate-12 absolute -left-2 top-7"></div><div className="w-[150%] h-1 bg-white opacity-40 -rotate-12 absolute -left-2 top-11"></div></div>); break;
-      case 'tamago': content = <div className={`w-24 h-12 bg-yellow-400 rounded-md shadow-sm border-b-4 border-yellow-500 ${sel}`}></div>; break;
-      case 'ebi': content = (<div className={`w-28 h-12 relative ${sel}`}><div className="absolute w-[90%] h-10 bg-[#f4a460] rounded-[50px] left-[5%] top-0" style={{ boxShadow: 'inset -3px -3px 8px rgba(0,0,0,0.15), inset 2px 2px 4px rgba(255,255,255,0.4)' }}></div><div className="absolute w-[75%] h-[2px] bg-white/30 rounded-full top-[10px] left-[12%]"></div><div className="absolute w-[60%] h-[2px] bg-white/25 rounded-full top-[16px] left-[20%]"></div><div className="absolute w-[45%] h-[2px] bg-white/20 rounded-full top-[22px] left-[27%]"></div><div className="absolute right-0 top-[12px] w-4 h-6 bg-[#e07830] rounded-r-full" style={{ clipPath: 'polygon(0 20%, 100% 0, 100% 100%, 0 80%)' }}></div></div>); break;
-      case 'nori': content = <div className={`w-6 h-14 bg-[#1a1c18] rounded-sm shadow-md border border-gray-800 ${sel}`} style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)' }}></div>; break;
-      case 'ikura': { const grain = { boxShadow: 'inset -1px -1px 2px rgba(200,50,0,0.8), inset 1px 1px 1px rgba(255,255,255,0.8)' }; content = (<div className={`w-16 h-10 flex flex-col items-center justify-center ${sel}`}><div className="flex gap-0.5" style={{ marginBottom: '-7px' }}>{[0,1,2].map(i => (<div key={i} className="w-4 h-4 bg-orange-500 rounded-full shadow-sm" style={grain}></div>))}</div><div className="flex gap-0.5" style={{ marginLeft: '10px' }}>{[3,4,5].map(i => (<div key={i} className="w-4 h-4 bg-orange-500 rounded-full shadow-sm" style={grain}></div>))}</div></div>); break; }
-      case 'wasabi': content = <div className={`w-6 h-6 bg-green-500 rounded-[40%] blur-[0.5px] opacity-90 ${sel}`} style={{ boxShadow: 'inset -2px -2px 5px rgba(0,100,0,0.5)' }}></div>; break;
-      default: content = <div className="w-10 h-10 bg-gray-500"></div>;
-    }
+  // お手本プレビュー用に、注文の寿司を皿に並べた配置を作る
+  const previewItems = currentOrder ? (() => {
+    const list = [];
+    Object.entries(currentOrder.requiredCounts).forEach(([id, cnt]) => {
+      for (let i = 0; i < cnt; i++) list.push(id);
+    });
+    return list;
+  })() : [];
+
+  const selectedItemData = items.find(i => i.id === selectedId);
+  const onPlateCount = items.filter(isOnPlate).length;
+
+  // 皿の上に置かれた寿司スプライト
+  const renderSushi = (item) => {
+    const s = SUSHI_BY_ID[item.baseId];
+    if (!s) return null;
+    const isSel = item.id === selectedId;
+    const h = 66;
     return (
-      <div key={item.id} onPointerDown={isPreview ? undefined : (e) => handlePointerDown(e, item.id, item)} className={baseClass}
-        style={{ transform: `translate(${item.x}px, ${item.y}px) rotate(${item.rotation}deg) translate(-50%, -50%)`, zIndex: item.zIndex, touchAction: 'none' }}>
-        {content}
+      <div key={item.id}
+        onPointerDown={(e) => handlePointerDown(e, item.id, item)}
+        className="absolute origin-center cursor-grab active:cursor-grabbing"
+        style={{
+          transform: `translate(${item.x}px, ${item.y}px) rotate(${item.rotation}deg) translate(-50%, -50%)`,
+          zIndex: item.zIndex, touchAction: 'none',
+          filter: isSel ? 'drop-shadow(0 0 6px #3b82f6) drop-shadow(0 0 6px #3b82f6)' : 'drop-shadow(0 3px 3px rgba(0,0,0,0.25))',
+        }}>
+        <Sprite name={item.baseId} h={h} />
       </div>
     );
   };
 
-  const renderIngredientIcon = (baseId) => {
-    const ing = INGREDIENTS.find(i => i.id === baseId);
-    if (!ing) return null;
-    const colors = { shari: 'bg-[#fffff8] border border-gray-200', gunkan: 'bg-[#fffff8] border-2 border-[#1a1c18]', maguro: 'bg-red-600', salmon: 'bg-orange-400', tamago: 'bg-yellow-400', ebi: 'bg-[#f4a460]', nori: 'bg-[#1a1c18]', ikura: 'bg-orange-500', wasabi: 'bg-green-500' };
-    const shapes = { gunkan: 'w-7 h-4 rounded-[8px]', nori: 'w-2 h-6 rounded-sm', wasabi: 'w-4 h-4 rounded-full', ikura: 'w-4 h-4 rounded-full', ebi: 'w-7 h-3 rounded-t-[60px] rounded-b-[20px]' };
-    return <div className={`${shapes[baseId] || 'w-7 h-3 rounded-[60px]'} ${colors[baseId] || 'bg-gray-400'}`}></div>;
-  };
-
-  const selectedItemData = items.find(i => i.id === selectedId);
-  const previewItems = currentOrder ? generatePreviewItems(currentOrder.requiredCounts) : [];
-
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#f0e6d2] overflow-hidden font-sans">
       <style>{`
-        @keyframes slideRight { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .conveying-plate { transition: transform 2s ease-in; transform: translateX(100vw); }
+        @keyframes laneScroll { from { background-position-x: 0; } to { background-position-x: -160px; } }
+        .conveying-plate { transition: transform 2s ease-in; transform: translateX(120vw) rotate(8deg); }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes shakeIcon { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-15px) rotate(-10deg); } 50% { transform: translateX(15px) rotate(10deg); } 75% { transform: translateX(-15px) rotate(-10deg); } }
         .animate-pop-in { animation: popIn 0.4s ease-out forwards; }
@@ -350,15 +335,22 @@ function App() {
           <a href="index.html" className="gp-home">🏠</a>
           <div className="gp-hero gp-float mb-6">🍣</div>
           <h1 className="gp-title mb-4 text-center text-white">オーダー回転寿司</h1>
-          <button onClick={startGame} className="gp-btn gp-btn--lg mt-8">スタート</button>
+          <p className="mb-6 text-center text-sm text-white/80 leading-relaxed">
+            おきゃくさんの ちゅうもんの おすしを<br/>
+            したから えらんで おさらに のせて<br/>
+            「レーンに ながす」で かんせい！
+          </p>
+          <button onClick={startGame} disabled={!ready} className="gp-btn gp-btn--lg mt-2 disabled:opacity-50">
+            {ready ? 'スタート' : 'よみこみちゅう…'}
+          </button>
         </div>
       )}
 
       {gameState === 'result' && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gp-cover text-white p-6">
           <div className="gp-hero gp-float mb-6">🏆</div>
-          <h2 className="gp-title mb-2 text-white">営業終了！</h2>
-          <p className="text-xl text-gray-300 mb-8">今日のスコア</p>
+          <h2 className="gp-title mb-2 text-white">えいぎょうしゅうりょう！</h2>
+          <p className="text-xl text-gray-300 mb-8">きょうのスコア</p>
           <div className="text-6xl font-black text-[#f1c40f] mb-12 drop-shadow-lg">{score}</div>
           <div className="flex gap-4">
             <button onClick={() => window.location.href = 'index.html'} className="gp-btn gp-btn--ghost">🏠 もどる</button>
@@ -376,23 +368,27 @@ function App() {
             <div className="text-xs text-gray-400">{currentOrderIndex + 1}/{orders.length}</div>
           </header>
 
-          {/* お手本エリア（横並び：プレビュー左、素材数右） */}
+          {/* お手本エリア（お客さんの注文） */}
           <div className="bg-white border-b-4 border-red-500 px-3 py-2 z-10 shadow-sm shrink-0">
             <div className="flex items-center gap-3">
-              {/* プレビュー画像 */}
-              <div className="shrink-0">
-                <div className="text-[10px] font-black text-red-600 text-center mb-1 bg-red-100 px-2 py-0.5 rounded-full">お手本</div>
-                <div className="relative w-[80px] h-[80px] bg-red-50 rounded-full shadow-inner border-2 border-red-200 overflow-hidden pointer-events-none flex justify-center items-center">
-                  <div className="absolute w-[240px] h-[240px] scale-[0.32] origin-center">
-                    {previewItems.map(item => renderShape(item, true))}
-                  </div>
+              <div className="shrink-0 flex flex-col items-center">
+                <div className="text-[10px] font-black text-red-600 mb-1 bg-red-100 px-2 py-0.5 rounded-full">ちゅうもん</div>
+                <div className="text-2xl">🧑‍🍼</div>
+              </div>
+              {/* 注文された寿司を皿にのせた見本 */}
+              <div className="relative shrink-0 flex justify-center items-center" style={{ width: 96, height: 72 }}>
+                <Sprite name={plateColor} h={64} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }} />
+                <div className="absolute inset-0 flex justify-center items-center gap-0.5">
+                  {previewItems.map((id, i) => (
+                    <Sprite key={i} name={id} h={34} style={{ marginLeft: i > 0 ? -10 : 0, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }} />
+                  ))}
                 </div>
               </div>
-              {/* 素材リスト */}
+              {/* 材料リスト */}
               <div className="flex flex-wrap gap-1.5 flex-1">
-                {Object.entries(currentOrder.requiredCounts).map(([baseId, count]) => (
-                  <div key={baseId} className="flex items-center bg-gray-50 rounded-full px-2.5 py-1 border border-gray-200 gap-1.5">
-                    <div className="w-7 h-7 flex items-center justify-center">{renderIngredientIcon(baseId)}</div>
+                {Object.entries(currentOrder.requiredCounts).map(([id, count]) => (
+                  <div key={id} className="flex items-center bg-gray-50 rounded-full pl-1 pr-2.5 py-0.5 border border-gray-200 gap-1">
+                    <Sprite name={id} h={26} />
                     <span className="text-sm font-black text-gray-700">×{count}</span>
                   </div>
                 ))}
@@ -401,26 +397,29 @@ function App() {
           </div>
 
           {/* ワークスペース */}
-          <main className="flex-1 relative overflow-hidden bg-gray-100 flex flex-col min-h-0"
+          <main className="flex-1 relative overflow-hidden bg-[#e9edf2] flex flex-col min-h-0"
             onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onClick={handleWorkspaceClick}>
             {/* レーン背景 */}
-            <div className="absolute top-1/2 left-0 w-full h-16 bg-gray-300 -translate-y-1/2 shadow-inner border-y border-gray-400 flex items-center overflow-hidden">
-              <div className="w-[200%] h-full flex items-center" style={{ animation: 'slideRight 10s linear infinite' }}>
-                <div className="w-16 h-3 bg-gray-400 mx-8 rounded-full opacity-50"></div>
-                <div className="w-16 h-3 bg-gray-400 mx-8 rounded-full opacity-50"></div>
-                <div className="w-16 h-3 bg-gray-400 mx-8 rounded-full opacity-50"></div>
-                <div className="w-16 h-3 bg-gray-400 mx-8 rounded-full opacity-50"></div>
-              </div>
-            </div>
+            <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 pointer-events-none"
+              style={{
+                height: 120,
+                backgroundImage: `url(${ATLAS_SRC})`,
+                ...(() => { const f = FRAMES['lane']; const scale = 120 / f[3];
+                  return { backgroundSize: `${f[2]*scale}px ${ATLAS_H*scale}px`, backgroundPositionY: `-${f[1]*scale}px` }; })(),
+                backgroundRepeat: 'repeat-x',
+                animation: 'laneScroll 3s linear infinite',
+                opacity: 0.95,
+              }} />
 
             <div className="flex-1 relative flex justify-center items-center">
               <div ref={workspaceRef}
-                className={`relative w-[200px] h-[200px] bg-red-100 rounded-full shadow-xl border-[10px] border-red-500 flex justify-center items-center ${isConveying ? 'conveying-plate' : ''}`}
-                style={{ touchAction: 'none' }}>
-                <div className="absolute w-[150px] h-[150px] rounded-full border-2 border-red-200"></div>
-                {items.map(item => renderShape(item))}
+                className={`relative flex justify-center items-center ${isConveying ? 'conveying-plate' : ''}`}
+                style={{ width: PLATE_SIZE, height: PLATE_SIZE, touchAction: 'none' }}>
+                {/* お皿 */}
+                <Sprite name={plateColor} h={PLATE_SIZE} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.25))', pointerEvents: 'none' }} />
+                {items.map(renderSushi)}
                 {items.length > 0 && (
-                  <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow z-50">{items.filter(isOnPlate).length}</div>
+                  <div className="absolute -top-1 -left-1 bg-blue-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow z-50">{onPlateCount}</div>
                 )}
               </div>
             </div>
@@ -436,54 +435,53 @@ function App() {
               </div>
             )}
 
+            {/* 戻す・全消し */}
             <div className="absolute bottom-2 left-3 z-10 flex gap-2">
               <button onClick={undoLastItem} disabled={isConveying || resultStatus !== null || items.length === 0}
-                className={`w-12 h-12 rounded-full font-black text-lg shadow-md border-2 flex items-center justify-center
-                  ${(isConveying || resultStatus !== null || items.length === 0) ? 'bg-gray-300 border-gray-400 text-gray-400' : 'bg-yellow-400 border-yellow-600 text-yellow-800 active:scale-95'}`}>↩</button>
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform active:scale-95 ${(isConveying || resultStatus !== null || items.length === 0) ? 'opacity-40' : ''}`}
+                style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.3))' }}>
+                <Sprite name="btn_back" h={54} />
+              </button>
               <button onClick={clearAllItems} disabled={isConveying || resultStatus !== null || items.length === 0}
-                className={`w-12 h-12 rounded-full font-black text-xs shadow-md border-2 flex items-center justify-center
-                  ${(isConveying || resultStatus !== null || items.length === 0) ? 'bg-gray-300 border-gray-400 text-gray-400' : 'bg-red-400 border-red-600 text-white active:scale-95'}`}>全消し</button>
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform active:scale-95 ${(isConveying || resultStatus !== null || items.length === 0) ? 'opacity-40' : ''}`}
+                style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.3))' }}>
+                <Sprite name="btn_clear" h={54} />
+              </button>
             </div>
+            {/* レーンに流す */}
             <div className="absolute bottom-2 right-3 z-10">
               <button onClick={submitSushi} disabled={isConveying || resultStatus !== null}
-                className={`w-20 h-20 rounded-full font-black text-base shadow-lg border-4 transition-transform active:scale-95 flex flex-col items-center justify-center
-                  ${(isConveying || resultStatus !== null) ? 'bg-gray-400 border-gray-500 text-gray-200' : 'bg-green-500 border-green-700 text-white'}`}>
-                <span>レーンに</span><span>流す</span>
+                className={`w-20 h-20 rounded-full flex items-center justify-center transition-transform active:scale-95 ${(isConveying || resultStatus !== null) ? 'opacity-40' : ''}`}
+                style={{ filter: 'drop-shadow(0 4px 5px rgba(0,0,0,0.35))' }}>
+                <Sprite name="btn_go" h={80} />
               </button>
             </div>
           </main>
 
-          {/* コントロールパネル */}
+          {/* コントロールパネル（選択中の寿司の回転・削除） */}
           {!isConveying && selectedItemData && resultStatus === null && (
             <div className="bg-white px-3 py-1.5 border-t border-gray-200 flex gap-3 justify-between items-center z-10 shadow-lg shrink-0">
-              <div className="flex flex-col flex-1 max-w-[140px]">
-                <label className="text-[10px] text-gray-500 font-bold">回転</label>
+              <div className="flex flex-col flex-1 max-w-[180px]">
+                <label className="text-[10px] text-gray-500 font-bold">かいてん</label>
                 <input type="range" min="0" max="360" value={selectedItemData.rotation}
-                  onChange={(e) => updateSelectedItem({ rotation: Number(e.target.value) })} className="w-full accent-blue-600" />
+                  onChange={(e) => updateItems(prev => prev.map(i => i.id === selectedId ? { ...i, rotation: Number(e.target.value) } : i))}
+                  className="w-full accent-red-500" />
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => moveZ('down')} className="p-1 bg-gray-100 rounded-md"><IconArrowDown /></button>
-                <button onClick={() => moveZ('up')} className="p-1 bg-gray-100 rounded-md"><IconArrowUp /></button>
-                <button onClick={deleteSelectedItem} className="p-1 bg-red-100 text-red-600 rounded-md"><IconTrash /></button>
-              </div>
+              <button onClick={deleteSelectedItem} className="px-3 py-2 bg-red-100 text-red-600 rounded-lg font-bold text-sm">🗑 けす</button>
             </div>
           )}
 
-          {/* 素材パレット */}
+          {/* 寿司パレット */}
           <div className="bg-gray-200 px-2 py-2 shrink-0" style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
             <div className={`bg-white p-2 rounded-xl border border-gray-200 overflow-x-auto whitespace-nowrap shadow-lg ${isConveying || resultStatus !== null ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="flex gap-1.5 px-0.5">
-                {INGREDIENTS.map((ing) => (
-                  <button key={ing.id} onClick={() => addItem(ing)}
-                    className="flex flex-col items-center min-w-[58px] bg-gray-50 p-1.5 rounded-lg shadow-sm border border-gray-200 active:bg-blue-50 active:scale-95 transition-all">
-                    <div className="w-9 h-9 flex items-center justify-center relative pointer-events-none">
-                      {ing.type === 'emoji' ? <span className="text-xl">{ing.emoji}</span> : (
-                        <div className="scale-[0.3] origin-center absolute top-1/2 left-1/2">
-                          {renderShape({ ...ing, baseId: ing.id, x: 0, y: 0, rotation: 0, zIndex: 1, type: ing.type }, true)}
-                        </div>
-                      )}
+                {SUSHI.map((s) => (
+                  <button key={s.id} onClick={() => addSushi(s)}
+                    className="flex flex-col items-center min-w-[64px] bg-gray-50 p-1 rounded-lg shadow-sm border border-gray-200 active:bg-red-50 active:scale-95 transition-all">
+                    <div className="h-11 flex items-center justify-center pointer-events-none">
+                      <Sprite name={s.id} h={42} />
                     </div>
-                    <span className="text-[9px] text-gray-500 font-bold leading-none mt-0.5">{ing.name}</span>
+                    <span className="text-[9px] text-gray-600 font-bold leading-none mt-0.5">{s.name}</span>
                   </button>
                 ))}
               </div>
