@@ -2038,22 +2038,24 @@ document.getElementById('room').addEventListener('pointerdown', function(e) {
 // ============================================================
 // Title & init
 // ============================================================
-document.getElementById('btn-start').addEventListener('click', function() {
-  ensureAudio();
-  playSparkle();
+function enterGame(withSound) {
+  if (withSound) { ensureAudio(); playSparkle(); }
   document.getElementById('title-screen').classList.add('hidden');
   state.scene = 'main';
   updateMood();
   if (useImages) updateImageLayers();
   else updateCssDoll();
   showSpeech('いっしょにあそぼ！ 💕', 2500);
-});
+}
+document.getElementById('btn-start').addEventListener('click', function() { enterGame(true); });
 
 document.addEventListener('dblclick', function(e) { e.preventDefault(); });
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
 checkImages();
 updateMood();
+// タイトル画面を出さずに、そのままゲームを始める（音は最初のタップで鳴りだす）
+enterGame(false);
 </script>
 </body>
 </html>

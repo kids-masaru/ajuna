@@ -1266,6 +1266,10 @@ document.getElementById('btn-start').addEventListener('click', () => {
   startGame();
 });
 
+// タイトル画面を出さずに、そのままゲームを始める（音は最初のタップで鳴りだす）
+startGame();
+document.addEventListener('pointerdown', () => ensureAudio(), { once: true });
+
 document.getElementById('btn-retry').addEventListener('click', () => {
   ensureAudio();
   startGame();

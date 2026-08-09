@@ -471,6 +471,8 @@
 
         function repeatText() { if (currentPhrase) speak(currentPhrase); }
         window.onload = () => { synth.getVoices(); };
+        // スタート画面を出さずに、そのままゲームを始める
+        gameStart();
     </script>
 </body>
 

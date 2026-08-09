@@ -230,7 +230,8 @@
         );
 
         function App() {
-            const [gameState, setGameState] = useState('pre_start'); // Changed initial state
+            // タイトル画面を出さずに、いきなりお店えらびから始める
+            const [gameState, setGameState] = useState('select_shop');
             const [currentShop, setCurrentShop] = useState(SHOPS[0]);
 
             const [targetItems, setTargetItems] = useState([]);
@@ -288,6 +289,24 @@
                 setGameState('select_shop');
                 speak("どこのおみせにいく？");
             };
+
+            // 起動時：横向きレイアウトにして案内をしゃべる。
+            // 全画面と音は、ブラウザの決まりで最初にさわったときに有効にする。
+            useEffect(() => {
+                document.body.classList.add('game-started');
+                speak("どこのおみせにいく？");
+                const unlock = () => {
+                    try {
+                        const el = document.documentElement;
+                        if (el.requestFullscreen) el.requestFullscreen().catch(() => { });
+                        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { });
+                    } catch (e) { }
+                    initAudio();
+                };
+                document.addEventListener('pointerdown', unlock, { once: true });
+                return () => document.removeEventListener('pointerdown', unlock);
+            }, []);
 
             const startBGM = () => { if (bgmRef.current && !isMuted) { bgmRef.current.volume = 0.3; bgmRef.current.play().catch(e => { }); } };
             const stopBGM = () => { if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } };

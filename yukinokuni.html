@@ -69,6 +69,12 @@
         .warning-text {
             animation: flashWarning 0.5s infinite;
         }
+
+        /* Tailwindが読めなかったときでも画面が隠れるように */
+        #startScreen.hidden,
+        #gameOverScreen.hidden {
+            display: none !important;
+        }
     </style>
     <link rel="stylesheet" href="assets/kit.css">
 </head>
@@ -90,7 +96,7 @@
                 <span class="text-yellow-300">⭐ほしでとくてんアップ！</span><br>
                 <span class="text-sky-300">💎ジェムでビームがつよくなる！（さいだい3本）</span>
             </p>
-            <button id="startBtn" class="gp-btn gp-btn--lg">スタート</button>
+            <div id="startBtn" class="text-white text-lg font-bold opacity-80">よみこみちゅう…</div>
         </div>
 
         <div id="gameOverScreen" class="gp-cover hidden absolute inset-0 flex flex-col justify-center items-center z-20">
@@ -121,7 +127,8 @@
     const ATLAS = {"castle":[[0,0,349,320]],"special":[[353,0,209,256]],"treeL":[[566,0,142,254]],"run":[[1096,0,179,194],[1279,0,166,193],[712,0,177,196],[1449,0,158,193],[893,0,199,195],[1693,0,191,190],[0,324,196,187]],"lamp":[[1611,0,78,192]],"treeM":[[200,324,93,166]],"flag":[[297,324,108,163]],"boss":[[569,324,177,152],[409,324,156,159]],"snowman":[[750,324,157,148],[1091,324,163,146],[1258,324,167,146]],"burst":[[911,324,176,147]],"sign":[[1429,324,102,134]],"treeS":[[1535,324,77,132]],"snowmanDead":[[1616,324,160,131]],"deadTree":[[1780,324,142,125]],"chest":[[0,515,131,121]],"ghostDead":[[135,515,100,119]],"statue":[[239,515,186,119]],"snow":[[429,515,91,106],[102,640,70,81],[595,640,61,72],[1359,640,32,35],[1395,640,22,23]],"ghost":[[788,515,112,96],[524,515,141,102],[1060,515,135,95],[669,515,115,98],[1199,515,115,91],[1318,515,116,90]],"icicle":[[904,515,152,96]],"heart":[[1438,515,61,90]],"gem":[[1503,515,54,88]],"ice":[[1274,640,81,49],[466,640,125,74],[1561,515,129,87]],"star":[[384,640,78,75],[1883,515,83,83],[1694,515,88,87]],"iceBlock":[[176,640,84,80],[1786,515,93,86]],"platS":[[940,640,78,63],[0,640,98,82]],"iceDrip":[[264,640,116,77]],"platM":[[660,640,189,69]],"cloud":[[853,640,83,67]],"platL":[[1022,640,248,59]]};
 
     const sheet = new Image();
-    sheet.onload = () => { startBtn.disabled = false; };
+    sheet.onload = () => { beginGame(); };
+    sheet.onerror = () => { beginGame(); };
     sheet.src = 'yuki_atlas.png';
 
     // 高さ h に合わせて (cx, cy) を中心に描く（アスペクト比は保持）
@@ -891,12 +898,7 @@
         }
     }
 
-    startBtn.addEventListener('click', () => {
-        const doc = document.documentElement;
-        if (doc.requestFullscreen) doc.requestFullscreen().catch(() => {});
-        else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
-        
-        getACtx().resume();
+    function beginGame() {
         isGameStarted = true; applyOrientation();
         player = new Player();
         bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
@@ -907,9 +909,25 @@
         resultTitle.className = "text-6xl md:text-8xl font-bold mb-4 text-red-500";
         
         gameState = 'playing'; startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden');
-        bgm.currentTime = 0; bgm.play();
+        bgm.currentTime = 0; bgm.play().catch(() => {});
         gameLoop();
-    });
+    }
+
+    // タイトル画面を出さずに、絵の用意ができたらそのまま始める。
+    // 全画面と音は、ブラウザの決まりで最初にさわったときに有効にする。
+    let unlocked = false;
+    function unlockOnFirstTouch() {
+        if (unlocked) return;
+        unlocked = true;
+        const doc = document.documentElement;
+        if (doc.requestFullscreen) doc.requestFullscreen().catch(() => {});
+        else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+        getACtx().resume();
+        bgm.play().catch(() => {});
+        applyOrientation();
+    }
+    document.addEventListener('pointerdown', unlockOnFirstTouch, { once: true });
+    document.addEventListener('touchstart', unlockOnFirstTouch, { once: true });
 
     restartBtn.addEventListener('click', () => {
         player = new Player();

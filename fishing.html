@@ -96,7 +96,7 @@ body {
       おさかなを タッチして つろう！<br>
       <span style="color:#fde047">⭐ほし と 💗ハート も とってね</span>
     </p>
-    <button id="start-btn" class="gp-btn gp-btn--lg" style="margin-top:14px;">はじめる</button>
+    <div class="sub-text" style="margin-top:14px;opacity:0.8">よみこみちゅう…</div>
   </div>
 
   <div id="result-screen" class="screen-overlay" style="display:none;">
@@ -600,14 +600,12 @@ function endGame() {
   sndFan();
 }
 
-document.getElementById('start-btn').addEventListener('click', startGame);
 document.getElementById('retry-btn').addEventListener('click', startGame);
 document.addEventListener('contextmenu', e => e.preventDefault());
 
-const startBtn = document.getElementById('start-btn');
-startBtn.disabled = true; startBtn.textContent = 'よみこみちゅう…';
+// タイトル画面を出さずに、絵の用意ができたらそのまま始める
 const waitReady = setInterval(() => {
-  if (sheetReady) { clearInterval(waitReady); startBtn.disabled = false; startBtn.textContent = 'はじめる'; }
+  if (sheetReady) { clearInterval(waitReady); startGame(); }
 }, 60);
 
 requestAnimationFrame(loop);

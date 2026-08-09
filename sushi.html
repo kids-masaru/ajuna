@@ -272,6 +272,11 @@ function App() {
     img.src = ATLAS_SRC;
   }, []);
 
+  // タイトル画面を出さずに、絵の用意ができたらそのまま始める
+  useEffect(() => {
+    if (ready && gameState === 'title') startGame();
+  }, [ready]);
+
   // 材料は毎回「その注文に必要なもの＋おじゃまのネタ」だけ並べる
   // （全種類ならべると多すぎて探せないため）
   useEffect(() => {
@@ -439,9 +444,7 @@ function App() {
             したの ざいりょうを タップして<br/>
             シャリに ネタを のせてね
           </p>
-          <button onClick={startGame} disabled={!ready} className="gp-btn gp-btn--lg mt-2 disabled:opacity-50">
-            {ready ? 'スタート' : 'よみこみちゅう…'}
-          </button>
+          <div className="mt-2 text-white/80 font-bold">よみこみちゅう…</div>
         </div>
       )}
 
