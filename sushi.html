@@ -28,11 +28,11 @@ const { useState, useRef, useEffect } = React;
 
 // ===== スプライトアトラス =====
 const ATLAS_SRC = 'sushi_parts.png';
-const ATLAS_W = 1200, ATLAS_H = 724;
-const FRAMES = {"plate_red":[0,0,330,323],"btn_go":[334,0,169,172],"plate_green":[507,0,180,166],"plate_blue":[691,0,181,165],"plate_yellow":[876,0,179,165],"plate_pink":[0,327,180,163],"plate_purple":[184,327,184,162],"full_ikura":[372,327,137,134],"btn_back":[513,327,119,120],"full_maguro":[636,327,204,119],"btn_clear":[844,327,121,119],"full_ebi":[969,327,213,118],"maguro":[0,494,204,115],"full_salmon":[208,494,193,114],"gunkan":[405,494,138,113],"full_tamago":[547,494,170,112],"tamago":[721,494,170,111],"ebi":[895,494,201,111],"nori":[1100,494,60,109],"shari":[0,613,171,107],"salmon":[175,613,193,106],"wasabi":[372,613,66,70],"ikura":[442,613,72,53]};
+const ATLAS_W = 1100, ATLAS_H = 471;
+const FRAMES = {"plate_red":[0,0,221,192],"btn_go":[225,0,169,172],"plate_blue":[398,0,178,155],"plate_yellow":[580,0,172,153],"plate_purple":[756,0,165,152],"plate_green":[925,0,168,151],"plate_pink":[0,196,160,148],"gunkan":[164,196,127,130],"maguro":[295,196,187,124],"salmon":[486,196,196,122],"ebi":[686,196,214,120],"btn_back":[904,196,119,120],"btn_clear":[0,348,121,119],"shari":[125,348,163,115],"tamago":[292,348,151,97],"ikura":[447,348,144,97],"nori":[595,348,59,90],"wasabi":[658,348,69,76]};
 // レーンは繰り返し表示するので別画像（アトラスだと隣の絵まで一緒に流れてしまう）
 const LANE_SRC = 'sushi_lane.png';
-const LANE_W = 198, LANE_H = 138;
+const LANE_W = 116, LANE_H = 127;
 
 // 高さ h(px) にあわせたスプライト表示スタイル
 function spriteStyle(name, h) {
@@ -53,44 +53,68 @@ function Sprite({ name, h, style, className }) {
 }
 // 元の絵の比率をそのまま保つ共通スケール（部品どうしの大きさが正しくなる）
 const SCALE = 0.52;
-const partH = (name) => FRAMES[name][3] * SCALE;
+// 一部の部品だけ大きさを微調整したいときの倍率
+const SIZE_ADJ = { nori: 0.85 };
+const partH = (name) => FRAMES[name][3] * SCALE * (SIZE_ADJ[name] || 1);
 
 // ===== 部品（元のゲームと同じ9種） =====
 // dy: お皿の中心からの縦位置。重ねると本物のお寿司になるように調整してある
 const PARTS = [
   { id: 'shari',  name: 'シャリ',   dy: 26 },
-  { id: 'gunkan', name: 'ぐんかん', dy: 24 },
-  { id: 'maguro', name: 'まぐろ',   dy: 3 },
-  { id: 'salmon', name: 'サーモン', dy: 3 },
-  { id: 'tamago', name: 'たまご',   dy: 2 },
-  { id: 'ebi',    name: 'えび',     dy: 3 },
+  { id: 'gunkan', name: 'ぐんかん', dy: 22 },
+  { id: 'maguro', name: 'まぐろ',   dy: 14, dx: 8 },
+  { id: 'salmon', name: 'サーモン', dy: 14, dx: 8 },
+  { id: 'tamago', name: 'たまご',   dy: 20, dx: 8 },
+  { id: 'ebi',    name: 'えび',     dy: 14, dx: 8 },
   { id: 'ikura',  name: 'いくら',   dy: 6 },
-  { id: 'nori',   name: 'のり',     dy: 14 },
-  { id: 'wasabi', name: 'わさび',   dy: 20, dx: -30 },
+  { id: 'nori',   name: 'のり',     dy: 20, dx: 8 },
+  { id: 'wasabi', name: 'わさび',   dy: 32, dx: -38 },
 ];
 const PART_BY_ID = Object.fromEntries(PARTS.map(p => [p.id, p]));
 // 重ね順（シャリが一番下、わさび→ネタ→のり の順で上へ）
 const LAYER = { shari: 1, gunkan: 1, wasabi: 2, maguro: 3, salmon: 3, tamago: 3, ebi: 3, ikura: 3, nori: 4 };
 
+// お手本：注文されたパーツを実際と同じ重ね方で組み立てて見せる
+function SushiPreview({ req, scale, box }) {
+  const ids = Object.keys(req).sort((a, b) => LAYER[a] - LAYER[b]);
+  return (
+    <div style={{ position: 'relative', width: box[0], height: box[1] }}>
+      {ids.map(id => {
+        const p = PART_BY_ID[id];
+        if (!p) return null;
+        return (
+          <div key={id} style={{
+            position: 'absolute', left: '50%', top: '50%', zIndex: LAYER[id],
+            transform: `translate(-50%, -50%) translate(${(p.dx || 0) * scale}px, ${p.dy * scale}px)`,
+            filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.25))',
+          }}>
+            <Sprite name={id} h={partH(id) * scale} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ===== 注文 =====
-// full: お手本に見せる「完成したお寿司」の絵
+// お手本は req のパーツから自動で組み立てて表示する
 const EASY_ORDERS = [
-  { req: { shari: 1, maguro: 1 },            full: ['full_maguro'], score: 100 },
-  { req: { shari: 1, salmon: 1 },            full: ['full_salmon'], score: 100 },
-  { req: { shari: 1, ebi: 1 },               full: ['full_ebi'],    score: 120 },
-  { req: { shari: 1, tamago: 1, nori: 1 },   full: ['full_tamago'], score: 150 },
-  { req: { gunkan: 1, ikura: 1 },            full: ['full_ikura'],  score: 180 },
-  { req: { shari: 1, wasabi: 1, maguro: 1 }, full: ['full_maguro'], score: 150 },
-  { req: { shari: 1, wasabi: 1, salmon: 1 }, full: ['full_salmon'], score: 150 },
+  { req: { shari: 1, maguro: 1 },            score: 100 },
+  { req: { shari: 1, salmon: 1 },            score: 100 },
+  { req: { shari: 1, ebi: 1 },               score: 120 },
+  { req: { shari: 1, tamago: 1, nori: 1 },   score: 150 },
+  { req: { gunkan: 1, ikura: 1 },            score: 180 },
+  { req: { shari: 1, wasabi: 1, maguro: 1 }, score: 150 },
+  { req: { shari: 1, wasabi: 1, salmon: 1 }, score: 150 },
 ];
 const HARD_ORDERS = [
-  { req: { shari: 2, maguro: 2 },                 full: ['full_maguro', 'full_maguro'], score: 220 },
-  { req: { shari: 2, salmon: 2 },                 full: ['full_salmon', 'full_salmon'], score: 220 },
-  { req: { shari: 2, ebi: 2 },                    full: ['full_ebi', 'full_ebi'],       score: 250 },
-  { req: { shari: 2, maguro: 1, salmon: 1 },      full: ['full_maguro', 'full_salmon'], score: 240 },
-  { req: { shari: 2, tamago: 2, nori: 2 },        full: ['full_tamago', 'full_tamago'], score: 320 },
-  { req: { gunkan: 2, ikura: 2 },                 full: ['full_ikura', 'full_ikura'],   score: 340 },
-  { req: { shari: 2, wasabi: 2, maguro: 2 },      full: ['full_maguro', 'full_maguro'], score: 330 },
+  { req: { shari: 2, maguro: 2 },            score: 220 },
+  { req: { shari: 2, salmon: 2 },            score: 220 },
+  { req: { shari: 2, ebi: 2 },               score: 250 },
+  { req: { shari: 2, maguro: 1, salmon: 1 }, score: 240 },
+  { req: { shari: 2, tamago: 2, nori: 2 },   score: 320 },
+  { req: { gunkan: 2, ikura: 2 },            score: 340 },
+  { req: { shari: 2, wasabi: 2, maguro: 2 }, score: 330 },
 ];
 
 function shuffleArray(arr) {
@@ -276,6 +300,7 @@ function App() {
   const counts = {};
   items.forEach(i => { if (isOnPlate(i)) counts[i.baseId] = (counts[i.baseId] || 0) + 1; });
   const req = order ? order.req : {};
+  const pieceCount = (req.shari || 0) + (req.gunkan || 0);   // 何貫の注文か
   const isPerfect = order &&
     Object.keys(req).length === Object.keys(counts).length &&
     Object.keys(req).every(k => counts[k] === req[k]);
@@ -373,11 +398,11 @@ function App() {
             <div className="flex items-center gap-3">
               <div className="shrink-0 text-center">
                 <div className="text-[10px] font-black text-red-600 mb-1 bg-red-100 px-2 py-0.5 rounded-full">おてほん</div>
-                <div className="flex items-end justify-center gap-0.5 h-[52px]">
-                  {order.full.map((fn, i) => (
-                    <Sprite key={i} name={fn} h={46} style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.25))' }} />
-                  ))}
-                  {req.wasabi ? <Sprite name="wasabi" h={22} style={{ marginBottom: 2 }} /> : null}
+                <div className="relative flex justify-center">
+                  <SushiPreview req={req} scale={0.62} box={[76, 58]} />
+                  {pieceCount >= 2 && (
+                    <span className="absolute -right-1 bottom-0 text-[11px] font-black text-red-600 bg-white/90 rounded-full px-1.5 border border-red-300">×{pieceCount}</span>
+                  )}
                 </div>
               </div>
               {/* いくつ乗せたか、ひと目でわかるカウンター */}
