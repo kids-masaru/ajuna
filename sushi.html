@@ -68,7 +68,9 @@ const PARTS = [
   { id: 'ebi',    name: 'えび',     dy: 14, dx: 8 },
   { id: 'ikura',  name: 'いくら',   dy: 6 },
   { id: 'nori',   name: 'のり',     dy: 20, dx: 8 },
-  { id: 'wasabi', name: 'わさび',   dy: 32, dx: -38 },
+  // わさびはシャリとネタの間。本物と同じで見た目には隠れる
+  // （乗せたかどうかは上の「1/1」カウンターで確認できる）
+  { id: 'wasabi', name: 'わさび',   dy: 16, dx: -4 },
 ];
 const PART_BY_ID = Object.fromEntries(PARTS.map(p => [p.id, p]));
 // 重ね順（シャリが一番下、わさび→ネタ→のり の順で上へ）
