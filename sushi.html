@@ -99,6 +99,30 @@ const PARTS = [
 const PART_BY_ID = Object.fromEntries(PARTS.map(p => [p.id, p]));
 const NIGIRI_IDS = NIGIRI_NETA.map(n => n.id);
 const GUNKAN_IDS = GUNKAN_NETA.map(n => n.id);
+
+// 役割ごとに1貫目・2貫目へ振り分ける
+// （まぐろ1個＋サーモン1個 のとき、両方が同じ貫に乗ってしまわないように）
+function roleOf(id) {
+  if (id === 'shari' || id === 'gunkan') return 'base';
+  if (id === 'wasabi' || id === 'nori') return id;
+  return 'neta';
+}
+// 注文を「1貫ずつ」に分ける（お手本を貫の数だけ並べるのに使う）
+function splitIntoPieces(req, n) {
+  const pieces = Array.from({ length: n }, () => ({}));
+  const used = {};
+  ['base', 'wasabi', 'neta', 'nori'].forEach(role => {
+    Object.keys(req).forEach(id => {
+      if (roleOf(id) !== role) return;
+      for (let k = 0; k < req[id]; k++) {
+        const idx = (used[role] || 0); used[role] = idx + 1;
+        const p = pieces[idx % n];
+        p[id] = (p[id] || 0) + 1;
+      }
+    });
+  });
+  return pieces;
+}
 // 重ね順（シャリが一番下、わさび→ネタ→のり の順で上へ）
 const LAYER = { shari: 1, gunkan: 1, wasabi: 2, nori: 4 };
 [...NIGIRI_IDS, ...GUNKAN_IDS].forEach(id => { LAYER[id] = 3; });
@@ -291,7 +315,8 @@ function App() {
     if (isConveying || gameState !== 'playing' || resultStatus !== null) return;
     initAudio(); playSound('put');
     const slots = slotsFor(order);
-    const nth = itemsRef.current.filter(i => i.baseId === part.id).length;
+    // 同じ役割（シャリ／ネタ／わさび／のり）の中で何個目かで置き場所を決める
+    const nth = itemsRef.current.filter(i => roleOf(i.baseId) === roleOf(part.id)).length;
     const sx = slots[nth % slots.length];
     itemsRef.current = [...itemsRef.current, {
       id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -446,11 +471,12 @@ function App() {
             <div className="flex items-center gap-3">
               <div className="shrink-0 text-center">
                 <div className="text-[10px] font-black text-red-600 mb-1 bg-red-100 px-2 py-0.5 rounded-full">おてほん</div>
-                <div className="relative flex justify-center">
-                  <SushiPreview req={req} scale={0.62} box={[76, 58]} />
-                  {pieceCount >= 2 && (
-                    <span className="absolute -right-1 bottom-0 text-[11px] font-black text-red-600 bg-white/90 rounded-full px-1.5 border border-red-300">×{pieceCount}</span>
-                  )}
+                {/* 2貫の注文なら お寿司の絵も2つならべる（数字は使わない） */}
+                <div className="flex justify-center items-end gap-0.5">
+                  {splitIntoPieces(req, Math.max(1, pieceCount)).map((piece, i) => (
+                    <SushiPreview key={i} req={piece} scale={pieceCount >= 2 ? 0.46 : 0.62}
+                      box={pieceCount >= 2 ? [56, 52] : [76, 58]} />
+                  ))}
                 </div>
               </div>
               {/* いくつ乗せたか、ひと目でわかるカウンター */}
@@ -458,11 +484,20 @@ function App() {
                 {Object.entries(req).map(([id, need]) => {
                   const have = counts[id] || 0;
                   const ok = have === need;
+                  const over = have > need;
                   return (
-                    <div key={id}
-                      className={`flex items-center rounded-full pl-1 pr-2 py-0.5 border-2 gap-1 ${ok ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-200'}`}>
+                    <div key={id} data-part={id} data-have={have} data-need={need}
+                      className={`flex items-center rounded-full pl-1 pr-2 py-0.5 border-2 gap-1
+                        ${over ? 'bg-red-50 border-red-400' : ok ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-200'}`}>
                       <Sprite name={id} h={24} />
-                      <span className={`text-sm font-black ${ok ? 'text-green-600' : 'text-gray-600'}`}>{have}/{need}</span>
+                      {/* 必要な数だけ丸をならべて、のせたぶんだけ塗る（数字は読めなくてもわかる） */}
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: need }).map((_, i) => (
+                          <span key={i}
+                            className={`w-3 h-3 rounded-full border-2 ${i < have ? 'bg-green-500 border-green-600' : 'bg-white border-gray-300'}`} />
+                        ))}
+                        {over && <span className="w-3 h-3 rounded-full bg-red-500 border-2 border-red-600" />}
+                      </div>
                     </div>
                   );
                 })}
