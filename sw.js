@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v91';
+const CACHE_NAME = 'ajuna-v92';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -88,6 +88,7 @@ const LOCAL_FILES = [
   './waniwani.html',
   './wani_head.png',
   './fishing.html',
+  './fish_atlas.png',
   './kart.html',
   './kart_sprites.png',
   './kart_cat_front.png',
