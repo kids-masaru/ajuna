@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>すべりだい</title>
+<title>すべりだいめいろ</title>
 <link rel="stylesheet" href="assets/kit.css">
 <style>
 body {
@@ -13,658 +13,538 @@ body {
   touch-action: none;
   overscroll-behavior: none;
   width: 100vw; height: 100dvh;
+  background: #bfe6f5;
 }
+#cv { display: block; width: 100vw; height: 100dvh; }
 
-#game {
-  width: 100vw; height: 100dvh;
-  position: relative;
-  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 30%, #c8e6c9 70%, #4CAF50 100%);
-  overflow: hidden;
-}
-
-/* Slide track */
-#slide-track {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-}
-
-.track-segment {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  height: 4px;
-  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
-  border-radius: 2px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* Player */
-#player {
-  position: absolute;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
-  transition: left 0.08s ease-out;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-  width: 140px;
-  height: 175px;
-}
-#player img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-#player.bump {
-  animation: player-bump 0.3s ease-out;
-}
-@keyframes player-bump {
-  0% { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) brightness(2); }
-  100% { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) brightness(1); }
-}
-
-/* Sliding bob animation */
-@keyframes slide-bob {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(4px); }
-}
-
-/* Obstacles */
-.obstacle {
-  position: absolute;
-  font-size: 32px;
-  z-index: 3;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-}
-
-/* Collectibles */
-.collectible {
-  position: absolute;
-  font-size: 28px;
-  z-index: 3;
-  animation: collect-float 1s ease-in-out infinite alternate;
-}
-@keyframes collect-float {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-5px); }
-}
-
-.collected {
-  animation: collect-pop 0.3s ease-out forwards;
-}
-@keyframes collect-pop {
-  0% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; }
-}
-
-/* Side rails */
-.rail {
-  position: absolute;
-  top: 0;
-  width: 12px;
-  height: 100%;
-  z-index: 6;
-  box-shadow: 0 0 8px rgba(0,0,0,0.2);
-}
-.rail-left {
-  left: 0;
-  background: linear-gradient(180deg, #f44336 0%, #e91e63 50%, #9c27b0 100%);
-  border-radius: 0 5px 5px 0;
-}
-.rail-right {
-  right: 0;
-  left: auto;
-  background: linear-gradient(180deg, #ff9800 0%, #ff5722 50%, #e91e63 100%);
-  border-radius: 5px 0 0 5px;
-}
-
-/* Slide top */
-#slide-top {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  height: 50px;
-  background: linear-gradient(180deg, #795548, #8d6e63);
-  border-radius: 0;
-  z-index: 6;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 6px;
-  font-size: 12px;
-  font-weight: 800;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-
-/* Speed lines */
-.speed-line {
-  position: absolute;
-  width: 3px;
-  height: 30px;
-  background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0.7));
-  z-index: 1;
-  border-radius: 2px;
-  animation: speed-fly 0.4s linear forwards;
-}
-@keyframes speed-fly {
-  0% { opacity: 0.8; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(80px); }
-}
-
-/* Slide surface stripes (scrolling) */
-.slide-stripe {
-  position: absolute;
-  left: 12px;
-  width: calc(100% - 24px);
-  height: 2px;
-  background: rgba(255,255,255,0.15);
-  z-index: 1;
-  animation: stripe-scroll 0.25s linear forwards;
-  pointer-events: none;
-}
-@keyframes stripe-scroll {
-  0% { opacity: 0.3; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(100px); }
-}
-
-/* HUD */
 #hud {
-  position: absolute;
-  top: max(56px, calc(env(safe-area-inset-top) + 50px));
-  left: 0; right: 0;
-  z-index: 20;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 12px;
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: max(12px, env(safe-area-inset-top)) 12px 4px 70px;
   pointer-events: none;
 }
 .hud-box {
-  background: rgba(0,0,0,0.4);
-  border-radius: 14px;
-  padding: 5px 12px;
-  font-weight: 800;
-  font-size: 14px;
-  color: white;
+  background: rgba(255,255,255,0.92); border-radius: 999px;
+  padding: 5px 14px; font-weight: 800; font-size: 0.95rem; color: #0e7490;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18); white-space: nowrap;
+}
+
+/* ゴール・結果のオーバーレイ */
+.screen {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 24px; text-align: center;
+  background: rgba(8, 60, 90, 0.78);
   backdrop-filter: blur(4px);
+  color: #fff;
 }
-
-/* Progress bar */
-#progress-wrap {
-  position: absolute;
-  left: 8px;
-  top: 25%;
-  width: 16px;
-  height: 50%;
-  background: rgba(0,0,0,0.2);
-  border-radius: 8px;
-  z-index: 15;
-  overflow: hidden;
+.big-title { font-size: clamp(2rem, 9vw, 2.9rem); font-weight: 900; text-shadow: 0 3px 12px rgba(0,0,0,0.4); }
+.screen .gp-btn { white-space: nowrap; }
+#goal-flash {
+  position: absolute; inset: 0; z-index: 40;
+  display: none; align-items: center; justify-content: center;
+  pointer-events: none;
 }
-#progress-bar {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 0%;
-  background: linear-gradient(180deg, #4CAF50, #8BC34A);
-  border-radius: 8px;
-  transition: height 0.2s;
+#goal-flash .msg {
+  font-size: clamp(2.2rem, 11vw, 3.4rem); font-weight: 900; color: #fff;
+  text-shadow: 0 0 18px rgba(255,200,60,0.95), 0 4px 10px rgba(0,0,0,0.35);
+  animation: pop 0.5s ease-out;
 }
-#progress-marker {
-  position: absolute;
-  left: -2px;
-  width: 20px;
-  height: 20px;
-  font-size: 14px;
-  text-align: center;
-  z-index: 16;
-  transition: top 0.2s;
-}
-
-/* Loading */
-#loading-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: linear-gradient(180deg, #87CEEB 0%, #c8e6c9 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-#loading-screen.hidden { display: none; }
-
-/* Title */
-#title-screen {
-  position: fixed; inset: 0; z-index: 50;
-  background: linear-gradient(180deg, #87CEEB 0%, #B0E0F6 50%, #c8e6c9 100%);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 14px;
-  transition: opacity 0.5s;
-}
-#title-screen.hidden { opacity: 0; pointer-events: none; }
-.title-emoji { font-size: 60px; animation: gp-float 3s ease-in-out infinite; }
-.title-name {
-  font-size: clamp(2rem, 8vw, 2.8rem);
-  font-weight: 900; color: #4CAF50;
-  text-shadow: 0 2px 8px rgba(76,175,80,0.3);
-}
-.title-sub {
-  font-size: 1rem; font-weight: 700;
-  color: #66BB6A;
-  text-align: center; line-height: 1.6;
-}
-
-/* Result */
-#result-screen {
-  position: fixed; inset: 0; z-index: 50;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(6px);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 14px; opacity: 0; pointer-events: none;
-  transition: opacity 0.5s;
-}
-#result-screen.show { opacity: 1; pointer-events: auto; }
-.result-card {
-  background: white; border-radius: 24px;
-  padding: 28px 24px; max-width: 300px; width: 85%;
-  display: flex; flex-direction: column;
-  align-items: center; gap: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-}
-.result-emoji { font-size: 56px; }
-.result-title { font-weight: 900; font-size: 1.5rem; color: #333; }
-.result-score { font-weight: 800; font-size: 1.2rem; color: #4CAF50; }
-.result-detail { font-weight: 700; font-size: 0.9rem; color: #888; }
-
-/* Goal */
-#goal-line {
-  display: none;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  text-align: center;
-  z-index: 4;
-  font-size: 20px;
-  font-weight: 900;
-  color: #f44336;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+@keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
 </style>
 </head>
-<body class="gp gp-green">
+<body class="gp gp-cyan">
+  <canvas id="cv"></canvas>
   <a href="#" class="gp-home" id="btn-back" aria-label="もどる">🔙</a>
 
-  <div id="loading-screen">
-    <div style="font-size:48px;animation:gp-float 2s ease-in-out infinite">🛝</div>
-    <div style="font-size:16px;font-weight:800;color:#4CAF50;margin-top:12px">よみこみちゅう...</div>
+  <div id="hud">
+    <div class="hud-box">⭐ <span id="star-n">0</span></div>
+    <div class="hud-box">コース <span id="course-n">1</span>/3</div>
   </div>
 
-  <div id="game">
-    <div id="slide-top">スタート！</div>
-    <div class="rail rail-left"></div>
-    <div class="rail rail-right"></div>
-    <div id="slide-track"></div>
-    <div id="player"><img src="slide_girl.png" alt="おんなのこ"></div>
-    <div id="goal-line">🏁 ゴール！ 🏁</div>
+  <div id="goal-flash"><div class="msg">ゴール！🎉</div></div>
 
-    <div id="hud">
-      <div class="hud-box">⭐ <span id="score">0</span></div>
-      <div class="hud-box">🕐 <span id="timer">0.0</span></div>
-    </div>
-
-    <div id="progress-wrap">
-      <div id="progress-bar"></div>
-    </div>
-    <div id="progress-marker"><img src="slide_girl.png" alt="" style="width:18px;height:22px;object-fit:contain"></div>
-  </div>
-
-  <div id="title-screen">
-    <div class="title-emoji">🛝</div>
-    <div class="title-name">すべりだい</div>
-    <div class="title-sub">ひだり・みぎに スワイプして<br>じゃまなものを よけよう！</div>
-    <button class="gp-btn gp-btn--lg" id="btn-start" style="margin-top:16px;background:#4CAF50">はじめる！</button>
-  </div>
-
-  <div id="result-screen">
-    <div class="result-card gp-pop">
-      <div class="result-emoji" id="r-emoji">🎉</div>
-      <div class="result-title" id="r-title">ゴール！</div>
-      <div class="result-score" id="r-score"></div>
-      <div class="result-detail" id="r-detail"></div>
-      <button class="gp-btn gp-btn--lg" id="btn-retry" style="margin-top:8px;background:#4CAF50">もういっかい！</button>
-      <button class="gp-btn" id="btn-back-park" style="margin-top:4px;background:#66BB6A">🌳 こうえんにもどる</button>
+  <div id="result" class="screen" style="display:none;">
+    <div class="gp-hero gp-float">🏆</div>
+    <h2 class="big-title">ぜんぶ ゴール！</h2>
+    <div style="font-size:1.05rem;font-weight:800;">あつめた ほし</div>
+    <div id="final-star" style="font-size:3rem;font-weight:900;color:#fde047;line-height:1.1;">0</div>
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button class="gp-btn" id="btn-retry">もういっかい</button>
+      <button class="gp-btn gp-btn--ghost" id="btn-back-park">🌳 こうえんにもどる</button>
     </div>
   </div>
 
 <script>
-var player = document.getElementById('player');
-var scoreEl = document.getElementById('score');
-var timerEl = document.getElementById('timer');
-var gameEl = document.getElementById('game');
-var progressBar = document.getElementById('progress-bar');
-var progressMarker = document.getElementById('progress-marker');
+// ============================================================
+// すべりだいめいろ
+//  ・女の子が じどうで すべりおちる（画面は下から上へ流れる）
+//  ・道が ふたまたに分かれたら、左右をタップしてえらぶ
+//  ・いきどまりは ぽよんと はねかえって、もういちど えらべる
+//  ・ゴールまで すべりきれたら つぎのコースへ（全3コース）
+// ============================================================
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var W = 0, H = 0;
+function resize() {
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
 
-var AudioCtx = window.AudioContext || window.webkitAudioContext;
-var audioCtx;
+var girlImg = new Image();
+var girlOK = false;
+girlImg.onload = function () { girlOK = true; };
+girlImg.src = 'slide_girl.png';
+
+// ===== 音 =====
+var ac = null, windGain = null;
 function ensureAudio() {
-  if (!audioCtx) audioCtx = new AudioCtx();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-function playCollect() {
-  ensureAudio();
-  var t = audioCtx.currentTime;
-  var osc = audioCtx.createOscillator();
-  var g = audioCtx.createGain();
-  osc.connect(g); g.connect(audioCtx.destination);
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(880, t);
-  osc.frequency.exponentialRampToValueAtTime(1320, t + 0.1);
-  g.gain.setValueAtTime(0.1, t);
-  g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-  osc.start(t); osc.stop(t + 0.12);
-}
-
-function playBump() {
-  ensureAudio();
-  var t = audioCtx.currentTime;
-  var osc = audioCtx.createOscillator();
-  var g = audioCtx.createGain();
-  osc.connect(g); g.connect(audioCtx.destination);
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(150, t);
-  g.gain.setValueAtTime(0.08, t);
-  g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-  osc.start(t); osc.stop(t + 0.15);
-}
-
-function playFanfare() {
-  ensureAudio();
-  var t = audioCtx.currentTime;
-  [523, 659, 784, 1047].forEach(function(f, i) {
-    var osc = audioCtx.createOscillator();
-    var g = audioCtx.createGain();
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(f, t + i * 0.15);
-    g.gain.setValueAtTime(0, t + i * 0.15);
-    g.gain.linearRampToValueAtTime(0.15, t + i * 0.15 + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.15 + (i === 3 ? 0.5 : 0.2));
-    osc.start(t + i * 0.15); osc.stop(t + i * 0.15 + (i === 3 ? 0.5 : 0.2));
-  });
-}
-
-var state = 'title';
-var playerX = 50;
-var prevPlayerX = 50;
-var playerTilt = 0;
-var bobPhase = 0;
-var score = 0;
-var distance = 0;
-var totalDistance = 3000;
-var speed = 2;
-var elapsed = 0;
-var obstacles = [];
-var collectibles = [];
-var lastSpawn = 0;
-var lastStripe = 0;
-var touchStartX = null;
-
-var RAIL_W = 12;
-var PLAYER_HALF_W = 70;
-
-function getRailBounds() {
-  var cw = window.innerWidth;
-  var minPct = (RAIL_W + PLAYER_HALF_W) / cw * 100;
-  var maxPct = (cw - RAIL_W - PLAYER_HALF_W) / cw * 100;
-  return { min: minPct, max: maxPct };
-}
-
-var OBSTACLE_ITEMS = ['🪨','🌲','🍂','🎈','🐦'];
-var COLLECT_ITEMS = ['⭐','💎','🌸','🍀','🦋'];
-
-function spawnItems() {
-  var screenH = window.innerHeight;
-  var bounds = getRailBounds();
-  var spawnMin = bounds.min + 2;
-  var spawnMax = bounds.max - 2;
-  var spawnRange = spawnMax - spawnMin;
-  if (Math.random() < 0.4) {
-    var obs = document.createElement('div');
-    obs.className = 'obstacle';
-    obs.textContent = OBSTACLE_ITEMS[Math.floor(Math.random() * OBSTACLE_ITEMS.length)];
-    obs.style.left = (spawnMin + Math.random() * spawnRange) + '%';
-    obs.style.top = screenH + 'px';
-    obs._y = screenH;
-    obs._x = parseFloat(obs.style.left);
-    gameEl.appendChild(obs);
-    obstacles.push(obs);
+  if (!ac) {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    // すべっている間の「シャーッ」という風の音
+    var len = ac.sampleRate * 2;
+    var buf = ac.createBuffer(1, len, ac.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    var f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+    windGain = ac.createGain(); windGain.gain.value = 0;
+    src.connect(f); f.connect(windGain); windGain.connect(ac.destination);
+    src.start();
   }
-  if (Math.random() < 0.35) {
-    var col = document.createElement('div');
-    col.className = 'collectible';
-    col.textContent = COLLECT_ITEMS[Math.floor(Math.random() * COLLECT_ITEMS.length)];
-    col.style.left = (spawnMin + Math.random() * spawnRange) + '%';
-    col.style.top = screenH + 'px';
-    col._y = screenH;
-    col._x = parseFloat(col.style.left);
-    col._collected = false;
-    gameEl.appendChild(col);
-    collectibles.push(col);
-  }
+  if (ac.state === 'suspended') ac.resume();
 }
-
-function spawnSpeedLine() {
-  var bounds = getRailBounds();
-  var el = document.createElement('div');
-  el.className = 'speed-line';
-  el.style.left = (bounds.min + Math.random() * (bounds.max - bounds.min)) + '%';
-  el.style.top = '-20px';
-  gameEl.appendChild(el);
-  el.addEventListener('animationend', function() { this.remove(); });
+function setWind(on) {
+  if (!windGain) return;
+  windGain.gain.linearRampToValueAtTime(on ? 0.05 : 0, ac.currentTime + 0.25);
 }
-
-function spawnStripe() {
-  var el = document.createElement('div');
-  el.className = 'slide-stripe';
-  el.style.top = '-2px';
-  gameEl.appendChild(el);
-  el.addEventListener('animationend', function() { this.remove(); });
+function tone(f0, dur, type, vol, f1) {
+  if (!ac) return;
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.connect(g); g.connect(ac.destination);
+  var t = ac.currentTime;
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t);
+  if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol || 0.15, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.start(t); o.stop(t + dur);
 }
+var sndChoose = function () { tone(500, 0.12, 'square', 0.07, 900); };
+var sndStar   = function () { tone(880, 0.09, 'sine', 0.18); setTimeout(function(){ tone(1320, 0.14, 'sine', 0.18); }, 70); };
+var sndBoing  = function () { tone(300, 0.35, 'sine', 0.2, 90); };
+var sndGoal   = function () { [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){ tone(f,0.25,'sine',0.2); }, i*130); }); };
 
-var lastTime = 0;
+// ===== コースづくり =====
+// lanes: 3本のレーン。ほんとうの道を1本つくり、分かれ道ごとに
+// 「いきどまり」の枝を1本たす。いきどまりは1〜2だん下でフタになる。
+var LANES = 3;
+var course = null;
+var courseIdx = 0, TOTAL_COURSES = 3;
+var stars = 0;
 
-function gameLoop(now) {
-  if (state !== 'playing') { requestAnimationFrame(gameLoop); return; }
-
-  var dt = lastTime ? Math.min(now - lastTime, 50) : 16;
-  lastTime = now;
-
-  elapsed += dt / 1000;
-  timerEl.textContent = elapsed.toFixed(1);
-
-  speed = 2 + distance / totalDistance * 3;
-  distance += speed * dt / 16;
-
-  var pct = Math.min(distance / totalDistance, 1);
-  progressBar.style.height = (pct * 100) + '%';
-  progressMarker.style.top = 'calc(25% + ' + (pct * 50) + '%)';
-
-  // Player tilt and bob for sliding feel
-  var dx = playerX - prevPlayerX;
-  playerTilt += ((-dx * 3) - playerTilt) * 0.15;
-  playerTilt = Math.max(-18, Math.min(18, playerTilt));
-  prevPlayerX = playerX;
-  bobPhase += dt * 0.008 * speed;
-  var bobY = Math.sin(bobPhase) * 3;
-  player.style.transform = 'translateX(-50%) rotate(' + playerTilt.toFixed(1) + 'deg) translateY(' + bobY.toFixed(1) + 'px)';
-
-  // Spawn
-  lastSpawn += dt;
-  if (lastSpawn > 400) {
-    lastSpawn = 0;
-    spawnItems();
+function genCourse(idx) {
+  var M = 5 + idx * 2;                     // 分かれ道の数（コースごとに長く）
+  var path = [1];
+  for (var r = 0; r < M; r++) {
+    var l = path[r], opts = [];
+    if (l > 0) opts.push(l - 1);
+    if (l < LANES - 1) opts.push(l + 1);
+    opts.push(l);
+    // まっすぐばかりにならないよう、まがる方をすこし優先
+    var next = opts[Math.floor(Math.random() * opts.length)];
+    if (next === l && Math.random() < 0.6) next = opts[0];
+    path.push(next);
   }
-  if (Math.random() < 0.3 * (speed / 3)) spawnSpeedLine();
-  lastStripe += dt;
-  if (lastStripe > 80) {
-    lastStripe = 0;
-    spawnStripe();
-  }
-
-  // Move obstacles
-  var playerRect = { x: playerX - 5, w: 10, y: 60, h: 40 };
-  for (var i = obstacles.length - 1; i >= 0; i--) {
-    var o = obstacles[i];
-    o._y -= speed * dt / 16;
-    o.style.top = o._y + 'px';
-    if (o._y < -50) {
-      o.remove();
-      obstacles.splice(i, 1);
-      continue;
-    }
-    if (o._y < 100 && o._y > 30 && Math.abs(o._x - playerX) < 12) {
-      playBump();
-      score = Math.max(0, score - 10);
-      scoreEl.textContent = score;
-      o.style.opacity = '0.3';
-      o.remove();
-      obstacles.splice(i, 1);
-      player.classList.remove('bump');
-      void player.offsetWidth;
-      player.classList.add('bump');
-      if (navigator.vibrate) navigator.vibrate(50);
+  var nodes = {};   // "r,l" -> {cap:bool, hit:bool}
+  var edges = {};   // "r,l" -> [ {to:lane, star:bool, correct:bool} ]
+  function N(r, l) { var k = r + ',' + l; if (!nodes[k]) nodes[k] = {}; return nodes[k]; }
+  function E(r, l) { var k = r + ',' + l; if (!edges[k]) edges[k] = []; return edges[k]; }
+  for (var r2 = 0; r2 < M; r2++) {
+    N(r2, path[r2]);
+    E(r2, path[r2]).push({ to: path[r2 + 1], star: Math.random() < 0.45, correct: true });
+    // いきどまりの枝
+    var l2 = path[r2], decoys = [];
+    [l2 - 1, l2, l2 + 1].forEach(function (d) {
+      if (d < 0 || d >= LANES) return;
+      if (d === path[r2 + 1]) return;
+      decoys.push(d);
+    });
+    if (decoys.length) {
+      var d2 = decoys[Math.floor(Math.random() * decoys.length)];
+      var deep = idx >= 1 && Math.random() < 0.5 && r2 + 2 <= M && d2 !== path[r2 + 2];
+      E(r2, l2).push({ to: d2, star: Math.random() < 0.3, correct: false });
+      if (deep) {
+        // 1だん下がってからフタ（すこしむずかしい）
+        N(r2 + 1, d2);
+        E(r2 + 1, d2).push({ to: d2, star: false, correct: false });
+        N(r2 + 2, d2).cap = true;
+      } else {
+        N(r2 + 1, d2).cap = true;
+      }
     }
   }
+  N(M, path[M]).goal = true;
+  return { M: M, path: path, nodes: nodes, edges: edges };
+}
 
-  // Move collectibles
-  for (var j = collectibles.length - 1; j >= 0; j--) {
-    var c = collectibles[j];
-    c._y -= speed * dt / 16;
-    c.style.top = c._y + 'px';
-    if (c._y < -50) {
-      c.remove();
-      collectibles.splice(j, 1);
-      continue;
-    }
-    if (!c._collected && c._y < 100 && c._y > 30 && Math.abs(c._x - playerX) < 14) {
-      c._collected = true;
-      c.classList.add('collected');
-      score += 20;
-      scoreEl.textContent = score;
-      playCollect();
-      setTimeout(function(el) { el.remove(); }, 300, c);
-      collectibles.splice(j, 1);
-    }
+// ===== レイアウト =====
+function laneX(l) { return W * (0.5 + (l - 1) * 0.30); }
+var RH = 0;
+function rowY(r) { return r * RH; }
+// カーブ上の位置（たてに入って、たてに出る なめらかな曲線）
+function edgePos(e, t) {
+  var x0 = laneX(e.fromL), y0 = rowY(e.fromR);
+  var x1 = laneX(e.toL),   y1 = rowY(e.fromR + 1);
+  var u = 1 - t;
+  var cy0 = y0 + (y1 - y0) * 0.45, cy1 = y0 + (y1 - y0) * 0.55;
+  var x = u*u*u*x0 + 3*u*u*t*x0 + 3*u*t*t*x1 + t*t*t*x1;
+  var y = u*u*u*y0 + 3*u*u*t*cy0 + 3*u*t*t*cy1 + t*t*t*y1;
+  return { x: x, y: y };
+}
+
+// ===== 進行の状態 =====
+// mode: slide（すべる）/ wait（分かれ道でまつ）/ reverse（もどる）/
+//        bump（いきどまりでぽよん）/ goal / done
+var st = {};
+function startCourse(i) {
+  courseIdx = i;
+  course = genCourse(i);
+  RH = Math.max(170, H * 0.26);
+  st = { mode: 'slide', edge: pickEdge(0, course.path[0], course.edges[ '0,' + course.path[0] ][0].to),
+         t: 0, pending: null, bumpT: 0, speed: 0 };
+  document.getElementById('course-n').textContent = (i + 1);
+}
+function pickEdge(r, fromL, toL) {
+  var list = course.edges[r + ',' + fromL] || [];
+  for (var i = 0; i < list.length; i++) if (list[i].to === toL) {
+    return { fromR: r, fromL: fromL, toL: toL, star: list[i].star, starTaken: false, ref: list[i] };
   }
+  return null;
+}
 
-  // Goal
-  if (distance >= totalDistance) {
-    endGame();
+function arriveNode() {
+  var r = st.edge.fromR + 1, l = st.edge.toL;
+  var node = course.nodes[r + ',' + l] || {};
+  if (node.goal) { doGoal(); return; }
+  if (node.cap) {
+    node.hit = true;
+    st.mode = 'bump'; st.bumpT = 0; sndBoing(); setWind(false);
     return;
   }
-
-  requestAnimationFrame(gameLoop);
-}
-
-function startGame() {
-  state = 'playing';
-  playerX = 50;
-  prevPlayerX = 50;
-  playerTilt = 0;
-  bobPhase = 0;
-  score = 0;
-  distance = 0;
-  elapsed = 0;
-  speed = 2;
-  lastSpawn = 0;
-  lastStripe = 0;
-  lastTime = 0;
-
-  obstacles.forEach(function(o) { o.remove(); });
-  collectibles.forEach(function(c) { c.remove(); });
-  obstacles = [];
-  collectibles = [];
-
-  player.style.left = '50%';
-  player.style.transform = 'translateX(-50%)';
-  scoreEl.textContent = '0';
-  timerEl.textContent = '0.0';
-  progressBar.style.height = '0%';
-
-  document.getElementById('title-screen').classList.add('hidden');
-  document.getElementById('result-screen').classList.remove('show');
-  document.getElementById('goal-line').style.display = 'none';
-
-  requestAnimationFrame(gameLoop);
-}
-
-function endGame() {
-  state = 'ended';
-  document.getElementById('goal-line').style.display = 'block';
-  document.getElementById('goal-line').style.top = '120px';
-
-  setTimeout(function() {
-    playFanfare();
-    var timeBonus = Math.max(0, Math.round((30 - elapsed) * 10));
-    var total = score + timeBonus;
-
-    document.getElementById('r-score').textContent = '⭐ ' + total + ' てん';
-    document.getElementById('r-detail').textContent = 'タイム: ' + elapsed.toFixed(1) + 'びょう';
-
-    if (total >= 300) {
-      document.getElementById('r-emoji').textContent = '🏆';
-      document.getElementById('r-title').textContent = 'すごすぎ！';
-    } else if (total >= 150) {
-      document.getElementById('r-emoji').textContent = '🎉';
-      document.getElementById('r-title').textContent = 'やったね！';
+  var outs = course.edges[r + ',' + l] || [];
+  if (outs.length === 1) {
+    st.edge = pickEdge(r, l, outs[0].to); st.t = 0; st.mode = 'slide';
+  } else if (outs.length >= 2) {
+    if (st.pending !== null) {
+      var chosen = chooseByDir(outs, l, st.pending);
+      st.pending = null;
+      st.edge = pickEdge(r, l, chosen.to); st.t = 0; st.mode = 'slide';
+      sndChoose();
     } else {
-      document.getElementById('r-emoji').textContent = '🛝';
-      document.getElementById('r-title').textContent = 'ゴール！';
+      st.mode = 'wait'; st.waitR = r; st.waitL = l; st.t = 0; setWind(false);
     }
-
-    document.getElementById('result-screen').classList.add('show');
-  }, 600);
+  }
+}
+function chooseByDir(outs, fromL, dir) {
+  // dir: -1=ひだり +1=みぎ。まっすぐしかないときは そのまま
+  var sorted = outs.slice().sort(function (a, b) { return a.to - b.to; });
+  if (dir < 0) return sorted[0];
+  return sorted[sorted.length - 1];
 }
 
-// Touch controls
-gameEl.addEventListener('pointerdown', function(e) {
-  if (state !== 'playing') return;
-  touchStartX = e.clientX;
-});
-gameEl.addEventListener('pointermove', function(e) {
-  if (state !== 'playing' || touchStartX === null) return;
+function doGoal() {
+  st.mode = 'goal'; st.goalT = 0; sndGoal(); setWind(false);
+  spawnConfetti();
+  var flash = document.getElementById('goal-flash');
+  flash.style.display = 'flex';
+  setTimeout(function () {
+    flash.style.display = 'none';
+    if (courseIdx + 1 >= TOTAL_COURSES) {
+      document.getElementById('final-star').textContent = stars;
+      document.getElementById('result').style.display = 'flex';
+      st.mode = 'done';
+    } else {
+      startCourse(courseIdx + 1);
+    }
+  }, 1600);
+}
+
+// ===== 入力 =====
+cv.addEventListener('pointerdown', function (e) {
   e.preventDefault();
-  var moveDx = e.clientX - touchStartX;
-  touchStartX = e.clientX;
-  var bounds = getRailBounds();
-  playerX = Math.max(bounds.min, Math.min(bounds.max, playerX + moveDx / window.innerWidth * 100));
-  player.style.left = playerX + '%';
-});
-gameEl.addEventListener('pointerup', function() { touchStartX = null; });
-
-document.getElementById('btn-start').addEventListener('click', function() {
   ensureAudio();
-  startGame();
-});
-document.getElementById('btn-retry').addEventListener('click', function() {
-  ensureAudio();
-  startGame();
+  var dir = (e.clientX < W / 2) ? -1 : 1;
+  if (st.mode === 'wait') {
+    var outs = course.edges[st.waitR + ',' + st.waitL];
+    var chosen = chooseByDir(outs, st.waitL, dir);
+    st.edge = pickEdge(st.waitR, st.waitL, chosen.to);
+    st.t = 0; st.mode = 'slide'; sndChoose();
+  } else if (st.mode === 'slide') {
+    // すべっている間に、さきに選んでおける（止まらずに流れる）
+    st.pending = dir; sndChoose();
+  }
 });
 
+// ===== パーティクル =====
+var parts = [];
+function spawnConfetti() {
+  for (var i = 0; i < 50; i++) {
+    parts.push({ x: W/2 + (Math.random()-0.5)*W*0.6, y: H*0.3 + Math.random()*H*0.2,
+      vx: (Math.random()-0.5)*260, vy: -Math.random()*260 - 60,
+      c: ['#f472b6','#facc15','#4ade80','#38bdf8','#a78bfa'][i%5],
+      r: Math.random()*6+3, rot: Math.random()*6.3, vr: (Math.random()-0.5)*8, life: 1.6 });
+  }
+}
+function starBurst(x, y) {
+  for (var i = 0; i < 10; i++) {
+    parts.push({ x: x, y: y, vx: (Math.random()-0.5)*220, vy: (Math.random()-0.5)*220,
+      c: '#fde047', r: Math.random()*4+2, rot: 0, vr: 0, life: 0.6 });
+  }
+}
+
+// ===== 描画 =====
+var PALETTES = [
+  { rail: '#e15f8f', surf: '#fca5c8', line: '#ffffff' },
+  { rail: '#0e9488', surf: '#7fd8c8', line: '#ffffff' },
+  { rail: '#d97706', surf: '#fcd34d', line: '#ffffff' },
+];
+function drawEdgeCurve(e, style) {
+  var x0 = laneX(e.fromL), y0 = rowY(e.fromR) - camY;
+  var x1 = laneX(e.toL),   y1 = rowY(e.fromR + 1) - camY;
+  var cy0 = y0 + (y1 - y0) * 0.45, cy1 = y0 + (y1 - y0) * 0.55;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.bezierCurveTo(x0, cy0, x1, cy1, x1, y1);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = style.color; ctx.lineWidth = style.width;
+  if (style.dash) ctx.setLineDash(style.dash); else ctx.setLineDash([]);
+  if (style.dashOffset !== undefined) ctx.lineDashOffset = style.dashOffset;
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+var camY = 0, scrollLines = 0;
+function draw(dt, tNow) {
+  var pal = PALETTES[courseIdx % PALETTES.length];
+  // そら
+  var sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#bfe9fb'); sky.addColorStop(1, '#e8f9ee');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  // とおくの雲（ゆっくり流れて、たかさを感じる）
+  ctx.save(); ctx.globalAlpha = 0.7; ctx.fillStyle = '#ffffff';
+  for (var i = 0; i < 6; i++) {
+    var cy = ((i * 340 + 120) - camY * 0.35) % (H + 200) - 100;
+    var cx = W * (0.15 + (i % 3) * 0.35);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 26, 0, 6.3); ctx.arc(cx + 26, cy + 6, 20, 0, 6.3); ctx.arc(cx - 26, cy + 8, 18, 0, 6.3);
+    ctx.fill();
+  }
+  ctx.restore();
+  // 木（世界と同じ速さで流れて、スピード感を出す）
+  ctx.save();
+  for (var i2 = 0; i2 < 10; i2++) {
+    var ty = ((i2 * 260) - camY) % (rowY(course.M) + H) ;
+    var sy = ty - 0 + 40; var side = (i2 % 2 === 0) ? W * 0.045 : W * 0.955;
+    if (sy < -60 || sy > H + 60) continue;
+    ctx.font = '34px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(i2 % 4 === 0 ? '🌳' : (i2 % 4 === 1 ? '🌲' : (i2 % 4 === 2 ? '🌷' : '🌼')), side, sy);
+  }
+  ctx.restore();
+
+  var lw = Math.min(W * 0.17, 64);
+  // レールのかげ → 面 → 中央の流れる線（スピード感）
+  scrollLines = (scrollLines + dt * 240) % 36;
+  for (var key in course.edges) {
+    var kk = key.split(','); var r3 = +kk[0], l3 = +kk[1];
+    var y0v = rowY(r3) - camY, y1v = rowY(r3 + 1) - camY;
+    if (y1v < -80 || y0v > H + 80) continue;
+    course.edges[key].forEach(function (ed) {
+      var e = { fromR: r3, fromL: l3, toL: ed.to };
+      drawEdgeCurve(e, { color: pal.rail, width: lw + 12 });
+      drawEdgeCurve(e, { color: pal.surf, width: lw });
+      drawEdgeCurve(e, { color: 'rgba(255,255,255,0.75)', width: 5, dash: [14, 22], dashOffset: -scrollLines });
+    });
+  }
+  // いきどまりのフタ / ほし / ゴール
+  for (var key2 in course.nodes) {
+    var kk2 = key2.split(','); var r4 = +kk2[0], l4 = +kk2[1];
+    var nx = laneX(l4), ny = rowY(r4) - camY;
+    if (ny < -90 || ny > H + 90) continue;
+    var node = course.nodes[key2];
+    if (node.cap) {
+      ctx.fillStyle = pal.rail;
+      ctx.beginPath(); ctx.arc(nx, ny, lw * 0.62, 0, 6.3); ctx.fill();
+      ctx.fillStyle = '#fff1f2';
+      ctx.beginPath(); ctx.arc(nx, ny, lw * 0.48, 0, 6.3); ctx.fill();
+      ctx.font = '900 ' + (lw * 0.5) + 'px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillText(node.hit ? '💦' : '✕', nx, ny + 2);
+    }
+    if (node.goal) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(nx, ny + 8, lw * 0.9, 0, 6.3); ctx.fill();
+      ctx.font = (lw * 0.9) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🚩', nx, ny - 6);
+      ctx.font = '900 ' + Math.min(26, lw * 0.42) + 'px sans-serif';
+      ctx.fillStyle = '#e11d48';
+      ctx.fillText('ゴール', nx, ny + lw * 0.55);
+    }
+  }
+  // ほし（えだの途中）
+  for (var key3 in course.edges) {
+    var kk3 = key3.split(','); var r5 = +kk3[0], l5 = +kk3[1];
+    course.edges[key3].forEach(function (ed) {
+      if (!ed.star || ed.starDone) return;
+      var p = edgePos({ fromR: r5, fromL: l5, toL: ed.to }, 0.55);
+      var sy2 = p.y - camY;
+      if (sy2 < -40 || sy2 > H + 40) return;
+      var bob = Math.sin(tNow * 3 + r5) * 4;
+      ctx.font = '30px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('⭐', p.x, sy2 + bob);
+    });
+  }
+  // 分かれ道の矢印
+  if (st.mode === 'wait' || (st.mode === 'slide' && st.t > 0.45 && nextIsJunction())) {
+    var jr = st.mode === 'wait' ? st.waitR : st.edge.fromR + 1;
+    var jl = st.mode === 'wait' ? st.waitL : st.edge.toL;
+    var outs = course.edges[jr + ',' + jl] || [];
+    if (outs.length >= 2) {
+      var bounce = Math.sin(tNow * 5) * 6;
+      outs.forEach(function (ed) {
+        var p2 = edgePos({ fromR: jr, fromL: jl, toL: ed.to }, 0.35);
+        var ax = p2.x, ay = p2.y - camY + bounce;
+        // 白まる＋みどりの三角やじるし（どの端末でも同じ見た目）
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, 24, 0, 6.3); ctx.fill(); ctx.stroke();
+        var ang = ed.to < jl ? Math.PI : (ed.to > jl ? 0 : Math.PI / 2);
+        ctx.rotate(ang);
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.moveTo(12, 0); ctx.lineTo(-7, -11); ctx.lineTo(-7, 11);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      });
+      if (st.mode === 'wait') {
+        ctx.font = '900 ' + Math.min(24, W * 0.055) + 'px sans-serif';
+        ctx.fillStyle = '#0e7490'; ctx.textAlign = 'center';
+        ctx.fillText('どっちに いく？', W / 2, H * 0.16);
+      }
+    }
+  }
+  // 女の子
+  var gp = girlScreenPos(tNow);
+  if (girlOK) {
+    var gh = Math.min(H * 0.16, 120) * gp.squash;
+    var gw = gh * (girlImg.width / girlImg.height);
+    ctx.save();
+    ctx.translate(gp.x, gp.y);
+    ctx.rotate(gp.tilt);
+    // すべっている間は、うしろに白いすじ
+    if (st.mode === 'slide') {
+      ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#ffffff';
+      for (var s2 = 0; s2 < 3; s2++) {
+        ctx.beginPath();
+        ctx.ellipse(-gw * 0.1 + (s2 - 1) * 10, -gh * (0.62 + s2 * 0.16), 5, 16 + s2 * 5, 0, 0, 6.3);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.drawImage(girlImg, -gw / 2, -gh / 2, gw, gh);
+    ctx.restore();
+  }
+  // パーティクル
+  for (var pi = parts.length - 1; pi >= 0; pi--) {
+    var pt = parts[pi];
+    pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 500 * dt;
+    pt.rot += pt.vr * dt; pt.life -= dt;
+    if (pt.life <= 0) { parts.splice(pi, 1); continue; }
+    ctx.save(); ctx.globalAlpha = Math.min(1, pt.life * 2);
+    ctx.translate(pt.x, pt.y); ctx.rotate(pt.rot);
+    ctx.fillStyle = pt.c; ctx.fillRect(-pt.r, -pt.r, pt.r * 2, pt.r * 2);
+    ctx.restore();
+  }
+}
+function nextIsJunction() {
+  var r = st.edge.fromR + 1, l = st.edge.toL;
+  var n = course.nodes[r + ',' + l] || {};
+  if (n.cap || n.goal) return false;
+  return (course.edges[r + ',' + l] || []).length >= 2;
+}
+function girlWorldPos(tNow) {
+  if (st.mode === 'wait') {
+    var wiggle = Math.sin(tNow * 4) * 3;
+    return { x: laneX(st.waitL) + wiggle, y: rowY(st.waitR), tilt: Math.sin(tNow * 4) * 0.06, squash: 1 };
+  }
+  if (st.mode === 'bump') {
+    var k = Math.min(1, st.bumpT / 0.45);
+    var sq = 1 - Math.sin(k * Math.PI) * 0.25;
+    return { x: laneX(st.edge.toL), y: rowY(st.edge.fromR + 1) - 6, tilt: 0, squash: sq };
+  }
+  var p = edgePos(st.edge, st.t);
+  var p2 = edgePos(st.edge, Math.min(1, st.t + 0.04));
+  var tilt = Math.atan2(p2.x - p.x, (p2.y - p.y) || 1) * -0.8;
+  return { x: p.x, y: p.y, tilt: tilt, squash: 1 };
+}
+function girlScreenPos(tNow) {
+  var wp = girlWorldPos(tNow);
+  return { x: wp.x, y: wp.y - camY, tilt: wp.tilt, squash: wp.squash };
+}
+
+// ===== メインループ =====
+var last = 0;
+function tick(ts) {
+  requestAnimationFrame(tick);
+  var tNow = ts / 1000;
+  var dt = last ? Math.min((ts - last) / 1000, 0.05) : 0;
+  last = ts;
+  if (!course) return;
+
+  if (st.mode === 'slide') {
+    // だんだん加速して、カーブでちょっとゆっくり（すべってる感じ）
+    var target = H * 0.55;
+    st.speed += (target - st.speed) * Math.min(1, dt * 2);
+    setWind(true);
+    var len = RH * 1.1;
+    st.t += (st.speed * dt) / len;
+    // ほしを取る
+    if (st.edge.ref && st.edge.ref.star && !st.edge.ref.starDone && st.t > 0.5) {
+      st.edge.ref.starDone = true;
+      stars++; document.getElementById('star-n').textContent = stars;
+      var sp = edgePos(st.edge, 0.55);
+      starBurst(sp.x, sp.y - camY);
+      sndStar();
+    }
+    if (st.t >= 1) { st.t = 1; arriveNode(); }
+  } else if (st.mode === 'bump') {
+    st.bumpT += dt;
+    if (st.bumpT > 0.5) { st.mode = 'reverse'; st.speed = 0; }
+  } else if (st.mode === 'reverse') {
+    st.t -= dt * 1.6;
+    if (st.t <= 0) {
+      st.t = 0;
+      st.mode = 'wait';
+      st.waitR = st.edge.fromR; st.waitL = st.edge.fromL;
+    }
+  }
+
+  // カメラ：おんなのこが画面の上から1/3のところに来るように
+  var wp = girlWorldPos(tNow);
+  var want = wp.y - H * 0.34;
+  camY += (want - camY) * Math.min(1, dt * 5);
+
+  draw(dt, tNow);
+}
+requestAnimationFrame(tick);
+
+// ===== こうえんへ戻る =====
 var fromOsewa = location.search.indexOf('from=osewa') !== -1;
-
 function goBackToPark() {
   if (fromOsewa) {
     try {
@@ -673,34 +553,25 @@ function goBackToPark() {
         window.parent.document.getElementById('slide-iframe').src = '';
         return;
       }
-    } catch(e) {
+    } catch (e) {
       window.parent.postMessage('close-slide', '*');
       return;
     }
   }
   window.location.href = 'osewa.html';
 }
-
-document.getElementById('btn-back').addEventListener('click', function(e) {
-  e.preventDefault();
-  goBackToPark();
+document.getElementById('btn-back').addEventListener('click', function (e) { e.preventDefault(); goBackToPark(); });
+document.getElementById('btn-back-park').addEventListener('click', goBackToPark);
+document.getElementById('btn-retry').addEventListener('click', function () {
+  stars = 0; document.getElementById('star-n').textContent = 0;
+  document.getElementById('result').style.display = 'none';
+  startCourse(0);
 });
-document.getElementById('btn-back-park').addEventListener('click', function() {
-  goBackToPark();
-});
+document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+document.addEventListener('dblclick', function (e) { e.preventDefault(); });
 
-if (fromOsewa) {
-  document.getElementById('loading-screen').classList.add('hidden');
-  ensureAudio();
-  startGame();
-} else {
-  document.getElementById('loading-screen').classList.add('hidden');
-}
-
-document.addEventListener('dblclick', function(e) { e.preventDefault(); });
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-requestAnimationFrame(gameLoop);
+// タイトルなしで、そのままスタート
+startCourse(0);
 </script>
 </body>
 </html>
