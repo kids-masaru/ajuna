@@ -63,6 +63,56 @@
             filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
         }
 
+        .snow-sprite {
+            display: block;
+            width: min(34vw, 210px);
+            aspect-ratio: 1;
+            background-image: url('snow_followers_v2.png');
+            background-size: 300% 200%;
+            background-repeat: no-repeat;
+            border-radius: 28%;
+            box-shadow: 0 0 26px rgba(255,255,255,.35);
+        }
+
+        .snow-sprite--hero { width: min(28vw, 170px); }
+
+        .snow-follower {
+            position: absolute;
+            width: clamp(62px, 10vw, 96px);
+            aspect-ratio: 1;
+            background-image: url('snow_followers_v2.png');
+            background-size: 300% 200%;
+            background-repeat: no-repeat;
+            border-radius: 30%;
+            transform: translate(-50%, -50%);
+            animation: follower-bob 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 7px 7px rgba(1, 28, 72, .34));
+            will-change: left, top, transform;
+        }
+
+        @keyframes follower-bob {
+            0%, 100% { transform: translate(-50%, -50%) rotate(-3deg) scale(1); }
+            50% { transform: translate(-50%, calc(-50% - 7px)) rotate(3deg) scale(1.04); }
+        }
+
+        @media (orientation: portrait) {
+            .stats-layer { top: 84px !important; left: 12px !important; right: 12px !important; }
+            .stats-layer .text-3xl { font-size: 1.35rem !important; }
+            .stats-layer .px-6 { padding-left: 1rem !important; padding-right: 1rem !important; }
+            #milestoneText { font-size: clamp(1.8rem, 8vw, 3rem) !important; }
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            #startScreen { padding: 8px 76px; }
+            .snow-sprite--hero { width: min(27vh, 108px); margin-bottom: 4px !important; }
+            #startScreen h1 { font-size: 1.85rem !important; line-height: 1.02; margin-bottom: 7px !important; }
+            #startScreen h1 span { font-size: 1.05rem !important; }
+            #startBtn { min-height: 54px; padding: .55em 1.6em; }
+            #startScreen p { margin-top: 7px !important; font-size: .95rem !important; }
+            #milestoneSprite { width: 116px; }
+            #milestoneText { margin-top: 4px !important; font-size: 2rem !important; }
+        }
+
         #magicBar {
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
             transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -123,25 +173,25 @@
 
 <body id="mainBody" class="gp gp-cyan gp-dark gradient-bg stage-1 h-screen w-screen relative overflow-hidden select-none">
 
-    <a href="index.html" class="gp-home" aria-label="ホームにもどる">🏠</a>
+    <a href="index.html" class="gp-home" aria-label="ホームにもどる"></a>
 
     <div class="fringe-sparkle"></div>
 
     <!-- UI Layer -->
     <div id="startScreen"
         class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl transition-opacity duration-1000">
-        <div class="gp-hero gp-float mb-8 character-pop">❄️</div>
+        <div class="snow-sprite snow-sprite--hero character-pop mb-5" style="background-position:0% 0%" aria-hidden="true"></div>
         <h1 class="text-4xl text-white font-bold mb-4 text-center tracking-widest">
             ゆきのまほう<br><span class="text-2xl font-normal opacity-80">リズムあそび</span>
         </h1>
-        <button id="startBtn" class="gp-btn gp-btn--lg">はじめる ▶</button>
-        <p class="text-white/60 mt-10 text-lg animate-pulse">がめんを なぞってね 🔊</p>
+        <button id="startBtn" class="gp-btn gp-btn--lg">はじめる</button>
+        <p class="text-white/60 mt-10 text-lg animate-pulse">がめんを なぞってね</p>
     </div>
 
     <!-- Milestone Notification -->
     <div id="milestoneMsg"
         class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
-        <div id="milestoneEmoji" class="text-[12rem] character-pop">⛄</div>
+        <div id="milestoneSprite" class="snow-sprite character-pop" aria-hidden="true"></div>
         <div id="milestoneText"
             class="text-white text-5xl font-bold mt-6 text-center drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
             ゆきだるま できた！
@@ -149,7 +199,7 @@
     </div>
 
     <!-- Stats UI -->
-    <div class="absolute top-8 left-8 right-8 z-10 flex flex-col gap-4 pointer-events-none">
+    <div class="stats-layer absolute top-8 left-24 right-8 z-10 flex flex-col gap-4 pointer-events-none">
         <div class="flex justify-between items-end">
             <div class="flex flex-col">
                 <span class="text-white/70 text-xs font-bold tracking-widest ml-2 mb-1 uppercase">Magic Score</span>
@@ -184,8 +234,19 @@
         let noteIndex = 0;
 
         function initAudio() {
-            if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                if (!AudioContext) return;
+                if (!audioCtx) audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(error => {
+                        console.warn('雪ゲームの音声を再開できませんでした。', error);
+                    });
+                }
+            } catch (error) {
+                // 音声が使えなくても、雪を集める操作と演出は続けられる
+                audioCtx = null;
+                console.warn('雪ゲームの音声を準備できませんでした。', error);
+            }
         }
 
         function playMagicSound(stage) {
@@ -222,7 +283,9 @@
                 gain.connect(audioCtx.destination);
                 osc.start();
                 osc.stop(now + 0.6);
-            } catch (e) { }
+            } catch (error) {
+                console.warn('雪ゲームの効果音を再生できませんでした。', error);
+            }
         }
 
         // --- Game Logic ---
@@ -231,7 +294,7 @@
         const scoreDisplay = document.getElementById('scoreDisplay');
         const magicBar = document.getElementById('magicBar');
         const milestoneMsg = document.getElementById('milestoneMsg');
-        const milestoneEmoji = document.getElementById('milestoneEmoji');
+        const milestoneSprite = document.getElementById('milestoneSprite');
         const milestoneText = document.getElementById('milestoneText');
         const startScreen = document.getElementById('startScreen');
         const startBtn = document.getElementById('startBtn');
@@ -249,13 +312,19 @@
         const MAX_PARTICLES = 200;
 
         const milestones = [
-            { score: 200, emoji: '⛄', text: 'ゆきだるま できた！', bg: 'stage-2', rank: 'ゆきの まほうつかい' },
-            { score: 600, emoji: '🦌', text: 'トナカイも きたよ！', bg: 'stage-3', rank: 'もりの まほうつかい' },
-            { score: 1200, emoji: '🏰', text: 'おしろの まほう！', bg: 'stage-4', rank: 'こおりの おうじょ' },
-            { score: 2000, emoji: '🐳', text: 'そらとぶ クジラ！', bg: 'stage-5', rank: 'ほしの まほうつかい' },
-            { score: 3000, emoji: '🦄', text: 'でんせつの ユニコーン！', bg: 'stage-6', rank: 'にじの まほうつかい' },
-            { score: 5000, emoji: '👑', text: 'まほうの おうさま！', bg: 'stage-6', rank: 'きらきら マスター' }
+            { score: 200, slot: 0, text: 'ゆきだるま できた！', bg: 'stage-2', rank: 'ゆきの まほうつかい' },
+            { score: 600, slot: 1, text: 'トナカイも きたよ！', bg: 'stage-3', rank: 'もりの まほうつかい' },
+            { score: 1200, slot: 2, text: 'おしろの まほう！', bg: 'stage-4', rank: 'こおりの おうじょ' },
+            { score: 2000, slot: 3, text: 'そらとぶ クジラ！', bg: 'stage-5', rank: 'ほしの まほうつかい' },
+            { score: 3000, slot: 4, text: 'でんせつの ユニコーン！', bg: 'stage-6', rank: 'にじの まほうつかい' },
+            { score: 5000, slot: 5, text: 'まほうの おうさま！', bg: 'stage-6', rank: 'きらきら マスター' }
         ];
+
+        function spritePosition(slot) {
+            const col = slot % 3;
+            const row = Math.floor(slot / 3);
+            return `${col / 2 * 100}% ${row * 100}%`;
+        }
 
         // Target for characters to follow
         let targetX = window.innerWidth / 2;
@@ -275,14 +344,7 @@
                 this.size = Math.random() * 20 + 35;
                 this.speed = Math.random() * 1.2 + 0.8 + (currentLevel * 0.25);
 
-                const emojis = ['❄️', '❅', '❆'];
-                if (currentLevel >= 2) emojis.push('✨', '💎');
-                if (currentLevel >= 3) emojis.push('⭐', '🔔');
-                if (currentLevel >= 4) emojis.push('🌈', '🍬');
-                if (currentLevel >= 5) emojis.push('🌙', '🪐');
-                if (currentLevel >= 6) emojis.push('💖', '🔥');
-
-                this.emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                this.kind = Math.floor(Math.random() * 3);
                 this.rotation = Math.random() * Math.PI * 2;
                 this.spin = (Math.random() - 0.5) * 0.04;
                 this.wobble = Math.random() * Math.PI * 2;
@@ -298,13 +360,31 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation);
-                ctx.font = `${this.size}px serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
                 ctx.shadowColor = `hsl(${(currentLevel * 60) % 360}, 100%, 70%)`;
                 ctx.shadowBlur = 15;
-                ctx.fillStyle = "white";
-                ctx.fillText(this.emoji, 0, 0);
+                ctx.strokeStyle = currentLevel >= 4 ? '#fef3c7' : '#ffffff';
+                ctx.fillStyle = currentLevel >= 5 ? '#e9d5ff' : '#dff7ff';
+                ctx.lineWidth = Math.max(2, this.size * .065);
+                const radius = this.size * .42;
+                ctx.beginPath();
+                for (let arm = 0; arm < 6; arm++) {
+                    const angle = arm * Math.PI / 3;
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+                    const bx = Math.cos(angle) * radius * .6;
+                    const by = Math.sin(angle) * radius * .6;
+                    for (const side of [-1, 1]) {
+                        const branchAngle = angle + side * Math.PI / 4;
+                        ctx.moveTo(bx, by);
+                        ctx.lineTo(bx + Math.cos(branchAngle) * radius * .25, by + Math.sin(branchAngle) * radius * .25);
+                    }
+                }
+                ctx.stroke();
+                if (this.kind === 1) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size * .11, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
             }
         }
@@ -426,8 +506,8 @@
         }
 
         function showMilestone(m) {
-            mainBody.className = `gradient-bg h-screen w-screen relative overflow-hidden select-none ${m.bg}`;
-            milestoneEmoji.textContent = m.emoji;
+            mainBody.className = `gp gp-cyan gp-dark gradient-bg h-screen w-screen relative overflow-hidden select-none ${m.bg}`;
+            milestoneSprite.style.backgroundPosition = spritePosition(m.slot);
             milestoneText.textContent = m.text;
             milestoneMsg.classList.remove('hidden');
             milestoneMsg.classList.add('fade-in-up');
@@ -437,12 +517,12 @@
             const startY = (Math.random() * window.innerHeight * 0.5) + (window.innerHeight * 0.4);
 
             const char = document.createElement('div');
-            char.className = 'absolute character-pop text-7xl drop-shadow-lg';
+            char.className = 'snow-follower';
             char.style.left = startX + 'px';
             char.style.top = startY + 'px';
-            char.style.bottom = 'auto'; // 追従させるため絶対座標にする
-            char.textContent = m.emoji;
-            char.style.transform = 'translate(-50%, -50%)'; // 中心基準に
+            char.style.bottom = 'auto';
+            char.style.backgroundPosition = spritePosition(m.slot);
+            char.style.animationDelay = `${followingCharacters.length * -0.22}s`;
 
             stageChars.appendChild(char);
 
@@ -450,7 +530,8 @@
                 el: char,
                 x: startX,
                 y: startY,
-                speed: 0.15 // 追従スピードを少し速めにして連なりやすくする
+                speed: 0.16,
+                gap: Math.min(88, Math.max(62, window.innerWidth * .09))
             });
 
             setTimeout(() => {
@@ -500,20 +581,19 @@
             followingCharacters.forEach((c, index) => {
                 let goalX, goalY;
 
-                if (index === 0) {
-                    // 最初に出現したキャラ（先頭）はタッチ位置を追う
-                    goalX = targetX;
-                    goalY = targetY + 60; // 指の下あたりを目標に
-                } else {
-                    // 2番目以降のキャラは、1つ前のキャラを追う
-                    const leader = followingCharacters[index - 1];
-                    goalX = leader.x;
-                    goalY = leader.y + 10; // 少しだけ下げる
-                }
+                const leader = index === 0 ? { x: targetX, y: targetY + 58 } : followingCharacters[index - 1];
+                goalX = leader.x;
+                goalY = leader.y;
 
-                // 距離に応じて移動（イージング）
-                c.x += (goalX - c.x) * c.speed;
-                c.y += (goalY - c.y) * c.speed;
+                // 指や前の仲間に重ならず、少し遅れて列になって追いかける。
+                const dx = goalX - c.x;
+                const dy = goalY - c.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance > c.gap) {
+                    const move = (distance - c.gap) * c.speed;
+                    c.x += dx / distance * move;
+                    c.y += dy / distance * move;
+                }
 
                 // 位置更新
                 c.el.style.left = c.x + 'px';
@@ -563,12 +643,6 @@
                 gameLoop();
             }, 700);
         });
-        // Auto-skip title screen
-        initAudio();
-        startScreen.style.display = 'none';
-        isPlaying = true;
-        gameLoop();
-
     </script>
 </body>
 

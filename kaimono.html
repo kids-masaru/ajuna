@@ -53,21 +53,60 @@
             display: none;
         }
 
-        /* Only show warning if NOT in pre_start and is portrait */
+        /* 画面回転を禁止する端末でも、ゲームとホーム操作は隠さない。 */
         @media (orientation: portrait) {
             body.game-started .portrait-warning {
                 display: flex;
             }
-
-            body.game-started .game-content {
-                display: none !important;
-            }
         }
 
         .rotate-device-icon {
-            width: 112px;
-            height: 92px;
+            width: 34px;
+            height: 28px;
             color: #f97316;
+        }
+
+        .shop-scene {
+            background-image: linear-gradient(rgba(255,255,255,.16), rgba(255,255,255,.12)), url('kaimono_shop_scenes_v2.png');
+            background-size: 400% 200%;
+            background-repeat: no-repeat;
+            background-color: #fff7ed;
+        }
+
+        .shop-thumb {
+            background-image: url('kaimono_shop_scenes_v2.png');
+            background-size: 400% 200%;
+            background-repeat: no-repeat;
+        }
+
+        .picture-basket {
+            position: relative;
+            width: clamp(150px, 25vw, 230px);
+            aspect-ratio: 1.5;
+            background: url('ui_shopping_basket_v2.png') center / contain no-repeat;
+            filter: drop-shadow(0 8px 8px rgba(91, 33, 20, .25));
+        }
+
+        .picture-basket__items {
+            position: absolute;
+            left: 18%;
+            right: 18%;
+            top: 13%;
+            height: 48%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1px;
+            overflow: hidden;
+        }
+
+        .shelf-stage {
+            background: rgba(255, 250, 242, .68);
+            border: 3px solid rgba(255,255,255,.8);
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(71, 35, 12, .2);
+            backdrop-filter: blur(3px);
         }
 
         .atlas-icon {
@@ -115,12 +154,52 @@
             .atlas-icon--drag { --atlas-height: 72px; }
             .atlas-icon--cart { --atlas-height: 32px; }
         }
+
+        @media (orientation: portrait) {
+            .portrait-warning {
+                position: fixed;
+                z-index: 120;
+                top: max(8px, env(safe-area-inset-top));
+                left: 50%;
+                transform: translateX(-50%);
+                width: max-content;
+                max-width: calc(100vw - 150px);
+                min-height: 44px;
+                padding: 6px 12px;
+                flex-direction: row;
+                gap: 8px;
+                border-radius: 999px;
+                background: rgba(255,247,237,.94);
+                border: 2px solid #fdba74;
+                box-shadow: 0 4px 14px rgba(124,45,18,.18);
+                pointer-events: none;
+            }
+            .portrait-warning h1 { font-size: 13px !important; line-height: 1.2; margin: 0 !important; }
+            .portrait-warning p { display: none; }
+            .portrait-warning svg { margin: 0 !important; flex: none; }
+            body.shopping-active .portrait-warning { display: none; }
+            .shop-select-title { font-size: 1.6rem !important; margin-top: 42px; }
+            .shop-select-list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-y: auto !important; overflow-x: hidden !important; gap: 12px !important; padding: 10px 18px 30px !important; }
+            .shop-select-card { width: 100% !important; height: 145px !important; }
+            .shopping-list-wrap { top: 82px !important; }
+            .shelf-stage { margin-top: 58px; transform: scale(.84); transform-origin: center; }
+            .shopping-basket-row { height: 118px !important; }
+            .picture-basket { width: 170px; }
+        }
     </style>
     <script>
         window.onerror = function (message, source, lineno, colno, error) {
             const root = document.getElementById('root');
             if (root) {
-                root.innerHTML = `<div style="color:#f87171;background:#450a0a;padding:20px;"><h2>エラー</h2><p>${message}</p></div>`;
+                // エラー文をHTMLとして解釈せず、外部スクリプト由来の文字列も安全に表示する
+                const panel = document.createElement('div');
+                const title = document.createElement('h2');
+                const detail = document.createElement('p');
+                panel.style.cssText = 'color:#f87171;background:#450a0a;padding:20px;';
+                title.textContent = 'エラー';
+                detail.textContent = String(message);
+                panel.append(title, detail);
+                root.replaceChildren(panel);
             }
         };
     </script>
@@ -129,8 +208,7 @@
 
 <body class="gp gp-emerald gp-dark fixed inset-0 overflow-hidden">
     <!-- Portrait Warning Overlay -->
-    <div
-        class="portrait-warning fixed inset-0 z-[9999] bg-orange-100 flex-col items-center justify-center p-8 text-center animate-in zoom-in">
+    <div class="portrait-warning text-center">
         <svg class="rotate-device-icon mb-8" viewBox="0 0 120 96" aria-hidden="true">
             <rect x="10" y="18" width="46" height="70" rx="9" fill="white" stroke="currentColor" stroke-width="6" />
             <circle cx="33" cy="78" r="3" fill="currentColor" />
@@ -138,7 +216,7 @@
             <path d="M96 51l12 9 8-13" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
             <rect x="65" y="52" width="46" height="34" rx="8" fill="white" stroke="currentColor" stroke-width="6" />
         </svg>
-        <h1 class="text-4xl text-orange-600 font-bold mb-4">スマホを<br>よこにしてね</h1>
+        <h1 class="text-4xl text-orange-600 font-bold mb-4">よこにすると<br>もっとあそびやすいよ</h1>
         <p class="text-xl text-orange-400">げーむのおへやのおかいものごっこ</p>
     </div>
 
@@ -221,33 +299,10 @@
             </div>
         );
 
-        // --- Wire Mesh Shopping Cart SVG ---
-        const WireCart = ({ children, className }) => (
-            <div className={`relative ${className}`}>
-                <svg viewBox="0 0 120 100" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                    {/* Cart Body (Wire Mesh) */}
-                    <path d="M20 20 L100 20 L90 70 L30 70 Z" fill="none" stroke="#60a5fa" strokeWidth="2" />
-                    {/* Vertical Wires */}
-                    <line x1="35" y1="20" x2="40" y2="70" stroke="#60a5fa" strokeWidth="1" />
-                    <line x1="50" y1="20" x2="52" y2="70" stroke="#60a5fa" strokeWidth="1" />
-                    <line x1="65" y1="20" x2="63" y2="70" stroke="#60a5fa" strokeWidth="1" />
-                    <line x1="80" y1="20" x2="75" y2="70" stroke="#60a5fa" strokeWidth="1" />
-                    {/* Horizontal Wires */}
-                    <line x1="24" y1="35" x2="96" y2="35" stroke="#60a5fa" strokeWidth="1" />
-                    <line x1="27" y1="52" x2="93" y2="52" stroke="#60a5fa" strokeWidth="1" />
-                    {/* Handle */}
-                    <path d="M20 20 L10 20 Q 5 20 5 10 L 5 5" fill="none" stroke="#2563eb" strokeWidth="4" strokeLinecap="round" />
-                    {/* Chassis & Wheels */}
-                    <line x1="30" y1="70" x2="90" y2="70" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
-                    <circle cx="40" cy="85" r="8" fill="#1e293b" />
-                    <circle cx="40" cy="85" r="3" fill="#94a3b8" />
-                    <circle cx="80" cy="85" r="8" fill="#1e293b" />
-                    <circle cx="80" cy="85" r="3" fill="#94a3b8" />
-                </svg>
-                {/* Content Overlay Container */}
-                <div className="absolute top-[20%] left-[20%] right-[10%] bottom-[30%] flex items-center justify-center flex-wrap gap-1 pointer-events-none">
-                    {children}
-                </div>
+        // 商品を重ねても中身が見える、専用イラストの買い物かご。
+        const PictureBasket = ({ children }) => (
+            <div className="picture-basket" aria-hidden="true">
+                <div className="picture-basket__items">{children}</div>
             </div>
         );
 
@@ -273,14 +328,16 @@
 
         // 商品名と画像上の順番を揃え、絵文字に依存しないデータに統一する。
         const SHOPS = [
-            { id: 'greengrocer', name: 'やおやさん', atlas: 'kaimono_items_greengrocer_atlas.png', cols: 6, rows: 3, bg: 'bg-[#f7fee7]', border: 'border-[#bef264]', items: makeItems('v', ['にんじん', 'じゃがいも', 'コーン', 'トマト', 'なす', 'きゅうり', 'たまねぎ', 'ブロッコリー', 'かぼちゃ', 'さつまいも', 'ぶどう', 'メロン', 'すいか', 'いちご', 'もも', 'りんご', 'キノコ', 'さくらんぼ']) },
-            { id: 'fish', name: 'おさかなや', atlas: 'kaimono_items_fish_atlas.png', cols: 5, rows: 3, bg: 'bg-[#f0f9ff]', border: 'border-[#7dd3fc]', items: makeItems('f', ['さかな', 'たこ', 'いか', 'えび', 'かに', 'ふぐ', 'かい', 'さめ', 'くじら', 'いるか', 'ねったいぎょ', 'ロブスター', 'ペンギン', 'かめ']) },
-            { id: 'sweets', name: 'おかしや', atlas: 'kaimono_items_sweets_atlas.png', cols: 5, rows: 3, bg: 'bg-[#fff1f2]', border: 'border-[#fba1b7]', items: makeItems('s', ['あめ', 'クッキー', 'チョコ', 'ドーナツ', 'ケーキ', 'プリン', 'アイス', 'だんご', 'ペロペロキャンディ', 'かきごおり', 'はちみつ', 'ポップコーン', 'バースデーケーキ', 'クロワッサン']) },
-            { id: 'bakery', name: 'パンやさん', atlas: 'kaimono_items_bakery_atlas.png', cols: 5, rows: 2, bg: 'bg-[#fff7ed]', border: 'border-[#fdba74]', items: makeItems('b', ['しょくパン', 'クロワッサン', 'フランスパン', 'ベーグル', 'パンケーキ', 'ワッフル', 'サンドイッチ', 'ホットドッグ', 'ピザ', 'プレッツェル']) },
-            { id: 'toys', name: 'おもちゃや', atlas: 'kaimono_items_toys_atlas.png', cols: 4, rows: 3, bg: 'bg-[#fefce8]', border: 'border-[#fde047]', items: makeItems('t', ['くまさん', 'ロボット', 'くるま', 'きしゃ', 'ボール', 'ゲーム', 'パズル', 'たいこ', 'きょうりゅう', 'UFO', 'しょうぼうしゃ', 'パトカー']) },
-            { id: 'flowers', name: 'おはなや', atlas: 'kaimono_items_flowers_atlas.png', cols: 4, rows: 3, bg: 'bg-[#fff1f2]', border: 'border-[#fda4af]', items: makeItems('fl', ['はなたば', 'バラ', 'ひまわり', 'チューリップ', 'ハイビスカス', 'サクラ', 'マーガレット', 'サボテン', 'ツリー', 'クローバー', 'もみじ', 'おちば']) },
-            { id: 'convenience', name: 'コンビニ', atlas: 'kaimono_items_convenience_atlas.png', cols: 4, rows: 3, bg: 'bg-[#f8fafc]', border: 'border-[#cbd5e1]', items: makeItems('c', ['おにぎり', 'ハンバーガー', 'ポテト', 'ぎゅうにゅう', 'おべんとう', 'おちゃ', 'バナナ', 'ジュース', 'たまご', 'コーヒー', 'かさ', 'しんぶん']) }
+            { id: 'greengrocer', name: 'やおやさん', sceneSlot: 0, atlas: 'kaimono_items_greengrocer_atlas.png', cols: 6, rows: 3, bg: 'bg-[#f7fee7]', border: 'border-[#bef264]', items: makeItems('v', ['にんじん', 'じゃがいも', 'コーン', 'トマト', 'なす', 'きゅうり', 'たまねぎ', 'ブロッコリー', 'かぼちゃ', 'さつまいも', 'ぶどう', 'メロン', 'すいか', 'いちご', 'もも', 'りんご', 'キノコ', 'さくらんぼ']) },
+            { id: 'fish', name: 'おさかなや', sceneSlot: 1, atlas: 'kaimono_items_fish_atlas.png', cols: 5, rows: 3, bg: 'bg-[#f0f9ff]', border: 'border-[#7dd3fc]', items: makeItems('f', ['さかな', 'たこ', 'いか', 'えび', 'かに', 'ふぐ', 'かい', 'さめ', 'くじら', 'いるか', 'ねったいぎょ', 'ロブスター', 'ペンギン', 'かめ']) },
+            { id: 'sweets', name: 'おかしや', sceneSlot: 2, atlas: 'kaimono_items_sweets_atlas.png', cols: 5, rows: 3, bg: 'bg-[#fff1f2]', border: 'border-[#fba1b7]', items: makeItems('s', ['あめ', 'クッキー', 'チョコ', 'ドーナツ', 'ケーキ', 'プリン', 'アイス', 'だんご', 'ペロペロキャンディ', 'かきごおり', 'はちみつ', 'ポップコーン', 'バースデーケーキ', 'クロワッサン']) },
+            { id: 'bakery', name: 'パンやさん', sceneSlot: 3, atlas: 'kaimono_items_bakery_atlas.png', cols: 5, rows: 2, bg: 'bg-[#fff7ed]', border: 'border-[#fdba74]', items: makeItems('b', ['しょくパン', 'クロワッサン', 'フランスパン', 'ベーグル', 'パンケーキ', 'ワッフル', 'サンドイッチ', 'ホットドッグ', 'ピザ', 'プレッツェル']) },
+            { id: 'toys', name: 'おもちゃや', sceneSlot: 4, atlas: 'kaimono_items_toys_atlas.png', cols: 4, rows: 3, bg: 'bg-[#fefce8]', border: 'border-[#fde047]', items: makeItems('t', ['くまさん', 'ロボット', 'くるま', 'きしゃ', 'ボール', 'ゲーム', 'パズル', 'たいこ', 'きょうりゅう', 'UFO', 'しょうぼうしゃ', 'パトカー']) },
+            { id: 'flowers', name: 'おはなや', sceneSlot: 5, atlas: 'kaimono_items_flowers_atlas.png', cols: 4, rows: 3, bg: 'bg-[#fff1f2]', border: 'border-[#fda4af]', items: makeItems('fl', ['はなたば', 'バラ', 'ひまわり', 'チューリップ', 'ハイビスカス', 'サクラ', 'マーガレット', 'サボテン', 'ツリー', 'クローバー', 'もみじ', 'おちば']) },
+            { id: 'convenience', name: 'コンビニ', sceneSlot: 6, atlas: 'kaimono_items_convenience_atlas.png', cols: 4, rows: 3, bg: 'bg-[#f8fafc]', border: 'border-[#cbd5e1]', items: makeItems('c', ['おにぎり', 'ハンバーガー', 'ポテト', 'ぎゅうにゅう', 'おべんとう', 'おちゃ', 'バナナ', 'ジュース', 'たまご', 'コーヒー', 'かさ', 'しんぶん']) }
         ];
+
+        const scenePosition = (slot) => `${(slot % 4) / 3 * 100}% ${Math.floor(slot / 4) * 100}%`;
 
         const speak = (text) => {
             if (!window.speechSynthesis) return;
@@ -317,12 +374,20 @@
             const bgmRef = useRef(null);
 
             const initAudio = () => {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!audioCtx.current && AudioContext) {
-                    audioCtx.current = new AudioContext();
-                }
-                if (audioCtx.current && audioCtx.current.state === 'suspended') {
-                    audioCtx.current.resume();
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!audioCtx.current && AudioContext) {
+                        audioCtx.current = new AudioContext();
+                    }
+                    if (audioCtx.current && audioCtx.current.state === 'suspended') {
+                        audioCtx.current.resume().catch(error => {
+                            console.warn('買い物ゲームの音声を再開できませんでした。', error);
+                        });
+                    }
+                } catch (error) {
+                    // 音声が使えない端末でも、買い物操作はそのまま続けられる
+                    audioCtx.current = null;
+                    console.warn('買い物ゲームの音声を準備できませんでした。', error);
                 }
             };
 
@@ -339,7 +404,9 @@
                     gain.connect(audioCtx.current.destination);
                     osc.start();
                     osc.stop(audioCtx.current.currentTime + 0.2);
-                } catch (e) { }
+                } catch (error) {
+                    console.warn('買い物ゲームの効果音を再生できませんでした。', error);
+                }
             };
 
             // 起動時：横向きレイアウトにして案内をしゃべる。
@@ -350,17 +417,34 @@
                 const unlock = () => {
                     try {
                         const el = document.documentElement;
-                        if (el.requestFullscreen) el.requestFullscreen().catch(() => { });
+                        if (el.requestFullscreen) {
+                            el.requestFullscreen().catch(error => {
+                                console.warn('全画面表示へ切り替えられませんでした。', error);
+                            });
+                        }
                         else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-                        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { });
-                    } catch (e) { }
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch(error => {
+                                console.warn('横向きへ固定できないため、現在の向きで続けます。', error);
+                            });
+                        }
+                    } catch (error) {
+                        // 全画面化や向き固定が非対応でも、縦横どちらでも遊べるレイアウトを使う
+                        console.warn('画面表示の切り替えを利用できませんでした。', error);
+                    }
                     initAudio();
                 };
                 document.addEventListener('pointerdown', unlock, { once: true });
                 return () => document.removeEventListener('pointerdown', unlock);
             }, []);
 
-            const startBGM = () => { if (bgmRef.current && !isMuted) { bgmRef.current.volume = 0.3; bgmRef.current.play().catch(e => { }); } };
+            const startBGM = () => {
+                if (!bgmRef.current || isMuted) return;
+                bgmRef.current.volume = 0.3;
+                bgmRef.current.play().catch(error => {
+                    console.warn('買い物ゲームのBGMを開始できませんでした。', error);
+                });
+            };
             const stopBGM = () => { if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } };
 
             useEffect(() => {
@@ -370,6 +454,11 @@
             }, [isMuted, gameState]);
 
             useEffect(() => { if (gameState === 'playing') startBGM(); else stopBGM(); }, [gameState]);
+
+            useEffect(() => {
+                document.body.classList.toggle('shopping-active', gameState === 'playing' || gameState === 'result');
+                return () => document.body.classList.remove('shopping-active');
+            }, [gameState]);
 
             // Robust Drag & Drop using Window Listeners
             useEffect(() => {
@@ -463,7 +552,7 @@
 
             return (
                 <div
-                    className={`relative min-h-screen ${currentShop.bg} transition-colors duration-700 flex flex-col overflow-hidden select-none touch-none font-sans`}
+                    className={`relative h-[100dvh] ${currentShop.bg} transition-colors duration-700 flex flex-col overflow-hidden select-none touch-manipulation font-sans`}
                     onPointerCancel={cancelDrag}
                 >
                     <audio ref={bgmRef} src="./kaimono_bgm.mp3" loop />
@@ -486,13 +575,13 @@
                     {/* Shop Select: Horizontal Scroll / Optimized for Landscape */}
                     {gameState === 'select_shop' && (
                         <div className="w-full h-full bg-orange-50 flex flex-col p-4 items-center justify-center gap-8">
-                            <h2 className="text-3xl md:text-4xl font-bold text-orange-600 shrink-0 drop-shadow-sm">どこの おみせに いく？</h2>
+                            <h2 className="shop-select-title text-3xl md:text-4xl font-bold text-orange-600 shrink-0 drop-shadow-sm">どこの おみせに いく？</h2>
                             {/* Horizontal Scroll Container */}
-                            <div className="w-full flex items-center overflow-x-auto gap-6 px-8 no-scrollbar snap-x py-4">
+                            <div className="shop-select-list w-full flex items-center overflow-x-auto gap-6 px-8 no-scrollbar snap-x py-4">
                                 {SHOPS.map(shop => (
-                                    <button key={shop.id} onClick={() => startShopping(shop)} aria-label={`${shop.name}へいく`} className={`shrink-0 w-40 h-40 md:w-56 md:h-56 flex flex-col items-center justify-center p-2 ${shop.bg} rounded-[2rem] border-4 ${shop.border} shadow-lg active:scale-95 scroll-ml-6 snap-center hover:rotate-2 transition-all`}>
-                                        <AtlasIcon shop={shop} item={shop.items[0]} variant="shop" />
-                                        <span className="text-xl md:text-2xl font-bold text-gray-700">{shop.name}</span>
+                                    <button key={shop.id} onClick={() => startShopping(shop)} aria-label={`${shop.name}へいく`} className={`shop-select-card shrink-0 w-40 h-40 md:w-56 md:h-56 flex flex-col items-center justify-end overflow-hidden ${shop.bg} rounded-[2rem] border-4 ${shop.border} shadow-lg active:scale-95 scroll-ml-6 snap-center hover:rotate-2 transition-all`}>
+                                        <span className="shop-thumb w-full flex-1" style={{ backgroundPosition: scenePosition(shop.sceneSlot) }} aria-hidden="true"></span>
+                                        <span className="w-full bg-white/95 py-2 text-xl md:text-2xl font-bold text-gray-700">{shop.name}</span>
                                     </button>
                                 ))}
                                 <div className="w-4 shrink-0"></div>
@@ -501,10 +590,10 @@
                     )}
 
                     {gameState === 'playing' || gameState === 'result' ? (
-                        <div className={`relative w-full h-full flex flex-col ${currentShop.bg}`}>
+                        <div className="shop-scene relative w-full h-full flex flex-col" style={{ backgroundPosition: scenePosition(currentShop.sceneSlot) }}>
 
                             {/* Clipboard Shopping List (Sidebar) */}
-                            <div className="absolute top-24 left-2 z-30 pointer-events-auto">
+                            <div className="shopping-list-wrap absolute top-24 left-2 z-30 pointer-events-auto">
                                 <ClipboardList shop={currentShop} items={targetItems} foundItems={foundItems} onSpeak={speak} />
                             </div>
 
@@ -514,7 +603,7 @@
 
                             {/* Shelves Layout: Stacking 3 tiers vertically */}
                             <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden flex flex-col items-center justify-center p-2 md:p-4 no-scrollbar scroll-smooth">
-                                <div className="flex flex-col gap-1 min-w-max px-12 pt-2 pb-1">
+                                <div className="shelf-stage flex flex-col gap-1 min-w-max px-12 pt-3 pb-2">
                                     {[0, 7, 14].map(startIdx => (
                                         <div key={startIdx} className="w-[600px]">
                                             <ShelfLayer>
@@ -545,18 +634,17 @@
                             </div>
 
                             {/* Basket & Character Side-by-Side: Responsive Scale & Half-Body Clip */}
-                            <div ref={basketRef} role="region" aria-label="かご" className="relative shrink-0 left-0 right-0 h-24 z-40 flex items-end justify-center pointer-events-none gap-4">
+                            <div ref={basketRef} role="region" aria-label="かご" className="shopping-basket-row relative shrink-0 left-0 right-0 h-24 z-40 flex items-end justify-center pointer-events-none gap-4">
                                 <div className="w-full max-w-4xl flex items-end justify-center px-4">
                                     {/* Character */}
                                     <div className="shrink-0 animate-sway">
                                         <img src="osewa_title_girl_512.png" alt="かごをもつ女の子とうさぎ" className="w-24 h-24 object-contain drop-shadow-lg" draggable="false" />
                                     </div>
-                                    {/* Wire Cart */}
-                                    <WireCart className="w-32 h-24 -ml-4">
+                                    <PictureBasket>
                                         {foundItems.map((item, idx) => (
                                             <AtlasIcon key={`${item.id}-${idx}`} shop={currentShop} item={item} variant="cart" />
                                         ))}
-                                    </WireCart>
+                                    </PictureBasket>
                                 </div>
                             </div>
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v122';
+const CACHE_NAME = 'ajuna-v124';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -39,11 +39,14 @@ const LOCAL_FILES = [
   './kaimono_items_toys_atlas.png',
   './kaimono_items_flowers_atlas.png',
   './kaimono_items_convenience_atlas.png',
+  './kaimono_shop_scenes_v2.png',
+  './ui_shopping_basket_v2.png',
   './icon_hiragana.png',
   './icon_eawase.png',
   './icon_woodpuzzle.png',
   './icon_kazukazoe.png',
   './kazukazoe_items_atlas.png',
+  './snow_followers_v2.png',
   './icon_carrace.png',
   './icon_graingame.png',
   './icon_yukinokuni.png',
@@ -56,9 +59,12 @@ const LOCAL_FILES = [
   './toyfreeze.html',
   './toyfreeze_room.png',
   './toyfreeze_characters.png',
+  './toyfreeze_stage_scenes_v2.png',
+  './toyfreeze_friends_v2.png',
   './icon_toyfreeze.png',
   './slide.html',
   './slide_girl.png',
+  './slide_park_bg_v2.png',
   './osewa.html',
   './osewa_room.png',
   './osewa_park.png',

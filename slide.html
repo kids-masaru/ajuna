@@ -13,7 +13,7 @@ body {
   touch-action: none;
   overscroll-behavior: none;
   width: 100vw; height: 100dvh;
-  background: #bfe6f5;
+  background: #dff5ff url('slide_park_bg_v2.png') center / cover no-repeat;
 }
 #cv { display: block; width: 100vw; height: 100dvh; }
 
@@ -36,25 +36,39 @@ body {
 }
 
 /* 4歳児でも行き先が分かる、文字付きの常時表示ボタン */
-#btn-back {
+.park-back-btn {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: auto;
   min-width: 142px;
   height: 50px;
   padding: 0 16px;
   gap: 7px;
   border-radius: 999px;
-  border-color: #86efac;
+  border: 3px solid #86efac;
+  background: rgba(255,255,255,.96);
   color: #166534;
   font-size: 1rem;
   font-weight: 900;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(22,101,52,.2);
+  touch-action: manipulation;
 }
-#btn-back .back-arrow {
+.park-back-btn:active { transform: scale(.94); }
+.park-back-btn .back-arrow {
   font-size: 1.45rem;
   line-height: 1;
 }
 
 @media (max-width: 430px) {
-  #btn-back { min-width: 130px; padding: 0 12px; font-size: 0.92rem; }
+  .park-back-btn { min-width: 130px; padding: 0 12px; font-size: 0.92rem; }
+  .result-actions { flex-direction: column; width: min(88vw, 330px); }
+  .result-actions .gp-btn { width: 100%; }
 }
 
 /* ゴール・結果のオーバーレイ */
@@ -83,26 +97,26 @@ body {
 </head>
 <body class="gp gp-cyan">
   <canvas id="cv"></canvas>
-  <a href="#" class="gp-home" id="btn-back" aria-label="こうえんにもどる">
+  <button type="button" class="park-back-btn" id="btn-back" aria-label="こうえんにもどる">
     <span class="back-arrow" aria-hidden="true">←</span>
-    <span>こうえんへ</span>
-  </a>
+    <span>こうえんにもどる</span>
+  </button>
 
   <div id="hud">
     <div class="hud-box"><span aria-hidden="true">★</span> <span id="star-n">0</span></div>
     <div class="hud-box">コース <span id="course-n">1</span>/3</div>
   </div>
 
-  <div id="goal-flash"><div class="msg">ゴール！🎉</div></div>
+  <div id="goal-flash"><div class="msg">ゴール！</div></div>
 
   <div id="result" class="screen" style="display:none;">
-    <div class="gp-hero gp-float">🏆</div>
+    <img src="park_slide_icon_512.png" alt="" class="gp-float" style="width:120px;height:120px;object-fit:contain;">
     <h2 class="big-title">ぜんぶ ゴール！</h2>
     <div style="font-size:1.05rem;font-weight:800;">あつめた ほし</div>
     <div id="final-star" style="font-size:3rem;font-weight:900;color:#fde047;line-height:1.1;">0</div>
-    <div style="display:flex;gap:12px;margin-top:8px;">
+    <div class="result-actions" style="display:flex;gap:12px;margin-top:8px;">
       <button class="gp-btn" id="btn-retry">もういっかい</button>
-      <button class="gp-btn gp-btn--ghost" id="btn-back-park">🌳 こうえんにもどる</button>
+      <button class="gp-btn gp-btn--ghost" id="btn-back-park">こうえんにもどる</button>
     </div>
   </div>
 
@@ -130,6 +144,11 @@ var girlImg = new Image();
 var girlOK = false;
 girlImg.onload = function () { girlOK = true; };
 girlImg.src = 'slide_girl.png';
+
+var parkBg = new Image();
+var parkBgOK = false;
+parkBg.onload = function () { parkBgOK = true; };
+parkBg.src = 'slide_park_bg_v2.png';
 
 // ===== 音 =====
 var ac = null, windGain = null;
@@ -171,7 +190,7 @@ var sndGoal   = function () { [523,659,784,1047].forEach(function(f,i){ setTimeo
 
 // ===== コースづくり =====
 // lanes: 3本のレーン。ほんとうの道を1本つくり、分かれ道ごとに
-// 「いきどまり」の枝を1本たす。いきどまりは1〜2だん下でフタになる。
+// 「いきどまり」の枝を1本たす。どの枝も1だんで元の分岐へ戻れる。
 var LANES = 3;
 var course = null;
 var courseIdx = 0, TOTAL_COURSES = 3;
@@ -208,20 +227,31 @@ function genCourse(idx) {
     });
     if (decoys.length) {
       var d2 = decoys[Math.floor(Math.random() * decoys.length)];
-      var deep = idx >= 1 && Math.random() < 0.5 && r2 + 2 <= M && d2 !== path[r2 + 2];
       E(r2, l2).push({ to: d2, star: false, correct: false });
-      if (deep) {
-        // 1だん下がってからフタ（すこしむずかしい）
-        N(r2 + 1, d2);
-        E(r2 + 1, d2).push({ to: d2, star: false, correct: false });
-        N(r2 + 2, d2).cap = true;
-      } else {
-        N(r2 + 1, d2).cap = true;
-      }
+      N(r2 + 1, d2).cap = true;
     }
   }
   N(M, path[M]).goal = true;
-  return { M: M, path: path, nodes: nodes, edges: edges };
+  var made = { M: M, path: path, nodes: nodes, edges: edges };
+  // 正解ルートと、すべての誤答枝からの復帰可能性を生成直後に確認する。
+  if (!validateCourse(made)) return genCourse(idx);
+  return made;
+}
+
+function validateCourse(c) {
+  if (!c || c.path.length !== c.M + 1) return false;
+  for (var r = 0; r < c.M; r++) {
+    var from = c.path[r];
+    var outs = c.edges[r + ',' + from] || [];
+    var correct = outs.filter(function (e) { return e.correct && e.to === c.path[r + 1]; });
+    if (correct.length !== 1) return false;
+    for (var i = 0; i < outs.length; i++) {
+      if (outs[i].correct) continue;
+      var dead = c.nodes[(r + 1) + ',' + outs[i].to];
+      if (!dead || !dead.cap) return false;
+    }
+  }
+  return !!(c.nodes[c.M + ',' + c.path[c.M]] || {}).goal;
 }
 
 // ===== レイアウト =====
@@ -380,30 +410,10 @@ function drawEdgeCurve(e, style) {
 var camY = 0, scrollLines = 0;
 function draw(dt, tNow) {
   var pal = PALETTES[courseIdx % PALETTES.length];
-  // そら
-  var sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#bfe9fb'); sky.addColorStop(1, '#e8f9ee');
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-  // とおくの雲（ゆっくり流れて、たかさを感じる）
-  ctx.save(); ctx.globalAlpha = 0.7; ctx.fillStyle = '#ffffff';
-  for (var i = 0; i < 6; i++) {
-    var cy = ((i * 340 + 120) - camY * 0.35) % (H + 200) - 100;
-    var cx = W * (0.15 + (i % 3) * 0.35);
-    ctx.beginPath();
-    ctx.arc(cx, cy, 26, 0, 6.3); ctx.arc(cx + 26, cy + 6, 20, 0, 6.3); ctx.arc(cx - 26, cy + 8, 18, 0, 6.3);
-    ctx.fill();
-  }
-  ctx.restore();
-  // 木（世界と同じ速さで流れて、スピード感を出す）
-  ctx.save();
-  for (var i2 = 0; i2 < 10; i2++) {
-    var ty = ((i2 * 260) - camY) % (rowY(course.M) + H) ;
-    var sy = ty - 0 + 40; var side = (i2 % 2 === 0) ? W * 0.045 : W * 0.955;
-    if (sy < -60 || sy > H + 60) continue;
-    ctx.font = '34px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(i2 % 4 === 0 ? '🌳' : (i2 % 4 === 1 ? '🌲' : (i2 % 4 === 2 ? '🌷' : '🌼')), side, sy);
-  }
-  ctx.restore();
+  // 絵本調の公園背景。コース部分は薄く白を重ねて読みやすくする。
+  if (parkBgOK) ctx.drawImage(parkBg, 0, 0, W, H);
+  else { ctx.fillStyle = '#dff5ff'; ctx.fillRect(0, 0, W, H); }
+  ctx.fillStyle = 'rgba(255,255,255,.24)'; ctx.fillRect(0, 0, W, H);
 
   var lw = Math.min(W * 0.17, 64);
   // レールのかげ → 面 → 中央の流れる線（スピード感）
@@ -430,17 +440,22 @@ function draw(dt, tNow) {
       ctx.beginPath(); ctx.arc(nx, ny, lw * 0.62, 0, 6.3); ctx.fill();
       ctx.fillStyle = '#fff1f2';
       ctx.beginPath(); ctx.arc(nx, ny, lw * 0.48, 0, 6.3); ctx.fill();
-      ctx.font = '900 ' + (lw * 0.5) + 'px sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#f43f5e';
-      ctx.fillText(node.hit ? '💦' : '✕', nx, ny + 2);
+      ctx.strokeStyle = node.hit ? '#38bdf8' : '#f43f5e';
+      ctx.lineWidth = Math.max(5, lw * .1); ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(nx - lw * .18, ny - lw * .18); ctx.lineTo(nx + lw * .18, ny + lw * .18);
+      ctx.moveTo(nx + lw * .18, ny - lw * .18); ctx.lineTo(nx - lw * .18, ny + lw * .18);
+      ctx.stroke();
     }
     if (node.goal) {
       ctx.fillStyle = '#fff';
       ctx.beginPath(); ctx.arc(nx, ny + 8, lw * 0.9, 0, 6.3); ctx.fill();
-      ctx.font = (lw * 0.9) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🚩', nx, ny - 6);
+      ctx.strokeStyle = '#475569'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(nx - 10, ny + 18); ctx.lineTo(nx - 10, ny - 28); ctx.stroke();
+      ctx.fillStyle = '#fb7185'; ctx.beginPath();
+      ctx.moveTo(nx - 8, ny - 27); ctx.lineTo(nx + 24, ny - 15); ctx.lineTo(nx - 8, ny - 4); ctx.closePath(); ctx.fill();
       ctx.font = '900 ' + Math.min(26, lw * 0.42) + 'px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = '#e11d48';
       ctx.fillText('ゴール', nx, ny + lw * 0.55);
     }
@@ -602,20 +617,14 @@ requestAnimationFrame(tick);
 var fromOsewa = location.search.indexOf('from=osewa') !== -1;
 function goBackToPark() {
   if (fromOsewa) {
-    try {
-      if (window.parent !== window) {
-        window.parent.document.getElementById('slide-overlay').style.display = 'none';
-        window.parent.document.getElementById('slide-iframe').src = '';
-        return;
-      }
-    } catch (e) {
+    if (window.parent !== window) {
       window.parent.postMessage('close-slide', '*');
       return;
     }
   }
   window.location.href = 'osewa.html';
 }
-document.getElementById('btn-back').addEventListener('click', function (e) { e.preventDefault(); goBackToPark(); });
+document.getElementById('btn-back').addEventListener('click', goBackToPark);
 document.getElementById('btn-back-park').addEventListener('click', goBackToPark);
 document.getElementById('btn-retry').addEventListener('click', function () {
   stars = 0; document.getElementById('star-n').textContent = 0;

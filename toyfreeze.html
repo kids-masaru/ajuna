@@ -118,14 +118,15 @@
     #play-screen {
       position: absolute;
       inset: 0;
-      display: grid;
-      grid-template-rows: minmax(0, 1fr) auto;
+      display: block;
     }
 
     #play-screen[hidden] { display: none; }
 
     #scene {
       position: relative;
+      width: 100%;
+      height: 100%;
       min-height: 0;
       overflow: hidden;
       background: #f8d5ac url('toyfreeze_room.png') center / 100% 100% no-repeat;
@@ -143,6 +144,18 @@
       gap: 7px;
       width: min(580px, calc(100% - 126px));
       transform: translateX(-50%);
+    }
+
+    #stage-label {
+      padding: 5px 13px;
+      border: 3px solid rgba(255,255,255,.95);
+      border-radius: 999px;
+      color: #0f5f58;
+      background: rgba(236,253,245,.94);
+      box-shadow: 0 3px 10px rgba(61,42,27,.14);
+      font-size: clamp(.78rem, 2.8vw, 1rem);
+      font-weight: 900;
+      line-height: 1;
     }
 
     #signal {
@@ -189,28 +202,63 @@
       aspect-ratio: 1;
       background-image: url('toyfreeze_characters.png');
       background-repeat: no-repeat;
-      background-size: 200% 200%;
+      /* 各セルの外周を少し切り、隣のキャラクター断片を表示しない。 */
+      background-size: 215% 215%;
       filter: drop-shadow(0 6px 5px rgba(70, 43, 25, .24));
       pointer-events: none;
     }
 
     #girl {
-      top: clamp(54px, 12vh, 96px);
-      left: 61%;
-      width: clamp(120px, 26vmin, 220px);
+      top: auto;
+      bottom: clamp(5px, 2.5vh, 24px);
+      left: 63%;
+      width: clamp(104px, 22vmin, 180px);
       background-position: 0 0;
       transform: translateX(-50%);
       transform-origin: 50% 85%;
       transition: transform .18s ease;
+      animation: girl-tidy 1.25s ease-in-out infinite alternate;
     }
 
     #girl.front {
       background-position: 100% 0;
       transform: translateX(-50%) scale(1.04);
+      animation: none;
     }
 
+    #girl.getting-ready { animation-play-state: paused; }
+
+    @keyframes girl-tidy {
+      from { transform: translateX(-50%) rotate(-2deg) translateY(0); }
+      to { transform: translateX(-50%) rotate(2deg) translateY(3px); }
+    }
+
+    #turn-cue {
+      position: absolute;
+      z-index: 14;
+      left: 63%;
+      bottom: clamp(170px, 31vmin, 265px);
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border: 5px solid #fff;
+      border-radius: 50%;
+      background: #fbbf24;
+      color: #7c2d12;
+      font-size: 2.4rem;
+      font-weight: 1000;
+      box-shadow: 0 6px 16px rgba(120,53,15,.3);
+      transform: translateX(-50%) scale(0);
+      opacity: 0;
+      transition: transform .18s, opacity .18s;
+      pointer-events: none;
+    }
+    #turn-cue.show { transform: translateX(-50%) scale(1); opacity: 1; animation: cue-pop .55s ease-in-out infinite alternate; }
+    @keyframes cue-pop { to { transform: translateX(-50%) scale(1.13) rotate(5deg); } }
+
     #toy {
-      left: 6%;
+      left: 13%;
       bottom: clamp(1px, 3vh, 28px);
       width: clamp(92px, 22vmin, 178px);
       background-position: 100% 100%;
@@ -225,6 +273,42 @@
     }
 
     #toy.caught { animation: toy-shake .42s ease-in-out 2; }
+
+    #friends {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    .friend {
+      position: absolute;
+      width: clamp(58px, 14vmin, 112px);
+      aspect-ratio: 1;
+      background-image: url('toyfreeze_friends_v2.png');
+      background-repeat: no-repeat;
+      background-size: 300% 100%;
+      filter: drop-shadow(0 5px 4px rgba(70,43,25,.2));
+      transform: translateX(-50%);
+      transform-origin: 50% 88%;
+      will-change: left, transform;
+    }
+
+    .friend--bunny { bottom: 20%; background-position: 0 0; }
+    .friend--car { bottom: 12%; background-position: 50% 0; }
+    .friend--dino { bottom: 27%; background-position: 100% 0; }
+    .friend.moving { animation: friend-move .42s ease-in-out infinite alternate; }
+    .friend.arrived { animation: friend-cheer .5s ease-in-out 3 alternate; }
+
+    @keyframes friend-move {
+      from { transform: translateX(-50%) translateY(0) rotate(-2deg); }
+      to { transform: translateX(-50%) translateY(-6px) rotate(2deg); }
+    }
+
+    @keyframes friend-cheer {
+      from { transform: translateX(-50%) translateY(0) rotate(-5deg) scale(1); }
+      to { transform: translateX(-50%) translateY(-12px) rotate(5deg) scale(1.08); }
+    }
 
     @keyframes toy-hop {
       from { transform: translateX(-50%) translateY(0) rotate(-2deg); }
@@ -251,56 +335,86 @@
       pointer-events: none;
     }
 
+    #goal-label {
+      position: absolute;
+      left: 50%;
+      bottom: -32px;
+      min-width: 106px;
+      padding: 5px 9px;
+      border: 3px solid #fff;
+      border-radius: 999px;
+      color: #7c4a03;
+      background: rgba(254,240,138,.95);
+      box-shadow: 0 3px 9px rgba(61,42,27,.18);
+      font-size: clamp(.72rem, 2.6vw, .95rem);
+      font-weight: 900;
+      text-align: center;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
     @keyframes goal-pulse {
       from { opacity: .55; transform: scale(.9); }
       to { opacity: 1; transform: scale(1.04); }
     }
 
-    #control-panel {
-      position: relative;
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      min-height: 116px;
-      padding: 9px 14px calc(var(--safe-bottom) + 7px);
-      background: linear-gradient(180deg, #fffdf8, #ffedd5);
-    }
-
-    #move-btn {
-      width: min(560px, 94vw);
-      min-height: 74px;
-      border: 0;
-      border-radius: 28px;
-      color: #fff;
-      background: #10b981;
-      box-shadow: 0 9px 0 #047857, 0 11px 22px rgba(4,120,87,.25);
-      font-family: var(--gp-font);
-      font-size: clamp(1.6rem, 7vw, 2.45rem);
-      font-weight: 900;
-      line-height: 1;
-      cursor: pointer;
-      touch-action: none;
-    }
-
-    #move-btn.pressed {
-      transform: translateY(8px);
-      box-shadow: 0 1px 0 #047857, 0 4px 8px rgba(4,120,87,.2);
-    }
-
-    #move-btn.stop-mode {
-      color: #fee2e2;
-      background: #b91c1c;
-      box-shadow: 0 9px 0 #7f1d1d, 0 11px 22px rgba(127,29,29,.25);
-    }
-
     #hint {
-      min-height: 1.25em;
-      color: #7c5b45;
+      position: absolute;
+      z-index: 15;
+      left: 50%;
+      top: calc(var(--safe-top) + 112px);
+      bottom: auto;
+      width: min(480px, 72vw);
+      min-height: 40px;
+      padding: 7px 14px;
+      border: 3px solid rgba(255,255,255,.95);
+      border-radius: 999px;
+      color: #5b4636;
+      background: rgba(255,247,237,.92);
+      box-shadow: 0 5px 14px rgba(61,42,27,.18);
       font-size: clamp(.84rem, 3vw, 1rem);
       font-weight: 800;
+      text-align: center;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    #stage-clear {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(255,247,237,.38);
+      backdrop-filter: blur(2px);
+      pointer-events: none;
+    }
+
+    #stage-clear[hidden] { display: none; }
+
+    .stage-clear-card {
+      min-width: min(330px, 86vw);
+      padding: 18px 22px;
+      border: 5px solid #fff;
+      border-radius: 28px;
+      color: #0f766e;
+      background: rgba(209,250,229,.96);
+      box-shadow: 0 12px 30px rgba(61,42,27,.24);
+      text-align: center;
+    }
+
+    .stage-clear-card strong {
+      display: block;
+      font-size: clamp(1.55rem, 7vw, 2.5rem);
+    }
+
+    .stage-clear-card span {
+      display: block;
+      margin-top: 5px;
+      color: #6b4f3b;
+      font-size: clamp(.95rem, 3.8vw, 1.2rem);
+      font-weight: 900;
     }
 
     .result-card {
@@ -331,23 +445,29 @@
       .lead { width: min(55vw, 500px); }
       .howto { width: min(55vw, 500px); }
       .screen .main-btn { min-height: 54px; padding-block: .65em; }
-      #play-screen { grid-template-rows: minmax(0, 1fr) 94px; }
-      #control-panel { min-height: 94px; padding-top: 6px; }
-      #move-btn { min-height: 58px; }
-      #girl { top: 42px; width: clamp(104px, 35vh, 164px); }
+      #girl { bottom: 0; width: clamp(92px, 31vh, 142px); }
       #toy { width: clamp(82px, 30vh, 138px); bottom: 0; }
       #signal { padding-block: 5px 6px; }
+      #stage-label { padding-block: 3px; }
       .progress-shell { height: 14px; }
+      #hint { top: calc(var(--safe-top) + 94px); }
+      .friend { width: clamp(52px, 22vh, 92px); }
       .result-card { width: min(620px, 90vw); padding: 14px; }
       .result-card .result-icon { width: 104px; float: left; margin-right: 14px; }
       .result-actions { margin-top: 10px; }
     }
 
     @media (orientation: portrait) {
-      #girl { left: 60%; top: clamp(88px, 15vh, 150px); width: clamp(126px, 40vw, 190px); }
-      #toy { bottom: 4%; width: clamp(98px, 31vw, 152px); }
+      #girl { left: 61%; bottom: 6%; width: clamp(112px, 34vw, 160px); }
+      #turn-cue { left: 61%; bottom: clamp(190px, 49vw, 255px); }
+      #toy { bottom: 6%; width: clamp(98px, 31vw, 152px); }
       #goal-glow { right: 1%; bottom: 8%; width: clamp(78px, 24vw, 125px); }
       .topbar { width: calc(100% - 122px); }
+      #hint { width: min(350px, 88vw); top: calc(var(--safe-top) + 120px); }
+      .friend { width: clamp(55px, 20vw, 90px); }
+      .friend--bunny { bottom: 22%; }
+      .friend--car { bottom: 14%; }
+      .friend--dino { bottom: 30%; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -357,17 +477,17 @@
 </head>
 <body class="gp gp-teal">
   <main id="game">
-    <a href="index.html" class="gp-home" aria-label="ホームにもどる">ホーム</a>
+    <a href="index.html" class="gp-home" aria-label="ホームにもどる"></a>
 
     <section id="start-screen" class="screen" aria-labelledby="game-title">
       <img class="title-icon gp-float" src="icon_toyfreeze.png" alt="おもちゃのロボットと女の子">
       <div>
         <h1 id="game-title">おもちゃは<br>うごかない！</h1>
-        <p class="lead">みられて いない あいだに<br>おもちゃばこへ すすもう！</p>
+        <p class="lead">なかまの おもちゃと いっしょに<br>3つの ばしょへ かえろう！</p>
       </div>
       <div class="howto" aria-label="あそびかた">
-        <div class="howto-card go">うしろむきなら<br>おして すすむ</div>
-        <div class="howto-card stop">ふりむいたら<br>はなして とまる</div>
+        <div class="howto-card go">うしろむきなら<br>おして すすもう</div>
+        <div class="howto-card stop">「！」が でたら<br>みんなで ぴたっ！</div>
       </div>
       <button id="start-btn" class="gp-btn gp-btn--lg main-btn" type="button">はじめる！</button>
     </section>
@@ -375,18 +495,24 @@
     <section id="play-screen" hidden aria-label="ゲーム画面">
       <div id="scene">
         <div class="topbar" aria-live="polite">
+          <div id="stage-label">ステージ 1 / 3　おもちゃばこへ</div>
           <div id="signal">いまだ！ すすめ！</div>
-          <div class="progress-shell" aria-label="おもちゃばこまでのきょり">
+          <div id="progress-shell" class="progress-shell" aria-label="おもちゃばこまでのきょり">
             <div id="progress"></div>
           </div>
         </div>
         <div id="girl" class="sprite" role="img" aria-label="うしろをむいている女の子"></div>
-        <div id="goal-glow" aria-hidden="true"></div>
+        <div id="turn-cue" aria-hidden="true">!</div>
+        <div id="goal-glow" aria-hidden="true"><span id="goal-label">おもちゃばこ</span></div>
+        <div id="friends" aria-label="いっしょに進むおもちゃたち"></div>
         <div id="toy" class="sprite" role="img" aria-label="おもちゃのロボット"></div>
-      </div>
-      <div id="control-panel">
-        <button id="move-btn" type="button" aria-label="おしているあいだ進む">おして すすむ</button>
-        <div id="hint">ボタンを はなすと とまるよ</div>
+        <div id="hint">ロボットか ゆかを おして、ゆびの ところへ すすもう</div>
+        <div id="stage-clear" hidden aria-live="assertive">
+          <div class="stage-clear-card gp-pop">
+            <strong id="stage-clear-title">ついたよ！</strong>
+            <span id="stage-clear-next">つぎの ばしょへ いこう</span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -394,7 +520,7 @@
       <div class="gp-card result-card gp-pop">
         <img class="result-icon" src="icon_toyfreeze.png" alt="おもちゃのロボット">
         <h2 id="result-title">やったね！</h2>
-        <p class="lead">みつからずに<br>おもちゃばこへ ついたよ！</p>
+        <p class="lead">みんなで 3つの ばしょへ<br>ぶじに かえれたよ！</p>
         <div class="result-actions">
           <button id="again-btn" class="gp-btn gp-btn--lg" type="button">もういちど</button>
           <a class="gp-btn gp-btn--ghost" href="index.html">ゲームを えらぶ</a>
@@ -412,12 +538,21 @@
       const resultScreen = document.getElementById('result-screen');
       const startButton = document.getElementById('start-btn');
       const againButton = document.getElementById('again-btn');
-      const moveButton = document.getElementById('move-btn');
+      const scene = document.getElementById('scene');
       const signal = document.getElementById('signal');
       const hint = document.getElementById('hint');
       const progress = document.getElementById('progress');
+      const progressShell = document.getElementById('progress-shell');
+      const stageLabel = document.getElementById('stage-label');
       const girl = document.getElementById('girl');
       const toy = document.getElementById('toy');
+      const turnCue = document.getElementById('turn-cue');
+      const goalGlow = document.getElementById('goal-glow');
+      const goalLabel = document.getElementById('goal-label');
+      const friendsContainer = document.getElementById('friends');
+      const stageClear = document.getElementById('stage-clear');
+      const stageClearTitle = document.getElementById('stage-clear-title');
+      const stageClearNext = document.getElementById('stage-clear-next');
 
       const PHASE = Object.freeze({
         AWAY: 'away',
@@ -426,17 +561,141 @@
         COMPLETE: 'complete'
       });
 
+      const STAGES = Object.freeze([
+        {
+          title: 'おもちゃばこへ',
+          destination: 'おもちゃばこ',
+          backgroundImage: "url('toyfreeze_room.png')",
+          backgroundSize: '100% 100%',
+          backgroundPosition: 'center',
+          girlLeft: 63,
+          girlBottom: 3,
+          goalRight: 3.5,
+          friendStarts: [11, 23, 35],
+          friendSpeeds: [7.6, 6.8, 6.2]
+        },
+        {
+          title: 'たなへ かえろう',
+          destination: 'おもちゃの たな',
+          backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
+          backgroundSize: '200% 100%',
+          backgroundPosition: '0% 0%',
+          girlLeft: 56,
+          girlBottom: 3,
+          goalRight: 3.5,
+          friendStarts: [8, 20, 32],
+          friendSpeeds: [7.2, 7.7, 6.5]
+        },
+        {
+          title: 'ベッドの したへ',
+          destination: 'ベッドの した',
+          backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
+          backgroundSize: '200% 100%',
+          backgroundPosition: '100% 0%',
+          girlLeft: 54,
+          girlBottom: 3,
+          goalRight: 5,
+          friendStarts: [12, 18, 30],
+          friendSpeeds: [6.8, 7.3, 7.8]
+        }
+      ]);
+
+      const FRIENDS = Object.freeze([
+        { className: 'friend--bunny', label: 'うさぎのぬいぐるみ', laneOffset: -2 },
+        { className: 'friend--car', label: 'きぐるま', laneOffset: 1 },
+        { className: 'friend--dino', label: 'きょうりゅうのおもちゃ', laneOffset: 3 }
+      ]);
+
       let phase = PHASE.AWAY;
       let phaseEndsAt = 0;
       let distance = 5;
       let pressing = false;
+      let targetDistance = 5;
       let caughtThisTurn = false;
       let lastFrame = 0;
       let animationId = 0;
+      let transitionTimer = 0;
+      let stageIndex = 0;
       let audioContext = null;
+      let friends = [];
 
       function randomBetween(min, max) {
         return min + Math.random() * (max - min);
+      }
+
+      function currentStage() {
+        return STAGES[stageIndex];
+      }
+
+      // 仲間は当たり判定を持たず、子どもの操作を邪魔しない見守り役として動かす
+      function createFriends() {
+        friendsContainer.replaceChildren();
+        friends = FRIENDS.map((friend, index) => {
+          const element = document.createElement('div');
+          element.className = `friend ${friend.className}`;
+          element.setAttribute('role', 'img');
+          element.setAttribute('aria-label', friend.label);
+          friendsContainer.appendChild(element);
+          return { ...friend, index, element, distance: 5, arrived: false };
+        });
+      }
+
+      function renderFriend(friend) {
+        const left = 5 + friend.distance * .78 + friend.laneOffset;
+        friend.element.style.left = `${Math.min(88, left)}%`;
+        friend.element.classList.toggle('arrived', friend.arrived);
+        friend.element.classList.toggle('moving', phase === PHASE.AWAY && !friend.arrived);
+      }
+
+      function resetFriends() {
+        const stage = currentStage();
+        friends.forEach((friend, index) => {
+          friend.distance = stage.friendStarts[index];
+          friend.arrived = false;
+          friend.element.classList.remove('arrived', 'moving');
+          renderFriend(friend);
+        });
+      }
+
+      function syncFriendMotion() {
+        friends.forEach(renderFriend);
+      }
+
+      function updateFriends(deltaSeconds) {
+        if (phase !== PHASE.AWAY) return;
+        const stage = currentStage();
+        friends.forEach((friend, index) => {
+          if (friend.arrived) return;
+          friend.distance = Math.min(100, friend.distance + deltaSeconds * stage.friendSpeeds[index]);
+          if (friend.distance >= 96) {
+            friend.distance = 100;
+            friend.arrived = true;
+            playTone(600 + index * 90, .12, 'sine', .025);
+          }
+          renderFriend(friend);
+        });
+      }
+
+      function finishFriends() {
+        friends.forEach(friend => {
+          friend.distance = 100;
+          friend.arrived = true;
+          renderFriend(friend);
+        });
+      }
+
+      function applyStage() {
+        const stage = currentStage();
+        scene.style.backgroundImage = stage.backgroundImage;
+        scene.style.backgroundSize = stage.backgroundSize;
+        scene.style.backgroundPosition = stage.backgroundPosition;
+        stageLabel.textContent = `ステージ ${stageIndex + 1} / ${STAGES.length}　${stage.title}`;
+        goalLabel.textContent = stage.destination;
+        progressShell.setAttribute('aria-label', `${stage.destination}までのきょり`);
+        girl.style.left = `${stage.girlLeft}%`;
+        girl.style.bottom = `${stage.girlBottom}%`;
+        turnCue.style.left = `${stage.girlLeft}%`;
+        goalGlow.style.right = `${stage.goalRight}%`;
       }
 
       // ユーザー操作後にだけ音を開始し、ブラウザの自動再生制限を避ける
@@ -492,21 +751,22 @@
 
       function setPressing(next) {
         pressing = Boolean(next) && phase !== PHASE.COMPLETE;
-        moveButton.classList.toggle('pressed', pressing);
-        toy.classList.toggle('walking', pressing && phase !== PHASE.WATCHING);
+        toy.classList.toggle('walking', pressing && phase === PHASE.AWAY);
         // 見られている最中の短いタップも、確実に判定へ含める
         if (pressing && phase === PHASE.WATCHING) catchToy();
       }
 
       function updateSignal() {
         signal.className = '';
-        moveButton.classList.remove('stop-mode');
+        turnCue.classList.remove('show');
+        girl.classList.remove('getting-ready');
 
         if (phase === PHASE.AWAY) {
           signal.textContent = 'いまだ！ すすめ！';
-          hint.textContent = 'タップでも ちょっと すすむよ';
+          hint.textContent = 'おしている あいだ、ロボットが ゆびへ すすむよ';
           girl.classList.remove('front');
           girl.setAttribute('aria-label', 'うしろをむいている女の子');
+          syncFriendMotion();
           return;
         }
 
@@ -515,17 +775,22 @@
           signal.textContent = 'もうすぐ ふりむくよ！';
           hint.textContent = 'そろそろ はなしてね';
           girl.classList.remove('front');
+          girl.classList.add('getting-ready');
+          turnCue.classList.add('show');
           girl.setAttribute('aria-label', 'もうすぐ振り向く女の子');
+          toy.classList.remove('walking');
+          syncFriendMotion();
           return;
         }
 
         if (phase === PHASE.WATCHING) {
           signal.classList.add(caughtThisTurn ? 'caught' : 'watching');
           signal.textContent = caughtThisTurn ? 'みつかっちゃった！' : 'ぴたっ！ とまって！';
-          hint.textContent = caughtThisTurn ? 'だいじょうぶ。つぎに すすもう' : 'ボタンから ゆびを はなそう';
+          hint.textContent = caughtThisTurn ? 'だいじょうぶ。つぎに すすもう' : 'ゆびを はなして とまろう';
           girl.classList.add('front');
           girl.setAttribute('aria-label', 'こちらを見ている女の子');
-          moveButton.classList.add('stop-mode');
+          toy.classList.remove('walking');
+          syncFriendMotion();
         }
       }
 
@@ -571,28 +836,44 @@
       function updateDistance(nextDistance) {
         distance = Math.min(100, Math.max(5, nextDistance));
         progress.style.width = `${distance}%`;
-        toy.style.left = `${6 + distance * .78}%`;
+        // 開始位置でもロボット全体が画面内へ収まるよう、移動範囲に左右の余白を持たせる
+        toy.style.left = `${13 + distance * .72}%`;
       }
 
       function advanceToy(amount) {
         updateDistance(distance + amount);
         if (distance < 100) return false;
-        completeGame();
+        completeStage();
         return true;
       }
 
-      function completeGame() {
+      function completeStage() {
         phase = PHASE.COMPLETE;
         setPressing(false);
         cancelAnimationFrame(animationId);
         updateDistance(100);
+        finishFriends();
+        signal.className = '';
+        signal.textContent = 'みんな ついたよ！';
+        hint.textContent = `${currentStage().destination}に かえれたよ`;
         playTone(660, .22, 'sine', .08);
         window.setTimeout(() => playTone(880, .32, 'sine', .08), 180);
-        speak('やったね。おもちゃばこに ついたよ');
-        window.setTimeout(() => {
+
+        if (stageIndex < STAGES.length - 1) {
+          const nextStage = STAGES[stageIndex + 1];
+          stageClearTitle.textContent = `${currentStage().destination}に ついたよ！`;
+          stageClearNext.textContent = `つぎは「${nextStage.destination}」へ`;
+          stageClear.hidden = false;
+          speak(`${currentStage().destination}に ついたよ。つぎへ いこう`);
+          transitionTimer = window.setTimeout(() => startStage(stageIndex + 1), 1650);
+          return;
+        }
+
+        speak('やったね。みんなで 3つの ばしょへ かえれたよ');
+        transitionTimer = window.setTimeout(() => {
           playScreen.hidden = true;
           resultScreen.hidden = false;
-        }, 650);
+        }, 800);
       }
 
       function gameLoop(now) {
@@ -601,11 +882,18 @@
         const deltaSeconds = Math.min((now - lastFrame) / 1000, .05);
         lastFrame = now;
 
+        updateFriends(deltaSeconds);
+
         if (pressing) {
           if (phase === PHASE.WATCHING) {
             catchToy();
-          } else {
-            if (advanceToy(deltaSeconds * 8.6)) return;
+          } else if (phase === PHASE.AWAY) {
+            const remaining = targetDistance - distance;
+            if (remaining > .15) {
+              if (advanceToy(Math.min(remaining, deltaSeconds * 24))) return;
+            } else {
+              toy.classList.remove('walking');
+            }
           }
         }
 
@@ -619,6 +907,25 @@
         animationId = requestAnimationFrame(gameLoop);
       }
 
+      function startStage(nextStageIndex) {
+        cancelAnimationFrame(animationId);
+        window.clearTimeout(transitionTimer);
+        stageIndex = nextStageIndex;
+        stageClear.hidden = true;
+        distance = 5;
+        targetDistance = 5;
+        pressing = false;
+        caughtThisTurn = false;
+        lastFrame = 0;
+        applyStage();
+        updateDistance(5);
+        toy.className = 'sprite';
+        resetFriends();
+        beginAway(performance.now());
+        speak(`${currentStage().destination}へ かえろう。うしろむきの あいだに すすもう`);
+        animationId = requestAnimationFrame(gameLoop);
+      }
+
       function startGame() {
         prepareAudio();
         if ('speechSynthesis' in window) {
@@ -628,29 +935,32 @@
             console.warn('前の読み上げを停止できませんでした。', error);
           }
         }
-        cancelAnimationFrame(animationId);
         startScreen.hidden = true;
         resultScreen.hidden = true;
         playScreen.hidden = false;
-        distance = 5;
-        pressing = false;
-        caughtThisTurn = false;
-        lastFrame = 0;
-        updateDistance(5);
-        toy.className = 'sprite';
-        beginAway(performance.now());
-        speak('うしろむきの あいだに、ボタンを おして すすもう');
-        animationId = requestAnimationFrame(gameLoop);
+        startStage(0);
+      }
+
+      function distanceFromPointer(event) {
+        const rect = scene.getBoundingClientRect();
+        const ratio = (event.clientX - rect.left) / rect.width;
+        return Math.min(100, Math.max(distance + 3, (ratio - .13) / .72 * 100));
       }
 
       function pressStart(event) {
         event.preventDefault();
         if (event.pointerId !== undefined) {
-          try { moveButton.setPointerCapture(event.pointerId); } catch (_) {}
+          try {
+            scene.setPointerCapture(event.pointerId);
+          } catch (error) {
+            // 非対応端末では通常のpointerupで停止できるため、操作を継続する
+            console.warn('指の追跡を固定できないため、通常操作で続けます。', error);
+          }
         }
+        targetDistance = distanceFromPointer(event);
         setPressing(true);
         // 短いタップでも少し進めるようにし、長押しが苦手な子も遊べるようにする
-        if (phase !== PHASE.WATCHING && phase !== PHASE.COMPLETE) advanceToy(3);
+        if (phase === PHASE.AWAY) advanceToy(3);
       }
 
       function pressEnd(event) {
@@ -660,15 +970,22 @@
 
       startButton.addEventListener('click', startGame);
       againButton.addEventListener('click', startGame);
-      moveButton.addEventListener('pointerdown', pressStart);
-      moveButton.addEventListener('pointerup', pressEnd);
-      moveButton.addEventListener('pointercancel', pressEnd);
-      moveButton.addEventListener('lostpointercapture', pressEnd);
-      moveButton.addEventListener('contextmenu', event => event.preventDefault());
+      scene.addEventListener('pointerdown', pressStart);
+      scene.addEventListener('pointermove', event => {
+        if (!pressing) return;
+        event.preventDefault();
+        targetDistance = distanceFromPointer(event);
+        if (phase === PHASE.WATCHING) catchToy();
+      });
+      scene.addEventListener('pointerup', pressEnd);
+      scene.addEventListener('pointercancel', pressEnd);
+      scene.addEventListener('lostpointercapture', pressEnd);
+      scene.addEventListener('contextmenu', event => event.preventDefault());
 
       window.addEventListener('keydown', event => {
         if ((event.code === 'Space' || event.code === 'ArrowRight') && !event.repeat && !playScreen.hidden) {
           event.preventDefault();
+          targetDistance = 100;
           setPressing(true);
         }
       });
@@ -685,6 +1002,8 @@
         if (document.hidden) setPressing(false);
         lastFrame = 0;
       });
+
+      createFriends();
     })();
   </script>
 </body>

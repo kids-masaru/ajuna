@@ -657,13 +657,13 @@ body {
 #swing-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 1200;
   background: black;
 }
 #slide-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 1200;
   background: black;
 }
 #slide-iframe {
@@ -676,6 +676,7 @@ body {
   height: 100%;
   border: none;
 }
+body.park-game-open > .gp-home { display: none !important; }
 
 /* Swipe hint for shop */
 #swipe-up-hint {
@@ -1114,7 +1115,7 @@ body {
 </style>
 </head>
 <body class="gp gp-pink">
-  <a href="index.html" class="gp-home" aria-label="ホームにもどる">🏠</a>
+  <a href="index.html" class="gp-home" aria-label="ホームにもどる"></a>
 
   <!-- ===== Main Room ===== -->
   <div id="room">
@@ -2092,10 +2093,12 @@ window.addEventListener('message', function(e) {
   if (e.data === 'close-swing') {
     document.getElementById('swing-overlay').style.display = 'none';
     document.getElementById('swing-iframe').src = '';
+    document.body.classList.remove('park-game-open');
   }
   if (e.data === 'close-slide') {
     document.getElementById('slide-overlay').style.display = 'none';
     document.getElementById('slide-iframe').src = '';
+    document.body.classList.remove('park-game-open');
   }
 });
 
@@ -2103,6 +2106,7 @@ window.addEventListener('message', function(e) {
 document.getElementById('park-swing-zone').addEventListener('click', function() {
   ensureAudio();
   playPop();
+  document.body.classList.add('park-game-open');
   document.getElementById('swing-overlay').style.display = 'block';
   document.getElementById('swing-iframe').src = 'swing.html?from=osewa';
 });
@@ -2112,6 +2116,7 @@ document.getElementById('park-swing-zone').addEventListener('click', function() 
 document.getElementById('park-slide-zone').addEventListener('click', function() {
   ensureAudio();
   playPop();
+  document.body.classList.add('park-game-open');
   document.getElementById('slide-overlay').style.display = 'block';
   // Service Workerに旧画面が残っていても、最新のすべり台を確実に開く
   document.getElementById('slide-iframe').src = 'slide.html?from=osewa&v=117';
