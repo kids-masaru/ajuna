@@ -8,11 +8,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#fff1f2">
-    <meta name="apple-mobile-web-app-title" content="げーむのひろば">
+    <meta name="apple-mobile-web-app-title" content="げーむのおへや">
     <link rel="apple-touch-icon" href="icon.png">
 
-    <title>げーむのひろば</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>げーむのおへや</title>
+    <link rel="stylesheet" href="assets/kit.css">
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
 
@@ -53,132 +54,111 @@
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col items-center py-10 px-4">
+<body class="gp gp-rose gp-bg min-h-screen flex flex-col items-center py-10 px-4">
 
     <div class="text-center mb-8 title-anim">
-        <h1 class="text-4xl text-rose-500 font-bold drop-shadow-sm">
-            🎮 げーむのおへや
+        <h1 class="text-4xl text-rose-500 font-bold drop-shadow-sm flex items-center justify-center gap-2">
+            <img src="icon.png" class="w-12 h-12 rounded-2xl" alt="">
+            <span>げーむのおへや</span>
         </h1>
-        <p class="text-[10px] text-rose-300 mt-1">v1.12</p>
+        <p class="text-[10px] text-rose-300 mt-1">v6.9</p>
     </div>
 
     <div class="w-full max-w-md grid grid-cols-3 gap-2 pb-10">
 
         <a href="oekaki.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-pink-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-pink-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-pink-200 mb-2">
-                🎨
-            </div>
-            <h2 class="text-[11px] font-bold text-pink-500 leading-tight whitespace-nowrap">おえかき</h2>
+            <img src="icon_oekaki.png" class="w-20 h-20 rounded-xl" alt="おえかき">
         </a>
 
         <a href="piano.html"
-            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-purple-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-purple-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-purple-200 mb-2">
-                🎹
-            </div>
-            <h2 class="text-[11px] font-bold text-purple-500 leading-tight whitespace-nowrap">ピアノ</h2>
+            class="game-card flex flex-col items-center justify-center bg-purple-100 rounded-2xl p-2 border-4 border-purple-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_piano.png" class="w-20 h-20 rounded-xl" alt="ピアノ">
         </a>
 
         <a href="snow.html"
-            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-cyan-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-cyan-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-cyan-200 mb-2">
-                ⛄
-            </div>
-            <h2 class="text-[11px] font-bold text-cyan-500 leading-tight whitespace-nowrap">ゆきのまほう</h2>
+            class="game-card flex flex-col items-center justify-center bg-cyan-50 rounded-2xl p-2 border-4 border-cyan-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_snow.png" class="w-20 h-20 rounded-xl" alt="ゆきのまほう">
         </a>
 
         <a href="karuta.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-orange-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-orange-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-orange-200 mb-2">
-                🐶
-            </div>
-            <h2 class="text-[11px] font-bold text-orange-500 leading-tight whitespace-nowrap">かるた</h2>
+            <img src="icon_karuta.png" class="w-20 h-20 rounded-xl" alt="かるた">
         </a>
 
         <a href="puzzle.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-yellow-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-yellow-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-yellow-200 mb-2">
-                🧩
-            </div>
-            <h2 class="text-[11px] font-bold text-yellow-500 leading-tight whitespace-nowrap">パズル</h2>
+            <img src="icon_puzzle.png" class="w-20 h-20 rounded-xl" alt="パズル">
         </a>
 
         <a href="kaimono.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-emerald-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-emerald-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-emerald-200 mb-2">
-                🛒
-            </div>
-            <h2 class="text-[11px] font-bold text-emerald-500 leading-tight whitespace-nowrap">おかいもの</h2>
+            <img src="icon_kaimono.png" class="w-20 h-20 rounded-xl" alt="おかいもの">
         </a>
 
         <a href="hiragana.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-sky-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-sky-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-sky-200 mb-2">
-                ✏️
-            </div>
-            <h2 class="text-[11px] font-bold text-sky-500 leading-tight whitespace-nowrap">ひらがな</h2>
+            <img src="icon_hiragana.png" class="w-20 h-20 rounded-xl" alt="ひらがな">
         </a>
 
         <a href="eawase.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-violet-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-violet-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-violet-200 mb-2">
-                🔗
-            </div>
-            <h2 class="text-[11px] font-bold text-violet-500 leading-tight whitespace-nowrap">えあわせ</h2>
+            <img src="icon_eawase.png" class="w-20 h-20 rounded-xl" alt="えあわせ">
         </a>
 
         <a href="woodPuzzle.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-green-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-green-200 mb-2">
-                🧱
-            </div>
-            <h2 class="text-[11px] font-bold text-green-500 leading-tight whitespace-nowrap">かたちパズル</h2>
+            <img src="icon_woodpuzzle.png" class="w-20 h-20 rounded-xl" alt="かたちパズル">
         </a>
 
         <a href="kazukazoe.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-blue-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-blue-200 mb-2">
-                🔢
-            </div>
-            <h2 class="text-[11px] font-bold text-blue-500 leading-tight whitespace-nowrap">かずかぞえ</h2>
+            <img src="icon_kazukazoe.png" class="w-20 h-20 rounded-xl" alt="かずかぞえ">
         </a>
 
         <a href="carrace.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-fuchsia-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-fuchsia-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-fuchsia-200 mb-2">
-                🏎️
-            </div>
-            <h2 class="text-[11px] font-bold text-fuchsia-500 leading-tight whitespace-nowrap">カーレース</h2>
+            <img src="icon_carrace.png" class="w-20 h-20 rounded-xl" alt="カーレース">
         </a>
 
         <a href="graingame.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-amber-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-amber-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-amber-200 mb-2">
-                🧸
-            </div>
-            <h2 class="text-[11px] font-bold text-amber-500 leading-tight whitespace-nowrap">クレーンゲーム</h2>
+            <img src="icon_graingame.png" class="w-20 h-20 rounded-xl" alt="クレーンゲーム">
         </a>
 
         <a href="yukinokuni.html"
             class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-indigo-300 no-underline text-gray-800 aspect-square text-center">
-            <div
-                class="bg-indigo-100 w-12 h-12 rounded-xl flex items-center justify-center text-2xl border-2 border-indigo-200 mb-2">
-                ❄️
-            </div>
-            <h2 class="text-[11px] font-bold text-indigo-500 leading-tight whitespace-nowrap">雪の国</h2>
+            <img src="icon_yukinokuni.png" class="w-20 h-20 rounded-xl" alt="雪の国">
+        </a>
+
+        <a href="programming.html"
+            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-teal-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_programming.png" class="w-20 h-20 rounded-xl" alt="めいろ">
+        </a>
+
+        <a href="sushi.html"
+            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-red-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_sushi.png" class="w-20 h-20 rounded-xl" alt="かいてんずし">
+        </a>
+
+        <a href="waniwani.html"
+            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-green-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_waniwani.png" class="w-20 h-20 rounded-xl" alt="ワニワニ">
+        </a>
+
+        <a href="fishing.html"
+            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-cyan-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_fishing.png" class="w-20 h-20 rounded-xl" alt="さかなつり">
+        </a>
+
+        <a href="kart.html?v=60"
+            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-lime-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_kart.png" class="w-20 h-20 rounded-xl" alt="ドットカート">
+        </a>
+
+        <a href="osewa.html"
+            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-pink-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_osewa.png" class="w-20 h-20 rounded-xl" alt="おせわごっこ">
         </a>
 
     </div>
@@ -186,7 +166,10 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js');
+                // 更新はService Worker側で安全に切り替え、オフライン用キャッシュは保持する
+                navigator.serviceWorker.register('./sw.js?v=121').catch(error => {
+                    console.error('オフライン機能を準備できませんでした。', error);
+                });
             });
         }
     </script>

@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>おかいものごっこ</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
 
@@ -63,24 +63,83 @@
                 display: none !important;
             }
         }
+
+        .rotate-device-icon {
+            width: 112px;
+            height: 92px;
+            color: #f97316;
+        }
+
+        .atlas-icon {
+            display: block;
+            flex: none;
+            height: var(--atlas-height, 54px);
+            aspect-ratio: var(--atlas-ratio);
+            background-repeat: no-repeat;
+            background-color: #fff;
+            border-radius: 16px;
+        }
+
+        .atlas-icon--shop {
+            --atlas-height: 86px;
+        }
+
+        .atlas-icon--list {
+            --atlas-height: 38px;
+            border-radius: 10px;
+        }
+
+        .atlas-icon--drag {
+            --atlas-height: 72px;
+            border-radius: 18px;
+        }
+
+        .atlas-icon--cart {
+            --atlas-height: 34px;
+            border-radius: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .atlas-icon { --atlas-height: 72px; }
+            .atlas-icon--shop { --atlas-height: 116px; }
+            .atlas-icon--list { --atlas-height: 48px; }
+            .atlas-icon--drag { --atlas-height: 96px; }
+            .atlas-icon--cart { --atlas-height: 54px; }
+        }
+
+        /* 横向きスマホでは幅が広くても高さが短いため、商品を詰め込みすぎない。 */
+        @media (max-height: 500px) {
+            .atlas-icon { --atlas-height: 46px; }
+            .atlas-icon--shop { --atlas-height: 86px; }
+            .atlas-icon--list { --atlas-height: 36px; }
+            .atlas-icon--drag { --atlas-height: 72px; }
+            .atlas-icon--cart { --atlas-height: 32px; }
+        }
     </style>
     <script>
         window.onerror = function (message, source, lineno, colno, error) {
             const root = document.getElementById('root');
             if (root) {
-                root.innerHTML = `<div style="color:#f87171;background:#450a0a;padding:20px;"><h2>⚠️ エラー</h2><p>${message}</p></div>`;
+                root.innerHTML = `<div style="color:#f87171;background:#450a0a;padding:20px;"><h2>エラー</h2><p>${message}</p></div>`;
             }
         };
     </script>
+    <link rel="stylesheet" href="assets/kit.css">
 </head>
 
-<body class="fixed inset-0 overflow-hidden">
+<body class="gp gp-emerald gp-dark fixed inset-0 overflow-hidden">
     <!-- Portrait Warning Overlay -->
     <div
         class="portrait-warning fixed inset-0 z-[9999] bg-orange-100 flex-col items-center justify-center p-8 text-center animate-in zoom-in">
-        <div class="text-8xl mb-8">📱🔄</div>
+        <svg class="rotate-device-icon mb-8" viewBox="0 0 120 96" aria-hidden="true">
+            <rect x="10" y="18" width="46" height="70" rx="9" fill="white" stroke="currentColor" stroke-width="6" />
+            <circle cx="33" cy="78" r="3" fill="currentColor" />
+            <path d="M70 24c23 0 38 14 38 34" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+            <path d="M96 51l12 9 8-13" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+            <rect x="65" y="52" width="46" height="34" rx="8" fill="white" stroke="currentColor" stroke-width="6" />
+        </svg>
         <h1 class="text-4xl text-orange-600 font-bold mb-4">スマホを<br>よこにしてね</h1>
-        <p class="text-xl text-orange-400">げーむのひろばのおかいものごっこ</p>
+        <p class="text-xl text-orange-400">げーむのおへやのおかいものごっこ</p>
     </div>
 
     <div id="root" class="w-full h-full game-content"></div>
@@ -101,8 +160,35 @@
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
         );
+        const Check = (props) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className={props.className} aria-hidden="true">
+                <path d="M5 12.5l4.2 4.2L19 7" />
+            </svg>
+        );
+
+        // 店舗ごとの商品アトラスから、指定した1マスだけを切り出して表示する。
+        const AtlasIcon = ({ shop, item, variant = "" }) => {
+            const col = item.slot % shop.cols;
+            const row = Math.floor(item.slot / shop.cols);
+            const posX = shop.cols > 1 ? (col / (shop.cols - 1)) * 100 : 0;
+            const posY = shop.rows > 1 ? (row / (shop.rows - 1)) * 100 : 0;
+            const cellRatio = (1.5 * shop.rows) / shop.cols;
+            return (
+                <span
+                    className={`atlas-icon ${variant ? `atlas-icon--${variant}` : ''}`}
+                    aria-hidden="true"
+                    style={{
+                        '--atlas-ratio': cellRatio,
+                        backgroundImage: `url('${shop.atlas}')`,
+                        backgroundSize: `${shop.cols * 100}% ${shop.rows * 100}%`,
+                        backgroundPosition: `${posX}% ${posY}%`
+                    }}
+                />
+            );
+        };
+
         // --- Clipboard Style Shopping List ---
-        const ClipboardList = ({ items, foundItems, onSpeak }) => (
+        const ClipboardList = ({ shop, items, foundItems, onSpeak }) => (
             <div className="relative bg-[#fdf6e3] rounded-sm shadow-lg border-2 border-[#d3c6aa] p-2 flex flex-col gap-2 min-h-[140px] w-20 md:w-24">
                 {/* Clipboard Top Clip */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-4 bg-gray-400 rounded-t-md border-b-2 border-gray-500 flex items-center justify-center z-10">
@@ -113,20 +199,22 @@
                     {items.map(item => {
                         const done = foundItems.some(f => f.id === item.id);
                         return (
-                            <div
+                            <button
+                                type="button"
                                 key={item.id}
                                 onClick={() => onSpeak(item.name)}
-                                className={`relative flex flex-col items-center justify-center transition-all ${done ? 'opacity-30' : 'scale-110'}`}
+                                aria-label={`${item.name}をきく`}
+                                className={`relative flex flex-col items-center justify-center transition-all bg-transparent border-0 p-0 ${done ? 'opacity-30' : 'scale-110'}`}
                             >
                                 <div className="relative">
-                                    <span className="text-3xl md:text-4xl">{item.icon}</span>
+                                    <AtlasIcon shop={shop} item={item} variant="list" />
                                     {done && (
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-4xl text-green-600 font-bold drop-shadow-md">✓</span>
+                                            <Check size={38} className="text-green-600 drop-shadow-md" />
                                         </div>
                                     )}
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
@@ -165,51 +253,33 @@
 
         // --- Wooden Shelf Component ---
         const ShelfLayer = ({ children }) => (
-            <div className="relative w-full h-24 md:h-36 flex flex-col items-center justify-end group">
+            <div className="relative w-full h-16 flex flex-col items-center justify-end group">
                 {/* The Wooden Board */}
-                <div className="absolute inset-x-0 bottom-0 h-4 md:h-6 bg-[#8b4513] rounded shadow-lg z-0 overflow-hidden">
+                <div className="absolute inset-x-0 bottom-0 h-4 bg-[#8b4513] rounded shadow-lg z-0 overflow-hidden">
                     {/* Wood Texture Lines */}
                     <div className="absolute top-1 left-0 right-0 h-[1px] bg-white/10"></div>
-                    <div className="absolute top-2 md:top-3 left-0 right-0 h-[1px] bg-black/20"></div>
+                    <div className="absolute top-2 left-0 right-0 h-[1px] bg-black/20"></div>
                 </div>
                 {/* Depth Lip */}
-                <div className="absolute inset-x-2 bottom-4 md:bottom-6 h-1 bg-[#654321] rounded-full z-0"></div>
+                <div className="absolute inset-x-2 bottom-4 h-1 bg-[#654321] rounded-full z-0"></div>
                 {/* Items Container */}
-                <div className="relative z-10 flex items-end justify-center w-full h-full pb-2 md:pb-4 px-2">
+                <div className="relative z-10 flex items-end justify-center w-full h-full pb-2 px-2">
                     {children}
                 </div>
             </div>
         );
 
-        // --- Half-Body Girl Character ---
-        const GirlHalfBody = ({ className }) => (
-            <svg viewBox="0 0 100 80" className={className} xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="2" dy="2" stdDeviation="2" floodOpacity="0.3" />
-                    </filter>
-                </defs>
-                <g filter="url(#shadow)">
-                    {/* Dress/Body */}
-                    <path d="M20 80 L80 80 L75 40 L25 40 Z" fill="#f472b6" />
-                    {/* Arms */}
-                    <path d="M25 45 L10 65 A5 5 0 0 0 15 70 L30 50 Z" fill="#fce5cd" />
-                    <path d="M75 45 L90 65 A5 5 0 0 0 85 70 L70 50 Z" fill="#fce5cd" />
-                    {/* Head */}
-                    <circle cx="50" cy="25" r="22" fill="#1f2937" />
-                    <path d="M28 25 A 22 22 0 0 1 72 25 L 75 45 Q 50 40 25 45 Z" fill="#1f2937" />
-                </g>
-            </svg>
-        );
+        const makeItems = (prefix, names) => names.map((name, slot) => ({ id: `${prefix}${slot + 1}`, name, slot }));
 
+        // 商品名と画像上の順番を揃え、絵文字に依存しないデータに統一する。
         const SHOPS = [
-            { id: 'greengrocer', name: 'やおやさん', icon: '🥕', bg: 'bg-[#f7fee7]', border: 'border-[#bef264]', items: [{ id: 'v1', name: 'にんじん', icon: '🥕' }, { id: 'v2', name: 'じゃがいも', icon: '🥔' }, { id: 'v3', name: 'コーン', icon: '🌽' }, { id: 'v4', name: 'トマト', icon: '🍅' }, { id: 'v5', name: 'なす', icon: '🍆' }, { id: 'v6', name: 'きゅうり', icon: '🥒' }, { id: 'v7', name: 'たまねぎ', icon: '🧅' }, { id: 'v8', name: 'ブロッコリー', icon: '🥦' }, { id: 'v9', name: 'かぼちゃ', icon: '🎃' }, { id: 'v10', name: 'さつまいも', icon: '🍠' }, { id: 'v11', name: 'ぶどう', icon: '🍇' }, { id: 'v12', name: 'メロン', icon: '🍈' }, { id: 'v13', name: 'すいか', icon: '🍉' }, { id: 'v14', name: 'いちご', icon: '🍓' }, { id: 'v15', name: 'もも', icon: '🍑' }, { id: 'v16', name: 'りんご', icon: '🍎' }, { id: 'v17', name: 'キノコ', icon: '🍄' }, { id: 'v18', name: 'さくらんぼ', icon: '🍒' }] },
-            { id: 'fish', name: 'おさかなや', icon: '🐟', bg: 'bg-[#f0f9ff]', border: 'border-[#7dd3fc]', items: [{ id: 'f1', name: 'さかな', icon: '🐟' }, { id: 'f2', name: 'たこ', icon: '🐙' }, { id: 'f3', name: 'いか', icon: '🦑' }, { id: 'f4', name: 'えび', icon: '🦐' }, { id: 'f5', name: 'かに', icon: '🦀' }, { id: 'f6', name: 'ふぐ', icon: '🐡' }, { id: 'f7', name: 'かい', icon: '🐚' }, { id: 'f8', name: 'さめ', icon: '🦈' }, { id: 'f9', name: 'くじら', icon: '🐋' }, { id: 'f10', name: 'いるか', icon: '🐬' }, { id: 'f11', name: 'ねったいぎょ', icon: '🐠' }, { id: 'f12', name: 'ロブスター', icon: '🦞' }, { id: 'f13', name: 'ペンギン', icon: '🐧' }, { id: 'f14', name: 'かめ', icon: '🐢' }] },
-            { id: 'sweets', name: 'おかしや', icon: '🍬', bg: 'bg-[#fff1f2]', border: 'border-[#fba1b7]', items: [{ id: 's1', name: 'あめ', icon: '🍬' }, { id: 's2', name: 'クッキー', icon: '🍪' }, { id: 's3', name: 'チョコ', icon: '🍫' }, { id: 's4', name: 'ドーナツ', icon: '🍩' }, { id: 's5', name: 'ケーキ', icon: '🍰' }, { id: 's6', name: 'プリン', icon: '🍮' }, { id: 's7', name: 'アイス', icon: '🍦' }, { id: 's8', name: 'だんご', icon: '🍡' }, { id: 's9', name: 'ペロペロキャンディ', icon: '🍭' }, { id: 's10', name: 'かきごおり', icon: '🍧' }, { id: 's11', name: 'はちみつ', icon: '🍯' }, { id: 's12', name: 'ポップコーン', icon: '🍿' }, { id: 's13', name: 'バースデーケーキ', icon: '🎂' }, { id: 's14', name: 'クロワッサン', icon: '🥐' }] },
-            { id: 'bakery', name: 'パンやさん', icon: '🍞', bg: 'bg-[#fff7ed]', border: 'border-[#fdba74]', items: [{ id: 'b1', name: 'しょくパン', icon: '🍞' }, { id: 'b2', name: 'クロワッサン', icon: '🥐' }, { id: 'b3', name: 'フランスパン', icon: '🥖' }, { id: 'b4', name: 'ベーグル', icon: '🥯' }, { id: 'b5', name: 'パンケーキ', icon: '🥞' }, { id: 'b6', name: 'ワッフル', icon: '🧇' }, { id: 'b7', name: 'サンドイッチ', icon: '🥪' }, { id: 'b8', name: 'ホットドッグ', icon: '🌭' }, { id: 'b9', name: 'ピザ', icon: '🍕' }, { id: 'b10', name: 'プレッツェル', icon: '🥨' }] },
-            { id: 'toys', name: 'おもちゃや', icon: '🧸', bg: 'bg-[#fefce8]', border: 'border-[#fde047]', items: [{ id: 't1', name: 'くまさん', icon: '🧸' }, { id: 't2', name: 'ロボット', icon: '🤖' }, { id: 't3', name: 'くるま', icon: '🚗' }, { id: 't4', name: 'きしゃ', icon: '🚂' }, { id: 't5', name: 'ボール', icon: '⚽' }, { id: 't6', name: 'ゲーム', icon: '🎮' }, { id: 't7', name: 'パズル', icon: '🧩' }, { id: 't8', name: 'たいこ', icon: '🥁' }, { id: 't9', name: 'きょうりゅう', icon: '🦖' }, { id: 't10', name: 'UFO', icon: '🛸' }, { id: 't11', name: 'しょうぼうしゃ', icon: '🚒' }, { id: 't12', name: 'パトカー', icon: '🚓' }] },
-            { id: 'flowers', name: 'おはなや', icon: '💐', bg: 'bg-[#fff1f2]', border: 'border-[#fda4af]', items: [{ id: 'fl1', name: 'はなたば', icon: '💐' }, { id: 'fl2', name: 'バラ', icon: '🌹' }, { id: 'fl3', name: 'ひまわり', icon: '🌻' }, { id: 'fl4', name: 'チューリップ', icon: '🌷' }, { id: 'fl5', name: 'ハイビスカス', icon: '🌺' }, { id: 'fl6', name: 'サクラ', icon: '🌸' }, { id: 'fl7', name: 'マーガレット', icon: '🌼' }, { id: 'fl8', name: 'サボテン', icon: '🌵' }, { id: 'fl9', name: 'ツリー', icon: '🌲' }, { id: 'fl10', name: 'クローバー', icon: '🍀' }, { id: 'fl11', name: 'もみじ', icon: '🍁' }, { id: 'fl12', name: 'おちば', icon: '🍂' }] },
-            { id: 'convenience', name: 'コンビニ', icon: '🏪', bg: 'bg-[#f8fafc]', border: 'border-[#cbd5e1]', items: [{ id: 'c1', name: 'おにぎり', icon: '🍙' }, { id: 'c2', name: 'ハンバーガー', icon: '🍔' }, { id: 'c3', name: 'ポテト', icon: '🍟' }, { id: 'c4', name: 'ぎゅうにゅう', icon: '🥛' }, { id: 'c5', name: 'おべんとう', icon: '🍱' }, { id: 'c6', name: 'おちゃ', icon: '🍵' }, { id: 'c7', name: 'バナナ', icon: '🍌' }, { id: 'c8', name: 'ジュース', icon: '🧃' }, { id: 'c9', name: 'たまご', icon: '🥚' }, { id: 'c10', name: 'コーヒー', icon: '☕' }, { id: 'c11', name: 'かさ', icon: '☔' }, { id: 'c12', name: 'しんぶん', icon: '📰' }] }
+            { id: 'greengrocer', name: 'やおやさん', atlas: 'kaimono_items_greengrocer_atlas.png', cols: 6, rows: 3, bg: 'bg-[#f7fee7]', border: 'border-[#bef264]', items: makeItems('v', ['にんじん', 'じゃがいも', 'コーン', 'トマト', 'なす', 'きゅうり', 'たまねぎ', 'ブロッコリー', 'かぼちゃ', 'さつまいも', 'ぶどう', 'メロン', 'すいか', 'いちご', 'もも', 'りんご', 'キノコ', 'さくらんぼ']) },
+            { id: 'fish', name: 'おさかなや', atlas: 'kaimono_items_fish_atlas.png', cols: 5, rows: 3, bg: 'bg-[#f0f9ff]', border: 'border-[#7dd3fc]', items: makeItems('f', ['さかな', 'たこ', 'いか', 'えび', 'かに', 'ふぐ', 'かい', 'さめ', 'くじら', 'いるか', 'ねったいぎょ', 'ロブスター', 'ペンギン', 'かめ']) },
+            { id: 'sweets', name: 'おかしや', atlas: 'kaimono_items_sweets_atlas.png', cols: 5, rows: 3, bg: 'bg-[#fff1f2]', border: 'border-[#fba1b7]', items: makeItems('s', ['あめ', 'クッキー', 'チョコ', 'ドーナツ', 'ケーキ', 'プリン', 'アイス', 'だんご', 'ペロペロキャンディ', 'かきごおり', 'はちみつ', 'ポップコーン', 'バースデーケーキ', 'クロワッサン']) },
+            { id: 'bakery', name: 'パンやさん', atlas: 'kaimono_items_bakery_atlas.png', cols: 5, rows: 2, bg: 'bg-[#fff7ed]', border: 'border-[#fdba74]', items: makeItems('b', ['しょくパン', 'クロワッサン', 'フランスパン', 'ベーグル', 'パンケーキ', 'ワッフル', 'サンドイッチ', 'ホットドッグ', 'ピザ', 'プレッツェル']) },
+            { id: 'toys', name: 'おもちゃや', atlas: 'kaimono_items_toys_atlas.png', cols: 4, rows: 3, bg: 'bg-[#fefce8]', border: 'border-[#fde047]', items: makeItems('t', ['くまさん', 'ロボット', 'くるま', 'きしゃ', 'ボール', 'ゲーム', 'パズル', 'たいこ', 'きょうりゅう', 'UFO', 'しょうぼうしゃ', 'パトカー']) },
+            { id: 'flowers', name: 'おはなや', atlas: 'kaimono_items_flowers_atlas.png', cols: 4, rows: 3, bg: 'bg-[#fff1f2]', border: 'border-[#fda4af]', items: makeItems('fl', ['はなたば', 'バラ', 'ひまわり', 'チューリップ', 'ハイビスカス', 'サクラ', 'マーガレット', 'サボテン', 'ツリー', 'クローバー', 'もみじ', 'おちば']) },
+            { id: 'convenience', name: 'コンビニ', atlas: 'kaimono_items_convenience_atlas.png', cols: 4, rows: 3, bg: 'bg-[#f8fafc]', border: 'border-[#cbd5e1]', items: makeItems('c', ['おにぎり', 'ハンバーガー', 'ポテト', 'ぎゅうにゅう', 'おべんとう', 'おちゃ', 'バナナ', 'ジュース', 'たまご', 'コーヒー', 'かさ', 'しんぶん']) }
         ];
 
         const speak = (text) => {
@@ -222,14 +292,15 @@
             window.speechSynthesis.speak(msg);
         };
 
-        const DragItem = ({ item, x, y }) => (
+        const DragItem = ({ shop, item, x, y }) => (
             <div className="fixed z-[999] pointer-events-none flex flex-col items-center justify-center p-2 bg-white/90 rounded-full shadow-2xl border-4 border-orange-400 w-24 h-24 md:w-32 md:h-32 animate-pulse" style={{ left: x, top: y, transform: 'translate(-50%, -50%)' }}>
-                <span className="text-5xl md:text-7xl">{item.icon}</span>
+                <AtlasIcon shop={shop} item={item} variant="drag" />
             </div>
         );
 
         function App() {
-            const [gameState, setGameState] = useState('pre_start'); // Changed initial state
+            // タイトル画面を出さずに、いきなりお店えらびから始める
+            const [gameState, setGameState] = useState('select_shop');
             const [currentShop, setCurrentShop] = useState(SHOPS[0]);
 
             const [targetItems, setTargetItems] = useState([]);
@@ -238,6 +309,8 @@
 
             const [dragState, setDragState] = useState(null);
             const basketRef = useRef(null);
+            const dragTimerRef = useRef(null);
+            const dragActiveRef = useRef(false);
 
             const [isMuted, setIsMuted] = useState(false);
             const audioCtx = useRef(null);
@@ -269,24 +342,23 @@
                 } catch (e) { }
             };
 
-            const startGame = async () => {
-                try {
-                    // Attempt Fullscreen and Orientation Lock
-                    if (document.documentElement.requestFullscreen) {
-                        await document.documentElement.requestFullscreen();
-                    } else if (document.documentElement.webkitRequestFullscreen) {
-                        await document.documentElement.webkitRequestFullscreen();
-                    }
-                    if (screen.orientation && screen.orientation.lock) {
-                        await screen.orientation.lock('landscape').catch(e => console.log('Lock failed:', e));
-                    }
-                } catch (e) { console.log('Fullscreen failed:', e); }
-
+            // 起動時：横向きレイアウトにして案内をしゃべる。
+            // 全画面と音は、ブラウザの決まりで最初にさわったときに有効にする。
+            useEffect(() => {
                 document.body.classList.add('game-started');
-                initAudio();
-                setGameState('select_shop');
                 speak("どこのおみせにいく？");
-            };
+                const unlock = () => {
+                    try {
+                        const el = document.documentElement;
+                        if (el.requestFullscreen) el.requestFullscreen().catch(() => { });
+                        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { });
+                    } catch (e) { }
+                    initAudio();
+                };
+                document.addEventListener('pointerdown', unlock, { once: true });
+                return () => document.removeEventListener('pointerdown', unlock);
+            }, []);
 
             const startBGM = () => { if (bgmRef.current && !isMuted) { bgmRef.current.volume = 0.3; bgmRef.current.play().catch(e => { }); } };
             const stopBGM = () => { if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } };
@@ -308,12 +380,14 @@
                 };
 
                 const handleUp = (e) => {
+                    if (dragTimerRef.current) clearTimeout(dragTimerRef.current);
                     if (basketRef.current) {
                         const rect = basketRef.current.getBoundingClientRect();
                         if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
                             handleDropInBasket(dragState.item);
                         }
                     }
+                    dragActiveRef.current = false;
                     setDragState(null);
                 };
 
@@ -361,39 +435,42 @@
                 }
             };
 
-            // Simple Pointer Down Handler
+            // 短いタップと長押しドラッグを分け、最初のタップが消えないようにする。
             const handlePointerDown = (e, item) => {
                 if (e.button && e.button !== 0) return;
-                setDragState({
-                    item,
-                    x: e.clientX,
-                    y: e.clientY,
-                    pointerId: e.pointerId
-                });
+                if (dragTimerRef.current) clearTimeout(dragTimerRef.current);
+                dragActiveRef.current = false;
+                const start = { item, x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+                dragTimerRef.current = setTimeout(() => {
+                    dragActiveRef.current = true;
+                    setDragState(start);
+                }, 140);
                 playSound(440, 'sine');
+            };
+
+            const handlePointerUpOnItem = (item) => {
+                if (dragTimerRef.current) clearTimeout(dragTimerRef.current);
+                dragTimerRef.current = null;
+                if (!dragActiveRef.current) handleDropInBasket(item);
+            };
+
+            const cancelDrag = () => {
+                if (dragTimerRef.current) clearTimeout(dragTimerRef.current);
+                dragTimerRef.current = null;
+                dragActiveRef.current = false;
+                setDragState(null);
             };
 
             return (
                 <div
                     className={`relative min-h-screen ${currentShop.bg} transition-colors duration-700 flex flex-col overflow-hidden select-none touch-none font-sans`}
-                    onPointerCancel={() => setDragState(null)}
+                    onPointerCancel={cancelDrag}
                 >
                     <audio ref={bgmRef} src="./kaimono_bgm.mp3" loop />
-                    {dragState && <DragItem item={dragState.item} x={dragState.x} y={dragState.y} />}
-
-                    {/* Pre-Start Screen with Orientation Lock Trigger */}
-                    {gameState === 'pre_start' && (
-                        <div className="absolute inset-0 z-[200] bg-orange-50 flex items-center justify-center">
-                            <button onClick={startGame} className="bg-orange-500 text-white text-3xl font-bold py-8 px-16 rounded-[3rem] shadow-[0_10px_0_rgb(180,60,20)] active:translate-y-2 active:shadow-[0_2px_0_rgb(180,60,20)] transition-all animate-bounce-slow">
-                                はじめる！ ▶
-                            </button>
-                        </div>
-                    )}
+                    {dragState && <DragItem shop={currentShop} item={dragState.item} x={dragState.x} y={dragState.y} />}
 
                     {/* ALWAYS Visible Home */}
-                    {gameState !== 'pre_start' && (
-                        <a href="index.html" className="fixed top-4 left-4 z-[110] bg-zinc-100 p-2 rounded-full border-2 border-zinc-300 w-12 h-12 flex items-center justify-center shadow-md active:scale-95 no-underline text-2xl" title="ホーム">🏠</a>
-                    )}
+                    <a href="index.html" className="gp-home" title="ホーム" aria-label="ホームにもどる"></a>
 
                     {/* Scene Specific UI */}
                     {gameState === 'playing' && (
@@ -413,8 +490,8 @@
                             {/* Horizontal Scroll Container */}
                             <div className="w-full flex items-center overflow-x-auto gap-6 px-8 no-scrollbar snap-x py-4">
                                 {SHOPS.map(shop => (
-                                    <button key={shop.id} onClick={() => startShopping(shop)} className={`shrink-0 w-40 h-40 md:w-56 md:h-56 flex flex-col items-center justify-center p-2 ${shop.bg} rounded-[2rem] border-4 ${shop.border} shadow-lg active:scale-95 scroll-ml-6 snap-center hover:rotate-2 transition-all`}>
-                                        <span className="text-6xl md:text-8xl mb-2">{shop.icon}</span>
+                                    <button key={shop.id} onClick={() => startShopping(shop)} aria-label={`${shop.name}へいく`} className={`shrink-0 w-40 h-40 md:w-56 md:h-56 flex flex-col items-center justify-center p-2 ${shop.bg} rounded-[2rem] border-4 ${shop.border} shadow-lg active:scale-95 scroll-ml-6 snap-center hover:rotate-2 transition-all`}>
+                                        <AtlasIcon shop={shop} item={shop.items[0]} variant="shop" />
                                         <span className="text-xl md:text-2xl font-bold text-gray-700">{shop.name}</span>
                                     </button>
                                 ))}
@@ -428,28 +505,35 @@
 
                             {/* Clipboard Shopping List (Sidebar) */}
                             <div className="absolute top-24 left-2 z-30 pointer-events-auto">
-                                <ClipboardList items={targetItems} foundItems={foundItems} onSpeak={speak} />
+                                <ClipboardList shop={currentShop} items={targetItems} foundItems={foundItems} onSpeak={speak} />
+                            </div>
+
+                            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-white/90 text-orange-700 rounded-full px-5 py-2 text-sm font-bold shadow-md border-2 border-orange-200 whitespace-nowrap">
+                                えを タップ または かごへ いれてね
                             </div>
 
                             {/* Shelves Layout: Stacking 3 tiers vertically */}
-                            <div className="flex-1 overflow-x-auto overflow-y-hidden flex flex-col items-center justify-center p-2 md:p-4 no-scrollbar scroll-smooth">
-                                <div className="flex flex-col gap-2 md:gap-10 min-w-max px-12 md:px-24 pt-4 md:pt-8 pb-16 md:pb-8">
+                            <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden flex flex-col items-center justify-center p-2 md:p-4 no-scrollbar scroll-smooth">
+                                <div className="flex flex-col gap-1 min-w-max px-12 pt-2 pb-1">
                                     {[0, 7, 14].map(startIdx => (
-                                        <div key={startIdx} className="w-[600px] md:w-[1000px]">
+                                        <div key={startIdx} className="w-[600px]">
                                             <ShelfLayer>
                                                 {shelfItems.slice(startIdx, startIdx + 7).map(item => {
                                                     const isCollected = foundItems.some(f => f.id === item.id);
                                                     return (
-                                                        <div key={item.uniqueId} className="w-20 h-20 md:w-32 md:h-28 flex flex-col items-center justify-end shrink-0 mx-1 md:mx-2">
+                                                        <div key={item.uniqueId} className="w-16 h-14 flex flex-col items-center justify-end shrink-0 mx-1">
                                                             {!isCollected && (
-                                                                <div
-                                                                    className="flex flex-col items-center cursor-grab active:cursor-grabbing transform transition-transform hover:scale-110"
+                                                                <button
+                                                                    type="button"
+                                                                    className="flex flex-col items-center cursor-grab active:cursor-grabbing transform transition-transform hover:scale-110 bg-transparent border-0 p-0"
                                                                     style={{ touchAction: 'none' }}
                                                                     onPointerDown={(e) => handlePointerDown(e, item)}
+                                                                    onPointerUp={() => handlePointerUpOnItem(item)}
+                                                                    aria-label={`${item.name}をかごにいれる`}
                                                                 >
-                                                                    <span className="text-4xl md:text-7xl drop-shadow-md">{item.icon}</span>
+                                                                    <AtlasIcon shop={currentShop} item={item} />
                                                                     <span className="bg-white/90 px-1 py-0.5 rounded-full text-[8px] md:text-[10px] font-bold mt-1 shadow-sm border border-orange-100">{item.name}</span>
-                                                                </div>
+                                                                </button>
                                                             )}
                                                         </div>
                                                     );
@@ -461,16 +545,16 @@
                             </div>
 
                             {/* Basket & Character Side-by-Side: Responsive Scale & Half-Body Clip */}
-                            <div ref={basketRef} className="absolute bottom-[-2%] md:bottom-[-4%] left-0 right-0 h-28 md:h-48 z-40 flex items-end justify-center pointer-events-none gap-4">
+                            <div ref={basketRef} role="region" aria-label="かご" className="relative shrink-0 left-0 right-0 h-24 z-40 flex items-end justify-center pointer-events-none gap-4">
                                 <div className="w-full max-w-4xl flex items-end justify-center px-4">
                                     {/* Character */}
                                     <div className="shrink-0 animate-sway">
-                                        <GirlHalfBody className="w-20 h-20 md:w-40 md:h-40 drop-shadow-lg" />
+                                        <img src="osewa_title_girl_512.png" alt="かごをもつ女の子とうさぎ" className="w-24 h-24 object-contain drop-shadow-lg" draggable="false" />
                                     </div>
                                     {/* Wire Cart */}
-                                    <WireCart className="w-40 h-32 md:w-80 md:h-60 -ml-4 md:-ml-8">
+                                    <WireCart className="w-32 h-24 -ml-4">
                                         {foundItems.map((item, idx) => (
-                                            <span key={idx} className="text-2xl md:text-5xl animate-in zoom-in slide-in-from-top-4 duration-300 drop-shadow-md">{item.icon}</span>
+                                            <AtlasIcon key={`${item.id}-${idx}`} shop={currentShop} item={item} variant="cart" />
                                         ))}
                                     </WireCart>
                                 </div>
@@ -480,11 +564,11 @@
                             {gameState === 'result' && (
                                 <div className="absolute inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                                     <div className="bg-white rounded-[2rem] p-6 shadow-2xl border-8 border-yellow-400 text-center animate-in zoom-in">
-                                        <div className="text-8xl mb-2 animate-bounce">💮</div>
-                                        <h2 className="text-3xl font-bold text-orange-500">じょうず！</h2>
+                                        <img src="ui_sparkle_128.png" alt="" className="w-20 h-20 object-contain mx-auto gp-float mb-2" />
+                                        <h2 className="gp-title" style={{ color: 'var(--gp-accent-d)' }}>じょうず！</h2>
                                         <div className="flex gap-4 mt-6 justify-center">
-                                            <button onClick={() => startShopping(currentShop)} className="bg-green-500 text-white text-lg font-bold py-3 px-6 rounded-full shadow-lg pointer-events-auto">もういっかい</button>
-                                            <button onClick={() => setGameState('select_shop')} className="bg-orange-100 text-orange-600 text-lg font-bold py-3 px-6 rounded-full pointer-events-auto">おみせへ</button>
+                                            <button onClick={() => startShopping(currentShop)} className="gp-btn gp-btn--sm pointer-events-auto">もういっかい</button>
+                                            <button onClick={() => setGameState('select_shop')} className="gp-btn gp-btn--sm gp-btn--ghost pointer-events-auto">おみせへ</button>
                                         </div>
                                     </div>
                                 </div>

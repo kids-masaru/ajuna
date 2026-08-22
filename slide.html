@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>すべりだいめいろ</title>
+<link rel="stylesheet" href="assets/kit.css">
+<style>
+body {
+  margin: 0; padding: 0;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+  width: 100vw; height: 100dvh;
+  background: #bfe6f5;
+}
+#cv { display: block; width: 100vw; height: 100dvh; }
+
+#hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; justify-content: flex-end; align-items: center;
+  padding: max(12px, env(safe-area-inset-top)) 12px 4px;
+  pointer-events: none;
+}
+.hud-box {
+  background: rgba(255,255,255,0.92); border-radius: 999px;
+  padding: 5px 14px; font-weight: 800; font-size: 0.95rem; color: #0e7490;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18); white-space: nowrap;
+}
+/* 星は戻るボタンの下に置き、文字幅や端末幅が変わっても重ねない */
+#hud .hud-box:first-child {
+  position: fixed;
+  top: max(72px, calc(env(safe-area-inset-top) + 64px));
+  left: max(12px, env(safe-area-inset-left));
+}
+
+/* 4歳児でも行き先が分かる、文字付きの常時表示ボタン */
+#btn-back {
+  width: auto;
+  min-width: 142px;
+  height: 50px;
+  padding: 0 16px;
+  gap: 7px;
+  border-radius: 999px;
+  border-color: #86efac;
+  color: #166534;
+  font-size: 1rem;
+  font-weight: 900;
+}
+#btn-back .back-arrow {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+@media (max-width: 430px) {
+  #btn-back { min-width: 130px; padding: 0 12px; font-size: 0.92rem; }
+}
+
+/* ゴール・結果のオーバーレイ */
+.screen {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 24px; text-align: center;
+  background: rgba(8, 60, 90, 0.78);
+  backdrop-filter: blur(4px);
+  color: #fff;
+}
+.big-title { font-size: clamp(2rem, 9vw, 2.9rem); font-weight: 900; text-shadow: 0 3px 12px rgba(0,0,0,0.4); }
+.screen .gp-btn { white-space: nowrap; }
+#goal-flash {
+  position: absolute; inset: 0; z-index: 40;
+  display: none; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+#goal-flash .msg {
+  font-size: clamp(2.2rem, 11vw, 3.4rem); font-weight: 900; color: #fff;
+  text-shadow: 0 0 18px rgba(255,200,60,0.95), 0 4px 10px rgba(0,0,0,0.35);
+  animation: pop 0.5s ease-out;
+}
+@keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body class="gp gp-cyan">
+  <canvas id="cv"></canvas>
+  <a href="#" class="gp-home" id="btn-back" aria-label="こうえんにもどる">
+    <span class="back-arrow" aria-hidden="true">←</span>
+    <span>こうえんへ</span>
+  </a>
+
+  <div id="hud">
+    <div class="hud-box"><span aria-hidden="true">★</span> <span id="star-n">0</span></div>
+    <div class="hud-box">コース <span id="course-n">1</span>/3</div>
+  </div>
+
+  <div id="goal-flash"><div class="msg">ゴール！🎉</div></div>
+
+  <div id="result" class="screen" style="display:none;">
+    <div class="gp-hero gp-float">🏆</div>
+    <h2 class="big-title">ぜんぶ ゴール！</h2>
+    <div style="font-size:1.05rem;font-weight:800;">あつめた ほし</div>
+    <div id="final-star" style="font-size:3rem;font-weight:900;color:#fde047;line-height:1.1;">0</div>
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button class="gp-btn" id="btn-retry">もういっかい</button>
+      <button class="gp-btn gp-btn--ghost" id="btn-back-park">🌳 こうえんにもどる</button>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+// すべりだいめいろ
+//  ・女の子が じどうで すべりおちる（画面は下から上へ流れる）
+//  ・道が ふたまたに分かれたら、左右をタップしてえらぶ
+//  ・いきどまりは ぽよんと はねかえって、もういちど えらべる
+//  ・ゴールまで すべりきれたら つぎのコースへ（全3コース）
+// ============================================================
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var W = 0, H = 0;
+function resize() {
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+var girlImg = new Image();
+var girlOK = false;
+girlImg.onload = function () { girlOK = true; };
+girlImg.src = 'slide_girl.png';
+
+// ===== 音 =====
+var ac = null, windGain = null;
+function ensureAudio() {
+  if (!ac) {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    // すべっている間の「シャーッ」という風の音
+    var len = ac.sampleRate * 2;
+    var buf = ac.createBuffer(1, len, ac.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    var f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+    windGain = ac.createGain(); windGain.gain.value = 0;
+    src.connect(f); f.connect(windGain); windGain.connect(ac.destination);
+    src.start();
+  }
+  if (ac.state === 'suspended') ac.resume();
+}
+function setWind(on) {
+  if (!windGain) return;
+  windGain.gain.linearRampToValueAtTime(on ? 0.05 : 0, ac.currentTime + 0.25);
+}
+function tone(f0, dur, type, vol, f1) {
+  if (!ac) return;
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.connect(g); g.connect(ac.destination);
+  var t = ac.currentTime;
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t);
+  if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol || 0.15, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.start(t); o.stop(t + dur);
+}
+var sndChoose = function () { tone(500, 0.12, 'square', 0.07, 900); };
+var sndStar   = function () { tone(880, 0.09, 'sine', 0.18); setTimeout(function(){ tone(1320, 0.14, 'sine', 0.18); }, 70); };
+var sndBoing  = function () { tone(300, 0.35, 'sine', 0.2, 90); };
+var sndGoal   = function () { [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){ tone(f,0.25,'sine',0.2); }, i*130); }); };
+
+// ===== コースづくり =====
+// lanes: 3本のレーン。ほんとうの道を1本つくり、分かれ道ごとに
+// 「いきどまり」の枝を1本たす。いきどまりは1〜2だん下でフタになる。
+var LANES = 3;
+var course = null;
+var courseIdx = 0, TOTAL_COURSES = 3;
+var stars = 0;
+
+function genCourse(idx) {
+  // 4歳児が集中して遊び切れるよう、3・4・5回の分岐にする
+  var M = 3 + idx;
+  var path = [1];
+  for (var r = 0; r < M; r++) {
+    var l = path[r], opts = [];
+    if (l > 0) opts.push(l - 1);
+    if (l < LANES - 1) opts.push(l + 1);
+    opts.push(l);
+    // まっすぐばかりにならないよう、まがる方をすこし優先
+    var next = opts[Math.floor(Math.random() * opts.length)];
+    if (next === l && Math.random() < 0.6) next = opts[0];
+    path.push(next);
+  }
+  var nodes = {};   // "r,l" -> {cap:bool, hit:bool}
+  var edges = {};   // "r,l" -> [ {to:lane, star:bool, correct:bool} ]
+  function N(r, l) { var k = r + ',' + l; if (!nodes[k]) nodes[k] = {}; return nodes[k]; }
+  function E(r, l) { var k = r + ',' + l; if (!edges[k]) edges[k] = []; return edges[k]; }
+  for (var r2 = 0; r2 < M; r2++) {
+    N(r2, path[r2]);
+    // 星がある道を選べば進める、目で理解できるルールに統一する
+    E(r2, path[r2]).push({ to: path[r2 + 1], star: true, correct: true });
+    // いきどまりの枝
+    var l2 = path[r2], decoys = [];
+    [l2 - 1, l2, l2 + 1].forEach(function (d) {
+      if (d < 0 || d >= LANES) return;
+      if (d === path[r2 + 1]) return;
+      decoys.push(d);
+    });
+    if (decoys.length) {
+      var d2 = decoys[Math.floor(Math.random() * decoys.length)];
+      var deep = idx >= 1 && Math.random() < 0.5 && r2 + 2 <= M && d2 !== path[r2 + 2];
+      E(r2, l2).push({ to: d2, star: false, correct: false });
+      if (deep) {
+        // 1だん下がってからフタ（すこしむずかしい）
+        N(r2 + 1, d2);
+        E(r2 + 1, d2).push({ to: d2, star: false, correct: false });
+        N(r2 + 2, d2).cap = true;
+      } else {
+        N(r2 + 1, d2).cap = true;
+      }
+    }
+  }
+  N(M, path[M]).goal = true;
+  return { M: M, path: path, nodes: nodes, edges: edges };
+}
+
+// ===== レイアウト =====
+function laneX(l) { return W * (0.5 + (l - 1) * 0.30); }
+var RH = 0;
+function rowY(r) { return r * RH; }
+// カーブ上の位置（たてに入って、たてに出る なめらかな曲線）
+function edgePos(e, t) {
+  var x0 = laneX(e.fromL), y0 = rowY(e.fromR);
+  var x1 = laneX(e.toL),   y1 = rowY(e.fromR + 1);
+  var u = 1 - t;
+  var cy0 = y0 + (y1 - y0) * 0.45, cy1 = y0 + (y1 - y0) * 0.55;
+  var x = u*u*u*x0 + 3*u*u*t*x0 + 3*u*t*t*x1 + t*t*t*x1;
+  var y = u*u*u*y0 + 3*u*u*t*cy0 + 3*u*t*t*cy1 + t*t*t*y1;
+  return { x: x, y: y };
+}
+
+// ===== 進行の状態 =====
+// mode: slide（すべる）/ wait（分かれ道でまつ）/ reverse（もどる）/
+//        bump（いきどまりでぽよん）/ goal / done
+var st = {};
+function startCourse(i) {
+  courseIdx = i;
+  course = genCourse(i);
+  RH = Math.max(170, H * 0.26);
+  st = { mode: 'slide', edge: pickEdge(0, course.path[0], course.edges[ '0,' + course.path[0] ][0].to),
+         t: 0, pending: null, bumpT: 0, speed: 0 };
+  document.getElementById('course-n').textContent = (i + 1);
+}
+function pickEdge(r, fromL, toL) {
+  var list = course.edges[r + ',' + fromL] || [];
+  for (var i = 0; i < list.length; i++) if (list[i].to === toL) {
+    return { fromR: r, fromL: fromL, toL: toL, star: list[i].star, starTaken: false, ref: list[i] };
+  }
+  return null;
+}
+
+function arriveNode() {
+  var r = st.edge.fromR + 1, l = st.edge.toL;
+  var node = course.nodes[r + ',' + l] || {};
+  if (node.goal) { doGoal(); return; }
+  if (node.cap) {
+    node.hit = true;
+    st.mode = 'bump'; st.bumpT = 0; sndBoing(); setWind(false);
+    return;
+  }
+  var outs = course.edges[r + ',' + l] || [];
+  if (outs.length === 1) {
+    st.edge = pickEdge(r, l, outs[0].to); st.t = 0; st.mode = 'slide';
+  } else if (outs.length >= 2) {
+    if (st.pending !== null) {
+      var chosen = chooseByDir(outs, l, st.pending);
+      st.pending = null;
+      st.edge = pickEdge(r, l, chosen.to); st.t = 0; st.mode = 'slide';
+      sndChoose();
+    } else {
+      st.mode = 'wait'; st.waitR = r; st.waitL = l; st.t = 0; setWind(false);
+    }
+  }
+}
+function chooseByDir(outs, fromL, dir) {
+  // dir: -1=ひだり +1=みぎ。まっすぐしかないときは そのまま
+  var sorted = outs.slice().sort(function (a, b) { return a.to - b.to; });
+  if (dir < 0) return sorted[0];
+  return sorted[sorted.length - 1];
+}
+
+function doGoal() {
+  st.mode = 'goal'; st.goalT = 0; sndGoal(); setWind(false);
+  spawnConfetti();
+  var flash = document.getElementById('goal-flash');
+  flash.style.display = 'flex';
+  setTimeout(function () {
+    flash.style.display = 'none';
+    if (courseIdx + 1 >= TOTAL_COURSES) {
+      document.getElementById('final-star').textContent = stars;
+      document.getElementById('result').style.display = 'flex';
+      st.mode = 'done';
+    } else {
+      startCourse(courseIdx + 1);
+    }
+  }, 1600);
+}
+
+// ===== 入力 =====
+cv.addEventListener('pointerdown', function (e) {
+  e.preventDefault();
+  ensureAudio();
+  var dir = (e.clientX < W / 2) ? -1 : 1;
+  if (st.mode === 'wait') {
+    var outs = course.edges[st.waitR + ',' + st.waitL];
+    var chosen = chooseByDir(outs, st.waitL, dir);
+    st.edge = pickEdge(st.waitR, st.waitL, chosen.to);
+    st.t = 0; st.mode = 'slide'; sndChoose();
+  }
+});
+
+// ===== パーティクル =====
+var parts = [];
+function spawnConfetti() {
+  for (var i = 0; i < 50; i++) {
+    parts.push({ x: W/2 + (Math.random()-0.5)*W*0.6, y: H*0.3 + Math.random()*H*0.2,
+      vx: (Math.random()-0.5)*260, vy: -Math.random()*260 - 60,
+      c: ['#f472b6','#facc15','#4ade80','#38bdf8','#a78bfa'][i%5],
+      r: Math.random()*6+3, rot: Math.random()*6.3, vr: (Math.random()-0.5)*8, life: 1.6 });
+  }
+}
+function starBurst(x, y) {
+  for (var i = 0; i < 10; i++) {
+    parts.push({ x: x, y: y, vx: (Math.random()-0.5)*220, vy: (Math.random()-0.5)*220,
+      c: '#fde047', r: Math.random()*4+2, rot: 0, vr: 0, life: 0.6 });
+  }
+}
+
+// 端末によって見た目が変わる絵文字ではなく、キャンバスに星を描く
+function drawStar(x, y, outer, inner, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath();
+  for (var i = 0; i < 10; i++) {
+    var radius = i % 2 === 0 ? outer : inner;
+    var angle = -Math.PI / 2 + i * Math.PI / 5;
+    var px = Math.cos(angle) * radius;
+    var py = Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = color || '#facc15';
+  ctx.fill();
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ===== 描画 =====
+var PALETTES = [
+  { rail: '#e15f8f', surf: '#fca5c8', line: '#ffffff' },
+  { rail: '#0e9488', surf: '#7fd8c8', line: '#ffffff' },
+  { rail: '#d97706', surf: '#fcd34d', line: '#ffffff' },
+];
+function drawEdgeCurve(e, style) {
+  var x0 = laneX(e.fromL), y0 = rowY(e.fromR) - camY;
+  var x1 = laneX(e.toL),   y1 = rowY(e.fromR + 1) - camY;
+  var cy0 = y0 + (y1 - y0) * 0.45, cy1 = y0 + (y1 - y0) * 0.55;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.bezierCurveTo(x0, cy0, x1, cy1, x1, y1);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = style.color; ctx.lineWidth = style.width;
+  if (style.dash) ctx.setLineDash(style.dash); else ctx.setLineDash([]);
+  if (style.dashOffset !== undefined) ctx.lineDashOffset = style.dashOffset;
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+var camY = 0, scrollLines = 0;
+function draw(dt, tNow) {
+  var pal = PALETTES[courseIdx % PALETTES.length];
+  // そら
+  var sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#bfe9fb'); sky.addColorStop(1, '#e8f9ee');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  // とおくの雲（ゆっくり流れて、たかさを感じる）
+  ctx.save(); ctx.globalAlpha = 0.7; ctx.fillStyle = '#ffffff';
+  for (var i = 0; i < 6; i++) {
+    var cy = ((i * 340 + 120) - camY * 0.35) % (H + 200) - 100;
+    var cx = W * (0.15 + (i % 3) * 0.35);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 26, 0, 6.3); ctx.arc(cx + 26, cy + 6, 20, 0, 6.3); ctx.arc(cx - 26, cy + 8, 18, 0, 6.3);
+    ctx.fill();
+  }
+  ctx.restore();
+  // 木（世界と同じ速さで流れて、スピード感を出す）
+  ctx.save();
+  for (var i2 = 0; i2 < 10; i2++) {
+    var ty = ((i2 * 260) - camY) % (rowY(course.M) + H) ;
+    var sy = ty - 0 + 40; var side = (i2 % 2 === 0) ? W * 0.045 : W * 0.955;
+    if (sy < -60 || sy > H + 60) continue;
+    ctx.font = '34px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(i2 % 4 === 0 ? '🌳' : (i2 % 4 === 1 ? '🌲' : (i2 % 4 === 2 ? '🌷' : '🌼')), side, sy);
+  }
+  ctx.restore();
+
+  var lw = Math.min(W * 0.17, 64);
+  // レールのかげ → 面 → 中央の流れる線（スピード感）
+  scrollLines = (scrollLines + dt * 240) % 36;
+  for (var key in course.edges) {
+    var kk = key.split(','); var r3 = +kk[0], l3 = +kk[1];
+    var y0v = rowY(r3) - camY, y1v = rowY(r3 + 1) - camY;
+    if (y1v < -80 || y0v > H + 80) continue;
+    course.edges[key].forEach(function (ed) {
+      var e = { fromR: r3, fromL: l3, toL: ed.to };
+      drawEdgeCurve(e, { color: pal.rail, width: lw + 12 });
+      drawEdgeCurve(e, { color: pal.surf, width: lw });
+      drawEdgeCurve(e, { color: 'rgba(255,255,255,0.75)', width: 5, dash: [14, 22], dashOffset: -scrollLines });
+    });
+  }
+  // いきどまりのフタ / ほし / ゴール
+  for (var key2 in course.nodes) {
+    var kk2 = key2.split(','); var r4 = +kk2[0], l4 = +kk2[1];
+    var nx = laneX(l4), ny = rowY(r4) - camY;
+    if (ny < -90 || ny > H + 90) continue;
+    var node = course.nodes[key2];
+    if (node.cap) {
+      ctx.fillStyle = pal.rail;
+      ctx.beginPath(); ctx.arc(nx, ny, lw * 0.62, 0, 6.3); ctx.fill();
+      ctx.fillStyle = '#fff1f2';
+      ctx.beginPath(); ctx.arc(nx, ny, lw * 0.48, 0, 6.3); ctx.fill();
+      ctx.font = '900 ' + (lw * 0.5) + 'px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillText(node.hit ? '💦' : '✕', nx, ny + 2);
+    }
+    if (node.goal) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(nx, ny + 8, lw * 0.9, 0, 6.3); ctx.fill();
+      ctx.font = (lw * 0.9) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🚩', nx, ny - 6);
+      ctx.font = '900 ' + Math.min(26, lw * 0.42) + 'px sans-serif';
+      ctx.fillStyle = '#e11d48';
+      ctx.fillText('ゴール', nx, ny + lw * 0.55);
+    }
+  }
+  // ほし（えだの途中）
+  for (var key3 in course.edges) {
+    var kk3 = key3.split(','); var r5 = +kk3[0], l5 = +kk3[1];
+    course.edges[key3].forEach(function (ed) {
+      if (!ed.star || ed.starDone) return;
+      var p = edgePos({ fromR: r5, fromL: l5, toL: ed.to }, 0.55);
+      var sy2 = p.y - camY;
+      if (sy2 < -40 || sy2 > H + 40) return;
+      var bob = Math.sin(tNow * 3 + r5) * 4;
+      drawStar(p.x, sy2 + bob, 16, 7, '#fde047');
+    });
+  }
+  // 分かれ道の矢印
+  if (st.mode === 'wait' || (st.mode === 'slide' && st.t > 0.45 && nextIsJunction())) {
+    var jr = st.mode === 'wait' ? st.waitR : st.edge.fromR + 1;
+    var jl = st.mode === 'wait' ? st.waitL : st.edge.toL;
+    var outs = course.edges[jr + ',' + jl] || [];
+    if (outs.length >= 2) {
+      var bounce = Math.sin(tNow * 5) * 6;
+      outs.forEach(function (ed) {
+        var p2 = edgePos({ fromR: jr, fromL: jl, toL: ed.to }, 0.35);
+        var ax = p2.x, ay = p2.y - camY + bounce;
+        // 白まる＋みどりの三角やじるし（どの端末でも同じ見た目）
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, 24, 0, 6.3); ctx.fill(); ctx.stroke();
+        var ang = ed.to < jl ? Math.PI : (ed.to > jl ? 0 : Math.PI / 2);
+        ctx.rotate(ang);
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.moveTo(12, 0); ctx.lineTo(-7, -11); ctx.lineTo(-7, 11);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      });
+      if (st.mode === 'wait') {
+        ctx.font = '900 ' + Math.min(24, W * 0.055) + 'px sans-serif';
+        ctx.fillStyle = '#0e7490'; ctx.textAlign = 'center';
+        ctx.fillText('ほしの みちは どっち？', W / 2, H * 0.16);
+      }
+    }
+  }
+  if (st.mode === 'bump' || st.mode === 'reverse') {
+    ctx.font = '900 ' + Math.min(24, W * 0.055) + 'px sans-serif';
+    ctx.fillStyle = '#e11d48'; ctx.textAlign = 'center';
+    ctx.fillText('もどって もういちど！', W / 2, H * 0.16);
+  }
+  // 女の子
+  var gp = girlScreenPos(tNow);
+  if (girlOK) {
+    var gh = Math.min(H * 0.16, 120) * gp.squash;
+    var gw = gh * (girlImg.width / girlImg.height);
+    ctx.save();
+    ctx.translate(gp.x, gp.y);
+    ctx.rotate(gp.tilt);
+    // すべっている間は、うしろに白いすじ
+    if (st.mode === 'slide') {
+      ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#ffffff';
+      for (var s2 = 0; s2 < 3; s2++) {
+        ctx.beginPath();
+        ctx.ellipse(-gw * 0.1 + (s2 - 1) * 10, -gh * (0.62 + s2 * 0.16), 5, 16 + s2 * 5, 0, 0, 6.3);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.drawImage(girlImg, -gw / 2, -gh / 2, gw, gh);
+    ctx.restore();
+  }
+  // パーティクル
+  for (var pi = parts.length - 1; pi >= 0; pi--) {
+    var pt = parts[pi];
+    pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 500 * dt;
+    pt.rot += pt.vr * dt; pt.life -= dt;
+    if (pt.life <= 0) { parts.splice(pi, 1); continue; }
+    ctx.save(); ctx.globalAlpha = Math.min(1, pt.life * 2);
+    ctx.translate(pt.x, pt.y); ctx.rotate(pt.rot);
+    ctx.fillStyle = pt.c; ctx.fillRect(-pt.r, -pt.r, pt.r * 2, pt.r * 2);
+    ctx.restore();
+  }
+}
+function nextIsJunction() {
+  var r = st.edge.fromR + 1, l = st.edge.toL;
+  var n = course.nodes[r + ',' + l] || {};
+  if (n.cap || n.goal) return false;
+  return (course.edges[r + ',' + l] || []).length >= 2;
+}
+function girlWorldPos(tNow) {
+  if (st.mode === 'wait') {
+    var wiggle = Math.sin(tNow * 4) * 3;
+    return { x: laneX(st.waitL) + wiggle, y: rowY(st.waitR), tilt: Math.sin(tNow * 4) * 0.06, squash: 1 };
+  }
+  if (st.mode === 'bump') {
+    var k = Math.min(1, st.bumpT / 0.45);
+    var sq = 1 - Math.sin(k * Math.PI) * 0.25;
+    return { x: laneX(st.edge.toL), y: rowY(st.edge.fromR + 1) - 6, tilt: 0, squash: sq };
+  }
+  var p = edgePos(st.edge, st.t);
+  var p2 = edgePos(st.edge, Math.min(1, st.t + 0.04));
+  var tilt = Math.atan2(p2.x - p.x, (p2.y - p.y) || 1) * -0.8;
+  return { x: p.x, y: p.y, tilt: tilt, squash: 1 };
+}
+function girlScreenPos(tNow) {
+  var wp = girlWorldPos(tNow);
+  return { x: wp.x, y: wp.y - camY, tilt: wp.tilt, squash: wp.squash };
+}
+
+// ===== メインループ =====
+var last = 0;
+function tick(ts) {
+  requestAnimationFrame(tick);
+  var tNow = ts / 1000;
+  var dt = last ? Math.min((ts - last) / 1000, 0.05) : 0;
+  last = ts;
+  if (!course) return;
+
+  if (st.mode === 'slide') {
+    // だんだん加速して、カーブでちょっとゆっくり（すべってる感じ）
+    var target = H * 0.55;
+    st.speed += (target - st.speed) * Math.min(1, dt * 2);
+    setWind(true);
+    var len = RH * 1.1;
+    st.t += (st.speed * dt) / len;
+    // ほしを取る
+    if (st.edge.ref && st.edge.ref.star && !st.edge.ref.starDone && st.t > 0.5) {
+      st.edge.ref.starDone = true;
+      stars++; document.getElementById('star-n').textContent = stars;
+      var sp = edgePos(st.edge, 0.55);
+      starBurst(sp.x, sp.y - camY);
+      sndStar();
+    }
+    if (st.t >= 1) { st.t = 1; arriveNode(); }
+  } else if (st.mode === 'bump') {
+    st.bumpT += dt;
+    if (st.bumpT > 0.5) { st.mode = 'reverse'; st.speed = 0; }
+  } else if (st.mode === 'reverse') {
+    st.t -= dt * 1.6;
+    if (st.t <= 0) {
+      st.t = 0;
+      st.mode = 'wait';
+      st.waitR = st.edge.fromR; st.waitL = st.edge.fromL;
+    }
+  }
+
+  // カメラ：おんなのこが画面の上から1/3のところに来るように
+  var wp = girlWorldPos(tNow);
+  var want = wp.y - H * 0.34;
+  camY += (want - camY) * Math.min(1, dt * 5);
+
+  draw(dt, tNow);
+}
+requestAnimationFrame(tick);
+
+// ===== こうえんへ戻る =====
+var fromOsewa = location.search.indexOf('from=osewa') !== -1;
+function goBackToPark() {
+  if (fromOsewa) {
+    try {
+      if (window.parent !== window) {
+        window.parent.document.getElementById('slide-overlay').style.display = 'none';
+        window.parent.document.getElementById('slide-iframe').src = '';
+        return;
+      }
+    } catch (e) {
+      window.parent.postMessage('close-slide', '*');
+      return;
+    }
+  }
+  window.location.href = 'osewa.html';
+}
+document.getElementById('btn-back').addEventListener('click', function (e) { e.preventDefault(); goBackToPark(); });
+document.getElementById('btn-back-park').addEventListener('click', goBackToPark);
+document.getElementById('btn-retry').addEventListener('click', function () {
+  stars = 0; document.getElementById('star-n').textContent = 0;
+  document.getElementById('result').style.display = 'none';
+  startCourse(0);
+});
+document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+document.addEventListener('dblclick', function (e) { e.preventDefault(); });
+
+// タイトルなしで、そのままスタート
+startCourse(0);
+</script>
+</body>
+</html>

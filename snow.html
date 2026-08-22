@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>雪の魔法のリズムあそび - 進化する軌跡</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
 
@@ -118,25 +118,23 @@
             transform: scale(0.9);
         }
     </style>
+    <link rel="stylesheet" href="assets/kit.css">
 </head>
 
-<body id="mainBody" class="gradient-bg stage-1 h-screen w-screen relative overflow-hidden select-none">
+<body id="mainBody" class="gp gp-cyan gp-dark gradient-bg stage-1 h-screen w-screen relative overflow-hidden select-none">
 
-    <a href="index.html" class="home-btn">🏠</a>
+    <a href="index.html" class="gp-home" aria-label="ホームにもどる">🏠</a>
 
     <div class="fringe-sparkle"></div>
 
     <!-- UI Layer -->
     <div id="startScreen"
         class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl transition-opacity duration-1000">
-        <div class="text-8xl mb-8 character-pop">❄️💎🪄</div>
+        <div class="gp-hero gp-float mb-8 character-pop">❄️</div>
         <h1 class="text-4xl text-white font-bold mb-4 text-center tracking-widest">
             ゆきのまほう<br><span class="text-2xl font-normal opacity-80">リズムあそび</span>
         </h1>
-        <button id="startBtn"
-            class="bg-white text-blue-600 text-3xl font-bold py-6 px-16 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.4)] transform active:scale-90 transition-all">
-            はじめる ▶
-        </button>
+        <button id="startBtn" class="gp-btn gp-btn--lg">はじめる ▶</button>
         <p class="text-white/60 mt-10 text-lg animate-pulse">がめんを なぞってね 🔊</p>
     </div>
 
@@ -565,6 +563,11 @@
                 gameLoop();
             }, 700);
         });
+        // Auto-skip title screen
+        initAudio();
+        startScreen.style.display = 'none';
+        isPlaying = true;
+        gameLoop();
 
     </script>
 </body>

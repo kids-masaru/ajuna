@@ -1,4 +1,4 @@
-# げーむのひろば
+# げーむのおへや
 
 子ども向けゲームアプリ。GitHub Pages で公開中。
 
@@ -20,6 +20,17 @@
 | snow.html | ゆき |
 | tebiki.html | てびき |
 | woodPuzzle.html | もくせいパズル |
+| carrace.html | カーレース |
+| graingame.html | クレーンゲーム |
+| yukinokuni.html | 雪の国 |
+| programming.html | プログラミングめいろ |
+| sushi.html | 回転寿司 |
+| waniwani.html | ワニワニパニック |
+| fishing.html | 魚釣り |
+| kart.html | ドットカート |
+| osewa.html | おせわごっこ |
+| slide.html | すべりだいめいろ（おせわごっこ内） |
+| swing.html | ブランコ（おせわごっこ内） |
 
 ---
 

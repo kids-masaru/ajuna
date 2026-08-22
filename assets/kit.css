@@ -1,0 +1,314 @@
+/* =========================================================================
+   げーむのおへや 共通デザインキット  (kit.css)
+   -------------------------------------------------------------------------
+   全ゲームでこの1枚を読み込むと、見た目（フォント・色・ボタン・タイトル/
+   結果画面・ホームボタン）が統一されます。「本物っぽさ」の土台。
+
+   使い方:
+     <head> 内に次の2行を入れる（Tailwind や React より前でOK）
+       <link rel="preconnect" href="https://fonts.googleapis.com">
+       <link rel="stylesheet" href="assets/kit.css">
+
+   各ゲームのテーマ色は <body> に1行入れるだけで切り替わる:
+       <body class="gp gp-rose"> ...    （rose / sky / violet / amber など）
+   テーマ一覧は下の「テーマ」セクション参照。
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap');
+
+/* ---- デザイントークン（共通の土台）------------------------------------ */
+:root {
+  --gp-font: 'M PLUS Rounded 1c', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* 文字色（真っ黒は使わない＝やさしく上質に見える） */
+  --gp-ink: #34303a;
+  --gp-ink-soft: #6b6675;
+  --gp-line: rgba(0, 0, 0, 0.08);
+  --gp-surface: #ffffff;
+
+  /* 角丸 */
+  --gp-r-sm: 12px;
+  --gp-r-md: 18px;
+  --gp-r-lg: 28px;
+  --gp-r-full: 999px;
+
+  /* 影 */
+  --gp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --gp-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --gp-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.18);
+
+  /* テーマ色（既定: rose）。gp-xxx クラスで上書きされる */
+  --gp-accent: #fb7185;
+  --gp-accent-d: #e11d48;   /* 3Dボタンの「底」の色 */
+  --gp-accent-soft: #fecdd3; /* 枠・薄い背景 */
+  --gp-accent-ink: #ffffff;  /* アクセント上の文字色 */
+}
+
+/* ---- テーマ（index.html の各カード色に対応）---------------------------- */
+.gp-rose    { --gp-accent:#fb7185; --gp-accent-d:#e11d48; --gp-accent-soft:#fecdd3; }
+.gp-pink    { --gp-accent:#f472b6; --gp-accent-d:#db2777; --gp-accent-soft:#fbcfe8; }
+.gp-red     { --gp-accent:#ef4444; --gp-accent-d:#b91c1c; --gp-accent-soft:#fecaca; }
+.gp-orange  { --gp-accent:#fb923c; --gp-accent-d:#ea580c; --gp-accent-soft:#fed7aa; }
+.gp-amber   { --gp-accent:#f59e0b; --gp-accent-d:#b45309; --gp-accent-soft:#fde68a; }
+.gp-yellow  { --gp-accent:#facc15; --gp-accent-d:#ca8a04; --gp-accent-soft:#fef08a; --gp-accent-ink:#5c4400; }
+.gp-green   { --gp-accent:#22c55e; --gp-accent-d:#15803d; --gp-accent-soft:#bbf7d0; }
+.gp-emerald { --gp-accent:#10b981; --gp-accent-d:#047857; --gp-accent-soft:#a7f3d0; }
+.gp-teal    { --gp-accent:#14b8a6; --gp-accent-d:#0f766e; --gp-accent-soft:#99f6e4; }
+.gp-cyan    { --gp-accent:#22d3ee; --gp-accent-d:#0891b2; --gp-accent-soft:#a5f3fc; --gp-accent-ink:#06343d; }
+.gp-sky     { --gp-accent:#38bdf8; --gp-accent-d:#0284c7; --gp-accent-soft:#bae6fd; }
+.gp-blue    { --gp-accent:#3b82f6; --gp-accent-d:#1d4ed8; --gp-accent-soft:#bfdbfe; }
+.gp-indigo  { --gp-accent:#6366f1; --gp-accent-d:#4338ca; --gp-accent-soft:#c7d2fe; }
+.gp-violet  { --gp-accent:#8b5cf6; --gp-accent-d:#6d28d9; --gp-accent-soft:#ddd6fe; }
+.gp-purple  { --gp-accent:#a855f7; --gp-accent-d:#7e22ce; --gp-accent-soft:#e9d5ff; }
+.gp-fuchsia { --gp-accent:#d946ef; --gp-accent-d:#a21caf; --gp-accent-soft:#f5d0fe; }
+
+/* ---- ベース ----------------------------------------------------------- */
+.gp,
+.gp * {
+  font-family: var(--gp-font);
+}
+.gp {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- 3Dボタン（市販ゲームらしい「ぷにっ」と押し込める手応え）---------- */
+.gp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  font-family: var(--gp-font);
+  font-weight: 800;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  color: var(--gp-accent-ink);
+  background: var(--gp-accent);
+  border: none;
+  border-radius: var(--gp-r-full);
+  padding: 0.8em 1.7em;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  box-shadow: 0 6px 0 var(--gp-accent-d), var(--gp-shadow-sm);
+  transition: transform .08s ease, box-shadow .08s ease, filter .15s ease;
+}
+.gp-btn:hover { filter: brightness(1.04); }
+.gp-btn:active {
+  transform: translateY(6px);
+  box-shadow: 0 0 0 var(--gp-accent-d), var(--gp-shadow-sm);
+}
+.gp-btn:disabled {
+  background: #cbd5e1;
+  box-shadow: 0 6px 0 #94a3b8;
+  color: #f1f5f9;
+  cursor: default;
+  transform: none;
+  filter: none;
+}
+
+/* サイズ違い */
+.gp-btn--lg { font-size: 1.6rem; padding: 0.9em 2.2em; box-shadow: 0 8px 0 var(--gp-accent-d), var(--gp-shadow-sm); }
+.gp-btn--lg:active { transform: translateY(8px); box-shadow: 0 0 0 var(--gp-accent-d), var(--gp-shadow-sm); }
+.gp-btn--sm { font-size: 1rem; padding: 0.6em 1.2em; box-shadow: 0 4px 0 var(--gp-accent-d), var(--gp-shadow-sm); }
+.gp-btn--sm:active { transform: translateY(4px); box-shadow: 0 0 0 var(--gp-accent-d), var(--gp-shadow-sm); }
+
+/* サブ（白地）ボタン: もどる等に */
+.gp-btn--ghost {
+  color: var(--gp-ink);
+  background: #ffffff;
+  box-shadow: 0 6px 0 #d4d4d8, var(--gp-shadow-sm);
+}
+.gp-btn--ghost:active { box-shadow: 0 0 0 #d4d4d8, var(--gp-shadow-sm); }
+
+/* ---- ホームボタン（全ゲーム共通の🏠）--------------------------------- */
+.gp-home {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid var(--gp-accent-soft);
+  border-radius: 50%;
+  box-shadow: var(--gp-shadow-md);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1000;
+  transition: transform .1s ease;
+}
+.gp-home:active { transform: scale(0.9); }
+/* 暗い背景のゲーム用（<body class="gp ... gp-dark">） */
+.gp-dark .gp-home {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+/* ホームボタン（インライン版：ヘッダーの列の中に置く・他UIと重ならない） */
+.gp-home-inline {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--gp-accent-soft);
+  border-radius: 50%;
+  box-shadow: var(--gp-shadow-sm);
+  transition: transform .1s ease;
+}
+.gp-home-inline:active { transform: scale(0.9); }
+.gp-dark .gp-home-inline {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+/* 全ゲーム共通のホーム画像。公園へ戻るボタンなど別用途には適用しない */
+.gp-home[href="index.html"],
+.gp-home-inline[href="index.html"],
+button.gp-home-inline[onclick*="index.html"] {
+  color: transparent;
+  font-size: 0;
+  background-image: url('../ui_home_v2_256.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 39px 36px;
+}
+
+/* ---- フルスクリーンの画面（タイトル/結果）---------------------------- */
+.gp-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
+.gp-title {
+  font-weight: 900;
+  font-size: clamp(1.9rem, 8vw, 3rem);
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+}
+.gp-subtitle {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gp-ink-soft);
+}
+
+/* ---- パネル/カード ---------------------------------------------------- */
+.gp-card {
+  background: var(--gp-surface);
+  border-radius: var(--gp-r-lg);
+  box-shadow: var(--gp-shadow-md);
+}
+.gp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 0.25em 0.8em;
+  border-radius: var(--gp-r-full);
+  background: var(--gp-accent-soft);
+  color: var(--gp-accent-d);
+}
+
+/* ---- 上質な背景（ベタ塗り→やわらかいグラデ）------------------------- */
+/* 明るいゲーム用：白ベースにテーマ色のふんわりした光 */
+.gp-bg {
+  background-color: #fffdfe;
+  background-image:
+    radial-gradient(125% 85% at 50% -15%,
+      color-mix(in srgb, var(--gp-accent) 26%, #ffffff) 0%, transparent 60%),
+    radial-gradient(95% 60% at 105% 108%,
+      color-mix(in srgb, var(--gp-accent) 16%, #ffffff) 0%, transparent 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+/* 暗いゲーム用：深い藍にテーマ色のグロー */
+.gp-bg-dark {
+  background-color: #0c1020;
+  background-image:
+    radial-gradient(120% 90% at 50% -10%,
+      color-mix(in srgb, var(--gp-accent) 45%, #0c1020) 0%, transparent 62%),
+    radial-gradient(90% 70% at 100% 110%,
+      color-mix(in srgb, var(--gp-accent) 30%, #0c1020) 0%, transparent 60%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+/* タイトル/結果のフルスクリーン背景（テーマ色グラデ＋上品な暗がり） */
+.gp-cover {
+  background:
+    radial-gradient(120% 90% at 50% 0%,
+      color-mix(in srgb, var(--gp-accent) 55%, #11131f) 0%, transparent 60%),
+    linear-gradient(180deg, #1b1e2c 0%, #11131f 100%);
+}
+/* コンテンツをまとめる白カード（結果モーダル等） */
+.gp-modal {
+  background: #ffffff;
+  border-radius: var(--gp-r-lg);
+  box-shadow: var(--gp-shadow-lg);
+  padding: 28px 26px;
+  border: 6px solid color-mix(in srgb, var(--gp-accent) 40%, #ffffff);
+}
+
+/* ---- タイトルの主役バッジ（絵を“デザインされた”見た目に）------------ */
+.gp-hero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(116px, 38vw, 176px);
+  height: clamp(116px, 38vw, 176px);
+  border-radius: 50%;
+  font-size: clamp(60px, 21vw, 98px);
+  line-height: 1;
+  background:
+    radial-gradient(circle at 36% 30%,
+      #ffffff 0%,
+      color-mix(in srgb, var(--gp-accent) 24%, #ffffff) 62%,
+      color-mix(in srgb, var(--gp-accent) 48%, #ffffff) 100%);
+  border: 6px solid #ffffff;
+  box-shadow:
+    var(--gp-shadow-lg),
+    inset 0 -10px 20px color-mix(in srgb, var(--gp-accent) 28%, transparent),
+    inset 0 8px 16px rgba(255, 255, 255, 0.7);
+  -webkit-text-fill-color: initial;
+}
+
+/* ---- 共通アニメ（演出の気持ちよさ）----------------------------------- */
+@keyframes gp-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes gp-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes gp-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-12px) rotate(-8deg); }
+  75%      { transform: translateX(12px) rotate(8deg); }
+}
+.gp-pop   { animation: gp-pop .4s ease-out both; }
+.gp-float { animation: gp-float 3s ease-in-out infinite; }
+.gp-shake { animation: gp-shake .5s ease-in-out; }

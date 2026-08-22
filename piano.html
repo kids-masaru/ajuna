@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>プリンセス・ピアノ（パーフェクト）</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
 
@@ -440,16 +440,15 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="assets/kit.css">
 </head>
 
-<body>
+<body class="gp gp-purple gp-bg">
 
     <div id="start-overlay">
-        <div class="text-6xl mb-4">🎹</div>
-        <button id="start-btn"
-            class="bg-pink-500 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-lg active:scale-95 transition-transform">
-            あそぶ！
-        </button>
+        <div class="gp-hero gp-float mb-6">🎹</div>
+        <h1 class="gp-title mb-6" style="color:var(--gp-accent-d)">プリンセス・ピアノ</h1>
+        <button id="start-btn" class="gp-btn gp-btn--lg">あそぶ！</button>
     </div>
 
     <div id="rotate-overlay">
@@ -463,7 +462,7 @@
 
     <div id="app-container">
 
-        <a href="index.html" class="home-btn">🏠</a>
+        <a href="index.html" class="gp-home" aria-label="ホームにもどる">🏠</a>
 
         <header class="header">
             <div class="mode-switch-container">
@@ -501,9 +500,11 @@
         // --- Start Button Logic ---
         document.getElementById('start-btn').addEventListener('click', () => {
             initAudio();
-            // Hide start overlay
             document.getElementById('start-overlay').style.display = 'none';
         });
+        // Auto-skip title screen
+        initAudio();
+        document.getElementById('start-overlay').style.display = 'none';
 
         // --- Forced Landscape Logic ---
         function forceLandscape() {

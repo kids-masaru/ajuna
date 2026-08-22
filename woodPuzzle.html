@@ -5,17 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>かたちパズル</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap');
         body { font-family: 'M PLUS Rounded 1c', sans-serif; user-select: none; touch-action: manipulation; overscroll-behavior: none; }
     </style>
+    <link rel="stylesheet" href="assets/kit.css">
 </head>
 
-<body>
+<body class="gp gp-green">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -226,22 +227,21 @@
           const svgH=TRAY_Y+rows*CELL_H+25;
 
           return(
-            <div className="min-h-screen w-full flex flex-col items-center select-none py-4 px-2"
+            <div className="min-h-screen w-full flex flex-col items-center select-none py-2 px-2"
               style={{backgroundColor:'#f0fdf4',backgroundImage:`linear-gradient(90deg,rgba(134,239,172,.25) 2px,transparent 2px),linear-gradient(rgba(134,239,172,.25) 2px,transparent 2px)`,backgroundSize:'40px 40px',fontFamily:'"M PLUS Rounded 1c",sans-serif'}}>
 
               {/* ホームボタン */}
-              <div className="w-full max-w-md mb-3 flex">
-                <button onClick={()=>window.location.href='index.html'}
-                  className="bg-white/90 p-2 rounded-full shadow-lg border-2 border-green-100 text-xl flex items-center justify-center w-12 h-12 active:scale-90 transition-transform">🏠</button>
+              <div className="w-full max-w-md mb-2 flex">
+                <a href="index.html" className="gp-home-inline" aria-label="ホームにもどる">🏠</a>
               </div>
 
               {/* ヘッダー */}
-              <div className="w-full max-w-md bg-white rounded-3xl shadow-sm p-4 mb-3 flex justify-between items-center border-4 border-green-200">
+              <div className="w-full max-w-md bg-white rounded-3xl shadow-sm p-3 mb-2 flex justify-between items-center border-4 border-green-200">
                 <div className="flex flex-col gap-1">
                   <div className="bg-green-500 text-white font-bold py-1 px-3 rounded-full text-xs inline-block w-max">かたちパズル</div>
                   <div className="text-base font-bold text-gray-700 mt-1">「{lv.name}」をつくろう</div>
                 </div>
-                <div className="w-28 h-28 bg-blue-50 rounded-2xl border-4 border-blue-100 overflow-hidden flex-shrink-0">
+                <div className="w-20 h-20 bg-blue-50 rounded-2xl border-4 border-blue-100 overflow-hidden flex-shrink-0">
                   <svg viewBox="0 0 400 340" className="w-full h-full p-2">
                     {lv.shapes.map(s=><Sample key={s.id} s={s}/>)}
                   </svg>
@@ -267,9 +267,9 @@
                 {cleared&&(
                   <div className="absolute inset-0 bg-white/50 flex flex-col items-center justify-center z-10 backdrop-blur-[2px]">
                     <Confetti/>
-                    <h2 className="text-6xl font-black text-orange-500 mb-8 drop-shadow-lg animate-bounce" style={{textShadow:'2px 4px 0 #FFD93D'}}>やったね！</h2>
-                    <button onClick={()=>setIdx(i=>(i+1)%order.length)}
-                      className="bg-yellow-400 text-white text-3xl font-black py-4 px-12 rounded-full shadow-xl active:scale-95 border-b-8 border-yellow-600 z-20">つぎへ</button>
+                    <div className="gp-hero gp-float mb-6">🎉</div>
+                    <h2 className="gp-title mb-8" style={{color:'var(--gp-accent-d)'}}>やったね！</h2>
+                    <button onClick={()=>setIdx(i=>(i+1)%order.length)} className="gp-btn gp-btn--lg z-20">つぎへ</button>
                   </div>
                 )}
               </div>

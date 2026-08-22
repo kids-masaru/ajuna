@@ -1,0 +1,16 @@
+# 環境変数・認証情報
+.env
+.env.*
+credentials.json
+secrets.json
+
+# 秘密鍵・証明書
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ローカル設定・一時ファイル
+.DS_Store
+Thumbs.db
+desktop.ini
