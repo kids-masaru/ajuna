@@ -29,6 +29,7 @@
 | fishing.html | 魚釣り |
 | kart.html | ドットカート |
 | osewa.html | おせわごっこ |
+| toyfreeze.html | おもちゃは うごかない！ |
 | slide.html | すべりだいめいろ（おせわごっこ内） |
 | swing.html | ブランコ（おせわごっこ内） |
 

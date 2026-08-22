@@ -61,7 +61,7 @@
             <img src="icon.png" class="w-12 h-12 rounded-2xl" alt="">
             <span>げーむのおへや</span>
         </h1>
-        <p class="text-[10px] text-rose-300 mt-1">v6.9</p>
+        <p class="text-[10px] text-rose-300 mt-1">v7.0</p>
     </div>
 
     <div class="w-full max-w-md grid grid-cols-3 gap-2 pb-10">
@@ -161,13 +161,18 @@
             <img src="icon_osewa.png" class="w-20 h-20 rounded-xl" alt="おせわごっこ">
         </a>
 
+        <a href="toyfreeze.html"
+            class="game-card flex flex-col items-center justify-center bg-white rounded-2xl p-2 border-4 border-teal-300 no-underline text-gray-800 aspect-square text-center">
+            <img src="icon_toyfreeze.png" class="w-20 h-20 rounded-xl" alt="おもちゃは うごかない！">
+        </a>
+
     </div>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 // 更新はService Worker側で安全に切り替え、オフライン用キャッシュは保持する
-                navigator.serviceWorker.register('./sw.js?v=121').catch(error => {
+                navigator.serviceWorker.register('./sw.js?v=122').catch(error => {
                     console.error('オフライン機能を準備できませんでした。', error);
                 });
             });

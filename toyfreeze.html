@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fff7ed">
+  <title>おもちゃは うごかない！｜げーむのおへや</title>
+  <link rel="stylesheet" href="assets/kit.css">
+  <style>
+    :root {
+      --safe-top: max(10px, env(safe-area-inset-top));
+      --safe-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      color: #43382f;
+      background: #fff7ed;
+    }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    #game {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      min-height: 100%;
+      overflow: hidden;
+      background: #fef3c7;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(10px, 2vh, 18px);
+      padding: calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 18px);
+      text-align: center;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(255,255,255,.9), transparent 30%),
+        linear-gradient(150deg, #fff7ed 0%, #fef3c7 48%, #d1fae5 100%);
+    }
+
+    .screen[hidden] { display: none; }
+
+    .title-icon {
+      width: clamp(126px, 32vw, 210px);
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 30%;
+      border: 6px solid #fff;
+      box-shadow: 0 12px 30px rgba(120, 73, 35, .2);
+    }
+
+    h1, h2, p { margin: 0; }
+
+    h1 {
+      color: #0f766e;
+      font-size: clamp(1.8rem, 7vw, 3.2rem);
+      line-height: 1.08;
+      text-shadow: 0 3px 0 #fff;
+    }
+
+    h2 {
+      color: #0f766e;
+      font-size: clamp(2rem, 9vw, 3.6rem);
+    }
+
+    .lead {
+      max-width: 560px;
+      color: #6b4f3b;
+      font-size: clamp(1rem, 3.8vw, 1.35rem);
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .howto {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: min(570px, 96vw);
+    }
+
+    .howto-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 62px;
+      padding: 9px 12px;
+      border: 4px solid #fff;
+      border-radius: 20px;
+      box-shadow: 0 5px 12px rgba(79, 57, 38, .12);
+      font-size: clamp(.88rem, 3.4vw, 1.15rem);
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .howto-card.go { color: #065f46; background: #a7f3d0; }
+    .howto-card.stop { color: #991b1b; background: #fecaca; }
+
+    .main-btn {
+      min-width: min(310px, 82vw);
+      min-height: 70px;
+      font-size: clamp(1.45rem, 6vw, 2rem);
+    }
+
+    #play-screen {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+
+    #play-screen[hidden] { display: none; }
+
+    #scene {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      background: #f8d5ac url('toyfreeze_room.png') center / 100% 100% no-repeat;
+      border-bottom: 5px solid rgba(120, 74, 37, .25);
+    }
+
+    .topbar {
+      position: absolute;
+      top: var(--safe-top);
+      left: 50%;
+      z-index: 12;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      width: min(580px, calc(100% - 126px));
+      transform: translateX(-50%);
+    }
+
+    #signal {
+      width: 100%;
+      padding: 8px 14px 9px;
+      border: 4px solid rgba(255,255,255,.95);
+      border-radius: 20px;
+      box-shadow: 0 5px 18px rgba(61, 42, 27, .22);
+      color: white;
+      background: #10b981;
+      font-size: clamp(1.05rem, 4vw, 1.7rem);
+      font-weight: 900;
+      line-height: 1.1;
+      text-align: center;
+      transition: background .16s, transform .16s;
+    }
+
+    #signal.warning { color: #613b00; background: #fbbf24; transform: scale(1.035); }
+    #signal.watching { background: #ef4444; transform: scale(1.06); }
+    #signal.caught { background: #8b5cf6; }
+
+    .progress-shell {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      overflow: hidden;
+      border: 3px solid #fff;
+      border-radius: 99px;
+      background: rgba(255,255,255,.75);
+      box-shadow: 0 3px 10px rgba(61,42,27,.16);
+    }
+
+    #progress {
+      width: 5%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #34d399, #14b8a6);
+      transition: width .12s linear;
+    }
+
+    .sprite {
+      position: absolute;
+      z-index: 7;
+      aspect-ratio: 1;
+      background-image: url('toyfreeze_characters.png');
+      background-repeat: no-repeat;
+      background-size: 200% 200%;
+      filter: drop-shadow(0 6px 5px rgba(70, 43, 25, .24));
+      pointer-events: none;
+    }
+
+    #girl {
+      top: clamp(54px, 12vh, 96px);
+      left: 61%;
+      width: clamp(120px, 26vmin, 220px);
+      background-position: 0 0;
+      transform: translateX(-50%);
+      transform-origin: 50% 85%;
+      transition: transform .18s ease;
+    }
+
+    #girl.front {
+      background-position: 100% 0;
+      transform: translateX(-50%) scale(1.04);
+    }
+
+    #toy {
+      left: 6%;
+      bottom: clamp(1px, 3vh, 28px);
+      width: clamp(92px, 22vmin, 178px);
+      background-position: 100% 100%;
+      transform: translateX(-50%);
+      transform-origin: 50% 88%;
+      will-change: left, transform;
+    }
+
+    #toy.walking {
+      background-position: 0 100%;
+      animation: toy-hop .34s ease-in-out infinite alternate;
+    }
+
+    #toy.caught { animation: toy-shake .42s ease-in-out 2; }
+
+    @keyframes toy-hop {
+      from { transform: translateX(-50%) translateY(0) rotate(-2deg); }
+      to { transform: translateX(-50%) translateY(-9px) rotate(2deg); }
+    }
+
+    @keyframes toy-shake {
+      0%, 100% { transform: translateX(-50%) rotate(0); }
+      25% { transform: translateX(calc(-50% - 10px)) rotate(-7deg); }
+      75% { transform: translateX(calc(-50% + 10px)) rotate(7deg); }
+    }
+
+    #goal-glow {
+      position: absolute;
+      right: 3.5%;
+      bottom: 5%;
+      z-index: 4;
+      width: clamp(80px, 18vmin, 150px);
+      aspect-ratio: 1;
+      border: 8px solid rgba(255, 214, 64, .78);
+      border-radius: 50%;
+      box-shadow: 0 0 0 8px rgba(255,255,255,.35), 0 0 35px #fde047;
+      animation: goal-pulse 1.3s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes goal-pulse {
+      from { opacity: .55; transform: scale(.9); }
+      to { opacity: 1; transform: scale(1.04); }
+    }
+
+    #control-panel {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 116px;
+      padding: 9px 14px calc(var(--safe-bottom) + 7px);
+      background: linear-gradient(180deg, #fffdf8, #ffedd5);
+    }
+
+    #move-btn {
+      width: min(560px, 94vw);
+      min-height: 74px;
+      border: 0;
+      border-radius: 28px;
+      color: #fff;
+      background: #10b981;
+      box-shadow: 0 9px 0 #047857, 0 11px 22px rgba(4,120,87,.25);
+      font-family: var(--gp-font);
+      font-size: clamp(1.6rem, 7vw, 2.45rem);
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    #move-btn.pressed {
+      transform: translateY(8px);
+      box-shadow: 0 1px 0 #047857, 0 4px 8px rgba(4,120,87,.2);
+    }
+
+    #move-btn.stop-mode {
+      color: #fee2e2;
+      background: #b91c1c;
+      box-shadow: 0 9px 0 #7f1d1d, 0 11px 22px rgba(127,29,29,.25);
+    }
+
+    #hint {
+      min-height: 1.25em;
+      color: #7c5b45;
+      font-size: clamp(.84rem, 3vw, 1rem);
+      font-weight: 800;
+    }
+
+    .result-card {
+      width: min(520px, 94vw);
+      padding: 22px 18px 26px;
+    }
+
+    .result-icon {
+      width: clamp(110px, 30vw, 170px);
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 28%;
+      box-shadow: 0 8px 20px rgba(63, 45, 29, .18);
+    }
+
+    .result-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    @media (orientation: landscape) and (max-height: 540px) {
+      .screen { flex-direction: row; flex-wrap: wrap; align-content: center; gap: 8px 16px; }
+      .title-icon { width: min(28vh, 150px); border-width: 4px; }
+      .screen h1 { width: min(55vw, 500px); }
+      .lead { width: min(55vw, 500px); }
+      .howto { width: min(55vw, 500px); }
+      .screen .main-btn { min-height: 54px; padding-block: .65em; }
+      #play-screen { grid-template-rows: minmax(0, 1fr) 94px; }
+      #control-panel { min-height: 94px; padding-top: 6px; }
+      #move-btn { min-height: 58px; }
+      #girl { top: 42px; width: clamp(104px, 35vh, 164px); }
+      #toy { width: clamp(82px, 30vh, 138px); bottom: 0; }
+      #signal { padding-block: 5px 6px; }
+      .progress-shell { height: 14px; }
+      .result-card { width: min(620px, 90vw); padding: 14px; }
+      .result-card .result-icon { width: 104px; float: left; margin-right: 14px; }
+      .result-actions { margin-top: 10px; }
+    }
+
+    @media (orientation: portrait) {
+      #girl { left: 60%; top: clamp(88px, 15vh, 150px); width: clamp(126px, 40vw, 190px); }
+      #toy { bottom: 4%; width: clamp(98px, 31vw, 152px); }
+      #goal-glow { right: 1%; bottom: 8%; width: clamp(78px, 24vw, 125px); }
+      .topbar { width: calc(100% - 122px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body class="gp gp-teal">
+  <main id="game">
+    <a href="index.html" class="gp-home" aria-label="ホームにもどる">ホーム</a>
+
+    <section id="start-screen" class="screen" aria-labelledby="game-title">
+      <img class="title-icon gp-float" src="icon_toyfreeze.png" alt="おもちゃのロボットと女の子">
+      <div>
+        <h1 id="game-title">おもちゃは<br>うごかない！</h1>
+        <p class="lead">みられて いない あいだに<br>おもちゃばこへ すすもう！</p>
+      </div>
+      <div class="howto" aria-label="あそびかた">
+        <div class="howto-card go">うしろむきなら<br>おして すすむ</div>
+        <div class="howto-card stop">ふりむいたら<br>はなして とまる</div>
+      </div>
+      <button id="start-btn" class="gp-btn gp-btn--lg main-btn" type="button">はじめる！</button>
+    </section>
+
+    <section id="play-screen" hidden aria-label="ゲーム画面">
+      <div id="scene">
+        <div class="topbar" aria-live="polite">
+          <div id="signal">いまだ！ すすめ！</div>
+          <div class="progress-shell" aria-label="おもちゃばこまでのきょり">
+            <div id="progress"></div>
+          </div>
+        </div>
+        <div id="girl" class="sprite" role="img" aria-label="うしろをむいている女の子"></div>
+        <div id="goal-glow" aria-hidden="true"></div>
+        <div id="toy" class="sprite" role="img" aria-label="おもちゃのロボット"></div>
+      </div>
+      <div id="control-panel">
+        <button id="move-btn" type="button" aria-label="おしているあいだ進む">おして すすむ</button>
+        <div id="hint">ボタンを はなすと とまるよ</div>
+      </div>
+    </section>
+
+    <section id="result-screen" class="screen" hidden aria-labelledby="result-title">
+      <div class="gp-card result-card gp-pop">
+        <img class="result-icon" src="icon_toyfreeze.png" alt="おもちゃのロボット">
+        <h2 id="result-title">やったね！</h2>
+        <p class="lead">みつからずに<br>おもちゃばこへ ついたよ！</p>
+        <div class="result-actions">
+          <button id="again-btn" class="gp-btn gp-btn--lg" type="button">もういちど</button>
+          <a class="gp-btn gp-btn--ghost" href="index.html">ゲームを えらぶ</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const startScreen = document.getElementById('start-screen');
+      const playScreen = document.getElementById('play-screen');
+      const resultScreen = document.getElementById('result-screen');
+      const startButton = document.getElementById('start-btn');
+      const againButton = document.getElementById('again-btn');
+      const moveButton = document.getElementById('move-btn');
+      const signal = document.getElementById('signal');
+      const hint = document.getElementById('hint');
+      const progress = document.getElementById('progress');
+      const girl = document.getElementById('girl');
+      const toy = document.getElementById('toy');
+
+      const PHASE = Object.freeze({
+        AWAY: 'away',
+        WARNING: 'warning',
+        WATCHING: 'watching',
+        COMPLETE: 'complete'
+      });
+
+      let phase = PHASE.AWAY;
+      let phaseEndsAt = 0;
+      let distance = 5;
+      let pressing = false;
+      let caughtThisTurn = false;
+      let lastFrame = 0;
+      let animationId = 0;
+      let audioContext = null;
+
+      function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      // ユーザー操作後にだけ音を開始し、ブラウザの自動再生制限を避ける
+      function prepareAudio() {
+        try {
+          if (!audioContext) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) audioContext = new AudioContextClass();
+          }
+          if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume().catch(error => {
+              console.warn('効果音の準備を再開できませんでした。', error);
+            });
+          }
+        } catch (error) {
+          // 音が使えなくても、文字と色だけで最後まで遊べる
+          audioContext = null;
+          console.warn('効果音を準備できませんでした。', error);
+        }
+      }
+
+      function playTone(frequency, duration, type = 'sine', volume = 0.08) {
+        if (!audioContext) return;
+        try {
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = type;
+          oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(volume, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + duration);
+        } catch (error) {
+          console.warn('効果音を再生できませんでした。', error);
+        }
+      }
+
+      function speak(text) {
+        if (!('speechSynthesis' in window)) return;
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.88;
+          utterance.pitch = 1.15;
+          window.speechSynthesis.speak(utterance);
+        } catch (error) {
+          console.warn('読み上げを開始できませんでした。', error);
+        }
+      }
+
+      function setPressing(next) {
+        pressing = Boolean(next) && phase !== PHASE.COMPLETE;
+        moveButton.classList.toggle('pressed', pressing);
+        toy.classList.toggle('walking', pressing && phase !== PHASE.WATCHING);
+        // 見られている最中の短いタップも、確実に判定へ含める
+        if (pressing && phase === PHASE.WATCHING) catchToy();
+      }
+
+      function updateSignal() {
+        signal.className = '';
+        moveButton.classList.remove('stop-mode');
+
+        if (phase === PHASE.AWAY) {
+          signal.textContent = 'いまだ！ すすめ！';
+          hint.textContent = 'タップでも ちょっと すすむよ';
+          girl.classList.remove('front');
+          girl.setAttribute('aria-label', 'うしろをむいている女の子');
+          return;
+        }
+
+        if (phase === PHASE.WARNING) {
+          signal.classList.add('warning');
+          signal.textContent = 'もうすぐ ふりむくよ！';
+          hint.textContent = 'そろそろ はなしてね';
+          girl.classList.remove('front');
+          girl.setAttribute('aria-label', 'もうすぐ振り向く女の子');
+          return;
+        }
+
+        if (phase === PHASE.WATCHING) {
+          signal.classList.add(caughtThisTurn ? 'caught' : 'watching');
+          signal.textContent = caughtThisTurn ? 'みつかっちゃった！' : 'ぴたっ！ とまって！';
+          hint.textContent = caughtThisTurn ? 'だいじょうぶ。つぎに すすもう' : 'ボタンから ゆびを はなそう';
+          girl.classList.add('front');
+          girl.setAttribute('aria-label', 'こちらを見ている女の子');
+          moveButton.classList.add('stop-mode');
+        }
+      }
+
+      function beginAway(now) {
+        phase = PHASE.AWAY;
+        caughtThisTurn = false;
+        phaseEndsAt = now + randomBetween(2300, 3900);
+        updateSignal();
+        playTone(520, .12, 'sine', .045);
+      }
+
+      function beginWarning(now) {
+        phase = PHASE.WARNING;
+        phaseEndsAt = now + 1450;
+        updateSignal();
+        playTone(760, .18, 'triangle', .07);
+        window.setTimeout(() => playTone(760, .18, 'triangle', .07), 430);
+        speak('もうすぐ ふりむくよ');
+      }
+
+      function beginWatching(now) {
+        phase = PHASE.WATCHING;
+        caughtThisTurn = false;
+        phaseEndsAt = now + randomBetween(1650, 2350);
+        updateSignal();
+        playTone(280, .28, 'square', .055);
+        speak('ぴたっ。とまって');
+      }
+
+      function catchToy() {
+        if (caughtThisTurn) return;
+        caughtThisTurn = true;
+        updateDistance(distance - 11);
+        toy.classList.remove('walking');
+        toy.classList.add('caught');
+        window.setTimeout(() => toy.classList.remove('caught'), 900);
+        if ('vibrate' in navigator) navigator.vibrate([80, 50, 80]);
+        playTone(180, .38, 'sawtooth', .06);
+        speak('みつかっちゃった。だいじょうぶ');
+        updateSignal();
+      }
+
+      function updateDistance(nextDistance) {
+        distance = Math.min(100, Math.max(5, nextDistance));
+        progress.style.width = `${distance}%`;
+        toy.style.left = `${6 + distance * .78}%`;
+      }
+
+      function advanceToy(amount) {
+        updateDistance(distance + amount);
+        if (distance < 100) return false;
+        completeGame();
+        return true;
+      }
+
+      function completeGame() {
+        phase = PHASE.COMPLETE;
+        setPressing(false);
+        cancelAnimationFrame(animationId);
+        updateDistance(100);
+        playTone(660, .22, 'sine', .08);
+        window.setTimeout(() => playTone(880, .32, 'sine', .08), 180);
+        speak('やったね。おもちゃばこに ついたよ');
+        window.setTimeout(() => {
+          playScreen.hidden = true;
+          resultScreen.hidden = false;
+        }, 650);
+      }
+
+      function gameLoop(now) {
+        // 長い停止後に一気に進まないよう、1フレーム分の経過時間へ上限を設ける
+        if (!lastFrame) lastFrame = now;
+        const deltaSeconds = Math.min((now - lastFrame) / 1000, .05);
+        lastFrame = now;
+
+        if (pressing) {
+          if (phase === PHASE.WATCHING) {
+            catchToy();
+          } else {
+            if (advanceToy(deltaSeconds * 8.6)) return;
+          }
+        }
+
+        // 「後ろ向き→予告→見ている」を循環させ、難しさを毎回少し変える
+        if (now >= phaseEndsAt) {
+          if (phase === PHASE.AWAY) beginWarning(now);
+          else if (phase === PHASE.WARNING) beginWatching(now);
+          else if (phase === PHASE.WATCHING) beginAway(now);
+        }
+
+        animationId = requestAnimationFrame(gameLoop);
+      }
+
+      function startGame() {
+        prepareAudio();
+        if ('speechSynthesis' in window) {
+          try {
+            window.speechSynthesis.cancel();
+          } catch (error) {
+            console.warn('前の読み上げを停止できませんでした。', error);
+          }
+        }
+        cancelAnimationFrame(animationId);
+        startScreen.hidden = true;
+        resultScreen.hidden = true;
+        playScreen.hidden = false;
+        distance = 5;
+        pressing = false;
+        caughtThisTurn = false;
+        lastFrame = 0;
+        updateDistance(5);
+        toy.className = 'sprite';
+        beginAway(performance.now());
+        speak('うしろむきの あいだに、ボタンを おして すすもう');
+        animationId = requestAnimationFrame(gameLoop);
+      }
+
+      function pressStart(event) {
+        event.preventDefault();
+        if (event.pointerId !== undefined) {
+          try { moveButton.setPointerCapture(event.pointerId); } catch (_) {}
+        }
+        setPressing(true);
+        // 短いタップでも少し進めるようにし、長押しが苦手な子も遊べるようにする
+        if (phase !== PHASE.WATCHING && phase !== PHASE.COMPLETE) advanceToy(3);
+      }
+
+      function pressEnd(event) {
+        if (event) event.preventDefault();
+        setPressing(false);
+      }
+
+      startButton.addEventListener('click', startGame);
+      againButton.addEventListener('click', startGame);
+      moveButton.addEventListener('pointerdown', pressStart);
+      moveButton.addEventListener('pointerup', pressEnd);
+      moveButton.addEventListener('pointercancel', pressEnd);
+      moveButton.addEventListener('lostpointercapture', pressEnd);
+      moveButton.addEventListener('contextmenu', event => event.preventDefault());
+
+      window.addEventListener('keydown', event => {
+        if ((event.code === 'Space' || event.code === 'ArrowRight') && !event.repeat && !playScreen.hidden) {
+          event.preventDefault();
+          setPressing(true);
+        }
+      });
+
+      window.addEventListener('keyup', event => {
+        if (event.code === 'Space' || event.code === 'ArrowRight') {
+          event.preventDefault();
+          setPressing(false);
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        // アプリを閉じた間の押しっぱなしを解除し、復帰時の誤判定を防ぐ
+        if (document.hidden) setPressing(false);
+        lastFrame = 0;
+      });
+    })();
+  </script>
+</body>
+</html>
