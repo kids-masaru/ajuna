@@ -141,6 +141,22 @@
     }
     #goal-glow[hidden] { display: none; }
     @keyframes goal-pulse { from { opacity: .52; scale: .88; } to { opacity: 1; scale: 1.05; } }
+    #home-goals { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
+    .home-goal {
+      position: absolute; display: grid; place-items: center; width: clamp(58px, 9vw, 112px); aspect-ratio: 1;
+      border: 6px solid rgba(255,214,64,.86); border-radius: 50%; background: rgba(255,255,255,.34);
+      box-shadow: 0 0 0 6px rgba(255,255,255,.3), 0 0 26px #fde047;
+      transform: translate(-50%, -50%); animation: goal-pulse 1.05s ease-in-out infinite alternate;
+    }
+    .home-goal::after {
+      content: ''; width: 44%; height: 82%; background-image: var(--home-goal-sprite);
+      background-repeat: no-repeat; background-size: 600% 100%; background-position: 0 0;
+      filter: drop-shadow(0 3px 3px rgba(70,43,25,.22));
+    }
+    .home-goal.arrived {
+      border-color: #34d399; background: rgba(209,250,229,.72); box-shadow: 0 0 0 6px rgba(255,255,255,.36), 0 0 24px #34d399;
+      animation: none; opacity: .58;
+    }
     #rescue-counter {
       position: absolute; z-index: 28; right: var(--safe-right); bottom: calc(var(--safe-bottom) + 8px); display: none;
       gap: 7px; padding: 8px 11px; border: 3px solid #fff; border-radius: 999px;
@@ -218,6 +234,7 @@
           <div id="girl" class="sprite-strip" role="img" aria-label="部屋の奥で後ろを向いている女の子"></div>
           <div id="turn-cue" aria-hidden="true">!</div>
           <div id="goal-glow" aria-hidden="true"></div>
+          <div id="home-goals" aria-label="仲間それぞれのゴール"></div>
           <div id="friends" aria-label="おもちゃの仲間たち"></div>
           <div id="helper" class="sprite-strip" role="img" aria-label="青いロボットの仲間"></div>
           <div id="player" class="sprite-strip" role="img" aria-label="指について歩くロボット"></div>
@@ -236,7 +253,7 @@
         <div class="gp-card result-card gp-pop">
           <img class="result-icon" src="icon_toyfreeze.png" alt="おもちゃのロボット">
           <h2 id="result-title">やったね！</h2>
-          <p class="lead">みんなで ベッドまで<br>ぶじに かえれたよ！</p>
+          <p class="lead">みんな それぞれの ばしょへ<br>ぶじに かえれたよ！</p>
           <div class="result-actions">
             <button id="again-btn" class="gp-btn gp-btn--lg" type="button">もういちど</button>
             <a class="gp-btn gp-btn--ghost" href="index.html">ゲームを えらぶ</a>
@@ -271,6 +288,7 @@
       const helper = document.getElementById('helper');
       const turnCue = document.getElementById('turn-cue');
       const goalGlow = document.getElementById('goal-glow');
+      const homeGoalsContainer = document.getElementById('home-goals');
       const friendsContainer = document.getElementById('friends');
       const rescueCounter = document.getElementById('rescue-counter');
       const rescueMarks = [...document.querySelectorAll('.rescue-mark')];
@@ -292,15 +310,22 @@
           goal: { x: 88, y: 74, radius: 10 }, start: { x: 14, y: 78 }, mode: 'rescue'
         },
         {
-          title: 'ベッドへ いこう', destination: 'ベッド', backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
+          title: 'みんなの おうち', destination: 'それぞれの ばしょ', backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
           backgroundSize: '200% 100%', backgroundPosition: '100% 0%', girl: { x: 66, y: 27 },
-          goal: { x: 83, y: 58, radius: 11 }, start: { x: 14, y: 80 }, mode: 'goal'
+          goal: null, start: { x: 14, y: 80 }, mode: 'homes'
         }
       ]);
       const FRIEND_DEFS = Object.freeze([
         { id: 'bunny', label: 'うさぎのぬいぐるみ', x: 30, y: 70 },
         { id: 'car', label: 'いぬのくるま', x: 50, y: 82 },
         { id: 'dino', label: 'きょうりゅうのおもちゃ', x: 70, y: 68 }
+      ]);
+      // 3面では、絵で見分けられる4つの別々の帰り場所へ仲間を案内する。
+      const HOME_GOAL_DEFS = Object.freeze([
+        { id: 'helper', label: '青いロボットの左上のゴール', x: 18, y: 52, radius: 9, sprite: 'toyfreeze_blue_robot_walk_v3.png' },
+        { id: 'bunny', label: 'うさぎの右上のゴール', x: 84, y: 51, radius: 9, sprite: 'toyfreeze_bunny_walk_v3.png' },
+        { id: 'car', label: 'くるまの右下のゴール', x: 85, y: 82, radius: 9, sprite: 'toyfreeze_car_roll_v3.png' },
+        { id: 'dino', label: 'きょうりゅうのベッドの下のゴール', x: 54, y: 75, radius: 9, sprite: 'toyfreeze_dino_walk_v3.png' }
       ]);
 
       let phase = PHASE.AWAY;
@@ -321,6 +346,9 @@
       let movementHistory = [];
       let friends = [];
       let rescuedCount = 0;
+      let homeGoals = [];
+      let homeReachedCount = 0;
+      let helperHomeReached = false;
 
       function randomBetween(min, max) { return min + Math.random() * (max - min); }
       function currentStage() { return STAGES[stageIndex]; }
@@ -409,7 +437,32 @@
           element.setAttribute('role', 'img');
           element.setAttribute('aria-label', definition.label);
           friendsContainer.appendChild(element);
-          return { ...definition, element, position: { x: definition.x, y: definition.y }, rescued: false, followDelay: 24 };
+          return { ...definition, element, position: { x: definition.x, y: definition.y }, rescued: false, homeReached: false, followDelay: 24 };
+        });
+      }
+
+      function createHomeGoals() {
+        homeGoalsContainer.replaceChildren();
+        homeGoals = HOME_GOAL_DEFS.map(definition => {
+          const element = document.createElement('div');
+          element.className = 'home-goal';
+          element.setAttribute('role', 'img');
+          element.setAttribute('aria-label', definition.label);
+          element.style.left = `${definition.x}%`;
+          element.style.top = `${definition.y}%`;
+          element.style.setProperty('--home-goal-sprite', `url('${definition.sprite}')`);
+          homeGoalsContainer.appendChild(element);
+          return { ...definition, element, reached: false };
+        });
+      }
+
+      function resetHomeGoals() {
+        homeReachedCount = 0;
+        helperHomeReached = false;
+        homeGoalsContainer.hidden = stageIndex !== 2;
+        homeGoals.forEach(goal => {
+          goal.reached = false;
+          goal.element.classList.remove('arrived');
         });
       }
 
@@ -419,6 +472,7 @@
         rescueMarks.forEach(mark => mark.classList.remove('done'));
         friends.forEach((friend, index) => {
           friend.rescued = stageIndex === 2;
+          friend.homeReached = false;
           friend.followDelay = 28 + index * 18;
           friend.position = stageIndex === 2
             ? { x: playerPosition.x - 5 - index * 3, y: playerPosition.y + (index - 1) * 3 }
@@ -456,6 +510,7 @@
         rescueCounter.classList.toggle('show', stage.mode === 'rescue');
         updateMissionDots();
         resetFriends();
+        resetHomeGoals();
         updateGoalVisibility();
       }
 
@@ -536,6 +591,47 @@
         });
       }
 
+      function settleHomeMember(goal) {
+        if (goal.reached || phase === PHASE.COMPLETE) return;
+        goal.reached = true;
+        goal.element.classList.add('arrived');
+        homeReachedCount += 1;
+        if (goal.id === 'helper') {
+          helperHomeReached = true;
+          helperPosition = { x: goal.x, y: goal.y };
+          setFrame(helper, 0);
+          place(helper, helperPosition);
+        } else {
+          const friend = friends.find(candidate => candidate.id === goal.id);
+          if (friend) {
+            friend.homeReached = true;
+            friend.position = { x: goal.x, y: goal.y };
+            setFrame(friend.element, 0);
+            place(friend.element, friend.position);
+          }
+        }
+        playTone(620 + homeReachedCount * 70, .2, 'sine', .065);
+        if (homeReachedCount === HOME_GOAL_DEFS.length) {
+          speak('みんな おうちに ついたよ');
+          completeStage();
+        } else {
+          speak('おうちに ついたよ');
+        }
+      }
+
+      function checkHomeArrivals() {
+        if (stageIndex !== 2 || phase === PHASE.WATCHING || phase === PHASE.COMPLETE) return;
+        homeGoals.forEach(goal => {
+          if (goal.reached) return;
+          const memberPosition = goal.id === 'helper'
+            ? helperPosition
+            : friends.find(friend => friend.id === goal.id)?.position;
+          if (!memberPosition) return;
+          const distance = Math.hypot(memberPosition.x - goal.x, memberPosition.y - goal.y);
+          if (distance <= goal.radius) settleHomeMember(goal);
+        });
+      }
+
       function completeStage() {
         if (phase === PHASE.COMPLETE) return;
         phase = PHASE.COMPLETE; pointerHeld = false; stageClear.hidden = false;
@@ -549,9 +645,9 @@
           transitionTimer = window.setTimeout(() => startStage(stageIndex + 1), 1500);
           return;
         }
-        stageClearTitle.textContent = 'ベッドに ついた！';
-        stageClearNext.textContent = 'みんな ぶじに かえれたよ';
-        speak('やったね。みんなで ベッドに ついたよ');
+        stageClearTitle.textContent = 'みんな おうちに ついた！';
+        stageClearNext.textContent = 'それぞれの ばしょへ かえれたよ';
+        speak('やったね。みんな それぞれの ばしょへ かえれたよ');
         transitionTimer = window.setTimeout(() => {
           playScreen.hidden = true; resultScreen.hidden = false;
         }, 1100);
@@ -590,7 +686,7 @@
         const helperDx = helperTarget.x - helperPosition.x;
         const helperDy = helperTarget.y - helperPosition.y;
         const helperDistance = Math.hypot(helperDx, helperDy);
-        if (toysCanMove && helperDistance > .4) {
+        if (!helperHomeReached && toysCanMove && helperDistance > .4) {
           const amount = Math.min(helperDistance, deltaSeconds * 25);
           helperPosition.x += helperDx / helperDistance * amount;
           helperPosition.y += helperDy / helperDistance * amount;
@@ -602,6 +698,11 @@
 
         friends.forEach((friend, index) => {
           if (!friend.rescued || friend.element.hidden) return;
+          if (friend.homeReached) {
+            setFrame(friend.element, 0);
+            place(friend.element, friend.position);
+            return;
+          }
           const historyIndex = Math.min(friend.followDelay, movementHistory.length - 1);
           const followTarget = movementHistory[historyIndex] || playerPosition;
           const offsetY = (index - 1) * 2.5;
@@ -620,6 +721,7 @@
         });
 
         rescueNearbyFriends();
+        checkHomeArrivals();
 
         const goalReady = currentStage().mode !== 'rescue' || rescuedCount === FRIEND_DEFS.length;
         if (goalReady && currentStage().goal) {
@@ -661,7 +763,9 @@
         applyStage(); beginAway(performance.now());
         const voice = stageIndex === 0
           ? 'たからばこへ すすもう'
-          : stageIndex === 1 ? 'なかまの ところへ すすんで、みんなで ひかりへ いこう' : 'みんなで ベッドへ すすもう';
+          : stageIndex === 1
+            ? 'なかまの ところへ すすんで、みんなで ひかりへ いこう'
+            : 'なかまを それぞれの ひかる ばしょへ つれていこう';
         speak(`${voice}。うしろむきの あいだに うごこう`);
         animationId = requestAnimationFrame(gameLoop);
       }
@@ -717,6 +821,7 @@
         lastFrame = 0;
       });
       createFriends();
+      createHomeGoals();
     })();
   </script>
 </body>

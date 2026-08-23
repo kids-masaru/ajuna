@@ -57,23 +57,7 @@
             overflow: hidden;
         }
 
-        #rotate-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 5000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 18px;
-            padding: 24px;
-            color: #c2410c;
-            background: linear-gradient(145deg, #fff7ed, #ffedd5);
-            text-align: center;
-        }
-
         @media (orientation: portrait) {
-            #rotate-overlay { display: flex; }
             #orientation-stage { visibility: hidden; }
             body.forced-landscape #rotate-overlay { display: none; }
             body.forced-landscape #orientation-stage {
@@ -85,30 +69,6 @@
                 top: 0;
                 left: 100%;
             }
-        }
-
-        .rotate-device-icon {
-            width: 96px;
-            height: 78px;
-            color: #f97316;
-        }
-
-        .rotate-action {
-            min-width: min(320px, 82vw);
-            min-height: 72px;
-            border: 5px solid #fff;
-            border-radius: 999px;
-            color: #fff;
-            background: #f97316;
-            box-shadow: 0 8px 0 #c2410c;
-            font: inherit;
-            font-size: 1.55rem;
-            font-weight: 900;
-        }
-
-        .rotate-action:active {
-            transform: translateY(5px);
-            box-shadow: 0 3px 0 #c2410c;
         }
 
         .shop-scene {
@@ -234,20 +194,18 @@
         };
     </script>
     <link rel="stylesheet" href="assets/kit.css">
+    <link rel="stylesheet" href="assets/landscape-prompt.css">
 </head>
 
 <body class="gp gp-emerald gp-dark fixed inset-0 overflow-hidden">
-    <div id="rotate-overlay">
-        <a href="index.html" class="gp-home" aria-label="ホームにもどる"></a>
-        <svg class="rotate-device-icon" viewBox="0 0 120 96" aria-hidden="true">
-            <rect x="10" y="18" width="46" height="70" rx="9" fill="white" stroke="currentColor" stroke-width="6" />
-            <circle cx="33" cy="78" r="3" fill="currentColor" />
-            <path d="M70 24c23 0 38 14 38 34" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
-            <path d="M96 51l12 9 8-13" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
-            <rect x="65" y="52" width="46" height="34" rx="8" fill="white" stroke="currentColor" stroke-width="6" />
-        </svg>
-        <h1 class="text-3xl font-bold">よこで あそぼう！</h1>
-        <button class="rotate-action" type="button" onclick="forceShoppingLandscape()">よこで あそぶ</button>
+    <div id="rotate-overlay" class="landscape-prompt" role="dialog" aria-modal="true" aria-label="横画面で遊ぶ案内">
+        <div class="landscape-prompt__card">
+            <div class="landscape-prompt__device" style="--landscape-prompt-icon:url('../icon_kaimono.png')" aria-hidden="true"></div>
+            <h1 class="landscape-prompt__title">よこで あそぼう！</h1>
+            <p class="landscape-prompt__text">このボタンで よこがめんに なるよ</p>
+            <button class="landscape-prompt__button" type="button" onclick="forceShoppingLandscape()">よこで あそぶ</button><br>
+            <a class="landscape-prompt__home" href="index.html">ゲームを えらぶ</a>
+        </div>
     </div>
 
     <div id="orientation-stage">
@@ -373,12 +331,17 @@
 
         const speak = (text) => {
             if (!window.speechSynthesis) return;
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'ja-JP';
-            msg.rate = 1.1;
-            msg.pitch = 1.4;
-            window.speechSynthesis.speak(msg);
+            try {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'ja-JP';
+                msg.rate = 1.1;
+                msg.pitch = 1.4;
+                window.speechSynthesis.speak(msg);
+            } catch (error) {
+                // 読み上げが使えない端末でも、絵を見てそのまま買い物を続けられる。
+                console.warn('買い物ゲームの読み上げを開始できませんでした。', error);
+            }
         };
 
         const DragItem = ({ shop, item, x, y }) => (
@@ -609,10 +572,6 @@
                             {/* Clipboard Shopping List (Sidebar) */}
                             <div className="shopping-list-wrap absolute top-24 left-2 z-30 pointer-events-auto">
                                 <ClipboardList shop={currentShop} items={targetItems} foundItems={foundItems} onSpeak={speak} />
-                            </div>
-
-                            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-white/90 text-orange-700 rounded-full px-5 py-2 text-sm font-bold shadow-md border-2 border-orange-200 whitespace-nowrap">
-                                えを タップ または かごへ いれてね
                             </div>
 
                             {/* Shelves Layout: Stacking 3 tiers vertically */}
