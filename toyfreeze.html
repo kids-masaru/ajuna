@@ -75,7 +75,7 @@
     }
     .topbar {
       position: absolute; top: var(--safe-top); left: 50%; z-index: 30; display: flex; align-items: center; gap: 8px;
-      width: min(600px, calc(100% - 150px)); transform: translateX(-50%); pointer-events: none;
+      width: auto; transform: translateX(-50%); pointer-events: none;
     }
     #stage-label {
       flex: 0 0 auto; padding: 7px 13px; border: 3px solid rgba(255,255,255,.96); border-radius: 999px;
@@ -83,13 +83,9 @@
       font-size: clamp(.72rem, 2.45vh, 1rem); font-weight: 900; line-height: 1;
     }
     #signal {
-      flex: 1; min-width: 0; padding: 8px 12px; border: 4px solid rgba(255,255,255,.96); border-radius: 20px;
-      color: #fff; background: #10b981; box-shadow: 0 5px 18px rgba(61,42,27,.22);
-      font-size: clamp(1rem, 3.6vh, 1.65rem); font-weight: 1000; line-height: 1; white-space: nowrap;
+      /* 状態判定と読み上げには使うが、色付きの文字枠は画面に表示しない。 */
+      display: none;
     }
-    #signal.warning { color: #613b00; background: #fbbf24; }
-    #signal.watching { background: #ef4444; }
-    #signal.caught { background: #8b5cf6; }
     #mission-dots {
       position: absolute; top: calc(var(--safe-top) + 54px); left: 50%; z-index: 29;
       display: flex; gap: 9px; transform: translateX(-50%); pointer-events: none;
@@ -496,9 +492,9 @@
         helperPosition = { x: stage.start.x - 6, y: stage.start.y + 3 };
         movementHistory = Array.from({ length: 100 }, () => ({ ...stage.start }));
         girl.style.left = `${stage.girl.x}%`;
-        girl.style.top = `${stage.girl.y}%`;
+        girl.style.top = `calc(${stage.girl.y}% + 30px)`;
         turnCue.style.left = `${stage.girl.x}%`;
-        turnCue.style.top = `${stage.girl.y - 15}%`;
+        turnCue.style.top = `calc(${stage.girl.y - 15}% + 30px)`;
         setFrame(girl, 0);
         place(player, playerPosition);
         place(helper, helperPosition);
