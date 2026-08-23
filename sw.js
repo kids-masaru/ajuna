@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v129';
+const CACHE_NAME = 'ajuna-v130';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -69,6 +69,10 @@ const LOCAL_FILES = [
   './toyfreeze_dino_walk_v3.png',
   './toyfreeze_girl_turn_v3.png',
   './icon_toyfreeze.png',
+  './forestflight.html',
+  './forestflight_scenes.png',
+  './forestflight_characters.png',
+  './icon_forestflight.png',
   './slide.html',
   './slide_girl.png',
   './slide_park_bg_v2.png',

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#dff8e8">
+  <title>もりのこま そらのたび｜げーむのおへや</title>
+  <link rel="stylesheet" href="assets/kit.css">
+  <link rel="stylesheet" href="assets/landscape-prompt.css">
+  <style>
+    :root {
+      --safe-top: max(8px, env(safe-area-inset-top));
+      --safe-right: max(8px, env(safe-area-inset-right));
+      --safe-bottom: max(8px, env(safe-area-inset-bottom));
+      --safe-left: max(8px, env(safe-area-inset-left));
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; overflow: hidden;
+      color: #31523c; background: #dff8e8; touch-action: none; user-select: none;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+    }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    #orientation-stage { position: fixed; inset: 0; overflow: hidden; background: #dff8e8; }
+    #game { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    .screen {
+      position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+      gap: clamp(16px, 4vw, 44px); padding: calc(var(--safe-top) + 12px) calc(var(--safe-right) + 18px)
+        calc(var(--safe-bottom) + 12px) calc(var(--safe-left) + 18px);
+      background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(218,249,227,.94)),
+        url('forestflight_scenes.png') 7% 45% / 300% auto;
+      text-align: center;
+    }
+    .screen[hidden], #play-screen[hidden] { display: none; }
+    .title-icon {
+      width: min(34vh, 220px); aspect-ratio: 1; object-fit: cover; border: 6px solid #fff; border-radius: 30%;
+      box-shadow: 0 14px 34px rgba(38,91,64,.23); animation: float 2.2s ease-in-out infinite alternate;
+    }
+    @keyframes float { to { transform: translateY(-8px) rotate(2deg); } }
+    .intro, .result-card { width: min(58vw, 620px); }
+    h1, h2, p { margin: 0; }
+    h1, h2 { color: #167052; line-height: 1.08; text-shadow: 0 3px 0 #fff; }
+    h1 { font-size: clamp(1.8rem, 6.5vh, 3.5rem); }
+    h2 { font-size: clamp(2rem, 8vh, 3.8rem); }
+    .lead { margin: 9px 0 13px; color: #526a50; font-size: clamp(.94rem, 3.2vh, 1.35rem); font-weight: 900; }
+    .start-picture {
+      display: flex; justify-content: center; align-items: center; gap: 13px; margin: 10px auto 14px;
+      font-size: clamp(2rem, 7vh, 3.5rem);
+    }
+    .finger-mark {
+      width: 72px; height: 48px; border: 5px solid #fff; border-radius: 999px;
+      background: radial-gradient(circle at 72% 50%, #fff 0 9px, #f8b84e 10px 17px, transparent 18px), #9be4ca;
+      box-shadow: 0 6px 14px rgba(38,91,64,.15);
+    }
+    .arrow-mark { position: relative; width: 44px; height: 13px; border-radius: 999px; background: #f3a524; box-shadow: 0 3px 0 #fff; }
+    .arrow-mark::after {
+      content: ''; position: absolute; top: 50%; right: -14px; width: 0; height: 0;
+      border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-left: 20px solid #f3a524;
+      transform: translateY(-50%);
+    }
+    .main-btn {
+      min-width: min(310px, 70vw); min-height: 58px; padding: .55em 1.2em; border: 5px solid #fff; border-radius: 999px;
+      color: #fff; background: linear-gradient(#26bb80, #109e6b); box-shadow: 0 8px 0 #087d55, 0 12px 22px rgba(25,102,73,.22);
+      font: 1000 clamp(1.35rem, 5vh, 2rem)/1 inherit; cursor: pointer;
+    }
+    .main-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #087d55; }
+    #play-screen { position: absolute; inset: 0; z-index: 10; background: #9bdcf2; }
+    #game-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+    .home-button {
+      position: absolute; top: var(--safe-top); left: var(--safe-left); z-index: 25; width: clamp(48px, 9vh, 70px);
+      aspect-ratio: 1; border: 4px solid #fff; border-radius: 50%; background: rgba(255,255,255,.86);
+      box-shadow: 0 4px 12px rgba(36,72,52,.22); overflow: hidden;
+    }
+    .home-button img { width: 100%; height: 100%; object-fit: cover; }
+    #hud {
+      position: absolute; top: var(--safe-top); left: 50%; z-index: 24; display: flex; align-items: center; gap: 14px;
+      transform: translateX(-50%); pointer-events: none;
+    }
+    #stage-dots, #seed-meter {
+      display: flex; align-items: center; gap: 7px; min-height: 39px; padding: 6px 12px; border: 4px solid rgba(255,255,255,.96);
+      border-radius: 999px; background: rgba(255,255,255,.78); box-shadow: 0 5px 14px rgba(38,72,52,.15);
+    }
+    .stage-dot { width: 15px; height: 15px; border: 3px solid #fff; border-radius: 50%; background: #b7d3c5; }
+    .stage-dot.done { background: #21b87c; }
+    .stage-dot.now { background: #ffd45c; box-shadow: 0 0 0 4px rgba(255,212,92,.38); }
+    .seed-mini {
+      width: 24px; height: 28px; background: url('forestflight_characters.png') 100% 0% / 300% 200% no-repeat;
+      transform: rotate(12deg); opacity: .25; filter: saturate(.4);
+    }
+    .seed-mini.got { opacity: 1; filter: drop-shadow(0 0 6px #ffe568); }
+    #stage-flash {
+      position: absolute; inset: 0; z-index: 22; display: grid; place-items: center; pointer-events: none;
+      background: rgba(255,255,255,.22); backdrop-filter: blur(2px);
+    }
+    #stage-flash[hidden] { display: none; }
+    .flash-mark {
+      display: grid; place-items: center; width: min(28vh, 160px); aspect-ratio: 1; border: 10px solid #fff;
+      border-radius: 50%; color: #fff; background: #25bd80; box-shadow: 0 0 0 14px rgba(255,225,96,.65), 0 15px 34px rgba(27,86,57,.26);
+      animation: pop .55s cubic-bezier(.2,1.5,.5,1);
+    }
+    .flash-mark::before {
+      content: ''; width: 32%; height: 56%; border-right: 13px solid #fff; border-bottom: 13px solid #fff;
+      transform: translateY(-8%) rotate(45deg);
+    }
+    @keyframes pop { from { transform: scale(.25) rotate(-20deg); opacity: 0; } }
+    .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 14px; }
+    .home-link {
+      display: inline-grid; place-items: center; min-height: 54px; padding: 10px 24px; border: 4px solid #fff; border-radius: 999px;
+      color: #40604a; background: rgba(255,255,255,.88); box-shadow: 0 6px 16px rgba(40,89,60,.18); font-weight: 1000; text-decoration: none;
+    }
+    #result-friends { display: flex; justify-content: center; align-items: end; gap: 5px; margin: 8px auto; }
+    .friend-face {
+      width: min(17vh, 94px); aspect-ratio: 1; background-image: url('forestflight_characters.png');
+      background-size: 300% 200%; background-repeat: no-repeat; filter: drop-shadow(0 6px 6px rgba(31,75,50,.2));
+    }
+    .friend-face.squirrel { background-position: 0% 100%; }
+    .friend-face.bird { background-position: 50% 100%; }
+    .friend-face.rabbit { background-position: 100% 100%; }
+    #rotate-overlay { display: none; }
+    @media (orientation: portrait) {
+      #orientation-stage { display: none; }
+      #rotate-overlay { display: grid; }
+      body.forced-landscape #orientation-stage {
+        top: 0; left: 100%; right: auto; bottom: auto; display: block; width: 100vh; height: 100vw;
+        transform: rotate(90deg); transform-origin: top left;
+      }
+      body.forced-landscape #rotate-overlay { display: none; }
+    }
+    @media (orientation: landscape) { #rotate-overlay { display: none; } }
+    @media (orientation: landscape) and (max-height: 430px) {
+      .screen { gap: 15px; }
+      .title-icon { width: min(31vh, 126px); border-width: 4px; }
+      .lead { margin-block: 5px 8px; }
+      .start-picture { margin-block: 4px 8px; }
+      .main-btn { min-height: 48px; }
+      #hud { top: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="orientation-stage">
+    <main id="game">
+      <section id="start-screen" class="screen">
+        <img class="title-icon" src="icon_forestflight.png" alt="女の子が木のこまで空を飛んでいる絵">
+        <div class="intro">
+          <h1>もりのこま<br>そらのたび</h1>
+          <p class="lead">ゆびと いっしょに そらへ！</p>
+          <div class="start-picture" aria-hidden="true"><span class="finger-mark"></span><span class="arrow-mark"></span></div>
+          <button id="start-btn" class="main-btn" type="button">そらへ！</button>
+        </div>
+      </section>
+
+      <section id="play-screen" hidden aria-label="空を飛ぶゲーム画面">
+        <canvas id="game-canvas"></canvas>
+        <a class="home-button" href="index.html" aria-label="ゲームをえらぶ"><img src="ui_home_v2_256.png" alt=""></a>
+        <div id="hud" aria-hidden="true">
+          <div id="stage-dots"><i class="stage-dot now"></i><i class="stage-dot"></i><i class="stage-dot"></i></div>
+          <div id="seed-meter"><i class="seed-mini"></i><i class="seed-mini"></i><i class="seed-mini"></i></div>
+        </div>
+        <div id="stage-flash" hidden><div class="flash-mark"></div></div>
+      </section>
+
+      <section id="result-screen" class="screen" hidden>
+        <img class="title-icon" src="icon_forestflight.png" alt="女の子が木のこまで空を飛んでいる絵">
+        <div class="result-card">
+          <h2>ついた！</h2>
+          <div id="result-friends" aria-hidden="true">
+            <i class="friend-face squirrel"></i><i class="friend-face bird"></i><i class="friend-face rabbit"></i>
+          </div>
+          <div class="result-actions">
+            <button id="again-btn" class="main-btn" type="button">もういっかい！</button>
+            <a class="home-link" href="index.html">ゲームを えらぶ</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="rotate-overlay" class="landscape-prompt" role="dialog" aria-modal="true" aria-label="横画面で遊ぶ案内">
+    <div class="landscape-prompt__card">
+      <div class="landscape-prompt__device" style="--landscape-prompt-icon:url('../icon_forestflight.png')" aria-hidden="true"></div>
+      <h1 class="landscape-prompt__title">よこで あそぼう！</h1>
+      <p class="landscape-prompt__text">このボタンで よこがめんに なるよ</p>
+      <button id="landscape-btn" class="landscape-prompt__button" type="button">よこで あそぶ</button><br>
+      <a class="landscape-prompt__home" href="index.html">ゲームを えらぶ</a>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const canvas = document.getElementById('game-canvas');
+      const context = canvas.getContext('2d', { alpha: false });
+      const startScreen = document.getElementById('start-screen');
+      const playScreen = document.getElementById('play-screen');
+      const resultScreen = document.getElementById('result-screen');
+      const stageFlash = document.getElementById('stage-flash');
+      const startButton = document.getElementById('start-btn');
+      const againButton = document.getElementById('again-btn');
+      const landscapeButton = document.getElementById('landscape-btn');
+      const stageDots = [...document.querySelectorAll('.stage-dot')];
+      const seedMarks = [...document.querySelectorAll('.seed-mini')];
+      const sceneImage = new Image();
+      const characterImage = new Image();
+      sceneImage.src = 'forestflight_scenes.png';
+      characterImage.src = 'forestflight_characters.png';
+      sceneImage.addEventListener('error', error => {
+        console.warn('背景画像を読み込めないため、空色の背景でゲームを続けます。', error);
+      });
+      characterImage.addEventListener('error', error => {
+        console.warn('キャラクター画像を読み込めませんでした。再読み込みしてください。', error);
+      });
+
+      const state = {
+        mode: 'ready', stage: 0, stageTime: 0, lastFrame: 0, width: 960, height: 440,
+        player: { x: 480, y: 300, targetX: 480, targetY: 300, vx: 0, vy: 0, radius: 35 },
+        pointerId: null, pointerHeld: false, seeds: 0, stageSeeds: 0, entities: [], particles: [],
+        shieldUntil: 0, nextSeed: 2.4, nextHazard: 4.1, ringIndex: 0, transitionAt: 0,
+        audio: null, animationId: 0
+      };
+      const ringPositions = [[.32,.36], [.50,.70], [.68,.31], [.80,.56]];
+      const stageDurations = [18, 20, Infinity];
+      const focalPoints = [.45, .54, .67];
+
+      // 端末機能が使えない場合も、CSS回転で遊び続けられるようにする。
+      async function forceLandscape() {
+        document.body.classList.add('forced-landscape');
+        prepareAudio();
+        try {
+          if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          }
+        } catch (error) {
+          console.warn('全画面表示を開始できないため、画面内で横向きにします。', error);
+        }
+        try {
+          if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+        } catch (error) {
+          console.warn('端末の向きを固定できないため、画面内で横向きにします。', error);
+        }
+        setTimeout(resizeCanvas, 350);
+      }
+
+      function prepareAudio() {
+        if (state.audio) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) state.audio = new AudioContextClass();
+        } catch (error) {
+          console.warn('効果音を準備できませんでしたが、ゲームは続けられます。', error);
+        }
+      }
+
+      function playTone(frequency, duration = .18, type = 'sine') {
+        if (!state.audio) return;
+        try {
+          const oscillator = state.audio.createOscillator();
+          const gain = state.audio.createGain();
+          oscillator.type = type; oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(.001, state.audio.currentTime);
+          gain.gain.exponentialRampToValueAtTime(.13, state.audio.currentTime + .02);
+          gain.gain.exponentialRampToValueAtTime(.001, state.audio.currentTime + duration);
+          oscillator.connect(gain).connect(state.audio.destination);
+          oscillator.start(); oscillator.stop(state.audio.currentTime + duration + .03);
+        } catch (error) {
+          console.warn('効果音を鳴らせませんでした。', error);
+        }
+      }
+
+      function speak(text) {
+        if (!('speechSynthesis' in window)) return;
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP'; utterance.rate = .88; utterance.pitch = 1.12;
+          window.speechSynthesis.speak(utterance);
+        } catch (error) {
+          console.warn('読み上げを開始できませんでした。', error);
+        }
+      }
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        state.width = Math.max(1, rect.width); state.height = Math.max(1, rect.height);
+        canvas.width = Math.round(state.width * ratio); canvas.height = Math.round(state.height * ratio);
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      function updateHud() {
+        stageDots.forEach((dot, index) => {
+          dot.classList.toggle('done', index < state.stage);
+          dot.classList.toggle('now', index === state.stage);
+        });
+        seedMarks.forEach((mark, index) => mark.classList.toggle('got', index < state.stageSeeds));
+      }
+
+      function setStage(index) {
+        // 場面ごとの進行だけを初期化し、旅全体で集めた光の数は最後まで保持する。
+        state.stage = index; state.stageTime = 0; state.stageSeeds = 0; state.entities = []; state.particles = [];
+        state.nextSeed = 2.2; state.nextHazard = 4; state.ringIndex = 0; state.shieldUntil = 0;
+        const startX = index === 0 ? state.width * .48 : state.width * .17;
+        const startY = index === 0 ? state.height * .72 : state.height * .55;
+        Object.assign(state.player, { x: startX, y: startY, targetX: startX, targetY: startY, vx: 0, vy: 0 });
+        updateHud();
+        const voices = ['そらへ、しゅっぱつ！', 'よるの そらを とぼう！', 'ひかる わを くぐろう！'];
+        speak(voices[index]);
+      }
+
+      function startGame() {
+        prepareAudio();
+        if (state.audio && state.audio.state === 'suspended') {
+          state.audio.resume().catch(error => console.warn('効果音を再開できませんでした。', error));
+        }
+        startScreen.hidden = true; resultScreen.hidden = true; playScreen.hidden = false; stageFlash.hidden = true;
+        resizeCanvas(); state.mode = 'playing'; state.seeds = 0; state.lastFrame = 0; setStage(0);
+        cancelAnimationFrame(state.animationId); state.animationId = requestAnimationFrame(frame);
+      }
+
+      function finishStage() {
+        if (state.mode !== 'playing') return;
+        state.mode = 'transition'; state.pointerHeld = false; state.pointerId = null;
+        stageFlash.hidden = false; state.transitionAt = performance.now() + 1250;
+        playTone(660, .22); setTimeout(() => playTone(880, .28), 120);
+      }
+
+      function continueAfterTransition(now) {
+        if (state.mode !== 'transition' || now < state.transitionAt) return;
+        stageFlash.hidden = true;
+        if (state.stage >= 2) {
+          state.mode = 'finished'; playScreen.hidden = true; resultScreen.hidden = false;
+          speak('ついた！ もりの なかまが まっていたよ！');
+          return;
+        }
+        state.mode = 'playing'; setStage(state.stage + 1);
+      }
+
+      function spawnSeed() {
+        const entity = { type: 'seed', radius: 22, spin: 0 };
+        if (state.stage === 0) {
+          Object.assign(entity, { x: state.width * (.2 + Math.random() * .6), y: -45, vx: 0, vy: 105 });
+        } else {
+          Object.assign(entity, { x: state.width + 45, y: state.height * (.22 + Math.random() * .57), vx: -120, vy: 0 });
+        }
+        state.entities.push(entity);
+      }
+
+      function spawnHazard() {
+        const entity = { type: 'cloud', radius: 45 + Math.random() * 8, phase: Math.random() * 6 };
+        if (state.stage === 0) {
+          Object.assign(entity, { x: state.width * (.16 + Math.random() * .68), y: -70, vx: 0, vy: 88 });
+        } else {
+          Object.assign(entity, { x: state.width + 80, y: state.height * (.2 + Math.random() * .6), vx: -94, vy: 0 });
+        }
+        state.entities.push(entity);
+      }
+
+      function scatterLeaves(x, y, color = '#f5c33d') {
+        for (let index = 0; index < 14; index += 1) {
+          const angle = Math.random() * Math.PI * 2;
+          state.particles.push({ x, y, vx: Math.cos(angle) * (45 + Math.random() * 100), vy: Math.sin(angle) * (45 + Math.random() * 100),
+            life: .85 + Math.random() * .35, rotation: Math.random() * 6, color });
+        }
+      }
+
+      function distance(first, second) { return Math.hypot(first.x - second.x, first.y - second.y); }
+
+      function collectSeed(entity) {
+        entity.dead = true; state.seeds += 1; state.stageSeeds = Math.min(3, state.stageSeeds + 1);
+        scatterLeaves(entity.x, entity.y, '#ffe05f'); updateHud(); playTone(920, .2);
+      }
+
+      function hitHazard(entity, now) {
+        if (now < state.shieldUntil) return;
+        // 4歳児が失敗で遊びを中断しないよう、ゲームオーバーではなく少し戻して無敵時間を付ける。
+        state.shieldUntil = now + 2200; scatterLeaves(state.player.x, state.player.y, '#6ed18f');
+        if (state.stage === 0) state.player.y = Math.min(state.height - 55, state.player.y + 62);
+        else state.player.x = Math.max(60, state.player.x - 72);
+        state.player.targetX = state.player.x; state.player.targetY = state.player.y;
+        playTone(180, .26, 'triangle');
+        try {
+          if (navigator.vibrate) navigator.vibrate(70);
+        } catch (error) {
+          console.warn('端末を振動させられませんでしたが、ゲームは続けられます。', error);
+        }
+        entity.dead = true;
+      }
+
+      function updatePlayer(delta) {
+        const player = state.player;
+        if (state.pointerHeld) {
+          // 指へ瞬間移動させず加速で追わせることで、操作感を保ちながら画面のちらつきを防ぐ。
+          const acceleration = 13;
+          player.vx += (player.targetX - player.x) * acceleration * delta;
+          player.vy += (player.targetY - player.y) * acceleration * delta;
+        }
+        const damping = Math.pow(.00045, delta);
+        player.vx *= damping; player.vy *= damping;
+        const speed = Math.hypot(player.vx, player.vy);
+        const maxSpeed = Math.max(380, Math.min(state.width, state.height) * 1.15);
+        if (speed > maxSpeed) { player.vx *= maxSpeed / speed; player.vy *= maxSpeed / speed; }
+        player.x += player.vx * delta; player.y += player.vy * delta;
+        player.x = Math.max(55, Math.min(state.width - 55, player.x));
+        player.y = Math.max(68, Math.min(state.height - 48, player.y));
+      }
+
+      function updateEntities(delta, now) {
+        state.entities.forEach(entity => {
+          entity.x += entity.vx * delta; entity.y += entity.vy * delta; entity.spin = (entity.spin || 0) + delta * 2.4;
+          const hitDistance = state.player.radius + entity.radius * (entity.type === 'seed' ? .56 : .72);
+          if (distance(state.player, entity) < hitDistance) {
+            if (entity.type === 'seed') collectSeed(entity); else hitHazard(entity, now);
+          }
+          if (entity.x < -120 || entity.y > state.height + 120) entity.dead = true;
+        });
+        state.entities = state.entities.filter(entity => !entity.dead);
+        state.particles.forEach(particle => {
+          particle.x += particle.vx * delta; particle.y += particle.vy * delta; particle.vy += 70 * delta;
+          particle.rotation += delta * 5; particle.life -= delta;
+        });
+        state.particles = state.particles.filter(particle => particle.life > 0);
+      }
+
+      function updateStage(delta, now) {
+        if (state.mode !== 'playing') return;
+        state.stageTime += delta; updatePlayer(delta);
+        if (state.stage < 2) {
+          // 最初の2面は時間で前進し、光を取り逃しても先へ進めるやさしいルールにする。
+          if (state.stageTime >= state.nextSeed && state.stageSeeds < 3) { spawnSeed(); state.nextSeed += 5.1; }
+          if (state.stageTime >= state.nextHazard) { spawnHazard(); state.nextHazard += state.stage === 0 ? 4.2 : 3.8; }
+          updateEntities(delta, now);
+          if (state.stageTime >= stageDurations[state.stage]) finishStage();
+          return;
+        }
+        const ring = ringPositions[state.ringIndex];
+        if (ring) {
+          const target = { x: state.width * ring[0], y: state.height * ring[1] };
+          // 絵のこまが輪へ重なった時点で成功にし、中央へ厳密に合わせる必要をなくす。
+          if (distance(state.player, target) < Math.min(130, state.height * .33)) {
+            scatterLeaves(target.x, target.y, '#fff2a0'); state.ringIndex += 1; playTone(620 + state.ringIndex * 85, .2);
+          }
+        } else {
+          const landing = { x: state.width * .84, y: state.height * .68 };
+          if (distance(state.player, landing) < Math.min(135, state.height * .33)) finishStage();
+        }
+        updateEntities(delta, now);
+      }
+
+      function drawBackground() {
+        if (!sceneImage.complete || !sceneImage.naturalWidth) {
+          context.fillStyle = state.stage === 0 ? '#9edcf5' : '#344d9b'; context.fillRect(0, 0, state.width, state.height); return;
+        }
+        // 縦長3面アトラスから横画面比率ぶんだけ切り出し、画像を横へ潰さず表示する。
+        const panelWidth = sceneImage.naturalWidth / 3;
+        const desiredAspect = state.width / state.height;
+        let sourceWidth = panelWidth; let sourceHeight = panelWidth / desiredAspect;
+        sourceHeight = Math.min(sourceHeight, sceneImage.naturalHeight);
+        sourceWidth = sourceHeight * desiredAspect;
+        const sourceX = state.stage * panelWidth + (panelWidth - sourceWidth) / 2;
+        const sourceY = (sceneImage.naturalHeight - sourceHeight) * focalPoints[state.stage];
+        context.drawImage(sceneImage, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, state.width, state.height);
+        if (state.stage === 0) {
+          const glow = context.createLinearGradient(0, 0, 0, state.height);
+          glow.addColorStop(0, 'rgba(255,255,255,.18)'); glow.addColorStop(1, 'rgba(114,209,152,.10)');
+          context.fillStyle = glow; context.fillRect(0, 0, state.width, state.height);
+        }
+      }
+
+      function drawAtlasSprite(column, row, x, y, width, height, rotation = 0, alpha = 1) {
+        if (!characterImage.complete || !characterImage.naturalWidth) return;
+        const cellWidth = characterImage.naturalWidth / 3; const cellHeight = characterImage.naturalHeight / 2;
+        context.save(); context.globalAlpha = alpha; context.translate(x + width / 2, y + height / 2); context.rotate(rotation);
+        context.drawImage(characterImage, column * cellWidth, row * cellHeight, cellWidth, cellHeight, -width / 2, -height / 2, width, height);
+        context.restore();
+      }
+
+      function drawCloud(entity) {
+        context.save(); context.translate(entity.x, entity.y + Math.sin(state.stageTime * 2 + entity.phase) * 5);
+        context.fillStyle = state.stage === 0 ? 'rgba(255,255,255,.93)' : 'rgba(201,219,255,.86)';
+        context.shadowColor = 'rgba(65,91,130,.2)'; context.shadowBlur = 12;
+        context.beginPath(); context.arc(-34, 8, entity.radius * .55, 0, Math.PI * 2);
+        context.arc(0, -7, entity.radius * .78, 0, Math.PI * 2); context.arc(38, 9, entity.radius * .58, 0, Math.PI * 2);
+        context.fill(); context.restore();
+      }
+
+      function drawSeed(entity) {
+        const size = 72; drawAtlasSprite(2, 0, entity.x - size / 2, entity.y - size / 2, size, size, Math.sin(entity.spin) * .12);
+      }
+
+      function drawGuide() {
+        if (state.stage !== 2) return;
+        const pulse = 1 + Math.sin(state.stageTime * 4) * .08;
+        const ring = ringPositions[state.ringIndex];
+        const x = state.width * (ring ? ring[0] : .84); const y = state.height * (ring ? ring[1] : .68);
+        const radius = Math.min(state.height * (ring ? .16 : .19), ring ? 72 : 84) * pulse;
+        context.save(); context.translate(x, y); context.lineWidth = 10;
+        context.strokeStyle = ring ? 'rgba(255,230,93,.95)' : 'rgba(137,255,176,.96)';
+        context.shadowColor = context.strokeStyle; context.shadowBlur = 24;
+        context.beginPath(); context.arc(0, 0, radius, 0, Math.PI * 2); context.stroke();
+        context.lineWidth = 3; context.strokeStyle = '#fff'; context.beginPath(); context.arc(0, 0, radius - 10, 0, Math.PI * 2); context.stroke();
+        context.restore();
+      }
+
+      function drawPlayer(now) {
+        const player = state.player; const bob = Math.sin((performance.now() / 170)) * 4;
+        const size = Math.min(150, Math.max(112, state.height * .34));
+        if (now < state.shieldUntil) {
+          context.save(); context.strokeStyle = 'rgba(150,255,205,.94)'; context.lineWidth = 7;
+          context.shadowColor = '#9fffd1'; context.shadowBlur = 20; context.beginPath();
+          context.arc(player.x, player.y, size * .43 + Math.sin(now / 90) * 4, 0, Math.PI * 2); context.stroke(); context.restore();
+        }
+        drawAtlasSprite(1, 0, player.x - size / 2, player.y - size / 2 + bob, size, size, Math.max(-.12, Math.min(.12, player.vy / 900)));
+      }
+
+      function drawScene(now) {
+        drawBackground();
+        if (state.stage === 0 && state.stageTime < 4.4) {
+          const alpha = Math.min(1, (4.4 - state.stageTime) / 1.2);
+          const guardianSize = Math.min(190, state.height * .47);
+          const glow = context.createRadialGradient(state.width * .17, state.height * .55, 8, state.width * .17, state.height * .55, guardianSize * .55);
+          glow.addColorStop(0, `rgba(255,248,187,${.48 * alpha})`); glow.addColorStop(1, 'rgba(255,248,187,0)');
+          context.fillStyle = glow; context.fillRect(0, 0, state.width * .34, state.height);
+          drawAtlasSprite(0, 0, state.width * .08, state.height * .30, guardianSize, guardianSize, 0, alpha);
+        }
+        drawGuide();
+        state.entities.forEach(entity => entity.type === 'seed' ? drawSeed(entity) : drawCloud(entity));
+        state.particles.forEach(particle => {
+          context.save(); context.globalAlpha = Math.min(1, particle.life * 1.6); context.translate(particle.x, particle.y); context.rotate(particle.rotation);
+          context.fillStyle = particle.color; context.beginPath(); context.ellipse(0, 0, 9, 4, 0, 0, Math.PI * 2); context.fill(); context.restore();
+        });
+        drawPlayer(now);
+      }
+
+      function frame(now) {
+        const delta = state.lastFrame ? Math.min(.034, (now - state.lastFrame) / 1000) : 0;
+        state.lastFrame = now; continueAfterTransition(now); updateStage(delta, now); drawScene(now);
+        if (state.mode !== 'finished') state.animationId = requestAnimationFrame(frame);
+      }
+
+      function pointerPosition(event) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: (event.clientX - rect.left) * state.width / rect.width, y: (event.clientY - rect.top) * state.height / rect.height };
+      }
+
+      function pointerStart(event) {
+        if (state.mode !== 'playing') return;
+        event.preventDefault(); prepareAudio(); state.pointerId = event.pointerId; state.pointerHeld = true;
+        const point = pointerPosition(event); state.player.targetX = point.x; state.player.targetY = point.y;
+        try { canvas.setPointerCapture(event.pointerId); }
+        catch (error) { console.warn('指の追跡を固定できないため、通常操作で続けます。', error); }
+      }
+
+      function pointerMove(event) {
+        if (!state.pointerHeld || event.pointerId !== state.pointerId) return;
+        event.preventDefault();
+        const point = pointerPosition(event);
+        state.player.targetX = point.x; state.player.targetY = point.y;
+        // 素早い子どものスワイプでも置いていかれないよう、入力イベントごとにも少し近づける。
+        state.player.x += (point.x - state.player.x) * .18;
+        state.player.y += (point.y - state.player.y) * .18;
+      }
+
+      function pointerEnd(event) {
+        if (state.pointerId !== null && event.pointerId !== state.pointerId) return;
+        if (event) event.preventDefault(); state.pointerHeld = false; state.pointerId = null;
+      }
+
+      landscapeButton.addEventListener('click', forceLandscape);
+      startButton.addEventListener('click', startGame);
+      againButton.addEventListener('click', startGame);
+      canvas.addEventListener('pointerdown', pointerStart);
+      canvas.addEventListener('pointermove', pointerMove);
+      canvas.addEventListener('pointerup', pointerEnd);
+      canvas.addEventListener('pointercancel', pointerEnd);
+      canvas.addEventListener('lostpointercapture', pointerEnd);
+      canvas.addEventListener('contextmenu', event => event.preventDefault());
+      window.addEventListener('resize', resizeCanvas);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { state.pointerHeld = false; state.pointerId = null; }
+        state.lastFrame = 0;
+      });
+    })();
+  </script>
+</body>
+</html>
