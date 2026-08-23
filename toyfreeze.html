@@ -2,703 +2,345 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#fff7ed">
   <title>おもちゃは うごかない！｜げーむのおへや</title>
   <link rel="stylesheet" href="assets/kit.css">
   <style>
     :root {
-      --safe-top: max(10px, env(safe-area-inset-top));
-      --safe-bottom: max(10px, env(safe-area-inset-bottom));
+      --safe-top: max(8px, env(safe-area-inset-top));
+      --safe-right: max(8px, env(safe-area-inset-right));
+      --safe-bottom: max(8px, env(safe-area-inset-bottom));
+      --safe-left: max(8px, env(safe-area-inset-left));
     }
-
     * { box-sizing: border-box; }
-
     html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      touch-action: none;
-      user-select: none;
-      color: #43382f;
-      background: #fff7ed;
+      width: 100%; height: 100%; margin: 0; overflow: hidden;
+      touch-action: none; user-select: none; color: #43382f; background: #fff7ed;
     }
-
     button, a { -webkit-tap-highlight-color: transparent; }
-
-    #game {
-      position: relative;
-      width: 100%;
-      height: 100dvh;
-      min-height: 100%;
-      overflow: hidden;
-      background: #fef3c7;
+    #orientation-stage {
+      position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #fff7ed;
     }
-
+    #game { position: relative; width: 100%; height: 100%; overflow: hidden; background: #fef3c7; }
+    #rotate-overlay {
+      position: fixed; inset: 0; z-index: 1000; display: none; place-items: center;
+      padding: 24px; text-align: center; background: linear-gradient(155deg, #fff7ed, #d1fae5);
+    }
+    .rotate-card {
+      width: min(430px, 92vw); padding: 28px 22px; border: 5px solid #fff; border-radius: 32px;
+      background: rgba(255,255,255,.88); box-shadow: 0 14px 35px rgba(91,70,48,.2);
+    }
+    .rotate-picture {
+      width: 132px; height: 82px; margin: 0 auto 18px; border: 8px solid #14b8a6; border-radius: 19px;
+      background: #ecfdf5 url('icon_toyfreeze.png') center / 66px 66px no-repeat;
+      box-shadow: 0 8px 20px rgba(15,118,110,.2); animation: rotate-guide 1.8s ease-in-out infinite alternate;
+    }
+    @keyframes rotate-guide { to { transform: rotate(7deg); } }
+    .rotate-card h1 { margin: 0 0 10px; color: #0f766e; font-size: clamp(1.8rem, 8vw, 2.6rem); }
+    .rotate-card p { margin: 0 0 18px; font-size: 1.05rem; font-weight: 900; line-height: 1.55; }
+    .rotate-home { display: inline-flex; margin-top: 14px; color: #6b4f3b; font-weight: 900; text-decoration: none; }
     .screen {
-      position: absolute;
-      inset: 0;
-      z-index: 50;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(10px, 2vh, 18px);
-      padding: calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 18px);
+      position: absolute; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+      gap: clamp(16px, 3vw, 34px);
+      padding: calc(var(--safe-top) + 12px) calc(var(--safe-right) + 18px) calc(var(--safe-bottom) + 12px) calc(var(--safe-left) + 18px);
       text-align: center;
-      background:
-        radial-gradient(circle at 18% 14%, rgba(255,255,255,.9), transparent 30%),
-        linear-gradient(150deg, #fff7ed 0%, #fef3c7 48%, #d1fae5 100%);
+      background: radial-gradient(circle at 18% 14%, rgba(255,255,255,.95), transparent 28%),
+                  linear-gradient(150deg, #fff7ed 0%, #fef3c7 48%, #d1fae5 100%);
     }
-
-    .screen[hidden] { display: none; }
-
+    .screen[hidden], #play-screen[hidden], #stage-clear[hidden] { display: none; }
     .title-icon {
-      width: clamp(126px, 32vw, 210px);
-      aspect-ratio: 1;
-      object-fit: cover;
-      border-radius: 30%;
-      border: 6px solid #fff;
-      box-shadow: 0 12px 30px rgba(120, 73, 35, .2);
+      width: min(31vh, 210px); aspect-ratio: 1; object-fit: cover; border: 6px solid #fff; border-radius: 30%;
+      box-shadow: 0 12px 30px rgba(120,73,35,.2);
     }
-
+    .intro { width: min(58vw, 590px); }
     h1, h2, p { margin: 0; }
-
-    h1 {
-      color: #0f766e;
-      font-size: clamp(1.8rem, 7vw, 3.2rem);
-      line-height: 1.08;
-      text-shadow: 0 3px 0 #fff;
-    }
-
-    h2 {
-      color: #0f766e;
-      font-size: clamp(2rem, 9vw, 3.6rem);
-    }
-
-    .lead {
-      max-width: 560px;
-      color: #6b4f3b;
-      font-size: clamp(1rem, 3.8vw, 1.35rem);
-      font-weight: 800;
-      line-height: 1.5;
-    }
-
-    .howto {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      width: min(570px, 96vw);
-    }
-
+    h1, h2 { color: #0f766e; line-height: 1.08; text-shadow: 0 3px 0 #fff; }
+    h1 { font-size: clamp(1.8rem, 6vh, 3.2rem); }
+    h2 { font-size: clamp(2rem, 8vh, 3.6rem); }
+    .lead { margin-top: 8px; color: #6b4f3b; font-size: clamp(.95rem, 3.2vh, 1.35rem); font-weight: 900; line-height: 1.45; }
+    .howto { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px auto; width: min(560px, 100%); }
     .howto-card {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 62px;
-      padding: 9px 12px;
-      border: 4px solid #fff;
-      border-radius: 20px;
-      box-shadow: 0 5px 12px rgba(79, 57, 38, .12);
-      font-size: clamp(.88rem, 3.4vw, 1.15rem);
-      font-weight: 900;
-      line-height: 1.25;
+      display: grid; place-items: center; min-height: 58px; padding: 8px 12px; border: 4px solid #fff;
+      border-radius: 18px; box-shadow: 0 5px 12px rgba(79,57,38,.12);
+      font-size: clamp(.8rem, 2.8vh, 1.1rem); font-weight: 900; line-height: 1.25;
     }
-
     .howto-card.go { color: #065f46; background: #a7f3d0; }
     .howto-card.stop { color: #991b1b; background: #fecaca; }
-
-    .main-btn {
-      min-width: min(310px, 82vw);
-      min-height: 70px;
-      font-size: clamp(1.45rem, 6vw, 2rem);
-    }
-
-    #play-screen {
-      position: absolute;
-      inset: 0;
-      display: block;
-    }
-
-    #play-screen[hidden] { display: none; }
-
+    .main-btn { min-width: min(300px, 72vw); min-height: 58px; font-size: clamp(1.3rem, 4.5vh, 1.9rem); }
+    #play-screen { position: absolute; inset: 0; display: block; }
     #scene {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      min-height: 0;
-      overflow: hidden;
-      background: #f8d5ac url('toyfreeze_room.png') center / 100% 100% no-repeat;
-      border-bottom: 5px solid rgba(120, 74, 37, .25);
+      position: relative; width: 100%; height: 100%; overflow: hidden;
+      background: #f8d5ac url('toyfreeze_room.png') center / cover no-repeat; cursor: crosshair;
     }
-
     .topbar {
-      position: absolute;
-      top: var(--safe-top);
-      left: 50%;
-      z-index: 12;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 7px;
-      width: min(580px, calc(100% - 126px));
-      transform: translateX(-50%);
+      position: absolute; top: var(--safe-top); left: 50%; z-index: 30; display: flex; align-items: center; gap: 8px;
+      width: min(600px, calc(100% - 150px)); transform: translateX(-50%); pointer-events: none;
     }
-
     #stage-label {
-      padding: 5px 13px;
-      border: 3px solid rgba(255,255,255,.95);
-      border-radius: 999px;
-      color: #0f5f58;
-      background: rgba(236,253,245,.94);
-      box-shadow: 0 3px 10px rgba(61,42,27,.14);
-      font-size: clamp(.78rem, 2.8vw, 1rem);
-      font-weight: 900;
-      line-height: 1;
+      flex: 0 0 auto; padding: 7px 13px; border: 3px solid rgba(255,255,255,.96); border-radius: 999px;
+      color: #0f5f58; background: rgba(236,253,245,.94); box-shadow: 0 3px 10px rgba(61,42,27,.14);
+      font-size: clamp(.72rem, 2.45vh, 1rem); font-weight: 900; line-height: 1;
     }
-
     #signal {
-      width: 100%;
-      padding: 8px 14px 9px;
-      border: 4px solid rgba(255,255,255,.95);
-      border-radius: 20px;
-      box-shadow: 0 5px 18px rgba(61, 42, 27, .22);
-      color: white;
-      background: #10b981;
-      font-size: clamp(1.05rem, 4vw, 1.7rem);
-      font-weight: 900;
-      line-height: 1.1;
-      text-align: center;
-      transition: background .16s, transform .16s;
+      flex: 1; min-width: 0; padding: 8px 12px; border: 4px solid rgba(255,255,255,.96); border-radius: 20px;
+      color: #fff; background: #10b981; box-shadow: 0 5px 18px rgba(61,42,27,.22);
+      font-size: clamp(1rem, 3.6vh, 1.65rem); font-weight: 1000; line-height: 1; white-space: nowrap;
     }
-
-    #signal.warning { color: #613b00; background: #fbbf24; transform: scale(1.035); }
-    #signal.watching { background: #ef4444; transform: scale(1.06); }
+    #signal.warning { color: #613b00; background: #fbbf24; }
+    #signal.watching { background: #ef4444; }
     #signal.caught { background: #8b5cf6; }
-
-    .progress-shell {
-      position: relative;
-      width: 100%;
-      height: 18px;
-      overflow: hidden;
-      border: 3px solid #fff;
-      border-radius: 99px;
-      background: rgba(255,255,255,.75);
-      box-shadow: 0 3px 10px rgba(61,42,27,.16);
+    #mission-dots {
+      position: absolute; top: calc(var(--safe-top) + 54px); left: 50%; z-index: 29;
+      display: flex; gap: 9px; transform: translateX(-50%); pointer-events: none;
     }
-
-    #progress {
-      width: 5%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #34d399, #14b8a6);
-      transition: width .12s linear;
+    .mission-dot {
+      width: 16px; height: 16px; border: 3px solid #fff; border-radius: 50%; background: rgba(255,255,255,.7);
+      box-shadow: 0 2px 6px rgba(61,42,27,.2);
     }
-
-    .sprite {
-      position: absolute;
-      z-index: 7;
-      aspect-ratio: 1;
-      background-image: url('toyfreeze_characters.png');
-      background-repeat: no-repeat;
-      /* 各セルの外周を少し切り、隣のキャラクター断片を表示しない。 */
-      background-size: 215% 215%;
-      filter: drop-shadow(0 6px 5px rgba(70, 43, 25, .24));
-      pointer-events: none;
+    .mission-dot.done { background: #14b8a6; }
+    .mission-dot.now { background: #fbbf24; transform: scale(1.24); }
+    .sprite-strip {
+      position: absolute; z-index: 10; width: clamp(48px, 7.3vw, 94px); aspect-ratio: .5;
+      background-repeat: no-repeat; background-size: 600% 100%; background-position: 0 0;
+      filter: drop-shadow(0 5px 4px rgba(70,43,25,.24)); transform: translate(-50%, -50%);
+      transform-origin: 50% 88%; will-change: left, top, background-position, transform;
     }
-
     #girl {
-      top: auto;
-      bottom: clamp(5px, 2.5vh, 24px);
-      left: 63%;
-      width: clamp(104px, 22vmin, 180px);
-      background-position: 0 0;
-      transform: translateX(-50%);
-      transform-origin: 50% 85%;
-      transition: transform .18s ease;
-      animation: girl-tidy 1.25s ease-in-out infinite alternate;
+      z-index: 6; width: clamp(38px, 5.2vw, 70px); background-image: url('toyfreeze_girl_turn_v3.png'); pointer-events: none;
     }
-
-    #girl.front {
-      background-position: 100% 0;
-      transform: translateX(-50%) scale(1.04);
-      animation: none;
+    #player { z-index: 17; background-image: url('toyfreeze_mint_robot_walk_v3.png'); pointer-events: none; }
+    #helper {
+      z-index: 14; width: clamp(42px, 6.2vw, 82px); background-image: url('toyfreeze_blue_robot_walk_v3.png'); pointer-events: none;
     }
-
-    #girl.getting-ready { animation-play-state: paused; }
-
-    @keyframes girl-tidy {
-      from { transform: translateX(-50%) rotate(-2deg) translateY(0); }
-      to { transform: translateX(-50%) rotate(2deg) translateY(3px); }
+    .friend { z-index: 13; width: clamp(44px, 6.8vw, 88px); pointer-events: auto; cursor: pointer; }
+    .friend.bunny { background-image: url('toyfreeze_bunny_walk_v3.png'); }
+    .friend.car { width: clamp(48px, 7.4vw, 96px); background-image: url('toyfreeze_car_roll_v3.png'); }
+    .friend.dino { background-image: url('toyfreeze_dino_walk_v3.png'); }
+    .friend.waiting { animation: waiting-breathe 1.1s ease-in-out infinite alternate; }
+    .friend.rescued { pointer-events: none; animation: rescue-pop .45s ease-out; }
+    @keyframes waiting-breathe { from { transform: translate(-50%, -50%) scale(.96); } to { transform: translate(-50%, -53%) scale(1.04); } }
+    @keyframes rescue-pop {
+      0% { transform: translate(-50%, -50%) scale(.75); filter: brightness(1.7) drop-shadow(0 0 14px #fde047); }
+      70% { transform: translate(-50%, -58%) scale(1.18); }
+      100% { transform: translate(-50%, -50%) scale(1); }
     }
-
     #turn-cue {
-      position: absolute;
-      z-index: 14;
-      left: 63%;
-      bottom: clamp(170px, 31vmin, 265px);
-      width: 58px;
-      height: 58px;
-      display: grid;
-      place-items: center;
-      border: 5px solid #fff;
-      border-radius: 50%;
-      background: #fbbf24;
-      color: #7c2d12;
-      font-size: 2.4rem;
-      font-weight: 1000;
-      box-shadow: 0 6px 16px rgba(120,53,15,.3);
-      transform: translateX(-50%) scale(0);
-      opacity: 0;
-      transition: transform .18s, opacity .18s;
-      pointer-events: none;
+      position: absolute; z-index: 25; display: grid; place-items: center; width: clamp(42px, 6vh, 58px); aspect-ratio: 1;
+      border: 5px solid #fff; border-radius: 50%; color: #7c2d12; background: #fbbf24;
+      box-shadow: 0 6px 16px rgba(120,53,15,.3); font-size: clamp(1.8rem, 5vh, 2.5rem); font-weight: 1000;
+      opacity: 0; transform: translate(-50%, -50%) scale(.4); transition: opacity .16s, transform .16s; pointer-events: none;
     }
-    #turn-cue.show { transform: translateX(-50%) scale(1); opacity: 1; animation: cue-pop .55s ease-in-out infinite alternate; }
-    @keyframes cue-pop { to { transform: translateX(-50%) scale(1.13) rotate(5deg); } }
-
-    #toy {
-      left: 13%;
-      bottom: clamp(1px, 3vh, 28px);
-      width: clamp(92px, 22vmin, 178px);
-      background-position: 100% 100%;
-      transform: translateX(-50%);
-      transform-origin: 50% 88%;
-      will-change: left, transform;
-    }
-
-    #toy.walking {
-      background-position: 0 100%;
-      animation: toy-hop .34s ease-in-out infinite alternate;
-    }
-
-    #toy.caught { animation: toy-shake .42s ease-in-out 2; }
-
-    #friends {
-      position: absolute;
-      inset: 0;
-      z-index: 6;
-      pointer-events: none;
-    }
-
-    .friend {
-      position: absolute;
-      width: clamp(58px, 14vmin, 112px);
-      aspect-ratio: 1;
-      background-image: url('toyfreeze_friends_v2.png');
-      background-repeat: no-repeat;
-      background-size: 300% 100%;
-      filter: drop-shadow(0 5px 4px rgba(70,43,25,.2));
-      transform: translateX(-50%);
-      transform-origin: 50% 88%;
-      will-change: left, transform;
-    }
-
-    .friend--bunny { bottom: 20%; background-position: 0 0; }
-    .friend--car { bottom: 12%; background-position: 50% 0; }
-    .friend--dino { bottom: 27%; background-position: 100% 0; }
-    .friend.moving { animation: friend-move .42s ease-in-out infinite alternate; }
-    .friend.arrived { animation: friend-cheer .5s ease-in-out 3 alternate; }
-
-    @keyframes friend-move {
-      from { transform: translateX(-50%) translateY(0) rotate(-2deg); }
-      to { transform: translateX(-50%) translateY(-6px) rotate(2deg); }
-    }
-
-    @keyframes friend-cheer {
-      from { transform: translateX(-50%) translateY(0) rotate(-5deg) scale(1); }
-      to { transform: translateX(-50%) translateY(-12px) rotate(5deg) scale(1.08); }
-    }
-
-    @keyframes toy-hop {
-      from { transform: translateX(-50%) translateY(0) rotate(-2deg); }
-      to { transform: translateX(-50%) translateY(-9px) rotate(2deg); }
-    }
-
-    @keyframes toy-shake {
-      0%, 100% { transform: translateX(-50%) rotate(0); }
-      25% { transform: translateX(calc(-50% - 10px)) rotate(-7deg); }
-      75% { transform: translateX(calc(-50% + 10px)) rotate(7deg); }
-    }
-
+    #turn-cue.show { opacity: 1; transform: translate(-50%, -50%) scale(1); animation: cue-pop .48s ease-in-out infinite alternate; }
+    @keyframes cue-pop { to { transform: translate(-50%, -50%) scale(1.14) rotate(5deg); } }
     #goal-glow {
-      position: absolute;
-      right: 3.5%;
-      bottom: 5%;
-      z-index: 4;
-      width: clamp(80px, 18vmin, 150px);
-      aspect-ratio: 1;
-      border: 8px solid rgba(255, 214, 64, .78);
-      border-radius: 50%;
+      position: absolute; z-index: 7; width: clamp(72px, 12vw, 150px); aspect-ratio: 1;
+      border: 8px solid rgba(255,214,64,.78); border-radius: 50%;
       box-shadow: 0 0 0 8px rgba(255,255,255,.35), 0 0 35px #fde047;
-      animation: goal-pulse 1.3s ease-in-out infinite alternate;
-      pointer-events: none;
+      transform: translate(-50%, -50%); animation: goal-pulse 1.15s ease-in-out infinite alternate; pointer-events: none;
     }
-
-    #goal-label {
-      position: absolute;
-      left: 50%;
-      bottom: -32px;
-      min-width: 106px;
-      padding: 5px 9px;
-      border: 3px solid #fff;
-      border-radius: 999px;
-      color: #7c4a03;
-      background: rgba(254,240,138,.95);
-      box-shadow: 0 3px 9px rgba(61,42,27,.18);
-      font-size: clamp(.72rem, 2.6vw, .95rem);
-      font-weight: 900;
-      text-align: center;
-      transform: translateX(-50%);
-      white-space: nowrap;
-    }
-
-    @keyframes goal-pulse {
-      from { opacity: .55; transform: scale(.9); }
-      to { opacity: 1; transform: scale(1.04); }
-    }
-
+    #goal-glow[hidden] { display: none; }
+    @keyframes goal-pulse { from { opacity: .52; scale: .88; } to { opacity: 1; scale: 1.05; } }
     #hint {
-      position: absolute;
-      z-index: 15;
-      left: 50%;
-      top: calc(var(--safe-top) + 112px);
-      bottom: auto;
-      width: min(480px, 72vw);
-      min-height: 40px;
-      padding: 7px 14px;
-      border: 3px solid rgba(255,255,255,.95);
-      border-radius: 999px;
-      color: #5b4636;
-      background: rgba(255,247,237,.92);
-      box-shadow: 0 5px 14px rgba(61,42,27,.18);
-      font-size: clamp(.84rem, 3vw, 1rem);
-      font-weight: 800;
-      text-align: center;
-      transform: translateX(-50%);
-      pointer-events: none;
+      position: absolute; z-index: 28; left: 50%; bottom: calc(var(--safe-bottom) + 7px); width: min(510px, 66vw);
+      min-height: 38px; padding: 7px 14px; border: 3px solid rgba(255,255,255,.96); border-radius: 999px;
+      color: #5b4636; background: rgba(255,247,237,.92); box-shadow: 0 5px 14px rgba(61,42,27,.18);
+      font-size: clamp(.77rem, 2.6vh, 1rem); font-weight: 900; text-align: center; transform: translateX(-50%); pointer-events: none;
     }
-
+    #rescue-counter {
+      position: absolute; z-index: 28; right: var(--safe-right); bottom: calc(var(--safe-bottom) + 8px); display: none;
+      gap: 7px; padding: 8px 11px; border: 3px solid #fff; border-radius: 999px;
+      background: rgba(255,247,237,.92); box-shadow: 0 4px 12px rgba(61,42,27,.18); pointer-events: none;
+    }
+    #rescue-counter.show { display: flex; }
+    .rescue-mark { width: 19px; height: 19px; border: 3px solid #14b8a6; border-radius: 50%; background: #fff; }
+    .rescue-mark.done { background: #14b8a6; box-shadow: inset 0 0 0 3px #fff; }
     #stage-clear {
-      position: absolute;
-      inset: 0;
-      z-index: 30;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-      background: rgba(255,247,237,.38);
-      backdrop-filter: blur(2px);
-      pointer-events: none;
+      position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px;
+      background: rgba(255,247,237,.34); backdrop-filter: blur(2px); pointer-events: none;
     }
-
-    #stage-clear[hidden] { display: none; }
-
     .stage-clear-card {
-      min-width: min(330px, 86vw);
-      padding: 18px 22px;
-      border: 5px solid #fff;
-      border-radius: 28px;
-      color: #0f766e;
-      background: rgba(209,250,229,.96);
-      box-shadow: 0 12px 30px rgba(61,42,27,.24);
-      text-align: center;
+      min-width: min(360px, 74vw); padding: 17px 22px; border: 5px solid #fff; border-radius: 28px;
+      color: #0f766e; background: rgba(209,250,229,.96); box-shadow: 0 12px 30px rgba(61,42,27,.24); text-align: center;
     }
-
-    .stage-clear-card strong {
-      display: block;
-      font-size: clamp(1.55rem, 7vw, 2.5rem);
-    }
-
-    .stage-clear-card span {
-      display: block;
-      margin-top: 5px;
-      color: #6b4f3b;
-      font-size: clamp(.95rem, 3.8vw, 1.2rem);
-      font-weight: 900;
-    }
-
-    .result-card {
-      width: min(520px, 94vw);
-      padding: 22px 18px 26px;
-    }
-
+    .stage-clear-card strong { display: block; font-size: clamp(1.55rem, 6vh, 2.5rem); }
+    .stage-clear-card span { display: block; margin-top: 5px; color: #6b4f3b; font-size: clamp(.9rem, 3vh, 1.15rem); font-weight: 900; }
+    .result-card { width: min(600px, 74vw); padding: 20px 18px 22px; }
     .result-icon {
-      width: clamp(110px, 30vw, 170px);
-      aspect-ratio: 1;
-      object-fit: cover;
-      border-radius: 28%;
-      box-shadow: 0 8px 20px rgba(63, 45, 29, .18);
+      float: left; width: min(25vh, 150px); margin-right: 18px; aspect-ratio: 1; object-fit: cover;
+      border-radius: 28%; box-shadow: 0 8px 20px rgba(63,45,29,.18);
     }
-
-    .result-actions {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    @media (orientation: landscape) and (max-height: 540px) {
-      .screen { flex-direction: row; flex-wrap: wrap; align-content: center; gap: 8px 16px; }
-      .title-icon { width: min(28vh, 150px); border-width: 4px; }
-      .screen h1 { width: min(55vw, 500px); }
-      .lead { width: min(55vw, 500px); }
-      .howto { width: min(55vw, 500px); }
-      .screen .main-btn { min-height: 54px; padding-block: .65em; }
-      #girl { bottom: 0; width: clamp(92px, 31vh, 142px); }
-      #toy { width: clamp(82px, 30vh, 138px); bottom: 0; }
-      #signal { padding-block: 5px 6px; }
-      #stage-label { padding-block: 3px; }
-      .progress-shell { height: 14px; }
-      #hint { top: calc(var(--safe-top) + 94px); }
-      .friend { width: clamp(52px, 22vh, 92px); }
-      .result-card { width: min(620px, 90vw); padding: 14px; }
-      .result-card .result-icon { width: 104px; float: left; margin-right: 14px; }
-      .result-actions { margin-top: 10px; }
-    }
-
+    .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 14px; }
     @media (orientation: portrait) {
-      #girl { left: 61%; bottom: 6%; width: clamp(112px, 34vw, 160px); }
-      #turn-cue { left: 61%; bottom: clamp(190px, 49vw, 255px); }
-      #toy { bottom: 6%; width: clamp(98px, 31vw, 152px); }
-      #goal-glow { right: 1%; bottom: 8%; width: clamp(78px, 24vw, 125px); }
-      .topbar { width: calc(100% - 122px); }
-      #hint { width: min(350px, 88vw); top: calc(var(--safe-top) + 120px); }
-      .friend { width: clamp(55px, 20vw, 90px); }
-      .friend--bunny { bottom: 22%; }
-      .friend--car { bottom: 14%; }
-      .friend--dino { bottom: 30%; }
+      #orientation-stage { display: none; }
+      #rotate-overlay { display: grid; }
+      body.forced-landscape #orientation-stage {
+        top: 0; left: 100%; right: auto; bottom: auto; display: block; width: 100vh; height: 100vw;
+        transform: rotate(90deg); transform-origin: top left;
+      }
+      body.forced-landscape #rotate-overlay { display: none; }
     }
-
+    @media (orientation: landscape) { #rotate-overlay { display: none; } }
+    @media (orientation: landscape) and (max-height: 430px) {
+      .screen { gap: 14px; }
+      .title-icon { width: min(29vh, 125px); border-width: 4px; }
+      .howto { margin-block: 7px; }
+      .howto-card { min-height: 45px; padding: 5px 8px; border-width: 3px; }
+      .main-btn { min-height: 48px; padding-block: .55em; }
+      .topbar { top: 5px; }
+      #mission-dots { top: 47px; }
+      #hint { min-height: 32px; padding-block: 4px; }
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
     }
   </style>
 </head>
 <body class="gp gp-teal">
-  <main id="game">
-    <a href="index.html" class="gp-home" aria-label="ホームにもどる"></a>
-
-    <section id="start-screen" class="screen" aria-labelledby="game-title">
-      <img class="title-icon gp-float" src="icon_toyfreeze.png" alt="おもちゃのロボットと女の子">
-      <div>
-        <h1 id="game-title">おもちゃは<br>うごかない！</h1>
-        <p class="lead">なかまの おもちゃと いっしょに<br>3つの ばしょへ かえろう！</p>
-      </div>
-      <div class="howto" aria-label="あそびかた">
-        <div class="howto-card go">うしろむきなら<br>おして すすもう</div>
-        <div class="howto-card stop">「！」が でたら<br>みんなで ぴたっ！</div>
-      </div>
-      <button id="start-btn" class="gp-btn gp-btn--lg main-btn" type="button">はじめる！</button>
-    </section>
-
-    <section id="play-screen" hidden aria-label="ゲーム画面">
-      <div id="scene">
-        <div class="topbar" aria-live="polite">
-          <div id="stage-label">ステージ 1 / 3　おもちゃばこへ</div>
-          <div id="signal">いまだ！ すすめ！</div>
-          <div id="progress-shell" class="progress-shell" aria-label="おもちゃばこまでのきょり">
-            <div id="progress"></div>
+  <div id="orientation-stage">
+    <main id="game">
+      <a href="index.html" class="gp-home" aria-label="ホームにもどる"></a>
+      <section id="start-screen" class="screen" aria-labelledby="game-title">
+        <img class="title-icon gp-float" src="icon_toyfreeze.png" alt="おもちゃのロボットと女の子">
+        <div class="intro">
+          <h1 id="game-title">おもちゃは<br>うごかない！</h1>
+          <p class="lead">ゆびの ところへ すすんで<br>3つの ミッションに ちょうせん！</p>
+          <div class="howto" aria-label="あそびかた">
+            <div class="howto-card go">うしろむきなら<br>おして すすもう</div>
+            <div class="howto-card stop">「！」が でたら<br>ゆびを はなそう</div>
+          </div>
+          <button id="start-btn" class="gp-btn gp-btn--lg main-btn" type="button">はじめる！</button>
+        </div>
+      </section>
+      <section id="play-screen" hidden aria-label="ゲーム画面">
+        <div id="scene">
+          <div class="topbar" aria-live="polite">
+            <div id="stage-label">1 / 3　たからばこ</div>
+            <div id="signal">いまだ！ すすめ！</div>
+          </div>
+          <div id="mission-dots" aria-label="ミッションの進み具合">
+            <span class="mission-dot now"></span><span class="mission-dot"></span><span class="mission-dot"></span>
+          </div>
+          <div id="girl" class="sprite-strip" role="img" aria-label="部屋の奥で後ろを向いている女の子"></div>
+          <div id="turn-cue" aria-hidden="true">!</div>
+          <div id="goal-glow" aria-hidden="true"></div>
+          <div id="friends" aria-label="おもちゃの仲間たち"></div>
+          <div id="helper" class="sprite-strip" role="img" aria-label="青いロボットの仲間"></div>
+          <div id="player" class="sprite-strip" role="img" aria-label="指について歩くロボット"></div>
+          <div id="hint">ゆかを おして、ゆびの ところへ すすもう</div>
+          <div id="rescue-counter" aria-label="助けた仲間の数">
+            <span class="rescue-mark"></span><span class="rescue-mark"></span><span class="rescue-mark"></span>
+          </div>
+          <div id="stage-clear" hidden aria-live="assertive">
+            <div class="stage-clear-card gp-pop">
+              <strong id="stage-clear-title">できた！</strong>
+              <span id="stage-clear-next">つぎの ミッションへ</span>
+            </div>
           </div>
         </div>
-        <div id="girl" class="sprite" role="img" aria-label="うしろをむいている女の子"></div>
-        <div id="turn-cue" aria-hidden="true">!</div>
-        <div id="goal-glow" aria-hidden="true"><span id="goal-label">おもちゃばこ</span></div>
-        <div id="friends" aria-label="いっしょに進むおもちゃたち"></div>
-        <div id="toy" class="sprite" role="img" aria-label="おもちゃのロボット"></div>
-        <div id="hint">ロボットか ゆかを おして、ゆびの ところへ すすもう</div>
-        <div id="stage-clear" hidden aria-live="assertive">
-          <div class="stage-clear-card gp-pop">
-            <strong id="stage-clear-title">ついたよ！</strong>
-            <span id="stage-clear-next">つぎの ばしょへ いこう</span>
+      </section>
+      <section id="result-screen" class="screen" hidden aria-labelledby="result-title">
+        <div class="gp-card result-card gp-pop">
+          <img class="result-icon" src="icon_toyfreeze.png" alt="おもちゃのロボット">
+          <h2 id="result-title">やったね！</h2>
+          <p class="lead">みんなで ベッドまで<br>ぶじに かえれたよ！</p>
+          <div class="result-actions">
+            <button id="again-btn" class="gp-btn gp-btn--lg" type="button">もういちど</button>
+            <a class="gp-btn gp-btn--ghost" href="index.html">ゲームを えらぶ</a>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section id="result-screen" class="screen" hidden aria-labelledby="result-title">
-      <div class="gp-card result-card gp-pop">
-        <img class="result-icon" src="icon_toyfreeze.png" alt="おもちゃのロボット">
-        <h2 id="result-title">やったね！</h2>
-        <p class="lead">みんなで 3つの ばしょへ<br>ぶじに かえれたよ！</p>
-        <div class="result-actions">
-          <button id="again-btn" class="gp-btn gp-btn--lg" type="button">もういちど</button>
-          <a class="gp-btn gp-btn--ghost" href="index.html">ゲームを えらぶ</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
+      </section>
+    </main>
+  </div>
+  <div id="rotate-overlay" role="dialog" aria-modal="true" aria-label="横画面で遊ぶ案内">
+    <div class="rotate-card">
+      <div class="rotate-picture" aria-hidden="true"></div>
+      <h1>よこで あそぼう！</h1>
+      <p>このボタンで よこがめんに なるよ</p>
+      <button id="landscape-btn" class="gp-btn gp-btn--lg" type="button">よこで あそぶ</button><br>
+      <a class="rotate-home" href="index.html">ゲームを えらぶ</a>
+    </div>
+  </div>
   <script>
     (() => {
       'use strict';
-
       const startScreen = document.getElementById('start-screen');
       const playScreen = document.getElementById('play-screen');
       const resultScreen = document.getElementById('result-screen');
       const startButton = document.getElementById('start-btn');
       const againButton = document.getElementById('again-btn');
+      const landscapeButton = document.getElementById('landscape-btn');
       const scene = document.getElementById('scene');
       const signal = document.getElementById('signal');
       const hint = document.getElementById('hint');
-      const progress = document.getElementById('progress');
-      const progressShell = document.getElementById('progress-shell');
       const stageLabel = document.getElementById('stage-label');
       const girl = document.getElementById('girl');
-      const toy = document.getElementById('toy');
+      const player = document.getElementById('player');
+      const helper = document.getElementById('helper');
       const turnCue = document.getElementById('turn-cue');
       const goalGlow = document.getElementById('goal-glow');
-      const goalLabel = document.getElementById('goal-label');
       const friendsContainer = document.getElementById('friends');
+      const rescueCounter = document.getElementById('rescue-counter');
+      const rescueMarks = [...document.querySelectorAll('.rescue-mark')];
+      const missionDots = [...document.querySelectorAll('.mission-dot')];
       const stageClear = document.getElementById('stage-clear');
       const stageClearTitle = document.getElementById('stage-clear-title');
       const stageClearNext = document.getElementById('stage-clear-next');
 
-      const PHASE = Object.freeze({
-        AWAY: 'away',
-        WARNING: 'warning',
-        WATCHING: 'watching',
-        COMPLETE: 'complete'
-      });
-
+      const PHASE = Object.freeze({ AWAY: 'away', WARNING: 'warning', WATCHING: 'watching', COMPLETE: 'complete' });
       const STAGES = Object.freeze([
         {
-          title: 'おもちゃばこへ',
-          destination: 'おもちゃばこ',
-          backgroundImage: "url('toyfreeze_room.png')",
-          backgroundSize: '100% 100%',
-          backgroundPosition: 'center',
-          girlLeft: 63,
-          girlBottom: 3,
-          goalRight: 3.5,
-          friendStarts: [11, 23, 35],
-          friendSpeeds: [7.6, 6.8, 6.2]
+          title: 'たからばこへ', destination: 'たからばこ', backgroundImage: "url('toyfreeze_room.png')",
+          backgroundSize: 'cover', backgroundPosition: 'center', girl: { x: 65, y: 28 },
+          goal: { x: 88, y: 66, radius: 10 }, start: { x: 14, y: 76 }, mode: 'goal'
         },
         {
-          title: 'たなへ かえろう',
-          destination: 'おもちゃの たな',
-          backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
-          backgroundSize: '200% 100%',
-          backgroundPosition: '0% 0%',
-          girlLeft: 56,
-          girlBottom: 3,
-          goalRight: 3.5,
-          friendStarts: [8, 20, 32],
-          friendSpeeds: [7.2, 7.7, 6.5]
+          title: 'なかまを たすけよう', destination: 'なかま', backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
+          backgroundSize: '200% 100%', backgroundPosition: '0% 0%', girl: { x: 68, y: 27 },
+          start: { x: 14, y: 78 }, mode: 'rescue'
         },
         {
-          title: 'ベッドの したへ',
-          destination: 'ベッドの した',
-          backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
-          backgroundSize: '200% 100%',
-          backgroundPosition: '100% 0%',
-          girlLeft: 54,
-          girlBottom: 3,
-          goalRight: 5,
-          friendStarts: [12, 18, 30],
-          friendSpeeds: [6.8, 7.3, 7.8]
+          title: 'ベッドへ いこう', destination: 'ベッド', backgroundImage: "url('toyfreeze_stage_scenes_v2.png')",
+          backgroundSize: '200% 100%', backgroundPosition: '100% 0%', girl: { x: 66, y: 27 },
+          goal: { x: 83, y: 58, radius: 11 }, start: { x: 14, y: 80 }, mode: 'goal'
         }
       ]);
-
-      const FRIENDS = Object.freeze([
-        { className: 'friend--bunny', label: 'うさぎのぬいぐるみ', laneOffset: -2 },
-        { className: 'friend--car', label: 'きぐるま', laneOffset: 1 },
-        { className: 'friend--dino', label: 'きょうりゅうのおもちゃ', laneOffset: 3 }
+      const FRIEND_DEFS = Object.freeze([
+        { id: 'bunny', label: 'うさぎのぬいぐるみ', x: 30, y: 70 },
+        { id: 'car', label: 'いぬのくるま', x: 50, y: 82 },
+        { id: 'dino', label: 'きょうりゅうのおもちゃ', x: 70, y: 68 }
       ]);
 
       let phase = PHASE.AWAY;
       let phaseEndsAt = 0;
-      let distance = 5;
-      let pressing = false;
-      let targetDistance = 5;
+      let stageIndex = 0;
+      let pointerHeld = false;
+      let activePointerId = null;
       let caughtThisTurn = false;
       let lastFrame = 0;
       let animationId = 0;
       let transitionTimer = 0;
-      let stageIndex = 0;
       let audioContext = null;
+      let walkClock = 0;
+      let girlClock = 0;
+      let playerPosition = { x: 14, y: 76 };
+      let targetPosition = { x: 14, y: 76 };
+      let helperPosition = { x: 8, y: 80 };
+      let movementHistory = [];
       let friends = [];
+      let rescuedCount = 0;
 
-      function randomBetween(min, max) {
-        return min + Math.random() * (max - min);
+      function randomBetween(min, max) { return min + Math.random() * (max - min); }
+      function currentStage() { return STAGES[stageIndex]; }
+      function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+      // 6枚を横に並べた画像から、指定した1コマだけを表示する。
+      function setFrame(element, frame) { element.style.backgroundPosition = `${clamp(frame, 0, 5) * 20}% 0`; }
+      function place(element, position, flip = false) {
+        element.style.left = `${position.x}%`;
+        element.style.top = `${position.y}%`;
+        element.style.transform = `translate(-50%, -50%) scaleX(${flip ? -1 : 1})`;
       }
 
-      function currentStage() {
-        return STAGES[stageIndex];
-      }
-
-      // 仲間は当たり判定を持たず、子どもの操作を邪魔しない見守り役として動かす
-      function createFriends() {
-        friendsContainer.replaceChildren();
-        friends = FRIENDS.map((friend, index) => {
-          const element = document.createElement('div');
-          element.className = `friend ${friend.className}`;
-          element.setAttribute('role', 'img');
-          element.setAttribute('aria-label', friend.label);
-          friendsContainer.appendChild(element);
-          return { ...friend, index, element, distance: 5, arrived: false };
-        });
-      }
-
-      function renderFriend(friend) {
-        const left = 5 + friend.distance * .78 + friend.laneOffset;
-        friend.element.style.left = `${Math.min(88, left)}%`;
-        friend.element.classList.toggle('arrived', friend.arrived);
-        friend.element.classList.toggle('moving', phase === PHASE.AWAY && !friend.arrived);
-      }
-
-      function resetFriends() {
-        const stage = currentStage();
-        friends.forEach((friend, index) => {
-          friend.distance = stage.friendStarts[index];
-          friend.arrived = false;
-          friend.element.classList.remove('arrived', 'moving');
-          renderFriend(friend);
-        });
-      }
-
-      function syncFriendMotion() {
-        friends.forEach(renderFriend);
-      }
-
-      function updateFriends(deltaSeconds) {
-        if (phase !== PHASE.AWAY) return;
-        const stage = currentStage();
-        friends.forEach((friend, index) => {
-          if (friend.arrived) return;
-          friend.distance = Math.min(100, friend.distance + deltaSeconds * stage.friendSpeeds[index]);
-          if (friend.distance >= 96) {
-            friend.distance = 100;
-            friend.arrived = true;
-            playTone(600 + index * 90, .12, 'sine', .025);
-          }
-          renderFriend(friend);
-        });
-      }
-
-      function finishFriends() {
-        friends.forEach(friend => {
-          friend.distance = 100;
-          friend.arrived = true;
-          renderFriend(friend);
-        });
-      }
-
-      function applyStage() {
-        const stage = currentStage();
-        scene.style.backgroundImage = stage.backgroundImage;
-        scene.style.backgroundSize = stage.backgroundSize;
-        scene.style.backgroundPosition = stage.backgroundPosition;
-        stageLabel.textContent = `ステージ ${stageIndex + 1} / ${STAGES.length}　${stage.title}`;
-        goalLabel.textContent = stage.destination;
-        progressShell.setAttribute('aria-label', `${stage.destination}までのきょり`);
-        girl.style.left = `${stage.girlLeft}%`;
-        girl.style.bottom = `${stage.girlBottom}%`;
-        turnCue.style.left = `${stage.girlLeft}%`;
-        goalGlow.style.right = `${stage.goalRight}%`;
-      }
-
-      // ユーザー操作後にだけ音を開始し、ブラウザの自動再生制限を避ける
       function prepareAudio() {
         try {
           if (!audioContext) {
@@ -706,18 +348,15 @@
             if (AudioContextClass) audioContext = new AudioContextClass();
           }
           if (audioContext && audioContext.state === 'suspended') {
-            audioContext.resume().catch(error => {
-              console.warn('効果音の準備を再開できませんでした。', error);
-            });
+            audioContext.resume().catch(error => console.warn('効果音を再開できませんでした。', error));
           }
         } catch (error) {
-          // 音が使えなくても、文字と色だけで最後まで遊べる
           audioContext = null;
           console.warn('効果音を準備できませんでした。', error);
         }
       }
 
-      function playTone(frequency, duration, type = 'sine', volume = 0.08) {
+      function playTone(frequency, duration, type = 'sine', volume = .07) {
         if (!audioContext) return;
         try {
           const oscillator = audioContext.createOscillator();
@@ -725,11 +364,9 @@
           oscillator.type = type;
           oscillator.frequency.value = frequency;
           gain.gain.setValueAtTime(volume, audioContext.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-          oscillator.connect(gain);
-          gain.connect(audioContext.destination);
-          oscillator.start();
-          oscillator.stop(audioContext.currentTime + duration);
+          gain.gain.exponentialRampToValueAtTime(.001, audioContext.currentTime + duration);
+          oscillator.connect(gain); gain.connect(audioContext.destination);
+          oscillator.start(); oscillator.stop(audioContext.currentTime + duration);
         } catch (error) {
           console.warn('効果音を再生できませんでした。', error);
         }
@@ -740,269 +377,344 @@
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'ja-JP';
-          utterance.rate = 0.88;
-          utterance.pitch = 1.15;
+          utterance.lang = 'ja-JP'; utterance.rate = .88; utterance.pitch = 1.12;
           window.speechSynthesis.speak(utterance);
         } catch (error) {
           console.warn('読み上げを開始できませんでした。', error);
         }
       }
 
-      function setPressing(next) {
-        pressing = Boolean(next) && phase !== PHASE.COMPLETE;
-        toy.classList.toggle('walking', pressing && phase === PHASE.AWAY);
-        // 見られている最中の短いタップも、確実に判定へ含める
-        if (pressing && phase === PHASE.WATCHING) catchToy();
+      async function forceLandscape() {
+        // 端末の横向き固定を優先し、非対応ブラウザではCSS回転を保険として使う。
+        document.body.classList.add('forced-landscape');
+        prepareAudio();
+        try {
+          const root = document.documentElement;
+          if (!document.fullscreenElement && root.requestFullscreen) await root.requestFullscreen();
+        } catch (error) {
+          console.warn('全画面表示を開始できないため、画面内で横向きにします。', error);
+        }
+        try {
+          if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+        } catch (error) {
+          console.warn('端末の向きを固定できないため、画面内で横向きにします。', error);
+        }
+      }
+
+      function updateMissionDots() {
+        missionDots.forEach((dot, index) => {
+          dot.classList.toggle('done', index < stageIndex);
+          dot.classList.toggle('now', index === stageIndex);
+        });
+      }
+
+      function createFriends() {
+        friendsContainer.replaceChildren();
+        friends = FRIEND_DEFS.map(definition => {
+          const element = document.createElement('div');
+          element.className = `sprite-strip friend ${definition.id}`;
+          element.dataset.friend = definition.id;
+          element.setAttribute('role', 'button');
+          element.setAttribute('aria-label', `${definition.label}をたすける`);
+          friendsContainer.appendChild(element);
+          return { ...definition, element, position: { x: definition.x, y: definition.y }, rescued: false, followDelay: 24 };
+        });
+      }
+
+      function resetFriends() {
+        // 2面では救出待ち、3面では救出済みの隊列として初期化する。
+        rescuedCount = 0;
+        rescueMarks.forEach(mark => mark.classList.remove('done'));
+        friends.forEach((friend, index) => {
+          friend.rescued = stageIndex === 2;
+          friend.followDelay = 28 + index * 18;
+          friend.position = stageIndex === 2
+            ? { x: playerPosition.x - 5 - index * 3, y: playerPosition.y + (index - 1) * 3 }
+            : { x: friend.x, y: friend.y };
+          friend.element.classList.toggle('waiting', stageIndex === 1);
+          friend.element.classList.toggle('rescued', friend.rescued);
+          friend.element.hidden = stageIndex === 0;
+          setFrame(friend.element, 0);
+          place(friend.element, friend.position);
+        });
+      }
+
+      function applyStage() {
+        const stage = currentStage();
+        scene.style.backgroundImage = stage.backgroundImage;
+        scene.style.backgroundSize = stage.backgroundSize;
+        scene.style.backgroundPosition = stage.backgroundPosition;
+        stageLabel.textContent = `${stageIndex + 1} / ${STAGES.length}　${stage.title}`;
+        playerPosition = { ...stage.start };
+        targetPosition = { ...stage.start };
+        helperPosition = { x: stage.start.x - 6, y: stage.start.y + 3 };
+        movementHistory = Array.from({ length: 100 }, () => ({ ...stage.start }));
+        girl.style.left = `${stage.girl.x}%`;
+        girl.style.top = `${stage.girl.y}%`;
+        turnCue.style.left = `${stage.girl.x}%`;
+        turnCue.style.top = `${stage.girl.y - 15}%`;
+        setFrame(girl, 0);
+        place(player, playerPosition);
+        place(helper, helperPosition);
+        goalGlow.hidden = stage.mode !== 'goal';
+        if (stage.goal) {
+          goalGlow.style.left = `${stage.goal.x}%`;
+          goalGlow.style.top = `${stage.goal.y}%`;
+        }
+        rescueCounter.classList.toggle('show', stage.mode === 'rescue');
+        hint.textContent = stage.mode === 'rescue'
+          ? 'なかまを おして たすけよう'
+          : stageIndex === 0 ? 'たからばこへ すすもう' : 'みんなで ベッドへ すすもう';
+        updateMissionDots();
+        resetFriends();
       }
 
       function updateSignal() {
         signal.className = '';
         turnCue.classList.remove('show');
-        girl.classList.remove('getting-ready');
-
         if (phase === PHASE.AWAY) {
           signal.textContent = 'いまだ！ すすめ！';
-          hint.textContent = 'おしている あいだ、ロボットが ゆびへ すすむよ';
-          girl.classList.remove('front');
-          girl.setAttribute('aria-label', 'うしろをむいている女の子');
-          syncFriendMotion();
+          girl.setAttribute('aria-label', '部屋の奥で後ろを向いている女の子');
           return;
         }
-
         if (phase === PHASE.WARNING) {
-          signal.classList.add('warning');
-          signal.textContent = 'もうすぐ ふりむくよ！';
-          hint.textContent = 'そろそろ はなしてね';
-          girl.classList.remove('front');
-          girl.classList.add('getting-ready');
-          turnCue.classList.add('show');
-          girl.setAttribute('aria-label', 'もうすぐ振り向く女の子');
-          toy.classList.remove('walking');
-          syncFriendMotion();
+          signal.classList.add('warning'); signal.textContent = 'もうすぐ ふりむく！'; turnCue.classList.add('show');
+          girl.setAttribute('aria-label', '部屋の奥で振り向き始めた女の子');
           return;
         }
-
         if (phase === PHASE.WATCHING) {
           signal.classList.add(caughtThisTurn ? 'caught' : 'watching');
           signal.textContent = caughtThisTurn ? 'みつかっちゃった！' : 'ぴたっ！ とまって！';
-          hint.textContent = caughtThisTurn ? 'だいじょうぶ。つぎに すすもう' : 'ゆびを はなして とまろう';
-          girl.classList.add('front');
-          girl.setAttribute('aria-label', 'こちらを見ている女の子');
-          toy.classList.remove('walking');
-          syncFriendMotion();
+          girl.setAttribute('aria-label', '部屋の奥からこちらを見ている女の子');
         }
       }
 
       function beginAway(now) {
-        phase = PHASE.AWAY;
-        caughtThisTurn = false;
-        phaseEndsAt = now + randomBetween(2300, 3900);
-        updateSignal();
-        playTone(520, .12, 'sine', .045);
+        phase = PHASE.AWAY; caughtThisTurn = false; phaseEndsAt = now + randomBetween(2500, 4100);
+        updateSignal(); playTone(520, .12, 'sine', .045);
       }
-
       function beginWarning(now) {
-        phase = PHASE.WARNING;
-        phaseEndsAt = now + 1450;
-        updateSignal();
+        phase = PHASE.WARNING; phaseEndsAt = now + 1250; updateSignal();
         playTone(760, .18, 'triangle', .07);
-        window.setTimeout(() => playTone(760, .18, 'triangle', .07), 430);
+        window.setTimeout(() => playTone(760, .18, 'triangle', .07), 380);
         speak('もうすぐ ふりむくよ');
       }
-
       function beginWatching(now) {
-        phase = PHASE.WATCHING;
-        caughtThisTurn = false;
-        phaseEndsAt = now + randomBetween(1650, 2350);
-        updateSignal();
-        playTone(280, .28, 'square', .055);
-        speak('ぴたっ。とまって');
+        phase = PHASE.WATCHING; caughtThisTurn = false; phaseEndsAt = now + randomBetween(1700, 2300);
+        updateSignal(); playTone(280, .28, 'square', .055); speak('ぴたっ。とまって');
+        if (pointerHeld) catchPlayer();
       }
 
-      function catchToy() {
-        if (caughtThisTurn) return;
+      function catchPlayer() {
+        if (caughtThisTurn || phase !== PHASE.WATCHING) return;
+        // 失敗しても遊び直しやすいよう、最初には戻さず少しだけ後退させる。
         caughtThisTurn = true;
-        updateDistance(distance - 11);
-        toy.classList.remove('walking');
-        toy.classList.add('caught');
-        window.setTimeout(() => toy.classList.remove('caught'), 900);
-        if ('vibrate' in navigator) navigator.vibrate([80, 50, 80]);
+        playerPosition.x = clamp(playerPosition.x - 8, 8, 92);
+        playerPosition.y = clamp(playerPosition.y + 3, 46, 88);
+        targetPosition = { ...playerPosition };
+        movementHistory = Array.from({ length: 100 }, () => ({ ...playerPosition }));
+        place(player, playerPosition);
         playTone(180, .38, 'sawtooth', .06);
+        if ('vibrate' in navigator) navigator.vibrate([70, 45, 70]);
         speak('みつかっちゃった。だいじょうぶ');
         updateSignal();
       }
 
-      function updateDistance(nextDistance) {
-        distance = Math.min(100, Math.max(5, nextDistance));
-        progress.style.width = `${distance}%`;
-        // 開始位置でもロボット全体が画面内へ収まるよう、移動範囲に左右の余白を持たせる
-        toy.style.left = `${13 + distance * .72}%`;
-      }
-
-      function advanceToy(amount) {
-        updateDistance(distance + amount);
-        if (distance < 100) return false;
-        completeStage();
-        return true;
+      function rescueFriend(friend) {
+        if (stageIndex !== 1 || phase !== PHASE.AWAY || friend.rescued) return;
+        friend.rescued = true;
+        rescuedCount += 1;
+        friend.element.classList.remove('waiting');
+        friend.element.classList.add('rescued');
+        rescueMarks[rescuedCount - 1].classList.add('done');
+        playTone(620 + rescuedCount * 80, .18, 'sine', .065);
+        speak(rescuedCount === 3 ? 'みんな たすけたよ' : 'たすけたよ');
+        if (rescuedCount === 3) transitionTimer = window.setTimeout(completeStage, 650);
       }
 
       function completeStage() {
-        phase = PHASE.COMPLETE;
-        setPressing(false);
-        cancelAnimationFrame(animationId);
-        updateDistance(100);
-        finishFriends();
-        signal.className = '';
-        signal.textContent = 'みんな ついたよ！';
-        hint.textContent = `${currentStage().destination}に かえれたよ`;
+        if (phase === PHASE.COMPLETE) return;
+        phase = PHASE.COMPLETE; pointerHeld = false; stageClear.hidden = false;
+        signal.className = ''; signal.textContent = 'できた！';
         playTone(660, .22, 'sine', .08);
-        window.setTimeout(() => playTone(880, .32, 'sine', .08), 180);
-
+        window.setTimeout(() => playTone(880, .32, 'sine', .08), 170);
         if (stageIndex < STAGES.length - 1) {
-          const nextStage = STAGES[stageIndex + 1];
-          stageClearTitle.textContent = `${currentStage().destination}に ついたよ！`;
-          stageClearNext.textContent = `つぎは「${nextStage.destination}」へ`;
-          stageClear.hidden = false;
-          speak(`${currentStage().destination}に ついたよ。つぎへ いこう`);
-          transitionTimer = window.setTimeout(() => startStage(stageIndex + 1), 1650);
+          stageClearTitle.textContent = stageIndex === 0 ? 'たからばこに ついた！' : 'みんなを たすけた！';
+          stageClearNext.textContent = 'つぎの ミッションへ';
+          speak(`${stageClearTitle.textContent} つぎへ いこう`);
+          transitionTimer = window.setTimeout(() => startStage(stageIndex + 1), 1500);
           return;
         }
-
-        speak('やったね。みんなで 3つの ばしょへ かえれたよ');
+        stageClearTitle.textContent = 'ベッドに ついた！';
+        stageClearNext.textContent = 'みんな ぶじに かえれたよ';
+        speak('やったね。みんなで ベッドに ついたよ');
         transitionTimer = window.setTimeout(() => {
-          playScreen.hidden = true;
-          resultScreen.hidden = false;
-        }, 800);
+          playScreen.hidden = true; resultScreen.hidden = false;
+        }, 1100);
+      }
+
+      function pointerPosition(event) {
+        const rect = scene.getBoundingClientRect();
+        return {
+          x: clamp((event.clientX - rect.left) / rect.width * 100, 7, 93),
+          y: clamp((event.clientY - rect.top) / rect.height * 100, 46, 88)
+        };
+      }
+
+      function updateMovement(deltaSeconds) {
+        // 指を押している間だけ2次元で追従し、履歴を仲間の遅延追従にも使う。
+        const canMove = pointerHeld && phase === PHASE.AWAY;
+        const dx = targetPosition.x - playerPosition.x;
+        const dy = targetPosition.y - playerPosition.y;
+        const distance = Math.hypot(dx, dy);
+        const moving = canMove && distance > .55;
+        if (moving) {
+          const amount = Math.min(distance, deltaSeconds * 28);
+          playerPosition.x += dx / distance * amount;
+          playerPosition.y += dy / distance * amount;
+          movementHistory.unshift({ ...playerPosition });
+          if (movementHistory.length > 120) movementHistory.pop();
+          walkClock += deltaSeconds;
+          setFrame(player, Math.floor(walkClock / .11) % 6);
+          place(player, playerPosition, dx < 0);
+        } else {
+          setFrame(player, 0); place(player, playerPosition);
+        }
+
+        const helperTarget = movementHistory[Math.min(18, movementHistory.length - 1)] || playerPosition;
+        const helperDx = helperTarget.x - helperPosition.x;
+        const helperDy = helperTarget.y - helperPosition.y;
+        const helperDistance = Math.hypot(helperDx, helperDy);
+        if (phase === PHASE.AWAY && helperDistance > .4) {
+          const amount = Math.min(helperDistance, deltaSeconds * 25);
+          helperPosition.x += helperDx / helperDistance * amount;
+          helperPosition.y += helperDy / helperDistance * amount;
+          setFrame(helper, Math.floor(walkClock / .11) % 6);
+          place(helper, helperPosition, helperDx < 0);
+        } else {
+          setFrame(helper, 0); place(helper, helperPosition);
+        }
+
+        friends.forEach((friend, index) => {
+          if (!friend.rescued || friend.element.hidden) return;
+          const historyIndex = Math.min(friend.followDelay, movementHistory.length - 1);
+          const followTarget = movementHistory[historyIndex] || playerPosition;
+          const offsetY = (index - 1) * 2.5;
+          const friendDx = followTarget.x - friend.position.x;
+          const friendDy = followTarget.y + offsetY - friend.position.y;
+          const friendDistance = Math.hypot(friendDx, friendDy);
+          if (phase === PHASE.AWAY && friendDistance > .45) {
+            const amount = Math.min(friendDistance, deltaSeconds * (22 - index));
+            friend.position.x += friendDx / friendDistance * amount;
+            friend.position.y += friendDy / friendDistance * amount;
+            setFrame(friend.element, Math.floor((walkClock + index * .04) / .11) % 6);
+            place(friend.element, friend.position, friendDx < 0);
+          } else {
+            setFrame(friend.element, 0); place(friend.element, friend.position);
+          }
+        });
+
+        if (currentStage().mode === 'goal' && currentStage().goal) {
+          const goalDistance = Math.hypot(playerPosition.x - currentStage().goal.x, playerPosition.y - currentStage().goal.y);
+          if (goalDistance <= currentStage().goal.radius) completeStage();
+        }
+      }
+
+      function updateGirl(deltaSeconds) {
+        // 後ろ向き・振り向き・正面の各状態に2コマずつ割り当てる。
+        girlClock += deltaSeconds;
+        let frame = 0;
+        if (phase === PHASE.AWAY) frame = Math.floor(girlClock / .42) % 2;
+        else if (phase === PHASE.WARNING) frame = 2 + Math.floor(girlClock / .34) % 2;
+        else if (phase === PHASE.WATCHING) frame = 4 + Math.floor(girlClock / .48) % 2;
+        else frame = 5;
+        setFrame(girl, frame);
       }
 
       function gameLoop(now) {
-        // 長い停止後に一気に進まないよう、1フレーム分の経過時間へ上限を設ける
         if (!lastFrame) lastFrame = now;
         const deltaSeconds = Math.min((now - lastFrame) / 1000, .05);
         lastFrame = now;
-
-        updateFriends(deltaSeconds);
-
-        if (pressing) {
-          if (phase === PHASE.WATCHING) {
-            catchToy();
-          } else if (phase === PHASE.AWAY) {
-            const remaining = targetDistance - distance;
-            if (remaining > .15) {
-              if (advanceToy(Math.min(remaining, deltaSeconds * 24))) return;
-            } else {
-              toy.classList.remove('walking');
-            }
-          }
-        }
-
-        // 「後ろ向き→予告→見ている」を循環させ、難しさを毎回少し変える
-        if (now >= phaseEndsAt) {
+        updateGirl(deltaSeconds);
+        if (phase !== PHASE.COMPLETE) updateMovement(deltaSeconds);
+        if (now >= phaseEndsAt && phase !== PHASE.COMPLETE) {
           if (phase === PHASE.AWAY) beginWarning(now);
           else if (phase === PHASE.WARNING) beginWatching(now);
           else if (phase === PHASE.WATCHING) beginAway(now);
         }
-
         animationId = requestAnimationFrame(gameLoop);
       }
 
       function startStage(nextStageIndex) {
         cancelAnimationFrame(animationId);
         window.clearTimeout(transitionTimer);
-        stageIndex = nextStageIndex;
-        stageClear.hidden = true;
-        distance = 5;
-        targetDistance = 5;
-        pressing = false;
-        caughtThisTurn = false;
-        lastFrame = 0;
-        applyStage();
-        updateDistance(5);
-        toy.className = 'sprite';
-        resetFriends();
-        beginAway(performance.now());
-        speak(`${currentStage().destination}へ かえろう。うしろむきの あいだに すすもう`);
+        stageIndex = nextStageIndex; stageClear.hidden = true; pointerHeld = false; activePointerId = null;
+        caughtThisTurn = false; lastFrame = 0; walkClock = 0; girlClock = 0;
+        applyStage(); beginAway(performance.now());
+        const voice = stageIndex === 0
+          ? 'たからばこへ すすもう'
+          : stageIndex === 1 ? 'なかまを おして たすけよう' : 'みんなで ベッドへ すすもう';
+        speak(`${voice}。うしろむきの あいだに うごこう`);
         animationId = requestAnimationFrame(gameLoop);
       }
 
       function startGame() {
-        prepareAudio();
-        if ('speechSynthesis' in window) {
-          try {
-            window.speechSynthesis.cancel();
-          } catch (error) {
-            console.warn('前の読み上げを停止できませんでした。', error);
-          }
-        }
-        startScreen.hidden = true;
-        resultScreen.hidden = true;
-        playScreen.hidden = false;
-        startStage(0);
-      }
-
-      function distanceFromPointer(event) {
-        const rect = scene.getBoundingClientRect();
-        const ratio = (event.clientX - rect.left) / rect.width;
-        return Math.min(100, Math.max(distance + 3, (ratio - .13) / .72 * 100));
+        prepareAudio(); startScreen.hidden = true; resultScreen.hidden = true; playScreen.hidden = false; startStage(0);
       }
 
       function pressStart(event) {
-        event.preventDefault();
-        if (event.pointerId !== undefined) {
-          try {
-            scene.setPointerCapture(event.pointerId);
-          } catch (error) {
-            // 非対応端末では通常のpointerupで停止できるため、操作を継続する
-            console.warn('指の追跡を固定できないため、通常操作で続けます。', error);
+        const friendElement = event.target.closest('.friend');
+        if (friendElement) {
+          event.preventDefault();
+          const friend = friends.find(item => item.id === friendElement.dataset.friend);
+          if (friend) rescueFriend(friend);
+          return;
+        }
+        if (phase === PHASE.COMPLETE) return;
+        event.preventDefault(); activePointerId = event.pointerId; targetPosition = pointerPosition(event); pointerHeld = true;
+        // すぐ指を離しても反応が伝わるよう、後ろ向き中の最初のタップだけ小さく進める。
+        if (phase === PHASE.AWAY) {
+          const dx = targetPosition.x - playerPosition.x;
+          const dy = targetPosition.y - playerPosition.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance > .1) {
+            const amount = Math.min(11, distance);
+            playerPosition.x += dx / distance * amount;
+            playerPosition.y += dy / distance * amount;
+            movementHistory.unshift({ ...playerPosition });
+            place(player, playerPosition, dx < 0);
           }
         }
-        targetDistance = distanceFromPointer(event);
-        setPressing(true);
-        // 短いタップでも少し進めるようにし、長押しが苦手な子も遊べるようにする
-        if (phase === PHASE.AWAY) advanceToy(3);
+        try {
+          scene.setPointerCapture(event.pointerId);
+        } catch (error) {
+          console.warn('指の追跡を固定できないため、通常操作で続けます。', error);
+        }
+        if (phase === PHASE.WATCHING) catchPlayer();
       }
-
+      function pressMove(event) {
+        if (!pointerHeld || event.pointerId !== activePointerId) return;
+        event.preventDefault(); targetPosition = pointerPosition(event);
+        if (phase === PHASE.WATCHING) catchPlayer();
+      }
       function pressEnd(event) {
-        if (event) event.preventDefault();
-        setPressing(false);
+        if (activePointerId !== null && event.pointerId !== activePointerId) return;
+        if (event) event.preventDefault(); pointerHeld = false; activePointerId = null;
       }
 
+      landscapeButton.addEventListener('click', forceLandscape);
       startButton.addEventListener('click', startGame);
       againButton.addEventListener('click', startGame);
       scene.addEventListener('pointerdown', pressStart);
-      scene.addEventListener('pointermove', event => {
-        if (!pressing) return;
-        event.preventDefault();
-        targetDistance = distanceFromPointer(event);
-        if (phase === PHASE.WATCHING) catchToy();
-      });
+      scene.addEventListener('pointermove', pressMove);
       scene.addEventListener('pointerup', pressEnd);
       scene.addEventListener('pointercancel', pressEnd);
       scene.addEventListener('lostpointercapture', pressEnd);
       scene.addEventListener('contextmenu', event => event.preventDefault());
-
-      window.addEventListener('keydown', event => {
-        if ((event.code === 'Space' || event.code === 'ArrowRight') && !event.repeat && !playScreen.hidden) {
-          event.preventDefault();
-          targetDistance = 100;
-          setPressing(true);
-        }
-      });
-
-      window.addEventListener('keyup', event => {
-        if (event.code === 'Space' || event.code === 'ArrowRight') {
-          event.preventDefault();
-          setPressing(false);
-        }
-      });
-
       document.addEventListener('visibilitychange', () => {
-        // アプリを閉じた間の押しっぱなしを解除し、復帰時の誤判定を防ぐ
-        if (document.hidden) setPressing(false);
+        if (document.hidden) { pointerHeld = false; activePointerId = null; }
         lastFrame = 0;
       });
-
       createFriends();
     })();
   </script>

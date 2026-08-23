@@ -29,7 +29,8 @@ body {
 
 #btn-grab {
   position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: max(14px, env(safe-area-inset-bottom));
+  /* Androidの下部ナビゲーションと重ならない高さへ持ち上げる。 */
+  bottom: max(68px, calc(env(safe-area-inset-bottom) + 54px));
   z-index: 12; width: 116px; height: 116px; border-radius: 50%;
   border: 6px solid #d6336c; background: radial-gradient(circle at 35% 30%, #ff8fc7, #f0518f);
   color: #fff; font-weight: 900; font-size: 1.25rem; line-height: 1.2;
@@ -38,6 +39,15 @@ body {
 }
 #btn-grab:active { transform: translateX(-50%) translateY(5px); box-shadow: 0 1px 0 #b02a5b, 0 4px 10px rgba(0,0,0,0.3); }
 #btn-grab:disabled { opacity: 0.45; }
+
+@media (orientation: landscape) and (max-height: 500px) {
+  #btn-grab {
+    width: 92px;
+    height: 92px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    font-size: 1.05rem;
+  }
+}
 
 .screen {
   position: absolute; inset: 0; z-index: 50;
@@ -122,8 +132,18 @@ const bgm = document.getElementById('bgm');
 // ===== 音 =====
 let ac = null;
 function ensureAudio() {
-  if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
-  if (ac.state === 'suspended') ac.resume();
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!ac) ac = new AudioContextClass();
+    if (ac.state === 'suspended') {
+      ac.resume().catch(error => console.warn('クレーンゲームの音声を再開できませんでした。', error));
+    }
+  } catch (error) {
+    // 音が使えない端末でも、クレーン操作は止めずに遊び続けられるようにする。
+    ac = null;
+    console.warn('クレーンゲームの音声を準備できませんでした。', error);
+  }
 }
 function tone(f0, dur, type, vol, f1) {
   if (!ac) return;
@@ -247,7 +267,10 @@ function beginRound() {
 }
 function pressButton() {
   ensureAudio();
-  if (bgm.paused) { bgm.volume = 0.3; bgm.play().catch(() => {}); }
+  if (bgm.paused) {
+    bgm.volume = 0.3;
+    bgm.play().catch(error => console.warn('クレーンゲームのBGMを開始できませんでした。', error));
+  }
   if (state !== 'move') return;
   state = 'down'; btn.disabled = true; sDown();
 }

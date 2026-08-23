@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v124';
+const CACHE_NAME = 'ajuna-v125';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -61,6 +61,12 @@ const LOCAL_FILES = [
   './toyfreeze_characters.png',
   './toyfreeze_stage_scenes_v2.png',
   './toyfreeze_friends_v2.png',
+  './toyfreeze_mint_robot_walk_v3.png',
+  './toyfreeze_blue_robot_walk_v3.png',
+  './toyfreeze_bunny_walk_v3.png',
+  './toyfreeze_car_roll_v3.png',
+  './toyfreeze_dino_walk_v3.png',
+  './toyfreeze_girl_turn_v3.png',
   './icon_toyfreeze.png',
   './slide.html',
   './slide_girl.png',
@@ -161,7 +167,10 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME).then(cache =>
       Promise.allSettled(
         LOCAL_FILES.map(url =>
-          cache.add(url).catch(() => {})
+          cache.add(url).catch(error => {
+            // 1ファイルの失敗でインストール全体を止めず、原因だけ確認できるようにする。
+            console.warn(`キャッシュできませんでした: ${url}`, error);
+          })
         )
       )
     )
@@ -189,7 +198,9 @@ self.addEventListener('fetch', event => {
       fetch(event.request).then(response => {
         if (response.ok || response.type === 'opaque') {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(event.request, clone))
+            .catch(error => console.warn('外部ファイルをキャッシュできませんでした。', error));
         }
         return response;
       }).catch(() => {
@@ -204,7 +215,9 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request, { cache: 'no-cache' }).then(response => {
         const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(event.request, clone))
+          .catch(error => console.warn('ローカルファイルをキャッシュできませんでした。', error));
         return response;
       }).catch(() => caches.match(event.request))
     );

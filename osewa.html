@@ -1903,6 +1903,10 @@ document.querySelectorAll('.loc-btn').forEach(function(btn) {
     playPop();
     var loc = this.dataset.loc;
     state.location = loc;
+    // 着替えなどの下部メニューは部屋専用。移動時は開いているパネルも閉じる。
+    var menuBar = document.getElementById('menu-bar');
+    menuBar.style.display = loc === 'room' ? 'flex' : 'none';
+    if (loc !== 'room') closeMenu();
     var room = document.getElementById('room');
     room.classList.remove('park', 'shop', 'shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
     if (loc !== 'room') room.classList.add(loc);

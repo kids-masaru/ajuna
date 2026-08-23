@@ -49,21 +49,66 @@
             }
         }
 
-        .portrait-warning {
-            display: none;
+        #orientation-stage {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
         }
 
-        /* 画面回転を禁止する端末でも、ゲームとホーム操作は隠さない。 */
+        #rotate-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 24px;
+            color: #c2410c;
+            background: linear-gradient(145deg, #fff7ed, #ffedd5);
+            text-align: center;
+        }
+
         @media (orientation: portrait) {
-            body.game-started .portrait-warning {
-                display: flex;
+            #rotate-overlay { display: flex; }
+            #orientation-stage { visibility: hidden; }
+            body.forced-landscape #rotate-overlay { display: none; }
+            body.forced-landscape #orientation-stage {
+                visibility: visible;
+                width: 100vh;
+                height: 100vw;
+                transform: rotate(90deg);
+                transform-origin: top left;
+                top: 0;
+                left: 100%;
             }
         }
 
         .rotate-device-icon {
-            width: 34px;
-            height: 28px;
+            width: 96px;
+            height: 78px;
             color: #f97316;
+        }
+
+        .rotate-action {
+            min-width: min(320px, 82vw);
+            min-height: 72px;
+            border: 5px solid #fff;
+            border-radius: 999px;
+            color: #fff;
+            background: #f97316;
+            box-shadow: 0 8px 0 #c2410c;
+            font: inherit;
+            font-size: 1.55rem;
+            font-weight: 900;
+        }
+
+        .rotate-action:active {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #c2410c;
         }
 
         .shop-scene {
@@ -155,39 +200,24 @@
             .atlas-icon--cart { --atlas-height: 32px; }
         }
 
-        @media (orientation: portrait) {
-            .portrait-warning {
-                position: fixed;
-                z-index: 120;
-                top: max(8px, env(safe-area-inset-top));
-                left: 50%;
-                transform: translateX(-50%);
-                width: max-content;
-                max-width: calc(100vw - 150px);
-                min-height: 44px;
-                padding: 6px 12px;
-                flex-direction: row;
-                gap: 8px;
-                border-radius: 999px;
-                background: rgba(255,247,237,.94);
-                border: 2px solid #fdba74;
-                box-shadow: 0 4px 14px rgba(124,45,18,.18);
-                pointer-events: none;
-            }
-            .portrait-warning h1 { font-size: 13px !important; line-height: 1.2; margin: 0 !important; }
-            .portrait-warning p { display: none; }
-            .portrait-warning svg { margin: 0 !important; flex: none; }
-            body.shopping-active .portrait-warning { display: none; }
-            .shop-select-title { font-size: 1.6rem !important; margin-top: 42px; }
-            .shop-select-list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-y: auto !important; overflow-x: hidden !important; gap: 12px !important; padding: 10px 18px 30px !important; }
-            .shop-select-card { width: 100% !important; height: 145px !important; }
-            .shopping-list-wrap { top: 82px !important; }
-            .shelf-stage { margin-top: 58px; transform: scale(.84); transform-origin: center; }
-            .shopping-basket-row { height: 118px !important; }
-            .picture-basket { width: 170px; }
-        }
     </style>
     <script>
+        async function forceShoppingLandscape() {
+            // 回転固定に対応しない端末でも、CSS回転で必ず横レイアウトを表示する。
+            document.body.classList.add('forced-landscape');
+            try {
+                const el = document.documentElement;
+                if (el.requestFullscreen && !document.fullscreenElement) {
+                    await el.requestFullscreen();
+                }
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape');
+                }
+            } catch (error) {
+                console.warn('端末の向きを固定できないため、横向き表示へ切り替えました。', error);
+            }
+        }
+
         window.onerror = function (message, source, lineno, colno, error) {
             const root = document.getElementById('root');
             if (root) {
@@ -207,20 +237,22 @@
 </head>
 
 <body class="gp gp-emerald gp-dark fixed inset-0 overflow-hidden">
-    <!-- Portrait Warning Overlay -->
-    <div class="portrait-warning text-center">
-        <svg class="rotate-device-icon mb-8" viewBox="0 0 120 96" aria-hidden="true">
+    <div id="rotate-overlay">
+        <a href="index.html" class="gp-home" aria-label="ホームにもどる"></a>
+        <svg class="rotate-device-icon" viewBox="0 0 120 96" aria-hidden="true">
             <rect x="10" y="18" width="46" height="70" rx="9" fill="white" stroke="currentColor" stroke-width="6" />
             <circle cx="33" cy="78" r="3" fill="currentColor" />
             <path d="M70 24c23 0 38 14 38 34" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
             <path d="M96 51l12 9 8-13" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
             <rect x="65" y="52" width="46" height="34" rx="8" fill="white" stroke="currentColor" stroke-width="6" />
         </svg>
-        <h1 class="text-4xl text-orange-600 font-bold mb-4">よこにすると<br>もっとあそびやすいよ</h1>
-        <p class="text-xl text-orange-400">げーむのおへやのおかいものごっこ</p>
+        <h1 class="text-3xl font-bold">よこで あそぼう！</h1>
+        <button class="rotate-action" type="button" onclick="forceShoppingLandscape()">よこで あそぶ</button>
     </div>
 
-    <div id="root" class="w-full h-full game-content"></div>
+    <div id="orientation-stage">
+        <div id="root" class="w-full h-full game-content"></div>
+    </div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
@@ -409,29 +441,11 @@
                 }
             };
 
-            // 起動時：横向きレイアウトにして案内をしゃべる。
-            // 全画面と音は、ブラウザの決まりで最初にさわったときに有効にする。
+            // 音はブラウザの決まりに合わせ、最初のタッチ後にだけ準備する。
+            // 横画面切替は画面上の専用ボタンが担当する。
             useEffect(() => {
-                document.body.classList.add('game-started');
                 speak("どこのおみせにいく？");
                 const unlock = () => {
-                    try {
-                        const el = document.documentElement;
-                        if (el.requestFullscreen) {
-                            el.requestFullscreen().catch(error => {
-                                console.warn('全画面表示へ切り替えられませんでした。', error);
-                            });
-                        }
-                        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-                        if (screen.orientation && screen.orientation.lock) {
-                            screen.orientation.lock('landscape').catch(error => {
-                                console.warn('横向きへ固定できないため、現在の向きで続けます。', error);
-                            });
-                        }
-                    } catch (error) {
-                        // 全画面化や向き固定が非対応でも、縦横どちらでも遊べるレイアウトを使う
-                        console.warn('画面表示の切り替えを利用できませんでした。', error);
-                    }
                     initAudio();
                 };
                 document.addEventListener('pointerdown', unlock, { once: true });
@@ -621,7 +635,6 @@
                                                                     aria-label={`${item.name}をかごにいれる`}
                                                                 >
                                                                     <AtlasIcon shop={currentShop} item={item} />
-                                                                    <span className="bg-white/90 px-1 py-0.5 rounded-full text-[8px] md:text-[10px] font-bold mt-1 shadow-sm border border-orange-100">{item.name}</span>
                                                                 </button>
                                                             )}
                                                         </div>

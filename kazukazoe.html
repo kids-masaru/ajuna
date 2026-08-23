@@ -24,7 +24,7 @@
             width: clamp(48px, 12vw, 82px);
             aspect-ratio: 1;
             background-image: url('kazukazoe_items_atlas.png');
-            background-size: 480% 480%;
+            background-size: 400% 400%;
             background-repeat: no-repeat;
             background-color: #fff;
             border-radius: 16px;
@@ -59,7 +59,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // 専用4×4アトラス。白背景で表示し、セルを少し拡大して隣の絵の混入を防ぐ。
+        // 専用4×4アトラス。各セルを正確に切り出し、絵の端まで欠けずに表示する。
         const ITEMS = [
           'りんご','いちご','みかん','にんじん',
           'いぬ','ねこ','うさぎ','パンダ',
@@ -70,8 +70,8 @@
         const CountPicture = ({ item }) => {
           const col = item.slot % 4;
           const row = Math.floor(item.slot / 4);
-          // 1セルの外周を約10%切り、生成アトラス内に残った隣セルの断片を除外する。
-          const safePosition = (index) => (((4.8 * (index + .5) / 4) - .5) / (4.8 - 1)) * 100;
+          // 4列・4行のセル中心を0%・33.3%・66.7%・100%へ対応させる。
+          const safePosition = (index) => index / 3 * 100;
           return <span className="count-picture" role="img" aria-label={item.name}
             style={{ backgroundPosition: `${safePosition(col)}% ${safePosition(row)}%` }} />;
         };
