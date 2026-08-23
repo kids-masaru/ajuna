@@ -129,6 +129,24 @@
     }
     #turn-cue.show { opacity: 1; transform: translate(-50%, -50%) scale(1); animation: cue-pop .48s ease-in-out infinite alternate; }
     @keyframes cue-pop { to { transform: translate(-50%, -50%) scale(1.14) rotate(5deg); } }
+    #outcome-mark {
+      position: absolute; left: 50%; top: 54%; z-index: 36; width: clamp(92px, 16vh, 150px); aspect-ratio: 1;
+      transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 8px 12px rgba(61,42,27,.28));
+    }
+    #outcome-mark[hidden] { display: none; }
+    #outcome-mark svg { display: none; width: 100%; height: 100%; overflow: visible; }
+    #outcome-mark.caught .outcome-caught { display: block; animation: caught-mark-pop .72s ease-out both; }
+    #outcome-mark.safe .outcome-safe { display: block; animation: safe-mark-pop .78s ease-out both; }
+    @keyframes caught-mark-pop {
+      0% { opacity: 0; transform: scale(.35) rotate(-12deg); }
+      35% { opacity: 1; transform: scale(1.16) rotate(5deg); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes safe-mark-pop {
+      0% { opacity: 0; transform: scale(.35) rotate(-8deg); }
+      45% { opacity: 1; transform: scale(1.14) rotate(4deg); }
+      100% { opacity: 1; transform: scale(1); }
+    }
     #goal-glow {
       position: absolute; z-index: 7; width: clamp(72px, 12vw, 150px); aspect-ratio: 1;
       border: 8px solid rgba(255,214,64,.78); border-radius: 50%;
@@ -229,6 +247,20 @@
           </div>
           <div id="girl" class="sprite-strip" role="img" aria-label="部屋の奥で後ろを向いている女の子"></div>
           <div id="turn-cue" aria-hidden="true">!</div>
+          <div id="outcome-mark" role="status" aria-live="assertive" hidden>
+            <svg class="outcome-caught" viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="52" fill="#fff" stroke="#ef4444" stroke-width="9" />
+              <ellipse cx="41" cy="43" rx="13" ry="16" fill="#fff" stroke="#7f1d1d" stroke-width="5" />
+              <ellipse cx="79" cy="43" rx="13" ry="16" fill="#fff" stroke="#7f1d1d" stroke-width="5" />
+              <circle cx="45" cy="47" r="6" fill="#7f1d1d" /><circle cx="75" cy="47" r="6" fill="#7f1d1d" />
+              <path d="M38 76L82 104M82 76L38 104" fill="none" stroke="#ef4444" stroke-width="12" stroke-linecap="round" />
+            </svg>
+            <svg class="outcome-safe" viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="48" fill="#fff" stroke="#10b981" stroke-width="11" />
+              <path d="M34 61l17 18 35-42" fill="none" stroke="#047857" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M21 19v16M13 27h16M99 12v18M90 21h18" fill="none" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" />
+            </svg>
+          </div>
           <div id="goal-glow" aria-hidden="true"></div>
           <div id="home-goals" aria-label="仲間それぞれのゴール"></div>
           <div id="friends" aria-label="おもちゃの仲間たち"></div>
@@ -283,6 +315,7 @@
       const player = document.getElementById('player');
       const helper = document.getElementById('helper');
       const turnCue = document.getElementById('turn-cue');
+      const outcomeMark = document.getElementById('outcome-mark');
       const goalGlow = document.getElementById('goal-glow');
       const homeGoalsContainer = document.getElementById('home-goals');
       const friendsContainer = document.getElementById('friends');
@@ -333,9 +366,13 @@
       let lastFrame = 0;
       let animationId = 0;
       let transitionTimer = 0;
+      let outcomeTimer = 0;
       let audioContext = null;
       let walkClock = 0;
+      let helperWalkClock = 0;
       let girlClock = 0;
+      let playerSpeed = 0;
+      let helperSpeed = 0;
       let playerPosition = { x: 14, y: 76 };
       let targetPosition = { x: 14, y: 76 };
       let helperPosition = { x: 8, y: 80 };
@@ -345,16 +382,20 @@
       let homeGoals = [];
       let homeReachedCount = 0;
       let helperHomeReached = false;
+      const facingLeftByElement = new WeakMap();
 
       function randomBetween(min, max) { return min + Math.random() * (max - min); }
       function currentStage() { return STAGES[stageIndex]; }
       function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
       // 6枚を横に並べた画像から、指定した1コマだけを表示する。
       function setFrame(element, frame) { element.style.backgroundPosition = `${clamp(frame, 0, 5) * 20}% 0`; }
-      function place(element, position, flip = false) {
+      function place(element, position, flip = null) {
+        // 止まった瞬間に正面へ反転しないよう、最後に進んだ向きを保持する。
+        if (typeof flip === 'boolean') facingLeftByElement.set(element, flip);
+        const facingLeft = facingLeftByElement.get(element) || false;
         element.style.left = `${position.x}%`;
         element.style.top = `${position.y}%`;
-        element.style.transform = `translate(-50%, -50%) scaleX(${flip ? -1 : 1})`;
+        element.style.transform = `translate(-50%, -50%) scaleX(${facingLeft ? -1 : 1})`;
       }
 
       function prepareAudio() {
@@ -433,7 +474,16 @@
           element.setAttribute('role', 'img');
           element.setAttribute('aria-label', definition.label);
           friendsContainer.appendChild(element);
-          return { ...definition, element, position: { x: definition.x, y: definition.y }, rescued: false, homeReached: false, followDelay: 24 };
+          return {
+            ...definition,
+            element,
+            position: { x: definition.x, y: definition.y },
+            rescued: false,
+            homeReached: false,
+            followDelay: 24,
+            moveSpeed: 0,
+            walkClock: 0
+          };
         });
       }
 
@@ -470,12 +520,15 @@
           friend.rescued = stageIndex === 2;
           friend.homeReached = false;
           friend.followDelay = 28 + index * 18;
+          friend.moveSpeed = 0;
+          friend.walkClock = 0;
           friend.position = stageIndex === 2
             ? { x: playerPosition.x - 5 - index * 3, y: playerPosition.y + (index - 1) * 3 }
             : { x: friend.x, y: friend.y };
           friend.element.classList.toggle('waiting', stageIndex === 1);
           friend.element.classList.toggle('rescued', friend.rescued);
           friend.element.hidden = stageIndex === 0;
+          facingLeftByElement.set(friend.element, false);
           setFrame(friend.element, 0);
           place(friend.element, friend.position);
         });
@@ -490,14 +543,23 @@
         playerPosition = { ...stage.start };
         targetPosition = { ...stage.start };
         helperPosition = { x: stage.start.x - 6, y: stage.start.y + 3 };
+        playerSpeed = 0;
+        helperSpeed = 0;
+        walkClock = 0;
+        helperWalkClock = 0;
         movementHistory = Array.from({ length: 100 }, () => ({ ...stage.start }));
         girl.style.left = `${stage.girl.x}%`;
         girl.style.top = `calc(${stage.girl.y}% + 30px)`;
         turnCue.style.left = `${stage.girl.x}%`;
         turnCue.style.top = `calc(${stage.girl.y - 15}% + 30px)`;
         setFrame(girl, 0);
+        facingLeftByElement.set(player, false);
+        facingLeftByElement.set(helper, false);
         place(player, playerPosition);
         place(helper, helperPosition);
+        window.clearTimeout(outcomeTimer);
+        outcomeMark.hidden = true;
+        outcomeMark.className = '';
         goalGlow.hidden = true;
         if (stage.goal) {
           goalGlow.style.left = `${stage.goal.x}%`;
@@ -530,6 +592,21 @@
         }
       }
 
+      function showOutcomeMark(type) {
+        window.clearTimeout(outcomeTimer);
+        outcomeMark.hidden = false;
+        outcomeMark.className = type;
+        outcomeMark.setAttribute('aria-label', type === 'caught' ? 'みつかった' : 'みつからなかった');
+        if (type === 'safe') {
+          playTone(700, .13, 'sine', .055);
+          window.setTimeout(() => playTone(920, .18, 'sine', .05), 120);
+        }
+        outcomeTimer = window.setTimeout(() => {
+          outcomeMark.hidden = true;
+          outcomeMark.className = '';
+        }, 900);
+      }
+
       function beginAway(now) {
         phase = PHASE.AWAY; caughtThisTurn = false; phaseEndsAt = now + randomBetween(2500, 4100);
         updateSignal(); playTone(520, .12, 'sine', .045);
@@ -548,15 +625,21 @@
 
       function catchPlayer() {
         if (caughtThisTurn || phase !== PHASE.WATCHING) return;
-        // 失敗しても遊び直しやすいよう、最初には戻さず少しだけ後退させる。
+        // 仲間と個別ゴールの進み具合は残し、主人公だけを現在ステージの初期位置へ戻す。
         caughtThisTurn = true;
-        playerPosition.x = clamp(playerPosition.x - 8, 8, 92);
-        playerPosition.y = clamp(playerPosition.y + 3, 46, 88);
+        playerPosition = { ...currentStage().start };
         targetPosition = { ...playerPosition };
+        playerSpeed = 0;
         movementHistory = Array.from({ length: 100 }, () => ({ ...playerPosition }));
+        facingLeftByElement.set(player, false);
         place(player, playerPosition);
+        showOutcomeMark('caught');
         playTone(180, .38, 'sawtooth', .06);
-        if ('vibrate' in navigator) navigator.vibrate([70, 45, 70]);
+        try {
+          if ('vibrate' in navigator) navigator.vibrate([70, 45, 70]);
+        } catch (error) {
+          console.warn('端末を振動させられませんでしたが、ゲームはそのまま続けます。', error);
+        }
         speak('みつかっちゃった。だいじょうぶ');
         updateSignal();
       }
@@ -666,15 +749,17 @@
         const distance = Math.hypot(dx, dy);
         const moving = canMove && distance > .55;
         if (moving) {
-          const amount = Math.min(distance, deltaSeconds * 28);
+          playerSpeed += (28 - playerSpeed) * Math.min(1, deltaSeconds * 7);
+          const amount = Math.min(distance, deltaSeconds * playerSpeed);
           playerPosition.x += dx / distance * amount;
           playerPosition.y += dy / distance * amount;
           movementHistory.unshift({ ...playerPosition });
           if (movementHistory.length > 120) movementHistory.pop();
           walkClock += deltaSeconds;
-          setFrame(player, Math.floor(walkClock / .11) % 6);
+          setFrame(player, Math.floor(walkClock / .14) % 6);
           place(player, playerPosition, dx < 0);
         } else {
+          playerSpeed = 0;
           setFrame(player, 0); place(player, playerPosition);
         }
 
@@ -683,18 +768,22 @@
         const helperDy = helperTarget.y - helperPosition.y;
         const helperDistance = Math.hypot(helperDx, helperDy);
         if (!helperHomeReached && toysCanMove && helperDistance > .4) {
-          const amount = Math.min(helperDistance, deltaSeconds * 25);
+          helperSpeed += (25 - helperSpeed) * Math.min(1, deltaSeconds * 6);
+          const amount = Math.min(helperDistance, deltaSeconds * helperSpeed);
           helperPosition.x += helperDx / helperDistance * amount;
           helperPosition.y += helperDy / helperDistance * amount;
-          setFrame(helper, Math.floor(walkClock / .11) % 6);
+          helperWalkClock += deltaSeconds;
+          setFrame(helper, Math.floor(helperWalkClock / .14) % 6);
           place(helper, helperPosition, helperDx < 0);
         } else {
+          helperSpeed = 0;
           setFrame(helper, 0); place(helper, helperPosition);
         }
 
         friends.forEach((friend, index) => {
           if (!friend.rescued || friend.element.hidden) return;
           if (friend.homeReached) {
+            friend.moveSpeed = 0;
             setFrame(friend.element, 0);
             place(friend.element, friend.position);
             return;
@@ -706,12 +795,16 @@
           const friendDy = followTarget.y + offsetY - friend.position.y;
           const friendDistance = Math.hypot(friendDx, friendDy);
           if (toysCanMove && friendDistance > .45) {
-            const amount = Math.min(friendDistance, deltaSeconds * (22 - index));
+            const targetSpeed = 22 - index;
+            friend.moveSpeed += (targetSpeed - friend.moveSpeed) * Math.min(1, deltaSeconds * 5);
+            const amount = Math.min(friendDistance, deltaSeconds * friend.moveSpeed);
             friend.position.x += friendDx / friendDistance * amount;
             friend.position.y += friendDy / friendDistance * amount;
-            setFrame(friend.element, Math.floor((walkClock + index * .04) / .11) % 6);
+            friend.walkClock += deltaSeconds;
+            setFrame(friend.element, Math.floor((friend.walkClock + index * .04) / .14) % 6);
             place(friend.element, friend.position, friendDx < 0);
           } else {
+            friend.moveSpeed = 0;
             setFrame(friend.element, 0); place(friend.element, friend.position);
           }
         });
@@ -746,7 +839,10 @@
         if (now >= phaseEndsAt && phase !== PHASE.COMPLETE) {
           if (phase === PHASE.AWAY) beginWarning(now);
           else if (phase === PHASE.WARNING) beginWatching(now);
-          else if (phase === PHASE.WATCHING) beginAway(now);
+          else if (phase === PHASE.WATCHING) {
+            if (!caughtThisTurn) showOutcomeMark('safe');
+            beginAway(now);
+          }
         }
         animationId = requestAnimationFrame(gameLoop);
       }
@@ -773,19 +869,7 @@
       function pressStart(event) {
         if (phase === PHASE.COMPLETE) return;
         event.preventDefault(); activePointerId = event.pointerId; targetPosition = pointerPosition(event); pointerHeld = true;
-        // 予告中も指の接地を維持し、振り向いた瞬間まで動いていたら失敗にする。
-        if (phase === PHASE.AWAY || phase === PHASE.WARNING) {
-          const dx = targetPosition.x - playerPosition.x;
-          const dy = targetPosition.y - playerPosition.y;
-          const distance = Math.hypot(dx, dy);
-          if (distance > .1) {
-            const amount = Math.min(11, distance);
-            playerPosition.x += dx / distance * amount;
-            playerPosition.y += dy / distance * amount;
-            movementHistory.unshift({ ...playerPosition });
-            place(player, playerPosition, dx < 0);
-          }
-        }
+        // 押した瞬間の位置飛びは行わず、毎フレームの加速移動で指へ自然に近づける。
         try {
           scene.setPointerCapture(event.pointerId);
         } catch (error) {

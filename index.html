@@ -61,7 +61,7 @@
             <img src="icon.png" class="w-12 h-12 rounded-2xl" alt="">
             <span>げーむのおへや</span>
         </h1>
-        <p class="text-[10px] text-rose-300 mt-1">v7.6</p>
+        <p class="text-[10px] text-rose-300 mt-1">v7.7</p>
     </div>
 
     <div class="w-full max-w-md grid grid-cols-3 gap-2 pb-10">
@@ -172,7 +172,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 // 更新はService Worker側で安全に切り替え、オフライン用キャッシュは保持する
-                navigator.serviceWorker.register('./sw.js?v=128').catch(error => {
+                navigator.serviceWorker.register('./sw.js?v=129').catch(error => {
                     console.error('オフライン機能を準備できませんでした。', error);
                 });
             });
