@@ -1,10 +1,11 @@
-const CACHE_NAME = 'ajuna-v125';
+const CACHE_NAME = 'ajuna-v126';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
   './',
   './index.html',
   './assets/kit.css',
+  './assets/landscape-prompt.css',
   './eawase.html',
   './hiragana.html',
   './kaimono.html',

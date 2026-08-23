@@ -68,14 +68,18 @@
 
   .hidden { display:none !important; }
 </style>
+<link rel="stylesheet" href="assets/landscape-prompt.css">
 </head>
 <body class="gp gp-lime gp-dark">
 
-<div class="rotate-notice">
-  <div class="ico">📱</div>
-  <h2 style="font-size:24px;font-weight:900;text-shadow:0 3px 0 #e23b3b">よこむきにしてね</h2>
-  <p style="color:#ffd84d;font-weight:800">スマホを よこにすると あそべるよ！</p>
-  <button class="rotate-go" onclick="forceLandscape()">よこむきにする 🔄</button>
+<div class="rotate-notice landscape-prompt" role="dialog" aria-modal="true" aria-label="横画面で遊ぶ案内">
+  <div class="landscape-prompt__card">
+    <div class="landscape-prompt__device" style="--landscape-prompt-icon:url('../icon_kart.png')" aria-hidden="true"></div>
+    <h2 class="landscape-prompt__title">よこで あそぼう！</h2>
+    <p class="landscape-prompt__text">このボタンで よこがめんに なるよ</p>
+    <button class="landscape-prompt__button" type="button" onclick="forceLandscape()">よこで あそぶ</button><br>
+    <a class="landscape-prompt__home" href="index.html">ゲームを えらぶ</a>
+  </div>
 </div>
 
 <div id="stage">

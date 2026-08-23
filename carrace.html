@@ -258,15 +258,19 @@
   }
 </style>
 <link rel="stylesheet" href="assets/kit.css">
+<link rel="stylesheet" href="assets/landscape-prompt.css">
 </head>
 <body class="gp gp-fuchsia">
 
 <!-- 縦向きのときの案内（横向き前提・自動回転オフの端末はボタンで横に） -->
-<div class="rotate-notice">
-  <div class="ico">📱</div>
-  <h2>よこむきにしてね</h2>
-  <p>スマホを よこにすると あそべるよ！</p>
-  <button class="rotate-go" onclick="forceLandscape()">よこむきにする 🔄</button>
+<div class="rotate-notice landscape-prompt" role="dialog" aria-modal="true" aria-label="横画面で遊ぶ案内">
+  <div class="landscape-prompt__card">
+    <div class="landscape-prompt__device" style="--landscape-prompt-icon:url('../icon_carrace.png')" aria-hidden="true"></div>
+    <h2 class="landscape-prompt__title">よこで あそぼう！</h2>
+    <p class="landscape-prompt__text">このボタンで よこがめんに なるよ</p>
+    <button class="landscape-prompt__button" type="button" onclick="forceLandscape()">よこで あそぶ</button><br>
+    <a class="landscape-prompt__home" href="index.html">ゲームを えらぶ</a>
+  </div>
 </div>
 
 <div id="stage">
@@ -847,7 +851,7 @@ function startCountdown() {
   
   // BGM再生
   bgm.currentTime = 0;
-  bgm.play().catch(e => console.log("BGM自動再生ブロック"));
+        bgm.play().catch(error => console.warn('カーレースのBGMを開始できませんでした。', error));
 
   const timer = setInterval(() => {
     count--;
@@ -965,9 +969,16 @@ document.getElementById('btn-course-heart').onclick = () => { selectedCourse = '
 function tryLockLandscape() {
   try {
     const el = document.documentElement;
-    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
-    if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
-  } catch (e) {}
+    if (el.requestFullscreen) {
+      el.requestFullscreen().catch(error => console.warn('カーレースを全画面にできませんでした。', error));
+    }
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(error => console.warn('カーレースを横向きに固定できませんでした。', error));
+    }
+  } catch (error) {
+    // 固定できない端末では、共通の横画面ボタンでCSS回転できるためゲームは継続する。
+    console.warn('カーレースの横画面準備に失敗しました。', error);
+  }
 }
 document.addEventListener('pointerdown', tryLockLandscape, { once: true });
 

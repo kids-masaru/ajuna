@@ -441,6 +441,7 @@
         }
     </style>
     <link rel="stylesheet" href="assets/kit.css">
+    <link rel="stylesheet" href="assets/landscape-prompt.css">
 </head>
 
 <body class="gp gp-purple gp-bg">
@@ -451,13 +452,14 @@
         <button id="start-btn" class="gp-btn gp-btn--lg">あそぶ！</button>
     </div>
 
-    <div id="rotate-overlay">
-        <div class="text-6xl mb-4">📱💫</div>
-        <p class="text-2xl font-bold mb-4">くるっとまわしてね</p>
-        <p class="text-lg text-gray-500 mb-8">もし画面が変わらないときは...</p>
-        <button class="rotate-btn" onclick="forceLandscape()">
-            ボタンで よこにする 🔄
-        </button>
+    <div id="rotate-overlay" class="landscape-prompt" role="dialog" aria-modal="true" aria-label="横画面で遊ぶ案内">
+        <div class="landscape-prompt__card">
+            <div class="landscape-prompt__device" style="--landscape-prompt-icon:url('../icon_piano.png')" aria-hidden="true"></div>
+            <h1 class="landscape-prompt__title">よこで あそぼう！</h1>
+            <p class="landscape-prompt__text">このボタンで よこがめんに なるよ</p>
+            <button class="landscape-prompt__button" type="button" onclick="forceLandscape()">よこで あそぶ</button><br>
+            <a class="landscape-prompt__home" href="index.html">ゲームを えらぶ</a>
+        </div>
     </div>
 
     <div id="app-container">

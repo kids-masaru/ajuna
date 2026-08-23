@@ -1,0 +1,106 @@
+/* 横向き専用ゲームで共通利用する、4歳児向けの画面切替案内。 */
+#rotate-overlay.landscape-prompt,
+.rotate-notice.landscape-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 24px;
+  color: #43382f;
+  text-align: center;
+  background: linear-gradient(155deg, #fff7ed, #d1fae5);
+}
+
+.landscape-prompt__card {
+  width: min(430px, 92vw);
+  padding: 28px 22px;
+  border: 5px solid #fff;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 14px 35px rgba(91, 70, 48, .2);
+}
+
+.landscape-prompt__device {
+  width: 132px;
+  height: 82px;
+  margin: 0 auto 18px;
+  border: 8px solid #14b8a6;
+  border-radius: 19px;
+  background-color: #ecfdf5;
+  background-image: var(--landscape-prompt-icon);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 66px 66px;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, .2);
+  animation: landscape-prompt-guide 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes landscape-prompt-guide {
+  to { transform: rotate(7deg); }
+}
+
+.landscape-prompt__title {
+  margin: 0 0 10px;
+  color: #0f766e;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1.15;
+  text-shadow: none;
+}
+
+.landscape-prompt__text {
+  margin: 0 0 18px;
+  color: #43382f;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.55;
+  letter-spacing: 0;
+}
+
+.landscape-prompt__button {
+  min-width: min(280px, 78vw);
+  padding: .78em 1.2em;
+  border: 4px solid #fff;
+  border-radius: 999px;
+  color: #fff;
+  background: #14b8a6;
+  box-shadow: 0 7px 0 #0f766e, 0 10px 20px rgba(15, 118, 110, .2);
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: clamp(1.3rem, 5vw, 1.8rem);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.landscape-prompt__button:active {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 #0f766e;
+}
+
+.landscape-prompt__home {
+  display: inline-flex;
+  margin-top: 18px;
+  color: #6b4f3b;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+@media (orientation: portrait) {
+  #rotate-overlay.landscape-prompt,
+  .rotate-notice.landscape-prompt {
+    display: flex;
+  }
+}
+
+@media (orientation: landscape) {
+  #rotate-overlay.landscape-prompt,
+  .rotate-notice.landscape-prompt {
+    display: none;
+  }
+}
