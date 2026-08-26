@@ -405,7 +405,7 @@
     state.particles = state.particles.filter(particle => particle.life > 0);
   }
 
-  function drawBackground(sceneIndex, focalPoint = .52) {
+  function drawBackground(sceneIndex, focalPoint = .52, cropScale = .94, horizontalPan = 0) {
     if (!images.scenes.complete || !images.scenes.naturalWidth) {
       context.fillStyle = sceneIndex === 1 ? '#6597dc' : '#a9e5ef';
       context.fillRect(0, 0, state.width, state.height);
@@ -414,10 +414,13 @@
     const panelWidth = images.scenes.naturalWidth / 3;
     const desiredAspect = state.width / state.height;
     // アトラス境界を少し内側へ寄せ、隣の場面が細く見えるのを防ぐ。
-    const safePanelWidth = panelWidth * .94;
+    const safePanelWidth = panelWidth * cropScale;
     let sourceHeight = Math.min(safePanelWidth / desiredAspect, images.scenes.naturalHeight);
     let sourceWidth = sourceHeight * desiredAspect;
-    const sourceX = sceneIndex * panelWidth + (panelWidth - sourceWidth) / 2;
+    const horizontalRoom = Math.max(0, panelWidth - sourceWidth);
+    const safePan = Math.max(-1, Math.min(1, horizontalPan));
+    // パネルの範囲内で切り取り位置を動かし、背景自体が横へ流れるように見せる。
+    const sourceX = sceneIndex * panelWidth + horizontalRoom / 2 + horizontalRoom / 2 * safePan;
     const sourceY = (images.scenes.naturalHeight - sourceHeight) * focalPoint;
     context.drawImage(images.scenes, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, state.width, state.height);
   }
@@ -530,7 +533,13 @@
 
   function drawFlight(now) {
     const scene = state.flightProgress < .55 ? 1 : 2;
-    drawBackground(scene, scene === 1 ? .5 : .58);
+    if (scene === 1) {
+      drawBackground(1, .5);
+    } else {
+      const treeApproach = Math.min(1, Math.max(0, (state.flightProgress - .55) / .45));
+      // 木のうろの場面は、横流れと接近ズームを同時に進めて飛行感を出す。
+      drawBackground(2, .58 + treeApproach * .04, .94 - treeApproach * .1, -.5 + treeApproach * .8);
+    }
     drawParallax();
     drawSpeedLines(.75 + state.flightProgress * .25);
     state.entities.forEach(entity => entity.type === 'seed' ? drawSeed(entity) : drawCloud(entity));
@@ -592,7 +601,9 @@
   }
 
   function drawLanding() {
-    drawBackground(2, .67);
+    const approach = Math.min(1, Math.max(0, state.landingProgress));
+    // 飛行シーンの最終位置から連続して、木のうろへ近づいていく。
+    drawBackground(2, .62 + approach * .04, .84 - approach * .1, .3 + approach * .5);
     const targetX = state.width * .68;
     const groundY = state.height * .72;
     const targetSize = Math.min(180, state.height * .45) * (1 + Math.sin(state.phaseTime * 5) * .05);
@@ -610,7 +621,7 @@
   }
 
   function drawLandingResult() {
-    drawBackground(2, .67);
+    drawBackground(2, .66, .74, .8);
     const targetX = state.width * .68;
     const groundY = state.height * .72;
     const topSize = Math.min(175, state.height * .43);
