@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v131';
+const CACHE_NAME = 'ajuna-v132';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -75,6 +75,7 @@ const LOCAL_FILES = [
   './forestflight_characters.png',
   './forestflight_girl_motion_v2.png',
   './forestflight_spin_v2.png',
+  './forestflight_spin_horizontal_v3.png',
   './forestflight_effects_v2.png',
   './icon_forestflight.png',
   './slide.html',

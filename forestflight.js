@@ -18,6 +18,7 @@
     friends: loadImage('forestflight_characters.png', '森の仲間画像'),
     girl: loadImage('forestflight_girl_motion_v2.png', '女の子の動き画像'),
     top: loadImage('forestflight_spin_v2.png', 'コマの動き画像'),
+    topSpin: loadImage('forestflight_spin_horizontal_v3.png', 'コマの横回転画像'),
     effects: loadImage('forestflight_effects_v2.png', '演出画像')
   };
 
@@ -43,7 +44,6 @@
     spawnAt: 0,
     hazardAt: 0,
     shieldUntil: 0,
-    topAngle: 0,
     flightProgress: 0,
     landingProgress: 0,
     flashUntil: 0,
@@ -172,7 +172,6 @@
     state.phaseTime = 0;
     state.outcome = '';
     state.spinValue = 0;
-    state.topAngle = 0;
     setHud(0);
     speak('ひかる ところで タッチ！');
   }
@@ -273,7 +272,6 @@
 
   function update(delta, now) {
     state.phaseTime += delta;
-    state.topAngle += delta * (state.phase === 'spin' ? 2 : 12);
     updateParticles(delta);
 
     if (state.phase === 'spin') {
@@ -282,7 +280,6 @@
       return;
     }
     if (state.phase === 'spinResult') {
-      if (state.outcome === 'good') state.topAngle += delta * 18;
       if (state.phaseTime > (state.outcome === 'good' ? 1.55 : 1.3)) {
         if (state.outcome === 'good') beginTakeoff(); else beginSpin();
       }
@@ -323,7 +320,8 @@
   function updatePlayer(delta) {
     const player = state.player;
     if (state.pointerHeld) {
-      const follow = 1 - Math.pow(.00001, delta);
+      // 指へ瞬間移動せず、少し遅れて追いつくことで飛んでいる重さと勢いを見せる。
+      const follow = 1 - Math.pow(.001, delta);
       player.x += (player.targetX - player.x) * follow;
       player.y += (player.targetY - player.y) * follow;
       player.vx = (player.targetX - player.x) * 4;
@@ -436,6 +434,17 @@
     context.restore();
   }
 
+  function drawHorizontalSpinTop(centerX, centerY, size, framesPerSecond = 11, alpha = 1) {
+    // 画像全体を傾けず、6枚の周方向差分を切り替えて本物のコマらしい横回転に見せる。
+    if (!images.topSpin.complete || !images.topSpin.naturalWidth) {
+      // 新素材だけが読めない場合も、旧素材の直立コマを表示して遊びを続けられるようにする。
+      drawCell(images.top, 3, 2, 2, 0, centerX, centerY, size, 0, alpha);
+      return;
+    }
+    const frameIndex = Math.floor(performance.now() * framesPerSecond / 1000) % 6;
+    drawCell(images.topSpin, 3, 2, frameIndex % 3, Math.floor(frameIndex / 3), centerX, centerY, size, 0, alpha);
+  }
+
   function drawSpinScene() {
     drawBackground(0, .66);
     const topX = state.width * .53;
@@ -443,16 +452,16 @@
     const girlSize = Math.min(230, state.height * .58);
     drawCell(images.girl, 3, 3, 2, 0, state.width * .29, groundY - girlSize * .26, girlSize);
 
-    let topColumn = 0;
-    let topRow = 0;
-    let rotation = state.topAngle;
-    if (state.phase === 'spin') topColumn = state.spinValue > .32 ? 1 : 0;
-    if (state.phase === 'spinResult') {
-      if (state.outcome === 'good') topColumn = 2;
-      if (state.outcome === 'weak') { topColumn = Math.floor(state.phaseTime * 7) % 2; topRow = 1; rotation = 0; }
-      if (state.outcome === 'strong') { topColumn = 2; topRow = 1; rotation = 0; }
+    const topSize = Math.min(190, state.height * .46);
+    if (state.phase === 'spinResult' && state.outcome === 'good') {
+      drawHorizontalSpinTop(topX, groundY, topSize, 10);
+    } else {
+      let topColumn = 0;
+      let topRow = 0;
+      if (state.phase === 'spinResult' && state.outcome === 'weak') { topColumn = Math.floor(state.phaseTime * 7) % 2; topRow = 1; }
+      if (state.phase === 'spinResult' && state.outcome === 'strong') { topColumn = 2; topRow = 1; }
+      drawCell(images.top, 3, 2, topColumn, topRow, topX, groundY, topSize);
     }
-    drawCell(images.top, 3, 2, topColumn, topRow, topX, groundY, Math.min(190, state.height * .46), rotation);
     if (state.phase === 'spin') drawTimingMeter(state.spinValue, spinWindow(), false);
   }
 
@@ -500,7 +509,7 @@
     const progress = Math.min(1, state.phaseTime / 2.65);
     const topX = state.width * (.53 + progress * .15);
     const topY = state.height * (.69 - Math.max(0, progress - .52) * .76);
-    drawCell(images.top, 3, 2, 2, 0, topX, topY, Math.min(180, state.height * .44), state.topAngle);
+    drawHorizontalSpinTop(topX, topY, Math.min(180, state.height * .44), 11);
 
     const girlSize = Math.min(230, state.height * .58);
     let girlColumn = Math.floor(state.phaseTime * 8) % 2;
@@ -577,8 +586,8 @@
       context.stroke();
       context.restore();
     }
-    // 女の子とコマを別々に描き、コマだけを高速回転させても女の子が回らないようにする。
-    drawCell(images.top, 3, 2, 2, 0, player.x, player.y + topSize * .23 + bob, topSize, state.topAngle);
+    // 女の子とコマを別々に描き、コマだけを横回転させても女の子が回らないようにする。
+    drawHorizontalSpinTop(player.x, player.y + topSize * .23 + bob, topSize, 12);
     drawCell(images.girl, 3, 3, girlFrame, 1, player.x, player.y - girlSize * .12 + bob, girlSize, tilt);
   }
 
@@ -594,7 +603,7 @@
     const topY = groundY - 28 - arc * state.height * .44;
     const topSize = Math.min(160, state.height * .39);
     const girlSize = Math.min(215, state.height * .53);
-    drawCell(images.top, 3, 2, 2, 0, topX, topY + topSize * .18, topSize, state.topAngle);
+    drawHorizontalSpinTop(topX, topY + topSize * .18, topSize, 11);
     drawCell(images.girl, 3, 3, state.landingProgress < .69 ? 2 : 0, 1, topX, topY - girlSize * .16, girlSize, 0);
     const windowSize = landingWindow();
     drawTimingMeter(state.landingProgress, { start: .69 - windowSize, end: .69 + windowSize }, true);
@@ -608,7 +617,8 @@
     const girlSize = Math.min(230, state.height * .58);
     if (state.outcome === 'good') {
       drawCell(images.effects, 3, 2, 0, 0, targetX, groundY - 24, Math.min(240, state.height * .62), state.phaseTime * .4, .9);
-      drawCell(images.top, 3, 2, 1, 0, targetX, groundY, topSize, state.topAngle * Math.max(0, 1 - state.phaseTime / 2));
+      if (state.phaseTime < 1.2) drawHorizontalSpinTop(targetX, groundY, topSize, Math.max(2, 10 - state.phaseTime * 6));
+      else drawCell(images.top, 3, 2, 0, 0, targetX, groundY, topSize);
       const frame = state.phaseTime < 1.1 ? 1 : 2;
       drawCell(images.girl, 3, 3, frame, 2, targetX, groundY - girlSize * .27, girlSize);
       return;
@@ -689,10 +699,6 @@
     const point = pointerPosition(event);
     state.player.targetX = point.x;
     state.player.targetY = point.y;
-    // 押した瞬間から指の位置へ合わせ、幼児の速い操作でもキャラクターを置き去りにしない。
-    state.player.x = point.x;
-    state.player.y = point.y;
-    clampPlayer();
     try {
       canvas.setPointerCapture(event.pointerId);
     } catch (error) {
@@ -706,10 +712,6 @@
     const point = pointerPosition(event);
     state.player.targetX = point.x;
     state.player.targetY = point.y;
-    // 補間ではなく指の座標を直接使い、「触っている場所についてくる」感触を優先する。
-    state.player.x = point.x;
-    state.player.y = point.y;
-    clampPlayer();
   }
 
   function pointerEnd(event) {
