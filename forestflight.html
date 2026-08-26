@@ -43,10 +43,7 @@
     h1 { font-size: clamp(1.8rem, 6.5vh, 3.5rem); }
     h2 { font-size: clamp(2rem, 8vh, 3.8rem); }
     .lead { margin: 9px 0 13px; color: #526a50; font-size: clamp(.94rem, 3.2vh, 1.35rem); font-weight: 900; }
-    .start-picture {
-      display: flex; justify-content: center; align-items: center; gap: 13px; margin: 10px auto 14px;
-      font-size: clamp(2rem, 7vh, 3.5rem);
-    }
+    .start-picture { display: flex; justify-content: center; align-items: center; gap: 13px; margin: 10px auto 14px; }
     .finger-mark {
       width: 72px; height: 48px; border: 5px solid #fff; border-radius: 999px;
       background: radial-gradient(circle at 72% 50%, #fff 0 9px, #f8b84e 10px 17px, transparent 18px), #9be4ca;
@@ -84,10 +81,10 @@
     .stage-dot.done { background: #21b87c; }
     .stage-dot.now { background: #ffd45c; box-shadow: 0 0 0 4px rgba(255,212,92,.38); }
     .seed-mini {
-      width: 24px; height: 28px; background: url('forestflight_characters.png') 100% 0% / 300% 200% no-repeat;
-      transform: rotate(12deg); opacity: .25; filter: saturate(.4);
+      width: 25px; height: 25px; border: 3px solid #fff; border-radius: 50%;
+      background: #d5e5da; opacity: .55;
     }
-    .seed-mini.got { opacity: 1; filter: drop-shadow(0 0 6px #ffe568); }
+    .seed-mini.got { background: #ffd85d; opacity: 1; box-shadow: 0 0 9px #ffe66c; }
     #stage-flash {
       position: absolute; inset: 0; z-index: 22; display: grid; place-items: center; pointer-events: none;
       background: rgba(255,255,255,.22); backdrop-filter: blur(2px);
@@ -101,6 +98,12 @@
     .flash-mark::before {
       content: ''; width: 32%; height: 56%; border-right: 13px solid #fff; border-bottom: 13px solid #fff;
       transform: translateY(-8%) rotate(45deg);
+    }
+    #stage-flash.fail { background: rgba(255,245,223,.18); }
+    #stage-flash.fail .flash-mark { background: #f0a34a; box-shadow: 0 0 0 14px rgba(255,236,174,.7), 0 15px 34px rgba(104,65,24,.2); }
+    #stage-flash.fail .flash-mark::before {
+      width: 48%; height: 13px; border: 0; border-radius: 999px; background: #fff;
+      transform: rotate(-12deg);
     }
     @keyframes pop { from { transform: scale(.25) rotate(-20deg); opacity: 0; } }
     .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 14px; }
@@ -189,7 +192,7 @@
     </div>
   </div>
 
-  <script>
+  <script type="text/plain" id="legacy-forestflight-script">
     (() => {
       'use strict';
       const canvas = document.getElementById('game-canvas');
@@ -584,5 +587,6 @@
       });
     })();
   </script>
+  <script src="forestflight.js?v=131"></script>
 </body>
 </html>
