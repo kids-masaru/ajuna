@@ -84,6 +84,129 @@
             background-repeat: no-repeat;
         }
 
+        .checkout-scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #f8ddad url('kaimono_checkout_scene_v3.png') center / 100% 100% no-repeat;
+        }
+
+        .checkout-customer {
+            position: absolute;
+            left: 3%;
+            bottom: 1%;
+            z-index: 12;
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            pointer-events: none;
+            filter: drop-shadow(0 8px 10px rgba(74, 40, 16, .25));
+        }
+
+        .checkout-customer > img {
+            width: clamp(82px, 17vh, 132px);
+            height: clamp(82px, 17vh, 132px);
+            object-fit: contain;
+        }
+
+        .checkout-customer .picture-basket {
+            width: clamp(120px, 19vw, 190px);
+        }
+
+        .checkout-target {
+            position: absolute;
+            left: 46%;
+            top: 76%;
+            z-index: 10;
+            width: clamp(92px, 14vw, 150px);
+            aspect-ratio: 1.7;
+            transform: translate(-50%, -50%);
+            border: 5px dashed rgba(255, 239, 126, .95);
+            border-radius: 999px;
+            background: rgba(255,255,255,.18);
+            box-shadow: 0 0 0 8px rgba(255,255,255,.45), 0 0 28px rgba(255,220,84,.9);
+            animation: checkout-target-pulse 1s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes checkout-target-pulse {
+            to { transform: translate(-50%, -50%) scale(1.1); filter: brightness(1.16); }
+        }
+
+        .checkout-payment {
+            position: absolute;
+            left: 23%;
+            top: 70%;
+            z-index: 25;
+            width: clamp(72px, 11vw, 116px);
+            aspect-ratio: 1;
+            padding: 0;
+            border: 0;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: transparent;
+            filter: drop-shadow(0 10px 8px rgba(91, 53, 8, .3));
+            touch-action: none;
+            cursor: grab;
+            transition: left .62s cubic-bezier(.2,.9,.3,1), top .62s cubic-bezier(.2,.9,.3,1), transform .62s ease, opacity .62s ease;
+        }
+
+        .checkout-payment.dragging { transition: none; cursor: grabbing; }
+        .checkout-payment.sending { left: 46%; top: 76%; transform: translate(-50%, -50%) scale(.42) rotate(360deg); opacity: .2; }
+        .checkout-payment.paid { opacity: 0; pointer-events: none; }
+
+        .checkout-coin {
+            display: grid;
+            place-items: center;
+            width: 100%;
+            height: 100%;
+            border: clamp(5px, .7vw, 9px) solid #fff4a4;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 28%, #fff7a0 0 9%, #ffd748 31%, #efa91d 72%, #c97910 100%);
+            box-shadow: inset 0 0 0 7px rgba(255,255,255,.35), 0 0 0 7px rgba(255,213,64,.35);
+        }
+
+        .checkout-coin img { width: 58%; height: 58%; object-fit: contain; }
+
+        .checkout-success {
+            position: absolute;
+            inset: 0;
+            z-index: 40;
+            display: grid;
+            place-items: center;
+            background: rgba(255,255,255,.38);
+            backdrop-filter: blur(3px);
+            animation: checkout-success-in .3s ease-out;
+        }
+
+        .checkout-success__card {
+            display: grid;
+            place-items: center;
+            gap: 5px;
+            min-width: min(52vw, 430px);
+            padding: 16px 32px;
+            border: 7px solid #fff;
+            border-radius: 36px;
+            color: #18794e;
+            background: rgba(241,255,245,.96);
+            box-shadow: 0 14px 34px rgba(34,84,55,.24);
+        }
+
+        .checkout-success__mark {
+            display: grid;
+            place-items: center;
+            width: clamp(70px, 15vh, 112px);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            color: white;
+            background: #24bd68;
+            box-shadow: 0 0 0 10px rgba(106,223,150,.28);
+        }
+
+        .checkout-success__card h2 { margin: 0; font-size: clamp(1.5rem, 7vh, 3rem); }
+        @keyframes checkout-success-in { from { opacity: 0; transform: scale(.7); } }
+
         .picture-basket {
             position: relative;
             width: clamp(150px, 25vw, 230px);
@@ -363,6 +486,13 @@
             const basketRef = useRef(null);
             const dragTimerRef = useRef(null);
             const dragActiveRef = useRef(false);
+            const [paymentPhase, setPaymentPhase] = useState('ready');
+            const [paymentDrag, setPaymentDrag] = useState(null);
+            const checkoutSceneRef = useRef(null);
+            const checkoutTargetRef = useRef(null);
+            const paymentPointerRef = useRef(null);
+            const paymentLockedRef = useRef(false);
+            const checkoutTimersRef = useRef([]);
 
             const [isMuted, setIsMuted] = useState(false);
             const audioCtx = useRef(null);
@@ -426,16 +556,20 @@
 
             useEffect(() => {
                 if (bgmRef.current) bgmRef.current.muted = isMuted;
-                if (gameState === 'playing' && !isMuted) startBGM();
+                if ((gameState === 'playing' || gameState === 'checkout') && !isMuted) startBGM();
                 else if (isMuted) { }
             }, [isMuted, gameState]);
 
-            useEffect(() => { if (gameState === 'playing') startBGM(); else stopBGM(); }, [gameState]);
+            useEffect(() => { if (gameState === 'playing' || gameState === 'checkout') startBGM(); else stopBGM(); }, [gameState]);
 
             useEffect(() => {
-                document.body.classList.toggle('shopping-active', gameState === 'playing' || gameState === 'result');
+                document.body.classList.toggle('shopping-active', gameState === 'playing' || gameState === 'checkout');
                 return () => document.body.classList.remove('shopping-active');
             }, [gameState]);
+
+            useEffect(() => () => {
+                checkoutTimersRef.current.forEach(timer => clearTimeout(timer));
+            }, []);
 
             // Robust Drag & Drop using Window Listeners
             useEffect(() => {
@@ -467,6 +601,12 @@
 
             const startShopping = (shop) => {
                 initAudio();
+                checkoutTimersRef.current.forEach(timer => clearTimeout(timer));
+                checkoutTimersRef.current = [];
+                paymentLockedRef.current = false;
+                paymentPointerRef.current = null;
+                setPaymentPhase('ready');
+                setPaymentDrag(null);
                 const pool = [...shop.items, ...shop.items, ...shop.items].sort(() => 0.5 - Math.random());
                 const shelfContent = pool.slice(0, 20).map((item, idx) => ({ ...item, uniqueId: `${item.id}-${idx}` }));
                 const uniqueItemsOnShelf = [...new Set(shelfContent.map(i => i.id))].map(id => shop.items.find(i => i.id === id));
@@ -492,8 +632,11 @@
                     playSound(1046, 'sine');
                     speak(`${item.name}、オッケー！`);
                     if (newFound.length === targetItems.length) {
-                        setGameState('result');
-                        speak("やったー！ぜんぶかえたね！");
+                        paymentLockedRef.current = false;
+                        setPaymentPhase('ready');
+                        setPaymentDrag(null);
+                        setGameState('checkout');
+                        speak("やったー！ レジで おかねを わたしてね！");
                     }
                 } else {
                     playSound(200, 'triangle');
@@ -525,6 +668,63 @@
                 dragTimerRef.current = null;
                 dragActiveRef.current = false;
                 setDragState(null);
+            };
+
+            const finishPayment = () => {
+                if (paymentLockedRef.current) return;
+                paymentLockedRef.current = true;
+                paymentPointerRef.current = null;
+                setPaymentDrag(null);
+                setPaymentPhase('sending');
+                playSound(784, 'sine');
+                const paidTimer = setTimeout(() => {
+                    setPaymentPhase('paid');
+                    playSound(1046, 'sine');
+                    speak("オッケー！ ありがとう！ またきてね！");
+                }, 620);
+                const exitTimer = setTimeout(() => {
+                    setGameState('select_shop');
+                    setPaymentPhase('ready');
+                    paymentLockedRef.current = false;
+                }, 2700);
+                checkoutTimersRef.current.push(paidTimer, exitTimer);
+            };
+
+            const handlePaymentPointerDown = (event) => {
+                if (paymentLockedRef.current || !checkoutSceneRef.current) return;
+                event.preventDefault();
+                const sceneRect = checkoutSceneRef.current.getBoundingClientRect();
+                paymentPointerRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY };
+                setPaymentDrag({ x: event.clientX - sceneRect.left, y: event.clientY - sceneRect.top });
+                try {
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                } catch (error) {
+                    // 指の固定に失敗しても、タップ会計で必ず進める。
+                    console.warn('会計コインの指追跡を固定できませんでした。', error);
+                }
+            };
+
+            const handlePaymentPointerMove = (event) => {
+                const pointer = paymentPointerRef.current;
+                if (!pointer || pointer.pointerId !== event.pointerId || !checkoutSceneRef.current) return;
+                event.preventDefault();
+                const sceneRect = checkoutSceneRef.current.getBoundingClientRect();
+                setPaymentDrag({ x: event.clientX - sceneRect.left, y: event.clientY - sceneRect.top });
+            };
+
+            const handlePaymentPointerUp = (event) => {
+                const pointer = paymentPointerRef.current;
+                if (!pointer || pointer.pointerId !== event.pointerId) return;
+                event.preventDefault();
+                const targetRect = checkoutTargetRef.current && checkoutTargetRef.current.getBoundingClientRect();
+                const onTarget = targetRect && event.clientX >= targetRect.left && event.clientX <= targetRect.right && event.clientY >= targetRect.top && event.clientY <= targetRect.bottom;
+                const shortTap = Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY) < 18;
+                paymentPointerRef.current = null;
+                if (onTarget || shortTap) finishPayment();
+                else {
+                    setPaymentDrag(null);
+                    speak("レジの ひかるところに わたしてね！");
+                }
             };
 
             return (
@@ -566,7 +766,7 @@
                         </div>
                     )}
 
-                    {gameState === 'playing' || gameState === 'result' ? (
+                    {gameState === 'playing' ? (
                         <div className="shop-scene relative w-full h-full flex flex-col" style={{ backgroundPosition: scenePosition(currentShop.sceneSlot) }}>
 
                             {/* Clipboard Shopping List (Sidebar) */}
@@ -620,21 +820,42 @@
                                 </div>
                             </div>
 
-                            {/* Result */}
-                            {gameState === 'result' && (
-                                <div className="absolute inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                                    <div className="bg-white rounded-[2rem] p-6 shadow-2xl border-8 border-yellow-400 text-center animate-in zoom-in">
-                                        <img src="ui_sparkle_128.png" alt="" className="w-20 h-20 object-contain mx-auto gp-float mb-2" />
-                                        <h2 className="gp-title" style={{ color: 'var(--gp-accent-d)' }}>じょうず！</h2>
-                                        <div className="flex gap-4 mt-6 justify-center">
-                                            <button onClick={() => startShopping(currentShop)} className="gp-btn gp-btn--sm pointer-events-auto">もういっかい</button>
-                                            <button onClick={() => setGameState('select_shop')} className="gp-btn gp-btn--sm gp-btn--ghost pointer-events-auto">おみせへ</button>
-                                        </div>
+                        </div>
+                    ) : null}
+
+                    {gameState === 'checkout' && (
+                        <div ref={checkoutSceneRef} className="checkout-scene">
+                            <div ref={checkoutTargetRef} className="checkout-target" aria-hidden="true"></div>
+                            <div className="checkout-customer" aria-hidden="true">
+                                <img src="osewa_title_girl_512.png" alt="" draggable="false" />
+                                <PictureBasket>
+                                    {foundItems.map((item, idx) => (
+                                        <AtlasIcon key={`${item.id}-checkout-${idx}`} shop={currentShop} item={item} variant="cart" />
+                                    ))}
+                                </PictureBasket>
+                            </div>
+                            <button
+                                type="button"
+                                className={`checkout-payment ${paymentDrag ? 'dragging' : ''} ${paymentPhase}`}
+                                style={paymentDrag ? { left: paymentDrag.x, top: paymentDrag.y } : undefined}
+                                onPointerDown={handlePaymentPointerDown}
+                                onPointerMove={handlePaymentPointerMove}
+                                onPointerUp={handlePaymentPointerUp}
+                                onPointerCancel={() => { paymentPointerRef.current = null; setPaymentDrag(null); }}
+                                aria-label="おかねをレジにわたす"
+                            >
+                                <span className="checkout-coin"><img src="ui_sparkle_128.png" alt="" draggable="false" /></span>
+                            </button>
+                            {paymentPhase === 'paid' && (
+                                <div className="checkout-success" aria-live="polite">
+                                    <div className="checkout-success__card">
+                                        <span className="checkout-success__mark"><Check size={72} /></span>
+                                        <h2>ありがとう！</h2>
                                     </div>
                                 </div>
                             )}
                         </div>
-                    ) : null}
+                    )}
                 </div>
             );
         }

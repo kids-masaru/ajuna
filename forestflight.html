@@ -113,12 +113,23 @@
     }
     #result-friends { display: flex; justify-content: center; align-items: end; gap: 5px; margin: 8px auto; }
     .friend-face {
-      width: min(17vh, 94px); aspect-ratio: 1; background-image: url('forestflight_characters.png');
-      background-size: 300% 200%; background-repeat: no-repeat; filter: drop-shadow(0 6px 6px rgba(31,75,50,.2));
+      position: relative; width: min(17vh, 94px); height: min(17vh, 94px); padding: 0; border: 0; overflow: hidden; cursor: pointer;
+      background: transparent; filter: drop-shadow(0 6px 6px rgba(31,75,50,.2));
+      transform-origin: center bottom; touch-action: manipulation;
     }
-    .friend-face.squirrel { background-position: 0% 100%; }
-    .friend-face.bird { background-position: 50% 100%; }
-    .friend-face.rabbit { background-position: 100% 100%; }
+    .friend-face.bird { width: min(21vh, 118px); }
+    .friend-face.rabbit { width: min(14vh, 78px); }
+    .friend-face img { position: absolute; top: 0; height: 100%; width: auto; max-width: none; pointer-events: none; }
+    .friend-face.squirrel img { left: 0; }
+    .friend-face.bird img { left: -78%; }
+    .friend-face.rabbit img { right: 0; }
+    .friend-face:focus { outline: 0; }
+    .friend-face:focus-visible { outline: 4px solid #f6c94d; outline-offset: 3px; border-radius: 22px; }
+    .friend-face.popped { animation: friend-pop 1.05s cubic-bezier(.2,1.2,.42,1); }
+    @keyframes friend-pop {
+      35%, 65% { transform: translateY(-10px) scale(1.42) rotate(-5deg); }
+      84% { transform: translateY(-3px) scale(.94) rotate(3deg); }
+    }
     #rotate-overlay { display: none; }
     @media (orientation: portrait) {
       #orientation-stage { display: none; }
@@ -170,8 +181,10 @@
         <img class="title-icon" src="icon_forestflight.png" alt="女の子が木のこまで空を飛んでいる絵">
         <div class="result-card">
           <h2>ついた！</h2>
-          <div id="result-friends" aria-hidden="true">
-            <i class="friend-face squirrel"></i><i class="friend-face bird"></i><i class="friend-face rabbit"></i>
+          <div id="result-friends">
+            <button type="button" class="friend-face squirrel" aria-label="りすさん"><img src="forestflight_friends_v2.png" alt="" draggable="false"></button>
+            <button type="button" class="friend-face bird" aria-label="とりさん"><img src="forestflight_friends_v2.png" alt="" draggable="false"></button>
+            <button type="button" class="friend-face rabbit" aria-label="うさぎさん"><img src="forestflight_friends_v2.png" alt="" draggable="false"></button>
           </div>
           <div class="result-actions">
             <button id="again-btn" class="main-btn" type="button">もういっかい！</button>
@@ -587,6 +600,6 @@
       });
     })();
   </script>
-  <script src="forestflight.js?v=133"></script>
+  <script src="forestflight.js?v=134"></script>
 </body>
 </html>

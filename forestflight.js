@@ -12,15 +12,30 @@
   const landscapeButton = document.getElementById('landscape-btn');
   const stageDots = [...document.querySelectorAll('.stage-dot')];
   const seedMarks = [...document.querySelectorAll('.seed-mini')];
+  const friendButtons = [...document.querySelectorAll('.friend-face')];
 
   const images = {
     scenes: loadImage('forestflight_scenes.png', '背景画像'),
     friends: loadImage('forestflight_characters.png', '森の仲間画像'),
+    friendStrip: loadImage('forestflight_friends_v2.png', '森の仲間専用画像'),
     girl: loadImage('forestflight_girl_motion_v2.png', '女の子の動き画像'),
     top: loadImage('forestflight_spin_v2.png', 'コマの動き画像'),
     topSpin: loadImage('forestflight_spin_horizontal_v3.png', 'コマの横回転画像'),
     effects: loadImage('forestflight_effects_v2.png', '演出画像')
   };
+
+  // 飛行の進行に合わせ、森の仲間を1匹ずつ見つけられるようにする。
+  const FRIEND_PLAN = [
+    { at: .16, column: 0, y: .28, label: 'りすさん' },
+    { at: .42, column: 1, y: .68, label: 'とりさん' },
+    { at: .67, column: 2, y: .26, label: 'うさぎさん' }
+  ];
+  // 生成素材は鳥の翼幅が広いため、等分ではなく各キャラクターの実際の範囲を切り出す。
+  const FRIEND_CROPS = [
+    { x: 0, width: .32 },
+    { x: .32, width: .41 },
+    { x: .73, width: .27 }
+  ];
 
   // 3つの遊びを1本のアニメーションループでつなぎ、画面遷移時の読み込み待ちをなくす。
   const state = {
@@ -43,6 +58,7 @@
     collected: 0,
     spawnAt: 0,
     hazardAt: 0,
+    friendIndex: 0,
     shieldUntil: 0,
     flightProgress: 0,
     landingProgress: 0,
@@ -219,6 +235,7 @@
     state.particles = [];
     state.spawnAt = .7;
     state.hazardAt = 1.8;
+    state.friendIndex = 0;
     state.shieldUntil = 0;
     const startX = state.width * .24;
     const startY = state.height * .54;
@@ -302,6 +319,10 @@
         spawnCloud();
         state.hazardAt += 3.4;
       }
+      while (state.friendIndex < FRIEND_PLAN.length && state.flightProgress >= FRIEND_PLAN[state.friendIndex].at) {
+        spawnFriend(FRIEND_PLAN[state.friendIndex]);
+        state.friendIndex += 1;
+      }
       if (state.flightProgress >= 1) beginLanding();
       return;
     }
@@ -349,10 +370,28 @@
     state.entities.push({ type: 'cloud', x: state.width + 100, y: state.height * (.18 + Math.random() * .62), vx: -(215 + Math.random() * 35), radius: 46, phase: Math.random() * 6 });
   }
 
+  function spawnFriend(plan) {
+    state.entities.push({
+      type: 'friend',
+      x: state.width + 90,
+      y: state.height * plan.y,
+      vx: -(92 + plan.column * 7),
+      radius: 48,
+      phase: Math.random() * 6,
+      column: plan.column,
+      label: plan.label,
+      popUntil: 0
+    });
+  }
+
   function updateFlightEntities(delta, now) {
     state.entities.forEach(entity => {
       entity.x += entity.vx * delta;
       entity.spin = (entity.spin || 0) + delta * 3;
+      if (entity.type === 'friend') {
+        if (entity.x < -130) entity.dead = true;
+        return;
+      }
       const hitDistance = state.player.radius + entity.radius * (entity.type === 'seed' ? .66 : .78);
       if (Math.hypot(state.player.x - entity.x, state.player.y - entity.y) < hitDistance) {
         if (entity.type === 'seed') collectSeed(entity);
@@ -542,7 +581,11 @@
     }
     drawParallax();
     drawSpeedLines(.75 + state.flightProgress * .25);
-    state.entities.forEach(entity => entity.type === 'seed' ? drawSeed(entity) : drawCloud(entity));
+    state.entities.forEach(entity => {
+      if (entity.type === 'seed') drawSeed(entity);
+      else if (entity.type === 'friend') drawFriend(entity, now);
+      else drawCloud(entity);
+    });
     drawFlyingPlayer(now);
   }
 
@@ -645,6 +688,36 @@
     drawCell(images.friends, 3, 2, 2, 0, entity.x, entity.y, 72, Math.sin(entity.spin) * .14);
   }
 
+  function drawFriend(entity, now) {
+    const bob = Math.sin(state.phaseTime * 3 + entity.phase) * 8;
+    const popProgress = Math.max(0, (entity.popUntil - now) / 680);
+    const popScale = 1 + Math.sin(popProgress * Math.PI) * .48;
+    const baseSize = entity.column === 1 ? 118 : 108;
+    if (popProgress > 0) {
+      context.save();
+      context.globalAlpha = popProgress * .65;
+      context.fillStyle = '#fff3a5';
+      context.beginPath();
+      context.arc(entity.x, entity.y + bob, baseSize * .52 * popScale, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+    }
+    drawFriendSprite(entity.column, entity.x, entity.y + bob, baseSize * popScale, Math.sin(state.phaseTime * 2 + entity.phase) * .045);
+  }
+
+  function drawFriendSprite(column, centerX, centerY, height, rotation) {
+    if (!images.friendStrip.complete || !images.friendStrip.naturalWidth) return;
+    const crop = FRIEND_CROPS[column];
+    const sourceX = images.friendStrip.naturalWidth * crop.x;
+    const sourceWidth = images.friendStrip.naturalWidth * crop.width;
+    const destinationWidth = height * sourceWidth / images.friendStrip.naturalHeight;
+    context.save();
+    context.translate(centerX, centerY);
+    context.rotate(rotation);
+    context.drawImage(images.friendStrip, sourceX, 0, sourceWidth, images.friendStrip.naturalHeight, -destinationWidth / 2, -height / 2, destinationWidth, height);
+    context.restore();
+  }
+
   function drawCloud(entity) {
     context.save();
     context.translate(entity.x, entity.y + Math.sin(state.phaseTime * 2 + entity.phase) * 5);
@@ -705,9 +778,10 @@
     prepareAudio();
     if (state.phase === 'spin') { judgeSpin(); return; }
     if (state.phase === 'landing') { judgeLanding(); return; }
+    const point = pointerPosition(event);
+    if (popFriendAt(point, performance.now())) return;
     state.pointerId = event.pointerId;
     state.pointerHeld = true;
-    const point = pointerPosition(event);
     state.player.targetX = point.x;
     state.player.targetY = point.y;
     try {
@@ -732,9 +806,30 @@
     state.pointerId = null;
   }
 
+  function popFriendAt(point, now) {
+    const friend = state.entities.find(entity => entity.type === 'friend' && Math.hypot(point.x - entity.x, point.y - entity.y) <= entity.radius * 1.45);
+    if (!friend) return false;
+    friend.popUntil = now + 680;
+    scatter(friend.x, friend.y, '#fff08a', 12);
+    playTone(760 + friend.column * 120, .2);
+    speak(friend.label);
+    return true;
+  }
+
   landscapeButton.addEventListener('click', forceLandscape);
   startButton.addEventListener('click', startGame);
   againButton.addEventListener('click', startGame);
+  friendButtons.forEach((button, index) => {
+    button.addEventListener('click', () => {
+      prepareAudio();
+      button.classList.remove('popped');
+      // 連続でタップしても、毎回大きく弾む反応を再生する。
+      void button.offsetWidth;
+      button.classList.add('popped');
+      playTone(760 + index * 120, .2);
+      speak(['りすさん', 'とりさん', 'うさぎさん'][index]);
+    });
+  });
   canvas.addEventListener('pointerdown', pointerStart);
   canvas.addEventListener('pointermove', pointerMove);
   canvas.addEventListener('pointerup', pointerEnd);

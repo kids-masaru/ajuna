@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ajuna-v133';
+const CACHE_NAME = 'ajuna-v134';
 
 // ローカルファイル（インストール時にまとめてキャッシュ）
 const LOCAL_FILES = [
@@ -41,6 +41,7 @@ const LOCAL_FILES = [
   './kaimono_items_flowers_atlas.png',
   './kaimono_items_convenience_atlas.png',
   './kaimono_shop_scenes_v2.png',
+  './kaimono_checkout_scene_v3.png',
   './ui_shopping_basket_v2.png',
   './icon_hiragana.png',
   './icon_eawase.png',
@@ -73,6 +74,7 @@ const LOCAL_FILES = [
   './forestflight.js',
   './forestflight_scenes.png',
   './forestflight_characters.png',
+  './forestflight_friends_v2.png',
   './forestflight_girl_motion_v2.png',
   './forestflight_spin_v2.png',
   './forestflight_spin_horizontal_v3.png',
