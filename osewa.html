@@ -604,6 +604,227 @@ body {
   justify-content: center;
 }
 
+/* ===== 4歳向けレジ会計 ===== */
+#checkout-shop-btn {
+  position: fixed;
+  right: 14px;
+  bottom: max(80px, 11%);
+  z-index: 14;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 126px;
+  height: 62px;
+  padding: 0 8px 0 56px;
+  border: 4px solid #fff;
+  border-radius: 24px;
+  color: #7c3f58;
+  background: #fff7ed url('ui_location_shop_256.png') 8px center / 46px 46px no-repeat;
+  box-shadow: 0 5px 0 #e9a5bf, 0 8px 18px rgba(94,45,64,.2);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.1;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#checkout-shop-btn.ready { display: flex; animation: checkout-btn-ready 1.35s ease-in-out infinite; }
+#checkout-shop-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #e9a5bf; }
+@keyframes checkout-btn-ready {
+  50% { transform: translateY(-5px) scale(1.04); filter: drop-shadow(0 0 9px rgba(255,213,72,.8)); }
+}
+
+#osewa-checkout {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: none;
+  overflow: hidden;
+  background: linear-gradient(#fff7df 0 46%, #fce7f3 72%, #fbcfe8 100%);
+  user-select: none;
+  touch-action: manipulation;
+}
+#osewa-checkout.active { display: block; }
+body.checkout-open > .gp-home { display: none !important; }
+
+#osewa-checkout-scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  aspect-ratio: 3 / 2;
+  max-height: 53%;
+  background: #f8ddad url('kaimono_checkout_scene_v3.png') center top / 100% 100% no-repeat;
+  box-shadow: 0 8px 18px rgba(92,55,28,.18);
+}
+
+#checkout-sample-wrap {
+  position: absolute;
+  top: 7%;
+  left: 6%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: clamp(112px, 31vw, 160px);
+  height: clamp(84px, 23vw, 116px);
+  border: 6px solid #fff;
+  border-radius: 28px;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 7px 18px rgba(79,46,20,.2), 0 0 0 7px rgba(255,217,85,.46);
+  animation: checkout-sample-pulse 1.1s ease-in-out infinite alternate;
+}
+@keyframes checkout-sample-pulse { to { transform: scale(1.06); } }
+
+#checkout-tray-target {
+  position: absolute;
+  left: 46%;
+  top: 76%;
+  z-index: 2;
+  width: clamp(84px, 25vw, 132px);
+  aspect-ratio: 1.7;
+  transform: translate(-50%, -50%);
+  border: 5px dashed rgba(255,243,147,.98);
+  border-radius: 999px;
+  box-shadow: 0 0 0 7px rgba(255,255,255,.42), 0 0 25px rgba(255,215,45,.88);
+  animation: checkout-tray-pulse 1s ease-in-out infinite alternate;
+}
+@keyframes checkout-tray-pulse { to { transform: translate(-50%, -50%) scale(1.12); } }
+
+#checkout-choice-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  min-height: 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(9px, 3vw, 18px);
+  padding: 42px 12px max(22px, env(safe-area-inset-bottom));
+}
+
+.checkout-money-choice {
+  display: grid;
+  place-items: center;
+  width: clamp(94px, 28vw, 142px);
+  min-height: clamp(104px, 30vw, 150px);
+  padding: 10px 5px;
+  border: 5px solid #fff;
+  border-radius: 28px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 7px 0 #e9a5bf, 0 11px 20px rgba(116,52,79,.16);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.checkout-money-choice:active { transform: translateY(5px) scale(.96); box-shadow: 0 2px 0 #e9a5bf; }
+.checkout-money-choice.wrong { animation: checkout-wrong .45s ease; border-color: #fda4af; }
+@keyframes checkout-wrong { 25% { transform: translateX(-9px); } 50% { transform: translateX(9px); } 75% { transform: translateX(-5px); } }
+
+.money-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 82%;
+  aspect-ratio: 1.65;
+  border: 5px solid rgba(255,255,255,.85);
+  border-radius: 15px;
+  box-shadow: inset 0 0 0 4px rgba(255,255,255,.35), 0 5px 9px rgba(64,39,24,.2);
+}
+.money-art img { width: 48%; height: 72%; object-fit: contain; pointer-events: none; }
+.money-art.pink-note { background: linear-gradient(135deg,#ff9ec4,#ef5c98); }
+.money-art.green-note { background: linear-gradient(135deg,#8ee5b0,#30ae70); }
+.money-art.blue-coin {
+  width: 76%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%,#bff7ff,#3fbfe0 56%,#2185b0 100%);
+}
+
+#checkout-back-btn {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: 10px;
+  z-index: 8;
+  width: 54px;
+  height: 54px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  color: #7c3f58;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 4px 11px rgba(73,40,24,.2);
+  font-size: 28px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#checkout-success {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  place-items: center;
+  background: rgba(255,255,255,.55);
+  backdrop-filter: blur(3px);
+}
+#checkout-success.show { display: grid; animation: checkout-success-in .3s ease-out; }
+#checkout-success-card {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-width: min(76vw, 360px);
+  padding: 25px;
+  border: 7px solid #fff;
+  border-radius: 38px;
+  color: #16794d;
+  background: #f0fff5;
+  box-shadow: 0 15px 35px rgba(40,94,62,.25);
+}
+#checkout-success-mark {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: white;
+  background: #25bd68;
+  box-shadow: 0 0 0 11px rgba(102,220,146,.28);
+  font-size: 72px;
+  font-weight: 900;
+}
+#checkout-success-card strong { font-size: 32px; }
+@keyframes checkout-success-in { from { opacity: 0; transform: scale(.72); } }
+
+.checkout-money-fly {
+  position: fixed;
+  z-index: 1400;
+  pointer-events: none;
+  transition: left .65s cubic-bezier(.2,.85,.35,1), top .65s cubic-bezier(.2,.85,.35,1), transform .65s ease, opacity .65s ease;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  #osewa-checkout-scene {
+    right: auto;
+    width: 48%;
+    height: 100%;
+    max-height: none;
+    aspect-ratio: auto;
+    background-position: 58% center;
+    background-size: cover;
+  }
+  #checkout-sample-wrap { top: 5%; left: 4%; width: 116px; height: 82px; }
+  #checkout-tray-target { left: 54%; top: 72%; }
+  #checkout-choice-panel {
+    top: 0;
+    left: 48%;
+    min-height: 100%;
+    gap: 8px;
+    padding: 58px 10px 20px;
+  }
+  .checkout-money-choice { width: 30%; min-height: 132px; padding: 8px 3px; }
+  #checkout-back-btn { right: 10px; }
+}
+
 /* Park play areas */
 #park-play {
   position: fixed;
@@ -1205,6 +1426,35 @@ body.park-game-open > .gp-home { display: none !important; }
       <div class="shop-shelf" id="shelf-right"></div>
       <div id="basket"><span id="basket-count">0こ</span></div>
       <button id="exit-shop-btn" aria-label="おみせのいりぐちにもどる">← いりぐちへ</button>
+      <button id="checkout-shop-btn" aria-label="レジでおかいけいする">レジへ</button>
+    </div>
+
+    <!-- 全店舗共通の、見本と同じお金を選ぶレジ会計 -->
+    <div id="osewa-checkout" aria-hidden="true">
+      <button id="checkout-back-btn" type="button" aria-label="おかいものにもどる">←</button>
+      <div id="osewa-checkout-scene">
+        <div id="checkout-sample-wrap" aria-label="おなじおかねをえらんでね">
+          <span id="checkout-sample" class="money-art pink-note"><img src="ui_mood_heart_128.png" alt=""></span>
+        </div>
+        <div id="checkout-tray-target" aria-hidden="true"></div>
+      </div>
+      <div id="checkout-choice-panel">
+        <button class="checkout-money-choice" type="button" data-payment="pink-note" aria-label="ピンクのおさつ">
+          <span class="money-art pink-note"><img src="ui_mood_heart_128.png" alt=""></span>
+        </button>
+        <button class="checkout-money-choice" type="button" data-payment="blue-coin" aria-label="あおいコイン">
+          <span class="money-art blue-coin"><img src="ui_sparkle_128.png" alt=""></span>
+        </button>
+        <button class="checkout-money-choice" type="button" data-payment="green-note" aria-label="みどりのおさつ">
+          <span class="money-art green-note"><img src="ui_sleep_star_128.png" alt=""></span>
+        </button>
+      </div>
+      <div id="checkout-success" aria-live="polite">
+        <div id="checkout-success-card">
+          <span id="checkout-success-mark" aria-hidden="true">✓</span>
+          <strong>ありがとう！</strong>
+        </div>
+      </div>
     </div>
 
     <!-- Park play zones -->
@@ -1993,9 +2243,150 @@ var SHOP_ITEMS = {
 };
 
 var basketCount = 0;
+var activeShopType = null;
 var dragItem = null;
 var dragOffX = 0;
 var dragOffY = 0;
+var checkoutTargetPayment = 'pink-note';
+var checkoutLocked = false;
+var checkoutExitTimer = null;
+
+var CHECKOUT_PAYMENTS = {
+  'pink-note': { label: 'ピンクの おさつ', image: 'ui_mood_heart_128.png' },
+  'blue-coin': { label: 'あおい コイン', image: 'ui_sparkle_128.png' },
+  'green-note': { label: 'みどりの おさつ', image: 'ui_sleep_star_128.png' }
+};
+
+function speakCheckout(text) {
+  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    var message = new SpeechSynthesisUtterance(text);
+    message.lang = 'ja-JP';
+    message.rate = 0.9;
+    message.pitch = 1.12;
+    window.speechSynthesis.speak(message);
+  } catch (error) {
+    // 読み上げが使えない端末でも、見本の光る枠だけで会計を続けられる。
+    console.warn('レジの案内を読み上げられませんでした。', error);
+  }
+}
+
+function updateCheckoutButton() {
+  document.getElementById('checkout-shop-btn').classList.toggle('ready', basketCount > 0);
+}
+
+function setCheckoutSample(paymentType) {
+  var sample = document.getElementById('checkout-sample');
+  var payment = CHECKOUT_PAYMENTS[paymentType];
+  sample.className = 'money-art ' + paymentType;
+  sample.querySelector('img').src = payment.image;
+  sample.parentElement.setAttribute('aria-label', payment.label + 'と おなじものを えらんでね');
+}
+
+function openCheckout() {
+  if (basketCount < 1) {
+    showSpeech('すきなものを かごに いれてね！');
+    return;
+  }
+  ensureAudio();
+  playPop();
+  if (checkoutExitTimer) clearTimeout(checkoutExitTimer);
+  checkoutExitTimer = null;
+  checkoutLocked = false;
+  var paymentTypes = Object.keys(CHECKOUT_PAYMENTS);
+  checkoutTargetPayment = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
+  setCheckoutSample(checkoutTargetPayment);
+  document.querySelectorAll('.checkout-money-choice').forEach(function(choice) {
+    choice.classList.remove('wrong');
+    // 並び順を毎回変え、場所ではなく絵を見て選ぶ遊びにする。
+    choice.style.order = Math.floor(Math.random() * 30);
+    choice.disabled = false;
+  });
+  document.getElementById('checkout-success').classList.remove('show');
+  document.getElementById('osewa-checkout').classList.add('active');
+  document.getElementById('osewa-checkout').setAttribute('aria-hidden', 'false');
+  document.body.classList.add('checkout-open');
+  speakCheckout(CHECKOUT_PAYMENTS[checkoutTargetPayment].label + 'と おなじものを えらんでね');
+}
+
+function closeCheckout(resumeShopping) {
+  if (checkoutLocked) return;
+  if (checkoutExitTimer) clearTimeout(checkoutExitTimer);
+  checkoutExitTimer = null;
+  document.getElementById('osewa-checkout').classList.remove('active');
+  document.getElementById('osewa-checkout').setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('checkout-open');
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  if (resumeShopping) showSpeech('おかいものを つづけよう！');
+}
+
+function flyPaymentToRegister(choice) {
+  var art = choice.querySelector('.money-art');
+  var start = art.getBoundingClientRect();
+  var target = document.getElementById('checkout-tray-target').getBoundingClientRect();
+  var flying = art.cloneNode(true);
+  flying.classList.add('checkout-money-fly');
+  flying.style.left = start.left + 'px';
+  flying.style.top = start.top + 'px';
+  flying.style.width = start.width + 'px';
+  flying.style.height = start.height + 'px';
+  document.body.appendChild(flying);
+  requestAnimationFrame(function() {
+    flying.style.left = (target.left + target.width / 2 - start.width / 2) + 'px';
+    flying.style.top = (target.top + target.height / 2 - start.height / 2) + 'px';
+    flying.style.transform = 'scale(.45) rotate(18deg)';
+    flying.style.opacity = '.18';
+  });
+  // 省電力設定などで終了通知が来ない場合も、飛んだお金を画面に残さない。
+  var cleanupTimer = setTimeout(function() {
+    if (flying.isConnected) flying.remove();
+  }, 1000);
+  flying.addEventListener('transitionend', function() {
+    clearTimeout(cleanupTimer);
+    flying.remove();
+  }, { once: true });
+}
+
+function completeCheckout() {
+  document.getElementById('osewa-checkout').classList.remove('active');
+  document.getElementById('osewa-checkout').setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('checkout-open');
+  checkoutLocked = false;
+  checkoutExitTimer = null;
+  basketCount = 0;
+  activeShopType = null;
+  updateCheckoutButton();
+  var room = document.getElementById('room');
+  room.classList.remove('shop-bakery', 'shop-toy', 'shop-candy', 'shop-flower');
+  room.classList.add('shop');
+  state.location = 'shop';
+  closeShop();
+  document.getElementById('swipe-up-hint').style.display = 'block';
+  showSpeech('おかいけい できたよ！');
+}
+
+function chooseCheckoutPayment(choice) {
+  if (checkoutLocked) return;
+  var paymentType = choice.dataset.payment;
+  if (paymentType !== checkoutTargetPayment) {
+    choice.classList.remove('wrong');
+    void choice.offsetWidth;
+    choice.classList.add('wrong');
+    playPop();
+    speakCheckout('おしい！ ひかっている おかねと おなじものを さがしてね');
+    return;
+  }
+  checkoutLocked = true;
+  document.querySelectorAll('.checkout-money-choice').forEach(function(button) { button.disabled = true; });
+  flyPaymentToRegister(choice);
+  playSparkle();
+  speakCheckout('せいかい！ ありがとう！');
+  setTimeout(function() {
+    document.getElementById('checkout-success').classList.add('show');
+  }, 620);
+  checkoutExitTimer = setTimeout(completeCheckout, 2700);
+}
 
 function openShop(shopType) {
   var items = SHOP_ITEMS[shopType] || [];
@@ -2003,8 +2394,10 @@ function openShop(shopType) {
   var rightShelf = document.getElementById('shelf-right');
   leftShelf.innerHTML = '';
   rightShelf.innerHTML = '';
+  activeShopType = shopType;
   basketCount = 0;
   document.getElementById('basket-count').textContent = '0こ';
+  updateCheckoutButton();
 
   items.forEach(function(item, i) {
     var el = document.createElement('button');
@@ -2028,6 +2421,7 @@ function openShop(shopType) {
 
 function closeShop() {
   document.getElementById('shopping-ui').classList.remove('active');
+  document.getElementById('checkout-shop-btn').classList.remove('ready');
 }
 
 function startDrag(e) {
@@ -2076,6 +2470,7 @@ function endDrag(e) {
     dragItem._src.classList.add('bought');
     basketCount++;
     document.getElementById('basket-count').textContent = basketCount + 'こ';
+    updateCheckoutButton();
     ensureAudio();
     playPop();
     showSpeech(dragItem._src.dataset.itemName + ' かったよ！');
@@ -2086,6 +2481,11 @@ function endDrag(e) {
     pop.style.top = br.top + 'px';
     document.body.appendChild(pop);
     pop.addEventListener('animationend', function() { this.remove(); });
+
+    if (activeShopType && basketCount === SHOP_ITEMS[activeShopType].length) {
+      showSpeech('かごが いっぱい！ レジへ いこう！', 3000);
+      speakCheckout('かごが いっぱい！ レジへ いこう！');
+    }
   }
 
   dragItem.remove();
@@ -2147,6 +2547,16 @@ document.getElementById('exit-shop-btn').addEventListener('click', function() {
   closeShop();
   document.getElementById('swipe-up-hint').style.display = 'block';
   showSpeech('おみせに もどったよ！');
+});
+
+document.getElementById('checkout-shop-btn').addEventListener('click', openCheckout);
+document.getElementById('checkout-back-btn').addEventListener('click', function() {
+  ensureAudio();
+  playPop();
+  closeCheckout(true);
+});
+document.querySelectorAll('.checkout-money-choice').forEach(function(choice) {
+  choice.addEventListener('click', function() { chooseCheckoutPayment(this); });
 });
 
 // Close panel on tap outside
