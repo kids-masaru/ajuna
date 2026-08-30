@@ -487,18 +487,62 @@ body {
   z-index: 12;
   pointer-events: none;
   display: none;
+  overscroll-behavior-x: none;
 }
 #shopping-ui.active { display: block; }
 
+/* 端末の戻るジェスチャーを避けるため、商品は左右端ではなく中央の棚にまとめる。 */
+#shop-shelf-stage {
+  position: fixed;
+  top: 18%;
+  left: 50%;
+  z-index: 12;
+  width: min(72vw, 440px);
+  padding: 9px 10px 11px;
+  transform: translateX(-50%);
+  border: 3px solid rgba(255,255,255,.86);
+  border-radius: 24px;
+  background: rgba(255,249,238,.78);
+  box-shadow: 0 9px 24px rgba(79,42,17,.23);
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+}
+
 .shop-shelf {
-  position: absolute;
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 6px;
+  height: 74px;
+  padding: 4px 5px 15px;
   pointer-events: auto;
 }
-#shelf-left { top: 25%; left: 8px; }
-#shelf-right { top: 25%; right: 8px; }
+.shop-shelf::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 13px;
+  border-radius: 5px;
+  background: linear-gradient(#a96732 0 35%, #81441f 36% 72%, #5f3119 73%);
+  box-shadow: 0 4px 5px rgba(67,35,14,.28), inset 0 2px rgba(255,255,255,.18);
+  pointer-events: none;
+}
+.shop-shelf::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 17px;
+  height: 4px;
+  border-radius: 999px;
+  background: #65371f;
+  opacity: .88;
+  pointer-events: none;
+}
+#shelf-left, #shelf-right { top: auto; left: auto; right: auto; }
 
 .shelf-item {
   width: 52px; height: 52px;
@@ -515,6 +559,8 @@ body {
   -webkit-tap-highlight-color: transparent;
   overflow: hidden;
   padding: 0;
+  position: relative;
+  z-index: 2;
 }
 .shelf-item-art {
   display: block;
@@ -602,6 +648,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 横向きでは2つの棚を横につなぎ、商品を画面端から離して1列に並べる。 */
+@media (orientation: landscape) and (max-height: 500px) {
+  #shop-shelf-stage {
+    top: 16%;
+    width: min(78vw, 680px);
+    display: flex;
+    padding: 8px 10px 10px;
+  }
+  .shop-shelf { width: 50%; height: 68px; padding-bottom: 15px; }
+  #shelf-left::before { border-radius: 5px 0 0 5px; }
+  #shelf-right::before { border-radius: 0 5px 5px 0; }
 }
 
 /* ===== 4歳向けレジ会計 ===== */
@@ -1422,8 +1481,10 @@ body.park-game-open > .gp-home { display: none !important; }
 
     <!-- Shopping UI (shown inside stores) -->
     <div id="shopping-ui">
-      <div class="shop-shelf" id="shelf-left"></div>
-      <div class="shop-shelf" id="shelf-right"></div>
+      <div id="shop-shelf-stage" aria-label="おみせのしょうひんだな">
+        <div class="shop-shelf" id="shelf-left"></div>
+        <div class="shop-shelf" id="shelf-right"></div>
+      </div>
       <div id="basket"><span id="basket-count">0こ</span></div>
       <button id="exit-shop-btn" aria-label="おみせのいりぐちにもどる">← いりぐちへ</button>
       <button id="checkout-shop-btn" aria-label="レジでおかいけいする">レジへ</button>
@@ -2420,6 +2481,7 @@ function openShop(shopType) {
 }
 
 function closeShop() {
+  if (dragItem) cancelDrag();
   document.getElementById('shopping-ui').classList.remove('active');
   document.getElementById('checkout-shop-btn').classList.remove('ready');
 }
@@ -2441,6 +2503,20 @@ function startDrag(e) {
 
   document.addEventListener('pointermove', moveDrag);
   document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', cancelDrag);
+}
+
+function clearDragListeners() {
+  document.removeEventListener('pointermove', moveDrag);
+  document.removeEventListener('pointerup', endDrag);
+  document.removeEventListener('pointercancel', cancelDrag);
+}
+
+function cancelDrag() {
+  clearDragListeners();
+  document.getElementById('basket').classList.remove('highlight');
+  if (dragItem) dragItem.remove();
+  dragItem = null;
 }
 
 function moveDrag(e) {
@@ -2457,8 +2533,7 @@ function moveDrag(e) {
 
 function endDrag(e) {
   if (!dragItem) return;
-  document.removeEventListener('pointermove', moveDrag);
-  document.removeEventListener('pointerup', endDrag);
+  clearDragListeners();
 
   var basket = document.getElementById('basket');
   var br = basket.getBoundingClientRect();
